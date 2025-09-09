@@ -8,6 +8,7 @@ import { AuthLayout } from '@/widgets/layouts/AuthLayout'
 
 // Pages
 import { Dashboard } from '@/pages/Dashboard'
+import { EventsPage } from '@/pages/Events'
 import { EventDetails } from '@/pages/EventDetails'
 import { Attendees } from '@/pages/Attendees'
 import { LoginPage } from '@/pages/Login'
@@ -38,7 +39,7 @@ export const router = createBrowserRouter([
             index: true,
             element: (
               <GuardedRoute action="read" subject="Event">
-                <Navigate to={ROUTES.DASHBOARD} replace />
+                <EventsPage />
               </GuardedRoute>
             ),
           },

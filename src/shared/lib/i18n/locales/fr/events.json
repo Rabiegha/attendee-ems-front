@@ -1,4 +1,7 @@
 {
+  "page": {
+    "title": "Événements"
+  },
   "events": {
     "title": "Événements",
     "create": "Créer un événement",
@@ -16,6 +19,12 @@
     "view_details": "Voir les détails",
     "manage_attendees": "Gérer les participants",
     "export_attendees": "Exporter les participants"
+  },
+  "actions": {
+    "create": "Créer un événement",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "view": "Voir détails"
   },
   "status": {
     "draft": "Brouillon",

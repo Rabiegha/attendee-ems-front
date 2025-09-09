@@ -1,4 +1,4 @@
-import { MongoAbility, createMongoAbility } from '@casl/ability'
+import { MongoAbility, createMongoAbility, subject } from '@casl/ability'
 
 // Define all possible actions in the system
 export type Actions =
@@ -47,3 +47,6 @@ export const createAppAbility = (rules: AppRule[] = []): AppAbility => {
 
 // Default empty ability
 export const defaultAbility = createAppAbility([])
+
+// Export subject helper for creating typed subjects
+export { subject }

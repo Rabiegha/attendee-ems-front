@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { authApi } from '@/features/auth/api/authApi'
 import { setSession } from '@/features/auth/model/sessionSlice'
 import { Button } from '@/shared/ui/Button'
@@ -20,6 +21,7 @@ type LoginFormData = z.infer<typeof loginSchema>
 export const LoginPage: React.FC = () => {
   const { t } = useTranslation('auth')
   const dispatch = useDispatch()
+  const navigate = useNavigate()
   const [login, { isLoading, error }] = authApi.useLoginMutation()
 
   const {
@@ -34,6 +36,8 @@ export const LoginPage: React.FC = () => {
     try {
       const result = await login(data).unwrap()
       dispatch(setSession(result))
+      // Redirect to dashboard after successful login
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       console.error('Login failed:', err)
     }

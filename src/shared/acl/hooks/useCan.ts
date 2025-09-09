@@ -2,7 +2,7 @@ import { useAbility } from './useAbility'
 import type { Actions, Subjects } from '../app-ability'
 
 /**
- * Hook to check if the current user can perform an action on a subject
+ * Hook to check if the current user can perform an action
  * @param action - The action to check
  * @param subjectType - The subject type to check against
  * @param subjectInstance - Optional subject instance for conditional checks
@@ -41,7 +41,7 @@ export const useCan = (
 }
 
 /**
- * Hook to check if the current user cannot perform an action on a subject
+ * Hook to check if the current user cannot perform an action
  * @param action - The action to check
  * @param subjectType - The subject to check against
  * @param subjectInstance - Optional subject instance for conditional checks

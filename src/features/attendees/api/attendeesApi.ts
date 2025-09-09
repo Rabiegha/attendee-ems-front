@@ -1,13 +1,10 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { env } from '@/app/config/env'
 import { API_ENDPOINTS } from '@/app/config/constants'
-import type { 
-  AttendeeDTO, 
-  CreateAttendeeDTO, 
-  UpdateAttendeeDTO, 
-  UpdateAttendeeStatusDTO,
+import type {
+  AttendeeDTO,
   AttendeesListResponse,
-  ExportAttendeesResponse 
+  ExportAttendeesResponse,
 } from '../dpo/attendee.dto'
 import type { 
   AttendeeDPO, 
@@ -132,7 +129,7 @@ export const attendeesApi = createApi({
             draft.status = data.status
             if (data.status === 'checked_in') {
               draft.checkedInAt = new Date()
-              draft.checkedInBy = data.checkedInBy
+              if (data.checkedInBy) draft.checkedInBy = data.checkedInBy
               draft.isCheckedIn = true
               draft.canCheckIn = false
             }

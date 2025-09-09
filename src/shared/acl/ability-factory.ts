@@ -1,13 +1,18 @@
-import { createMongoAbility } from '@casl/ability'
+import { createAppAbility } from './app-ability'
 import type { AppAbility, AppRule } from './app-ability'
 
 /**
- * Creates an AppAbility instance from an array of rules
- * @param rules - Array of CASL rules
- * @returns AppAbility instance
+ * Create an ability instance from rules
  */
-export const buildAbilityFromRules = (rules: AppRule[]): AppAbility => {
-  return createMongoAbility<AppAbility>(rules)
+export const createAbilityFromRules = (rules: AppRule[]): AppAbility => {
+  return createAppAbility(rules)
+}
+
+/**
+ * Update an existing ability with new rules
+ */
+export const updateAbility = (_ability: AppAbility, rules: AppRule[]): AppAbility => {
+  return createAppAbility(rules)
 }
 
 /**
@@ -17,15 +22,4 @@ export const buildAbilityFromRules = (rules: AppRule[]): AppAbility => {
  */
 export const serializeAbility = (ability: AppAbility): AppRule[] => {
   return ability.rules as AppRule[]
-}
-
-/**
- * Updates an existing ability with new rules
- * @param ability - Existing AppAbility instance
- * @param newRules - New rules to apply
- * @returns Updated AppAbility instance
- */
-export const updateAbility = (ability: AppAbility, newRules: AppRule[]): AppAbility => {
-  ability.update(newRules)
-  return ability
 }

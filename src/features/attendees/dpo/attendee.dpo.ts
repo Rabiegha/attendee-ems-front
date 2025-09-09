@@ -13,15 +13,16 @@ export interface AttendeeDPO {
   registrationDate: Date
   checkedInAt?: Date
   checkedInBy?: string
-  metadata: Record<string, any>
-  tags: string[]
+  metadata?: Record<string, any>
+  tags?: string[]
   createdAt: Date
   updatedAt: Date
+  
   // Computed properties
-  fullName: string
+  displayName: string
   isCheckedIn: boolean
-  isPending: boolean
   isConfirmed: boolean
+  isPending: boolean
   canCheckIn: boolean
 }
 

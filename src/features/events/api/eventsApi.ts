@@ -1,7 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { env } from '@/app/config/env'
 import { API_ENDPOINTS } from '@/app/config/constants'
-import type { EventDTO, CreateEventDTO, UpdateEventDTO } from '../dpo/event.dto'
+import type { EventDTO } from '../dpo/event.dto'
 import type { EventDPO, CreateEventDPO, UpdateEventDPO } from '../dpo/event.dpo'
 import { mapEventDTOtoDPO, mapCreateEventDPOtoDTO, mapUpdateEventDPOtoDTO } from '../dpo/event.mappers'
 

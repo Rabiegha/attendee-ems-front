@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useGetEventByIdQuery } from '@/features/events/api/eventsApi'
 import { useGetAttendeesQuery } from '@/features/attendees/api/attendeesApi'
+import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { Edit, Users, Download } from 'lucide-react'
@@ -13,7 +14,7 @@ export const EventDetails: React.FC = () => {
   const { t } = useTranslation(['events', 'common'])
   
   const { data: event, isLoading: eventLoading, error } = useGetEventByIdQuery(id!)
-  const { data: attendees = [] } = useGetAttendeesQuery({ eventId: id })
+  const { data: attendees = [] } = useGetAttendeesQuery(id ? { eventId: id } : skipToken)
 
   if (eventLoading) {
     return (

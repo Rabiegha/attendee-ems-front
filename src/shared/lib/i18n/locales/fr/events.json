@@ -1,0 +1,35 @@
+{
+  "events": {
+    "title": "Événements",
+    "create": "Créer un événement",
+    "edit": "Modifier l'événement",
+    "delete": "Supprimer l'événement",
+    "name": "Nom de l'événement",
+    "description": "Description",
+    "location": "Lieu",
+    "start_date": "Date de début",
+    "end_date": "Date de fin",
+    "max_attendees": "Nombre maximum de participants",
+    "current_attendees": "Participants actuels",
+    "status": "Statut",
+    "tags": "Tags",
+    "view_details": "Voir les détails",
+    "manage_attendees": "Gérer les participants",
+    "export_attendees": "Exporter les participants"
+  },
+  "status": {
+    "draft": "Brouillon",
+    "published": "Publié",
+    "active": "Actif",
+    "completed": "Terminé",
+    "cancelled": "Annulé"
+  },
+  "filters": {
+    "all": "Tous",
+    "search_placeholder": "Rechercher des événements...",
+    "sort_by": "Trier par",
+    "sort_name": "Nom",
+    "sort_date": "Date",
+    "sort_created": "Date de création"
+  }
+}

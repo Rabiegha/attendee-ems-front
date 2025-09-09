@@ -1,0 +1,49 @@
+{
+  "attendees": {
+    "title": "Participants",
+    "create": "Ajouter un participant",
+    "edit": "Modifier le participant",
+    "delete": "Supprimer le participant",
+    "first_name": "Prénom",
+    "last_name": "Nom",
+    "email": "Email",
+    "phone": "Téléphone",
+    "company": "Entreprise",
+    "job_title": "Poste",
+    "status": "Statut",
+    "registration_date": "Date d'inscription",
+    "checked_in_at": "Enregistré le",
+    "checked_in_by": "Enregistré par",
+    "tags": "Tags",
+    "export": "Exporter",
+    "bulk_actions": "Actions groupées",
+    "check_in": "Enregistrer",
+    "check_out": "Désinscrire"
+  },
+  "status": {
+    "pending": "En attente",
+    "confirmed": "Confirmé",
+    "checked_in": "Enregistré",
+    "cancelled": "Annulé",
+    "no_show": "Absent"
+  },
+  "filters": {
+    "all": "Tous",
+    "search_placeholder": "Rechercher des participants...",
+    "filter_by_status": "Filtrer par statut",
+    "filter_by_event": "Filtrer par événement",
+    "sort_by": "Trier par",
+    "sort_name": "Nom",
+    "sort_email": "Email",
+    "sort_registration": "Date d'inscription",
+    "sort_status": "Statut"
+  },
+  "export": {
+    "title": "Exporter les participants",
+    "format": "Format",
+    "csv": "CSV",
+    "xlsx": "Excel",
+    "include_all": "Inclure tous les participants",
+    "include_filtered": "Inclure seulement les participants filtrés"
+  }
+}

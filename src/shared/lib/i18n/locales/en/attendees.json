@@ -1,0 +1,49 @@
+{
+  "attendees": {
+    "title": "Attendees",
+    "create": "Add Attendee",
+    "edit": "Edit Attendee",
+    "delete": "Delete Attendee",
+    "first_name": "First Name",
+    "last_name": "Last Name",
+    "email": "Email",
+    "phone": "Phone",
+    "company": "Company",
+    "job_title": "Job Title",
+    "status": "Status",
+    "registration_date": "Registration Date",
+    "checked_in_at": "Checked In At",
+    "checked_in_by": "Checked In By",
+    "tags": "Tags",
+    "export": "Export",
+    "bulk_actions": "Bulk Actions",
+    "check_in": "Check In",
+    "check_out": "Check Out"
+  },
+  "status": {
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "checked_in": "Checked In",
+    "cancelled": "Cancelled",
+    "no_show": "No Show"
+  },
+  "filters": {
+    "all": "All",
+    "search_placeholder": "Search attendees...",
+    "filter_by_status": "Filter by Status",
+    "filter_by_event": "Filter by Event",
+    "sort_by": "Sort by",
+    "sort_name": "Name",
+    "sort_email": "Email",
+    "sort_registration": "Registration Date",
+    "sort_status": "Status"
+  },
+  "export": {
+    "title": "Export Attendees",
+    "format": "Format",
+    "csv": "CSV",
+    "xlsx": "Excel",
+    "include_all": "Include all attendees",
+    "include_filtered": "Include only filtered attendees"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "events": {
+    "title": "Events",
+    "create": "Create Event",
+    "edit": "Edit Event",
+    "delete": "Delete Event",
+    "name": "Event Name",
+    "description": "Description",
+    "location": "Location",
+    "start_date": "Start Date",
+    "end_date": "End Date",
+    "max_attendees": "Maximum Attendees",
+    "current_attendees": "Current Attendees",
+    "status": "Status",
+    "tags": "Tags",
+    "view_details": "View Details",
+    "manage_attendees": "Manage Attendees",
+    "export_attendees": "Export Attendees"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published",
+    "active": "Active",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "filters": {
+    "all": "All",
+    "search_placeholder": "Search events...",
+    "sort_by": "Sort by",
+    "sort_name": "Name",
+    "sort_date": "Date",
+    "sort_created": "Created Date"
+  }
+}

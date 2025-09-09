@@ -1,0 +1,87 @@
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { GuardedRoute } from '@/shared/acl/guards/GuardedRoute'
+import { ROUTES } from '@/app/config/constants'
+
+// Layouts
+import { RootLayout } from '@/widgets/layouts/RootLayout'
+import { AuthLayout } from '@/widgets/layouts/AuthLayout'
+
+// Pages
+import { Dashboard } from '@/pages/Dashboard'
+import { EventDetails } from '@/pages/EventDetails'
+import { Attendees } from '@/pages/Attendees'
+import { LoginPage } from '@/pages/Login'
+import { ForbiddenPage } from '@/pages/Forbidden'
+import { NotFoundPage } from '@/pages/NotFound'
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <RootLayout />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to={ROUTES.DASHBOARD} replace />,
+      },
+      {
+        path: 'dashboard',
+        element: (
+          <GuardedRoute action="read" subject="Organization">
+            <Dashboard />
+          </GuardedRoute>
+        ),
+      },
+      {
+        path: 'events',
+        children: [
+          {
+            index: true,
+            element: (
+              <GuardedRoute action="read" subject="Event">
+                <Navigate to={ROUTES.DASHBOARD} replace />
+              </GuardedRoute>
+            ),
+          },
+          {
+            path: ':id',
+            element: (
+              <GuardedRoute action="read" subject="Event">
+                <EventDetails />
+              </GuardedRoute>
+            ),
+          },
+        ],
+      },
+      {
+        path: 'attendees',
+        element: (
+          <GuardedRoute action="read" subject="Attendee">
+            <Attendees />
+          </GuardedRoute>
+        ),
+      },
+    ],
+  },
+  {
+    path: '/auth',
+    element: <AuthLayout />,
+    children: [
+      {
+        path: 'login',
+        element: <LoginPage />,
+      },
+    ],
+  },
+  {
+    path: '/login',
+    element: <Navigate to="/auth/login" replace />,
+  },
+  {
+    path: '/403',
+    element: <ForbiddenPage />,
+  },
+  {
+    path: '*',
+    element: <NotFoundPage />,
+  },
+])

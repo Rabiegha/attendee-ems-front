@@ -1,0 +1,53 @@
+{
+  "app": {
+    "name": "Système de Gestion d'Événements",
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "export": "Exporter",
+    "import": "Importer",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non"
+  },
+  "navigation": {
+    "dashboard": "Tableau de bord",
+    "events": "Événements",
+    "attendees": "Participants",
+    "reports": "Rapports",
+    "settings": "Paramètres",
+    "profile": "Profil",
+    "logout": "Déconnexion"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "pending": "En attente",
+    "completed": "Terminé",
+    "cancelled": "Annulé",
+    "draft": "Brouillon",
+    "published": "Publié"
+  },
+  "errors": {
+    "required": "Ce champ est obligatoire",
+    "invalid_email": "Adresse email invalide",
+    "min_length": "Minimum {{count}} caractères",
+    "max_length": "Maximum {{count}} caractères",
+    "network_error": "Erreur de connexion",
+    "unauthorized": "Non autorisé",
+    "forbidden": "Accès interdit",
+    "not_found": "Ressource non trouvée",
+    "server_error": "Erreur serveur"
+  }
+}

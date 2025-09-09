@@ -4,7 +4,7 @@ import { cn } from '@/shared/lib/utils'
 interface FormFieldProps {
   label?: string
   hint?: string
-  error?: string
+  error?: string | undefined
   required?: boolean
   children: React.ReactNode
   className?: string

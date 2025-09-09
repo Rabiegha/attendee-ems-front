@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { CheckCircle, Clock, XCircle, Edit, Trash2 } from 'lucide-react'
 import type { AttendeeDPO } from '../dpo/attendee.dpo'
 import { formatDate } from '@/shared/lib/utils'
@@ -47,7 +46,7 @@ const getStatusBadge = (status: string) => {
 }
 
 export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoading }) => {
-  const { t } = useTranslation('attendees')
+  // const { t } = useTranslation('attendees')
 
   if (isLoading) {
     return (
@@ -106,7 +105,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoadi
                 <div className="flex items-center">
                   <div>
                     <div className="text-sm font-medium text-gray-900">
-                      {attendee.fullName}
+                      {attendee.displayName}
                     </div>
                     {attendee.jobTitle && (
                       <div className="text-sm text-gray-500">

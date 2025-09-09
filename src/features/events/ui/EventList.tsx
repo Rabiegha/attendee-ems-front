@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Calendar, MapPin, Users } from 'lucide-react'
 import type { EventDPO } from '../dpo/event.dpo'
@@ -13,7 +12,7 @@ interface EventListProps {
 }
 
 export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
-  const { t } = useTranslation('events')
+  // const { t } = useTranslation('events')
 
   if (isLoading) {
     return (

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { LogOut, User } from 'lucide-react'
 import { selectUser, selectOrganization, clearSession } from '@/features/auth/model/sessionSlice'
 import { Button } from '@/shared/ui/Button'
-import { Can } from '@/shared/acl/guards/Can'
+// import { Can } from '@/shared/acl/guards/Can'
 
 export const Header: React.FC = () => {
   const { t } = useTranslation('common')

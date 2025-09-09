@@ -74,7 +74,7 @@ export const Dashboard: React.FC = () => {
               <div key={attendee.id} className="flex items-center justify-between py-2">
                 <div>
                   <p className="text-sm font-medium text-gray-900">
-                    {attendee.fullName}
+                    {attendee.displayName}
                   </p>
                   <p className="text-xs text-gray-500">{attendee.email}</p>
                 </div>

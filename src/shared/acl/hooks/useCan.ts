@@ -2,11 +2,11 @@ import { useAbility } from './useAbility'
 import type { Actions, Subjects } from '../app-ability'
 
 /**
- * Hook to check if the current user can perform an action on a subject
+ * Hook to check if the current user can perform an action
  * @param action - The action to check
- * @param subject - The subject to check against
- * @param data - Optional data for conditional checks
- * @returns Boolean indicating if the action is allowed
+ * @param subject - The subject/resource to check against
+ * @param data - Optional data/conditions for the check
+ * @returns boolean indicating if the action is allowed
  */
 export const useCan = (
   action: Actions,
@@ -14,15 +14,16 @@ export const useCan = (
   data?: Record<string, any>
 ): boolean => {
   const ability = useAbility()
-  return ability.can(action, subject, data)
+  
+  return ability.can(action, subject, data as any)
 }
 
 /**
- * Hook to check if the current user cannot perform an action on a subject
+ * Hook to check if the current user cannot perform an action
  * @param action - The action to check
- * @param subject - The subject to check against
- * @param data - Optional data for conditional checks
- * @returns Boolean indicating if the action is forbidden
+ * @param subject - The subject/resource to check against
+ * @param data - Optional data/conditions for the check
+ * @returns boolean indicating if the action is not allowed
  */
 export const useCannot = (
   action: Actions,
@@ -30,5 +31,6 @@ export const useCannot = (
   data?: Record<string, any>
 ): boolean => {
   const ability = useAbility()
-  return ability.cannot(action, subject, data)
+  
+  return ability.cannot(action, subject, data as any)
 }

@@ -62,7 +62,11 @@ export const attendeesSlice = createSlice({
     
     setSelectedStatus: (state, action: PayloadAction<string | null>) => {
       state.selectedStatus = action.payload
-      state.filters.status = action.payload || undefined
+      if (action.payload) {
+        state.filters.status = action.payload
+      } else {
+        delete state.filters.status
+      }
       state.filters.page = 1
     },
     

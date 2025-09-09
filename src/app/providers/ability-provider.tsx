@@ -1,7 +1,7 @@
 import React, { createContext, useMemo } from 'react'
 import { useSelector } from 'react-redux'
 import { selectAbilityRules, selectUser, selectOrgId } from '@/features/auth/model/sessionSlice'
-import { buildAbilityFromRules } from '@/shared/acl/ability-factory'
+import { createAbilityFromRules } from '@/shared/acl/ability-factory'
 import { rulesFor, fallbackRules } from '@/shared/acl/policies/rbac-presets'
 import type { AppAbility } from '@/shared/acl/app-ability'
 import type { UserRole } from '@/shared/acl/policies/rbac-presets'
@@ -20,7 +20,8 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
   const ability = useMemo(() => {
     // If we have rules from the API, use them
     if (rules.length > 0) {
-      return buildAbilityFromRules(rules)
+      const ability = createAbilityFromRules(rules)
+      return ability
     }
 
     // If we have user info but no rules yet, use preset rules based on roles
@@ -33,16 +34,16 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
         rulesFor(role, { orgId, userId: user.id, eventIds })
       )
       
-      return buildAbilityFromRules(combinedRules)
+      return createAbilityFromRules(combinedRules)
     }
 
     // Fallback: minimal rules for unauthenticated users
     if (user) {
-      return buildAbilityFromRules(fallbackRules(user.id))
+      return createAbilityFromRules(fallbackRules(user.id))
     }
 
     // No permissions for anonymous users
-    return buildAbilityFromRules([])
+    return createAbilityFromRules([])
   }, [rules, user, orgId])
 
   return (

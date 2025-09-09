@@ -1,16 +1,15 @@
 import React from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { selectIsAuthenticated } from '@/features/auth/model/sessionSlice'
 import { Header } from '@/widgets/Header'
 import { Sidebar } from '@/widgets/Sidebar'
-import { LoginPage } from '@/pages/Login'
 
 export const RootLayout: React.FC = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated)
 
   if (!isAuthenticated) {
-    return <LoginPage />
+    return <Navigate to="/auth/login" replace />
   }
 
   return (

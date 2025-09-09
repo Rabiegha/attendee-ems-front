@@ -39,16 +39,21 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
 /**
  * Maps CreateEventDPO to CreateEventDTO for API
  */
-export const mapCreateEventDPOtoDTO = (dpo: CreateEventDPO): CreateEventDTO => ({
-  name: dpo.name,
-  description: dpo.description,
-  start_date: dpo.startDate.toISOString(),
-  end_date: dpo.endDate.toISOString(),
-  location: dpo.location,
-  max_attendees: dpo.maxAttendees,
-  tags: dpo.tags,
-  metadata: dpo.metadata,
-})
+export const mapCreateEventDPOtoDTO = (dpo: CreateEventDPO): CreateEventDTO => {
+  const dto: CreateEventDTO = {
+    name: dpo.name,
+    description: dpo.description,
+    start_date: dpo.startDate.toISOString(),
+    end_date: dpo.endDate.toISOString(),
+    location: dpo.location,
+    max_attendees: dpo.maxAttendees,
+  }
+  
+  if (dpo.tags) dto.tags = dpo.tags
+  if (dpo.metadata) dto.metadata = dpo.metadata
+  
+  return dto
+}
 
 /**
  * Maps UpdateEventDPO to UpdateEventDTO for API

@@ -21,7 +21,7 @@ export interface RoleContext {
  * @returns Array of CASL rules
  */
 export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
-  const { orgId, userId, eventIds = [] } = ctx
+  const { orgId, eventIds = [] } = ctx
 
   switch (role) {
     case 'ORG_ADMIN':

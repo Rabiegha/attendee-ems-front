@@ -5,50 +5,56 @@ import type { AttendeeDPO, CreateAttendeeDPO, UpdateAttendeeDPO, UpdateAttendeeS
  * Maps AttendeeDTO from API to AttendeeDPO for client use
  */
 export const mapAttendeeDTOtoDPO = (dto: AttendeeDTO): AttendeeDPO => {
-  const fullName = `${dto.first_name} ${dto.last_name}`.trim()
-  
-  return {
+  const dpo: AttendeeDPO = {
     id: dto.id,
     firstName: dto.first_name,
     lastName: dto.last_name,
     email: dto.email,
-    phone: dto.phone,
-    company: dto.company,
-    jobTitle: dto.job_title,
     status: dto.status,
     eventId: dto.event_id,
     orgId: dto.org_id,
     registrationDate: new Date(dto.registration_date),
-    checkedInAt: dto.checked_in_at ? new Date(dto.checked_in_at) : undefined,
-    checkedInBy: dto.checked_in_by,
-    metadata: dto.metadata || {},
-    tags: dto.tags || [],
     createdAt: new Date(dto.created_at),
     updatedAt: new Date(dto.updated_at),
     
     // Computed properties
-    fullName,
+    displayName: `${dto.first_name} ${dto.last_name}`,
     isCheckedIn: dto.status === 'checked_in',
-    isPending: dto.status === 'pending',
     isConfirmed: dto.status === 'confirmed',
-    canCheckIn: dto.status === 'confirmed' || dto.status === 'pending',
+    isPending: dto.status === 'pending',
+    canCheckIn: dto.status === 'confirmed',
   }
+  
+  if (dto.checked_in_at) dpo.checkedInAt = new Date(dto.checked_in_at)
+  if (dto.checked_in_by) dpo.checkedInBy = dto.checked_in_by
+  if (dto.phone) dpo.phone = dto.phone
+  if (dto.company) dpo.company = dto.company
+  if (dto.job_title) dpo.jobTitle = dto.job_title
+  if (dto.metadata) dpo.metadata = dto.metadata
+  if (dto.tags) dpo.tags = dto.tags
+  
+  return dpo
 }
 
 /**
  * Maps CreateAttendeeDPO to CreateAttendeeDTO for API
  */
-export const mapCreateAttendeeDPOtoDTO = (dpo: CreateAttendeeDPO): CreateAttendeeDTO => ({
-  first_name: dpo.firstName,
-  last_name: dpo.lastName,
-  email: dpo.email,
-  phone: dpo.phone,
-  company: dpo.company,
-  job_title: dpo.jobTitle,
-  event_id: dpo.eventId,
-  metadata: dpo.metadata,
-  tags: dpo.tags,
-})
+export const mapCreateAttendeeDPOtoDTO = (dpo: CreateAttendeeDPO): CreateAttendeeDTO => {
+  const dto: CreateAttendeeDTO = {
+    first_name: dpo.firstName,
+    last_name: dpo.lastName,
+    email: dpo.email,
+    event_id: dpo.eventId,
+  }
+  
+  if (dpo.phone) dto.phone = dpo.phone
+  if (dpo.company) dto.company = dpo.company
+  if (dpo.jobTitle) dto.job_title = dpo.jobTitle
+  if (dpo.metadata) dto.metadata = dpo.metadata
+  if (dpo.tags) dto.tags = dpo.tags
+  
+  return dto
+}
 
 /**
  * Maps UpdateAttendeeDPO to UpdateAttendeeDTO for API
@@ -69,7 +75,12 @@ export const mapUpdateAttendeeDPOtoDTO = (dpo: UpdateAttendeeDPO): UpdateAttende
 /**
  * Maps UpdateAttendeeStatusDPO to UpdateAttendeeStatusDTO for API
  */
-export const mapUpdateAttendeeStatusDPOtoDTO = (dpo: UpdateAttendeeStatusDPO): UpdateAttendeeStatusDTO => ({
-  status: dpo.status,
-  checked_in_by: dpo.checkedInBy,
-})
+export const mapUpdateAttendeeStatusDPOtoDTO = (dpo: UpdateAttendeeStatusDPO): UpdateAttendeeStatusDTO => {
+  const dto: UpdateAttendeeStatusDTO = {
+    status: dpo.status,
+  }
+  
+  if (dpo.checkedInBy) dto.checked_in_by = dpo.checkedInBy
+  
+  return dto
+}

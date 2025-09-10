@@ -11,29 +11,17 @@ import type { Actions, Subjects } from '../app-ability'
 export const useCan = (
   action: Actions,
   subjectType: Subjects,
-  subjectInstance?: Record<string, any>
+  subjectInstance?: any
 ): boolean => {
   const ability = useAbility()
   
   try {
-    // For simple action/subject checks without instance data
-    if (!subjectInstance) {
-      return ability.can(action, subjectType)
+    if (subjectInstance) {
+      // Create a subject instance with type
+      const subject = { ...subjectInstance, __type: subjectType }
+      return ability.can(action, subject)
     }
-    
-    // For subject instances, we need to use a different approach
-    // Check if ability has rules that match our conditions
-    const rules = ability.rules.filter(rule => 
-      rule.action === action && rule.subject === subjectType
-    )
-    
-    if (rules.length === 0) {
-      return false
-    }
-    
-    // For now, return true if we have matching rules
-    // In a real implementation, you'd check conditions against subjectInstance
-    return rules.some(rule => !rule.inverted)
+    return ability.can(action, subjectType)
   } catch (error) {
     console.error('Error in useCan:', error)
     return false
@@ -50,7 +38,7 @@ export const useCan = (
 export const useCannot = (
   action: Actions,
   subjectType: Subjects,
-  subjectInstance?: Record<string, any>
+  subjectInstance?: any
 ): boolean => {
   return !useCan(action, subjectType, subjectInstance)
 }

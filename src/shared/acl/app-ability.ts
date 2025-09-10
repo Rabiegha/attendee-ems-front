@@ -1,4 +1,4 @@
-import { PureAbility, AbilityBuilder } from '@casl/ability'
+import { MongoAbility, createMongoAbility } from '@casl/ability'
 
 // Define all possible actions in the system
 export type Actions =
@@ -27,8 +27,8 @@ export type Subjects =
   | 'Settings'
   | 'all' // Special subject that represents all subjects
 
-// Define the shape of our ability
-export type AppAbility = PureAbility<[Actions, Subjects]>
+// Define the shape of our ability using MongoAbility for conditions support
+export type AppAbility = MongoAbility<[Actions, Subjects]>
 
 // Helper type for CASL rules
 export interface AppRule {
@@ -40,23 +40,10 @@ export interface AppRule {
   reason?: string
 }
 
-// Create a default ability (no permissions)
+// Create a default ability with MongoDB-style conditions matcher
 export const createAppAbility = (rules: AppRule[] = []): AppAbility => {
-  const { can, cannot, build } = new AbilityBuilder<AppAbility>(PureAbility)
-  
-  rules.forEach(rule => {
-    if (rule.inverted) {
-      cannot(rule.action, rule.subject, rule.conditions)
-    } else {
-      can(rule.action, rule.subject, rule.conditions)
-    }
-  })
-  
-  return build()
+  return createMongoAbility<AppAbility>(rules)
 }
 
 // Default empty ability
 export const defaultAbility = createAppAbility([])
-
-// Export subject helper for creating typed subjects
-export { subject }

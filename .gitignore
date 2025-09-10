@@ -41,3 +41,7 @@ storybook-static
 
 # MSW
 public/mockServiceWorker.js
+
+# Windsurf
+.windsurf
+

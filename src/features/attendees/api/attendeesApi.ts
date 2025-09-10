@@ -128,7 +128,7 @@ export const attendeesApi = createApi({
           attendeesApi.util.updateQueryData('getAttendeeById', id, (draft) => {
             draft.status = data.status
             if (data.status === 'checked_in') {
-              draft.checkedInAt = new Date()
+              draft.checkedInAt = new Date().toISOString()
               if (data.checkedInBy) draft.checkedInBy = data.checkedInBy
               draft.isCheckedIn = true
               draft.canCheckIn = false

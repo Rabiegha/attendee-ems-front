@@ -19,11 +19,11 @@ export interface EventDTO {
 
 export interface CreateEventDTO {
   name: string
-  description: string
+  description?: string
   start_date: string
   end_date: string
-  location: string
-  max_attendees: number
+  location?: string
+  max_attendees?: number
   tags?: string[]
   metadata?: Record<string, any>
 }

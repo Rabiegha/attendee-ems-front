@@ -8,6 +8,9 @@ import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { LoadingState } from '@/shared/ui/LoadingSpinner'
+import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
+import { formatDateForDisplay } from '@/shared/lib/date-utils'
+import { formatAttendeesCount } from '@/shared/lib/utils'
 import { 
   Plus, 
   Search, 
@@ -26,6 +29,9 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   const { t } = useTranslation(['events', 'common'])
   const user = useSelector(selectUser)
   const userRoles = useSelector(selectUserRoles)
+  
+  // État pour la modal de création
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   
   // Filtres et recherche
   const [searchQuery, setSearchQuery] = useState('')
@@ -75,19 +81,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   }, [events, user, userRoles])
 
   const handleCreateEvent = () => {
-    // TODO: Ouvrir modal de création d'événement
-    console.log('Créer un nouvel événement')
+    setIsCreateModalOpen(true)
   }
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -230,7 +227,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 <div className="space-y-2 text-sm text-gray-500">
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-2" />
-                    <span>{formatDate(event.startDate)}</span>
+                    <span>{formatDateForDisplay(event.startDate)}</span>
                   </div>
                   
                   {event.location && (
@@ -243,7 +240,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-2" />
                     <span>
-                      {event.currentAttendees || 0} / {event.maxAttendees || '∞'} participants
+                      {formatAttendeesCount(event.currentAttendees, event.maxAttendees)}
                     </span>
                   </div>
                 </div>
@@ -296,6 +293,12 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
           ))}
         </div>
       )}
+
+      {/* Modal de création d'événement */}
+      <CreateEventModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   )
 }

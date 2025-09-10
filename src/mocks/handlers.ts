@@ -269,4 +269,35 @@ export const handlers = [
       expiresAt: new Date(Date.now() + 3600000).toISOString(),
     })
   }),
+
+  // Create event endpoint
+  http.post(`${env.VITE_API_BASE_URL}/events`, async ({ request }) => {
+    const eventData = await request.json() as any
+    
+    // Simuler un délai réaliste
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Générer un nouvel événement avec ID
+    const newEvent: EventDTO = {
+      id: `event-${Date.now()}`,
+      name: eventData.name,
+      description: eventData.description || '', // Peut être vide
+      start_date: eventData.start_date,
+      end_date: eventData.end_date,
+      location: eventData.location || '', // Peut être vide
+      max_attendees: eventData.max_attendees || 1000000, // Sans limite = grand nombre
+      current_attendees: 0,
+      status: eventData.status || 'published', // Par défaut publié
+      org_id: mockUser.orgId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      created_by: mockUser.id,
+      tags: eventData.tags || [],
+    }
+    
+    // Ajouter à la liste mock (pour les futures requêtes GET)
+    mockEvents.push(newEvent)
+    
+    return HttpResponse.json(newEvent, { status: 201 })
+  }),
 ]

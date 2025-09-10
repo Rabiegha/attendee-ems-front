@@ -10,13 +10,13 @@ export interface AttendeeDPO {
   status: AttendeeStatus
   eventId: string
   orgId: string
-  registrationDate: Date
-  checkedInAt?: Date
+  registrationDate: string // ISO string for Redux serialization
+  checkedInAt?: string     // ISO string for Redux serialization
   checkedInBy?: string
   metadata?: Record<string, any>
   tags?: string[]
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string        // ISO string for Redux serialization
+  updatedAt: string        // ISO string for Redux serialization
   
   // Computed properties
   displayName: string

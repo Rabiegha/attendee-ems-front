@@ -3,15 +3,15 @@ export interface EventDPO {
   id: string
   name: string
   description: string
-  startDate: Date
-  endDate: Date
+  startDate: string // ISO string for Redux serialization
+  endDate: string   // ISO string for Redux serialization
   location: string
   maxAttendees: number
   currentAttendees: number
   status: EventStatus
   orgId: string
-  createdAt: Date
-  updatedAt: Date
+  createdAt: string // ISO string for Redux serialization
+  updatedAt: string // ISO string for Redux serialization
   createdBy: string
   tags: string[]
   metadata: Record<string, any>
@@ -28,11 +28,12 @@ export type EventStatus = 'draft' | 'published' | 'active' | 'completed' | 'canc
 
 export interface CreateEventDPO {
   name: string
-  description: string
-  startDate: Date
-  endDate: Date
-  location: string
-  maxAttendees: number
+  description?: string // Optionnel
+  startDate: string // ISO string from form
+  endDate: string   // ISO string from form
+  location?: string // Optionnel
+  maxAttendees?: number // Optionnel (sans limite par défaut)
+  status?: EventStatus // Optionnel (sera 'published' par défaut)
   tags?: string[]
   metadata?: Record<string, any>
 }

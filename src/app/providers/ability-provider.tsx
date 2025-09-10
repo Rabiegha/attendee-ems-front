@@ -1,6 +1,8 @@
-import React, { createContext, useMemo } from 'react'
-import { useSelector } from 'react-redux'
+import React, { createContext, useMemo, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { selectAbilityRules, selectUser, selectOrgId } from '@/features/auth/model/sessionSlice'
+import { useGetPolicyQuery } from '@/features/auth/api/authApi'
+import { setRules } from '@/features/auth/model/sessionSlice'
 import { createAbilityFromRules } from '@/shared/acl/ability-factory'
 import { rulesFor, fallbackRules } from '@/shared/acl/policies/rbac-presets'
 import type { AppAbility } from '@/shared/acl/app-ability'
@@ -13,9 +15,22 @@ interface AbilityProviderProps {
 }
 
 export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) => {
+  const dispatch = useDispatch()
   const rules = useSelector(selectAbilityRules)
   const user = useSelector(selectUser)
   const orgId = useSelector(selectOrgId)
+
+  // Charger automatiquement les règles de politique si l'utilisateur est connecté
+  const { data: policyData } = useGetPolicyQuery(orgId!, {
+    skip: !orgId || !user || rules.length > 0 // Skip si pas d'orgId, pas d'user, ou si on a déjà des règles
+  })
+
+  // Mettre à jour les règles dans le store quand elles sont chargées
+  useEffect(() => {
+    if (policyData?.rules) {
+      dispatch(setRules(policyData.rules))
+    }
+  }, [policyData, dispatch])
 
   const ability = useMemo(() => {
     // If we have rules from the API, use them

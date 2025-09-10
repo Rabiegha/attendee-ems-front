@@ -7,7 +7,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { Edit, Users, Download } from 'lucide-react'
-import { formatDate, formatDateTime } from '@/shared/lib/utils'
+import { formatDate, formatDateTime, formatAttendeesCount } from '@/shared/lib/utils'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -139,12 +139,20 @@ export const EventDetails: React.FC = () => {
               <div className="flex justify-between">
                 <span className="text-gray-600">Places disponibles</span>
                 <span className="font-medium">
-                  {event.maxAttendees - event.currentAttendees}
+                  {!event.maxAttendees || event.maxAttendees > 100000 
+                    ? "Illimité" 
+                    : event.maxAttendees - event.currentAttendees
+                  }
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Capacité maximale</span>
-                <span className="font-medium">{event.maxAttendees}</span>
+                <span className="font-medium">
+                  {!event.maxAttendees || event.maxAttendees > 100000 
+                    ? "Sans limite" 
+                    : event.maxAttendees
+                  }
+                </span>
               </div>
             </div>
           </div>

@@ -69,3 +69,18 @@ export function isEmpty(value: any): boolean {
   if (typeof value === 'object') return Object.keys(value).length === 0
   return false
 }
+
+/**
+ * Format attendees count display
+ * Shows "X participants" for unlimited events, "X / Y participants" for limited events
+ */
+export function formatAttendeesCount(current: number, max?: number | null): string {
+  const currentCount = current || 0
+  
+  // Considérer comme "sans limite" si max est null, undefined, 0, ou > 100000 (notre hack MSW)
+  if (!max || max === 0 || max > 100000) {
+    return `${currentCount} participant${currentCount !== 1 ? 's' : ''}`
+  }
+  
+  return `${currentCount} / ${max} participant${currentCount !== 1 ? 's' : ''}`
+}

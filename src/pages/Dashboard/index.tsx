@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
 import { useGetAttendeesQuery } from '@/features/attendees/api/attendeesApi'
@@ -6,10 +6,14 @@ import { StatsCards } from '@/widgets/StatsCards'
 import { EventList } from '@/features/events/ui/EventList'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
+import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
 import { Plus } from 'lucide-react'
 
 export const Dashboard: React.FC = () => {
   const { t } = useTranslation(['common', 'events'])
+  
+  // État pour la modal de création d'événement
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   
   const { data: events = [], isLoading: eventsLoading } = useGetEventsQuery({
     limit: 5,
@@ -23,6 +27,10 @@ export const Dashboard: React.FC = () => {
     sortOrder: 'desc',
   })
 
+  const handleCreateEvent = () => {
+    setIsCreateModalOpen(true)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -30,7 +38,7 @@ export const Dashboard: React.FC = () => {
           {t('navigation.dashboard')}
         </h1>
         <Can do="create" on="Event">
-          <Button className="flex items-center space-x-2">
+          <Button onClick={handleCreateEvent} className="flex items-center space-x-2">
             <Plus className="h-4 w-4" />
             <span>{t('events:events.create')}</span>
           </Button>
@@ -92,6 +100,12 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de création d'événement */}
+      <CreateEventModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   )
 }

@@ -50,7 +50,7 @@ Votre projet est configuré avec Mock Service Worker (MSW) pour simuler un backe
 
 ### Phase 2 - Gestion Événements
 - [x] Liste des événements (avec filtres et permissions)
-- [ ] Création d'événement
+- [x] Création d'événement (formulaire complet + modal)
 - [ ] Édition d'événement
 - [x] Détails d'événement
 
@@ -107,14 +107,47 @@ npm run build
 
 ✅ **Page Événements globale** - Nouvelle page `/events` avec liste complète, filtres avancés et gestion des permissions par rôle
 
+## 🎉 Nouvelles Fonctionnalités Ajoutées
+
+### ✅ Création d'Événements Complète
+- **Formulaire personnalisé** avec validation Zod + React Hook Form
+- **Champs optionnels** : Description et lieu non obligatoires
+- **Gestion intelligente des participants** : "Sans limite" par défaut, pas de "/1000000"
+- **Auto-publication** : Événements publiés automatiquement sans sélection de statut
+- **Modal intégrée** : Disponible depuis Dashboard ET page Events
+- **Types TypeScript complets** : DPO, DTO et mappers alignés
+- **MSW mis à jour** : Gestion correcte des champs optionnels
+
+### ✅ Interface & UX Améliorées
+- **Logo cliquable** : Remplace le titre texte, redirige vers le dashboard
+- **Affichage participants optimisé** : Plus de "0 / 1000000", affichage propre
+- **Fonction utilitaire** : `formatAttendeesCount()` pour un affichage élégant
+- **Validation flexible** : Formulaires plus user-friendly
+- **Hot reload fonctionnel** : Développement sans interruption
+
+### ✅ Architecture Technique
+- **Redux Store corrigé** : Sérialisation des dates gérée correctement
+- **MSW simple start** : Plus de doublons au démarrage
+- **TypeScript strict** : Tous les types cohérents sur toute la stack
+- **Feature-sliced architecture** : Maintenue et respectée
+
 ## 🎯 Prochaines Étapes
 
-1. **Testez la connexion** avec les identifiants fournis (`admin@example.com` / `password`)
-2. **Vérifiez les permissions** en navigant vers la page de test
-3. **Explorez les pages existantes** (Dashboard, Attendees, Events)
-4. **Développez les composants manquants**
-5. **Ajoutez des données mock** si nécessaire
-6. **Testez différents rôles** en modifiant les mocks
+### À Développer
+- [ ] **Édition d'événements** : Formulaire de modification avec données pré-remplies
+- [ ] **Gestion Participants** : Interface complète de check-in et liste filtrée  
+- [ ] **Export de données** : CSV/Excel pour participants et événements
+- [ ] **Notifications** : Toast messages pour feedback utilisateur
+- [ ] **Loading states** : Indicateurs de chargement sur les actions
+- [ ] **Optimisation mobile** : Interface responsive perfectionnée
+- [ ] **Tests E2E** : Coverage des workflows principaux
+
+### Tests Recommandés
+1. **Création d'événements** : Tester formulaire avec/sans champs optionnels
+2. **Navigation** : Vérifier logo cliquable et redirections  
+3. **Affichage** : Contrôler format "X participants" vs "X / Y participants"
+4. **Permissions** : Valider accès selon les rôles utilisateur
+5. **Responsive** : Tester sur mobile/tablette
 
 ## 🔧 URLs Utiles
 

@@ -27,6 +27,23 @@ export const store = configureStore({
           'persist/PERSIST',
           'persist/REHYDRATE',
           'persist/REGISTER',
+          // Ignore RTK Query actions with dates
+          'eventsApi/executeQuery/fulfilled',
+          'eventsApi/executeMutation/fulfilled',
+          'attendeesApi/executeQuery/fulfilled',
+          'attendeesApi/executeMutation/fulfilled',
+        ],
+        ignoredActionsPaths: [
+          'meta.arg',
+          'payload.timestamp',
+          'payload.baseQueryMeta',
+          'payload.fulfilledTimeStamp',
+        ],
+        ignoredPaths: [
+          // Ignore RTK Query state paths with dates
+          'eventsApi',
+          'attendeesApi',
+          'authApi',
         ],
       },
     })

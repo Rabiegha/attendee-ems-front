@@ -13,20 +13,20 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
     id: dto.id,
     name: dto.name,
     description: dto.description,
-    startDate,
-    endDate,
+    startDate: dto.start_date, // Keep as ISO string
+    endDate: dto.end_date,     // Keep as ISO string
     location: dto.location,
     maxAttendees: dto.max_attendees,
     currentAttendees: dto.current_attendees,
     status: dto.status,
     orgId: dto.org_id,
-    createdAt: new Date(dto.created_at),
-    updatedAt: new Date(dto.updated_at),
+    createdAt: dto.created_at, // Keep as ISO string
+    updatedAt: dto.updated_at, // Keep as ISO string
     createdBy: dto.created_by,
     tags: dto.tags || [],
     metadata: dto.metadata || {},
     
-    // Computed properties
+    // Computed properties (calculated from dates but stored as primitives)
     isActive: dto.status === 'active',
     isDraft: dto.status === 'draft',
     isCompleted: dto.status === 'completed',
@@ -42,13 +42,14 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
 export const mapCreateEventDPOtoDTO = (dpo: CreateEventDPO): CreateEventDTO => {
   const dto: CreateEventDTO = {
     name: dpo.name,
-    description: dpo.description,
-    start_date: dpo.startDate.toISOString(),
-    end_date: dpo.endDate.toISOString(),
-    location: dpo.location,
-    max_attendees: dpo.maxAttendees,
+    start_date: dpo.startDate, // Already ISO string from form
+    end_date: dpo.endDate,     // Already ISO string from form
   }
   
+  // Only include optional fields if they have values
+  if (dpo.description) dto.description = dpo.description
+  if (dpo.location) dto.location = dpo.location
+  if (dpo.maxAttendees !== undefined) dto.max_attendees = dpo.maxAttendees
   if (dpo.tags) dto.tags = dpo.tags
   if (dpo.metadata) dto.metadata = dpo.metadata
   
@@ -61,8 +62,8 @@ export const mapCreateEventDPOtoDTO = (dpo: CreateEventDPO): CreateEventDTO => {
 export const mapUpdateEventDPOtoDTO = (dpo: UpdateEventDPO): UpdateEventDTO => ({
   ...(dpo.name && { name: dpo.name }),
   ...(dpo.description && { description: dpo.description }),
-  ...(dpo.startDate && { start_date: dpo.startDate.toISOString() }),
-  ...(dpo.endDate && { end_date: dpo.endDate.toISOString() }),
+  ...(dpo.startDate && { start_date: dpo.startDate }), // Already ISO string
+  ...(dpo.endDate && { end_date: dpo.endDate }),       // Already ISO string
   ...(dpo.location && { location: dpo.location }),
   ...(dpo.maxAttendees && { max_attendees: dpo.maxAttendees }),
   ...(dpo.tags && { tags: dpo.tags }),

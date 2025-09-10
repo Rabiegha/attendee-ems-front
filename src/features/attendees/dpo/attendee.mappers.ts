@@ -13,9 +13,9 @@ export const mapAttendeeDTOtoDPO = (dto: AttendeeDTO): AttendeeDPO => {
     status: dto.status,
     eventId: dto.event_id,
     orgId: dto.org_id,
-    registrationDate: new Date(dto.registration_date),
-    createdAt: new Date(dto.created_at),
-    updatedAt: new Date(dto.updated_at),
+    registrationDate: dto.registration_date, // Keep as ISO string
+    createdAt: dto.created_at,               // Keep as ISO string
+    updatedAt: dto.updated_at,               // Keep as ISO string
     
     // Computed properties
     displayName: `${dto.first_name} ${dto.last_name}`,
@@ -25,7 +25,7 @@ export const mapAttendeeDTOtoDPO = (dto: AttendeeDTO): AttendeeDPO => {
     canCheckIn: dto.status === 'confirmed',
   }
   
-  if (dto.checked_in_at) dpo.checkedInAt = new Date(dto.checked_in_at)
+  if (dto.checked_in_at) dpo.checkedInAt = dto.checked_in_at // Keep as ISO string
   if (dto.checked_in_by) dpo.checkedInBy = dto.checked_in_by
   if (dto.phone) dpo.phone = dto.phone
   if (dto.company) dpo.company = dto.company

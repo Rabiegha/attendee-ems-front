@@ -22,6 +22,7 @@ export interface User {
   roles: string[]
   orgId: string
   eventIds?: string[]
+  isSuperAdmin?: boolean
 }
 
 export interface Organization {

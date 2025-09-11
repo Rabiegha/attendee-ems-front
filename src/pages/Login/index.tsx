@@ -10,6 +10,7 @@ import { setSession } from '@/features/auth/model/sessionSlice'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { FormField } from '@/shared/ui/FormField'
+import DemoLoginPanel from '@/shared/ui/DemoLoginPanel'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -90,6 +91,13 @@ export const LoginPage: React.FC = () => {
           {isLoading ? t('common:app.loading') : t('login.submit')}
         </Button>
       </form>
+      
+      {/* Panneau de démo en développement */}
+      {import.meta.env.DEV && (
+        <div className="mt-8">
+          <DemoLoginPanel />
+        </div>
+      )}
     </div>
   )
 }

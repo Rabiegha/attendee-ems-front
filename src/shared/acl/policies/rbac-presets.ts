@@ -6,6 +6,8 @@ export type UserRole =
   | 'EVENT_MANAGER'
   | 'CHECKIN_STAFF'
   | 'PARTNER'
+  | 'PARTNER_TECH'
+  | 'PARTNER_DESIGN'
   | 'READONLY'
 
 export interface RoleContext {
@@ -82,6 +84,8 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
       ]
 
     case 'PARTNER':
+    case 'PARTNER_TECH':
+    case 'PARTNER_DESIGN':
       return [
         // Can read events they're partnered with
         { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },

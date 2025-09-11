@@ -7,7 +7,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { Edit, Users, Download } from 'lucide-react'
-import { formatDate, formatDateTime, formatAttendeesCount } from '@/shared/lib/utils'
+import { formatDate, formatDateTime } from '@/shared/lib/utils'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()

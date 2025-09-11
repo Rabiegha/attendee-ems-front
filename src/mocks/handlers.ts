@@ -1,26 +1,12 @@
 import { http, HttpResponse } from 'msw'
 import { env } from '@/app/config/env'
-import type { LoginRequest, LoginResponse, User, PolicyResponse } from '@/features/auth/api/authApi'
 import type { EventDTO } from '@/features/events/dpo/event.dto'
 import type { AttendeeDTO } from '@/features/attendees/dpo/attendee.dto'
+import { authDemoHandlers, users } from './auth-demo'
+
+console.log('📋 Nombre de handlers de démo importés:', authDemoHandlers.length)
 
 // Mock data
-const mockUser: User = {
-  id: '1',
-  email: 'admin@example.com',
-  firstName: 'Admin',
-  lastName: 'User',
-  roles: ['ORG_ADMIN'],
-  orgId: 'org-1',
-  eventIds: ['event-1', 'event-2'],
-}
-
-const mockOrganization = {
-  id: 'org-1',
-  name: 'Mon Organisation',
-  slug: 'mon-org',
-}
-
 const mockEvents: EventDTO[] = [
   {
     id: 'event-1',
@@ -101,6 +87,87 @@ const mockEvents: EventDTO[] = [
     updated_at: '2024-04-01T09:30:00Z',
     created_by: '1',
     tags: ['hackathon', 'ai', 'competition'],
+  },
+  // Événements Creative Agency - Tests isolation partenaires
+  {
+    id: 'event-tech-1',
+    name: 'Workshop React Native',
+    description: 'Atelier développement mobile avec React Native',
+    start_date: '2024-11-15T09:00:00Z',
+    end_date: '2024-11-15T17:00:00Z',
+    location: 'Creative Agency - Salle Tech',
+    max_attendees: 25,
+    current_attendees: 15,
+    status: 'published',
+    org_id: 'org-2',
+    created_at: '2024-04-01T10:00:00Z',
+    updated_at: '2024-04-01T10:00:00Z',
+    created_by: 'user-2-admin',
+    tags: ['tech', 'mobile', 'react'],
+  },
+  {
+    id: 'event-tech-2',
+    name: 'Conférence DevOps & Cloud',
+    description: 'Dernières tendances en DevOps et infrastructure cloud',
+    start_date: '2024-12-05T14:00:00Z',
+    end_date: '2024-12-05T18:00:00Z',
+    location: 'Creative Agency - Auditorium',
+    max_attendees: 100,
+    current_attendees: 78,
+    status: 'published',
+    org_id: 'org-2',
+    created_at: '2024-04-02T11:00:00Z',
+    updated_at: '2024-04-02T11:00:00Z',
+    created_by: 'user-2-admin',
+    tags: ['tech', 'devops', 'cloud'],
+  },
+  {
+    id: 'event-design-1',
+    name: 'Atelier UX Design Thinking',
+    description: 'Méthodes de design thinking appliquées à l\'UX',
+    start_date: '2024-11-20T10:00:00Z',
+    end_date: '2024-11-20T16:00:00Z',
+    location: 'Creative Agency - Studio Design',
+    max_attendees: 20,
+    current_attendees: 18,
+    status: 'published',
+    org_id: 'org-2',
+    created_at: '2024-04-03T09:00:00Z',
+    updated_at: '2024-04-03T09:00:00Z',
+    created_by: 'user-2-admin',
+    tags: ['design', 'ux', 'thinking'],
+  },
+  {
+    id: 'event-design-2',
+    name: 'Masterclass UI Animation',
+    description: 'Techniques avancées d\'animation d\'interfaces',
+    start_date: '2024-12-10T13:00:00Z',
+    end_date: '2024-12-10T17:00:00Z',
+    location: 'Creative Agency - Lab Animation',
+    max_attendees: 15,
+    current_attendees: 12,
+    status: 'published',
+    org_id: 'org-2',
+    created_at: '2024-04-04T14:00:00Z',
+    updated_at: '2024-04-04T14:00:00Z',
+    created_by: 'user-2-admin',
+    tags: ['design', 'ui', 'animation'],
+  },
+  {
+    id: 'event-shared-1',
+    name: 'Creative & Tech Summit',
+    description: 'Conférence commune design et développement',
+    start_date: '2024-12-15T09:00:00Z',
+    end_date: '2024-12-15T18:00:00Z',
+    location: 'Creative Agency - Grand Amphithéâtre',
+    max_attendees: 200,
+    current_attendees: 145,
+    status: 'published',
+    org_id: 'org-2',
+    created_at: '2024-04-05T08:00:00Z',
+    updated_at: '2024-04-05T08:00:00Z',
+    created_by: 'user-2-admin',
+    tags: ['tech', 'design', 'collaboration'],
   },
 ]
 
@@ -184,52 +251,65 @@ const mockAttendees: AttendeeDTO[] = [
   },
 ]
 
-const mockPolicyResponse: PolicyResponse = {
-  rules: [
-    { action: 'manage', subject: 'all', conditions: { orgId: 'org-1' } },
-  ],
-  version: '1.0.0',
-}
-
 export const handlers = [
-  // Auth endpoints
-  http.post(`${env.VITE_API_BASE_URL}/auth/login`, async ({ request }) => {
-    const body = await request.json() as LoginRequest
+  // Handlers de démo pour l'authentification multi-tenant
+  ...authDemoHandlers,
+
+  // Events endpoints avec filtrage par permissions
+  http.get(`${env.VITE_API_BASE_URL}/events`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization')
     
-    if (body.email === 'admin@example.com' && body.password === 'password') {
-      const response: LoginResponse = {
-        token: 'mock-jwt-token',
-        user: mockUser,
-        organization: mockOrganization,
-      }
-      return HttpResponse.json(response)
+    // Si pas d'auth, retourner tous les événements (pour compatibilité)
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json({
+        events: mockEvents,
+        total: mockEvents.length,
+        page: 1,
+        limit: 20,
+      })
     }
-    
-    return HttpResponse.json(
-      { message: 'Invalid credentials' },
-      { status: 401 }
-    )
+
+    try {
+      // Extraction des informations utilisateur du token
+      const token = authHeader.replace('Bearer ', '')
+      const payload = JSON.parse(atob(token))
+      
+      // Recherche de l'utilisateur dans nos données de démo
+      const currentUser = users.find(u => u.id === payload.userId)
+      
+      let filteredEvents = mockEvents
+      
+      // Filtrage selon le rôle utilisateur
+      if (currentUser) {
+        // Filtrer par organisation d'abord
+        filteredEvents = mockEvents.filter(event => event.org_id === currentUser.orgId)
+        
+        // Filtrage spécifique pour les partenaires avec eventIds
+        if (currentUser.eventIds && currentUser.eventIds.length > 0) {
+          filteredEvents = filteredEvents.filter(event => 
+            currentUser.eventIds!.includes(event.id)
+          )
+        }
+      }
+      
+      return HttpResponse.json({
+        events: filteredEvents,
+        total: filteredEvents.length,
+        page: 1,
+        limit: 20,
+      })
+    } catch (error) {
+      // En cas d'erreur, retourner tous les événements
+      return HttpResponse.json({
+        events: mockEvents,
+        total: mockEvents.length,
+        page: 1,
+        limit: 20,
+      })
+    }
   }),
 
-  http.get(`${env.VITE_API_BASE_URL}/auth/me`, () => {
-    return HttpResponse.json(mockUser)
-  }),
-
-  http.get(`${env.VITE_API_BASE_URL}/auth/policy`, () => {
-    return HttpResponse.json(mockPolicyResponse)
-  }),
-
-  // Events endpoints
-  http.get(`${env.VITE_API_BASE_URL}/events`, () => {
-    return HttpResponse.json({
-      events: mockEvents,
-      total: mockEvents.length,
-      page: 1,
-      limit: 20,
-    })
-  }),
-
-  http.get(`${env.VITE_API_BASE_URL}/events/:id`, ({ params }) => {
+  http.get(`${env.VITE_API_BASE_URL}/events/:id`, ({ params, request }) => {
     const event = mockEvents.find(e => e.id === params.id)
     if (!event) {
       return HttpResponse.json(
@@ -237,6 +317,39 @@ export const handlers = [
         { status: 404 }
       )
     }
+
+    // Vérification des permissions d'accès à cet événement
+    const authHeader = request.headers.get('Authorization')
+    if (authHeader?.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.replace('Bearer ', '')
+        const payload = JSON.parse(atob(token))
+        const currentUser = users.find(u => u.id === payload.userId)
+        
+        if (currentUser) {
+          // Vérifier l'organisation
+          if (event.org_id !== currentUser.orgId) {
+            return HttpResponse.json(
+              { message: 'Event not found' },
+              { status: 404 }
+            )
+          }
+          
+          // Vérifier les permissions spécifiques des partenaires
+          if (currentUser.eventIds && currentUser.eventIds.length > 0) {
+            if (!currentUser.eventIds.includes(event.id)) {
+              return HttpResponse.json(
+                { message: 'Event not found' },
+                { status: 404 }
+              )
+            }
+          }
+        }
+      } catch (error) {
+        // Token invalide, mais on laisse passer pour compatibilité
+      }
+    }
+
     return HttpResponse.json(event)
   }),
 
@@ -288,10 +401,10 @@ export const handlers = [
       max_attendees: eventData.max_attendees || 1000000, // Sans limite = grand nombre
       current_attendees: 0,
       status: eventData.status || 'published', // Par défaut publié
-      org_id: mockUser.orgId,
+      org_id: 'org-1', // Organisation par défaut
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      created_by: mockUser.id,
+      created_by: '1', // Utilisateur par défaut
       tags: eventData.tags || [],
     }
     

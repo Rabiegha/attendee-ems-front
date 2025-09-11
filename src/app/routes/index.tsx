@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { GuardedRoute } from '@/shared/acl/guards/GuardedRoute'
-import { ROUTES } from '@/app/config/constants'
+import { SmartRedirect } from '@/shared/ui/SmartRedirect'
 
 // Layouts
 import { RootLayout } from '@/widgets/layouts/RootLayout'
@@ -22,15 +22,11 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to={ROUTES.DASHBOARD} replace />,
+        element: <SmartRedirect />,
       },
       {
         path: 'dashboard',
-        element: (
-          <GuardedRoute action="read" subject="Organization">
-            <Dashboard />
-          </GuardedRoute>
-        ),
+        element: <Dashboard />,
       },
       {
         path: 'events',

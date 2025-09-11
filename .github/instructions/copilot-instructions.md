@@ -191,3 +191,50 @@ Animations subtiles et élégantes :
 Tailles supportées: sm, md, lg, xl, 2xl, 4xl
 Props: title, maxWidth, showCloseButton, closeOnBackdropClick
 Exemples: CreateEventModal, EditEventModal, DeleteEventModal
+
+TOASTS SYSTÈME
+TOUJOURS utiliser le système de toast centralisé (shared/ui/Toast.tsx).
+- Position : bottom-center avec animations slide-up
+- Types : success, error, warning, info
+- Auto-dismiss 5s, closable manuellement
+- Hook useToast() pour usage simple
+- Store Redux dédié (toast-slice.ts)
+Exemples: toast.success('Événement créé !', 'Message détaillé.')
+
+ARCHITECTURE DONNÉES ATTENDEES/REGISTRATIONS
+IMPORTANT : Le système utilise une architecture à deux niveaux pour la gestion des participants.
+
+ATTENDEES (Base Globale CRM)
+- Table attendees : profils uniques par personne dans l'organisation
+- Lien vers persons (table globale cross-org)
+- Historique complet de toutes les participations
+- CRM intégré avec labels, notes, segmentation
+
+REGISTRATIONS (Inscriptions Spécifiques)
+- Table registrations : inscription à un événement spécifique
+- Lien vers attendee global (attendeeId)
+- Statut d'inscription (awaiting, approved, refused, cancelled)
+- Données contextuelles (type participation, réponses formulaires)
+- Badges, présences, check-ins liés
+
+FLUX D'INSCRIPTION
+1. Landing Page Event → Formulaire inscription
+2. Vérification existence attendee (par email/person_id)
+3. Si nouveau → Création profil attendee
+4. Si existant → Récupération profil existant
+5. Création registration liée à l'attendee
+6. Mise à jour historique et CRM
+
+AVANTAGES
+- CRM unifié avec vue globale par participant
+- Évite les doublons de profils
+- Historique cross-événements pour analytics
+- Marketing ciblé basé sur comportement
+- Support multi-événements et événements récurrents
+
+API ENDPOINTS À PRÉVOIR
+GET /attendees → Liste CRM global
+GET /attendees/:id → Profil complet + historique
+POST /events/:eventId/register → Inscription (crée attendee si besoin)
+GET /events/:eventId/registrations → Inscriptions à l'événement
+PUT /registrations/:id/status → Changement statut inscription

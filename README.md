@@ -35,6 +35,68 @@ Un système de gestion d'événements B2B moderne et complet, construit avec Rea
 ### Mocking & Développement
 - **MSW** (Mock Service Worker) pour les APIs mockées
 
+## 🏗️ Architecture de Données
+
+### Modèle Attendees vs Registrations
+
+Le système utilise une **architecture à deux niveaux** pour la gestion des participants :
+
+#### 📊 **Attendees (Base Globale)**
+- **Table globale** de tous les participants de l'organisation
+- **Profil unique** par personne avec informations personnelles
+- **Historique complet** de toutes les participations
+- **CRM intégré** avec suivi des interactions
+
+```typescript
+interface Attendee {
+  id: string
+  orgId: string
+  personId: string  // Lien vers persons (table globale)
+  defaultTypeId?: string
+  labels: string[]
+  notes?: string
+  // Historique calculé des événements
+}
+```
+
+#### 🎟️ **Registrations (Inscriptions Spécifiques)**
+- **Inscription spécifique** à un événement
+- **Statut d'inscription** (awaiting, approved, refused, cancelled)
+- **Données contextuelles** (type de participation, réponses aux formulaires)
+- **Lien vers l'attendee global**
+
+```typescript
+interface Registration {
+  id: string
+  eventId: string
+  attendeeId: string  // Lien vers attendee global
+  status: 'awaiting' | 'approved' | 'refused' | 'cancelled'
+  attendanceType: 'online' | 'onsite' | 'hybrid'
+  answers: Record<string, any>
+  // + badges, présences, etc.
+}
+```
+
+### 🔄 Flux d'Inscription
+
+1. **Landing Page Event** → Formulaire d'inscription
+2. **Vérification Attendee** :
+   - Si existe → Récupération du profil
+   - Si nouveau → Création du profil attendee
+3. **Création Registration** → Inscription à l'événement spécifique
+4. **Mise à jour CRM** → Enrichissement du profil global
+
+### 💡 Avantages de cette Architecture
+
+- **✅ CRM Unifié** : Vue globale sur chaque participant
+- **✅ Historique Complet** : Tous les événements d'une personne
+- **✅ Éviter les Doublons** : Une personne = un profil unique
+- **✅ Analytics Avancées** : Comportement cross-événements
+- **✅ Marketing Ciblé** : Segmentation basée sur l'historique
+- **✅ Support Multi-événements** : Gestion facilitée des séries
+
+> 📚 **Documentation détaillée** : [Architecture Attendees vs Registrations](./docs/ATTENDEES_ARCHITECTURE.md)
+
 ## 📁 Architecture
 
 ```

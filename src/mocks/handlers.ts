@@ -300,4 +300,73 @@ export const handlers = [
     
     return HttpResponse.json(newEvent, { status: 201 })
   }),
+
+  // Update event endpoint
+  http.put(`${env.VITE_API_BASE_URL}/events/:id`, async ({ request, params }) => {
+    const eventData = await request.json() as any
+    const eventId = params.id as string
+    
+    // Simuler un délai réaliste
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    // Trouver l'événement existant
+    const existingEventIndex = mockEvents.findIndex(e => e.id === eventId)
+    if (existingEventIndex === -1) {
+      return HttpResponse.json(
+        { message: 'Event not found' },
+        { status: 404 }
+      )
+    }
+    
+    const existingEvent = mockEvents[existingEventIndex]!
+    
+    // Mettre à jour l'événement
+    const updatedEvent: EventDTO = {
+      ...existingEvent,
+      name: eventData.name || existingEvent.name,
+      description: eventData.description !== undefined ? eventData.description : existingEvent.description,
+      start_date: eventData.start_date || existingEvent.start_date,
+      end_date: eventData.end_date || existingEvent.end_date,
+      location: eventData.location !== undefined ? eventData.location : existingEvent.location,
+      max_attendees: eventData.max_attendees !== undefined ? eventData.max_attendees : existingEvent.max_attendees,
+      tags: eventData.tags || existingEvent.tags,
+      updated_at: new Date().toISOString(),
+    }
+    
+    // Remplacer dans la liste
+    mockEvents[existingEventIndex] = updatedEvent
+    
+    return HttpResponse.json(updatedEvent)
+  }),
+
+  // Delete event endpoint
+  http.delete(`${env.VITE_API_BASE_URL}/events/:id`, async ({ params }) => {
+    const eventId = params.id as string
+    
+    // Simuler un délai réaliste
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Trouver et supprimer l'événement
+    const eventIndex = mockEvents.findIndex(e => e.id === eventId)
+    if (eventIndex === -1) {
+      return HttpResponse.json(
+        { message: 'Event not found' },
+        { status: 404 }
+      )
+    }
+    
+    // Supprimer l'événement
+    mockEvents.splice(eventIndex, 1)
+    
+    // Supprimer aussi les participants associés
+    const attendeesToRemove = mockAttendees.filter(a => a.event_id === eventId)
+    attendeesToRemove.forEach(attendee => {
+      const index = mockAttendees.findIndex(a => a.id === attendee.id)
+      if (index !== -1) {
+        mockAttendees.splice(index, 1)
+      }
+    })
+    
+    return HttpResponse.json({ message: 'Event deleted successfully' })
+  }),
 ]

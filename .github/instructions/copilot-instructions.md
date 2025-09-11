@@ -180,3 +180,14 @@ STORYBOOK
 Story pour Button (shared/ui/Button)
 Story pour EventCard
 Addon a11y, controls
+
+ANIMATIONS & MODALS
+TOUJOURS utiliser le composant Modal de base (shared/ui/Modal.tsx) pour toutes les modals.
+Animations subtiles et élégantes : 
+- Fade-in/out backdrop (200ms ease-out)
+- Scale + slide modal (95% → 100% scale, 4px translate-y)
+- Portal rendering pour éviter les z-index conflicts
+- Gestion state isVisible + shouldRender pour animations propres
+Tailles supportées: sm, md, lg, xl, 2xl, 4xl
+Props: title, maxWidth, showCloseButton, closeOnBackdropClick
+Exemples: CreateEventModal, EditEventModal, DeleteEventModal

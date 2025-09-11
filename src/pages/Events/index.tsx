@@ -9,6 +9,8 @@ import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { LoadingState } from '@/shared/ui/LoadingSpinner'
 import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
+import { EditEventModal } from '@/features/events/ui/EditEventModal'
+import { DeleteEventModal } from '@/features/events/ui/DeleteEventModal'
 import { formatDateForDisplay } from '@/shared/lib/date-utils'
 import { formatAttendeesCount } from '@/shared/lib/utils'
 import { 
@@ -30,8 +32,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   const user = useSelector(selectUser)
   const userRoles = useSelector(selectUserRoles)
   
-  // État pour la modal de création
+  // État pour les modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [editingEvent, setEditingEvent] = useState<any>(null)
+  const [deletingEvent, setDeletingEvent] = useState<any>(null)
   
   // Filtres et recherche
   const [searchQuery, setSearchQuery] = useState('')
@@ -277,13 +281,21 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 
                 <div className="flex items-center space-x-2">
                   <Can do="update" on="Event" data={event}>
-                    <button className="p-1 text-gray-400 hover:text-gray-600">
+                    <button 
+                      onClick={() => setEditingEvent(event)}
+                      className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                      title="Modifier l'événement"
+                    >
                       <Edit className="h-4 w-4" />
                     </button>
                   </Can>
                   
                   <Can do="delete" on="Event" data={event}>
-                    <button className="p-1 text-gray-400 hover:text-red-600">
+                    <button 
+                      onClick={() => setDeletingEvent(event)}
+                      className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Supprimer l'événement"
+                    >
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </Can>
@@ -298,6 +310,20 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       <CreateEventModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+      />
+
+      {/* Modal d'édition d'événement */}
+      <EditEventModal
+        event={editingEvent}
+        isOpen={!!editingEvent}
+        onClose={() => setEditingEvent(null)}
+      />
+
+      {/* Modal de suppression d'événement */}
+      <DeleteEventModal
+        event={deletingEvent}
+        isOpen={!!deletingEvent}
+        onClose={() => setDeletingEvent(null)}
       />
     </div>
   )

@@ -6,6 +6,7 @@ import { attendeesApi } from '@/features/attendees/api/attendeesApi'
 import { sessionSlice } from '@/features/auth/model/sessionSlice'
 import { eventsSlice } from '@/features/events/model/eventsSlice'
 import { attendeesSlice } from '@/features/attendees/model/attendeesSlice'
+import { toastReducer } from '@/shared/ui/toast-slice'
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     session: sessionSlice.reducer,
     events: eventsSlice.reducer,
     attendees: attendeesSlice.reducer,
+    toast: toastReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

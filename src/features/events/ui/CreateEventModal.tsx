@@ -1,8 +1,9 @@
 import React from 'react'
-import { X } from 'lucide-react'
+import { Modal } from '@/shared/ui/Modal'
 import { EventForm } from './EventForm'
 import { useCreateEventMutation } from '../api/eventsApi'
 import { type CreateEventFormData } from '../lib/validation'
+import { useToast } from '@/shared/hooks/useToast'
 
 interface CreateEventModalProps {
   isOpen: boolean
@@ -14,6 +15,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   onClose
 }) => {
   const [createEvent, { isLoading }] = useCreateEventMutation()
+  const toast = useToast()
 
   const handleSubmit = async (data: CreateEventFormData) => {
     try {
@@ -43,51 +45,38 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       }
       
       await createEvent(eventData).unwrap()
-      console.log('Événement créé avec succès !')
+      toast.success(
+        'Événement créé !',
+        `L'événement "${data.name}" a été créé avec succès.`
+      )
       onClose()
     } catch (error) {
       console.error('Erreur lors de la création:', error)
-      // TODO: Ajouter une notification d'erreur
+      toast.error(
+        'Erreur de création',
+        'Une erreur est survenue lors de la création de l\'événement. Veuillez réessayer.'
+      )
     }
   }
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-semibold text-gray-900">
-            Créer un nouvel événement
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
-            disabled={isLoading}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          <EventForm
-            onSubmit={handleSubmit}
-            onCancel={onClose}
-            isLoading={isLoading}
-            mode="create"
-          />
-        </div>
+    <Modal 
+      isOpen={isOpen} 
+      onClose={onClose}
+      title="Créer un nouvel événement"
+      maxWidth="4xl"
+    >
+      <div className="p-6">
+        <EventForm
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+          isLoading={isLoading}
+          mode="create"
+        />
       </div>
-    </div>
+    </Modal>
   )
 }
 

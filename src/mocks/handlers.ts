@@ -5,8 +5,6 @@ import type { AttendeeDTO } from '@/features/attendees/dpo/attendee.dto'
 import { authDemoHandlers, users, events as demoEvents } from './auth-demo'
 
 console.log('📋 Nouveaux handlers de démo importés:', authDemoHandlers.length)
-console.log('🎯 Événements demo chargés:', demoEvents.length)
-console.log('📝 Liste des événements:', demoEvents.map(e => ({ id: e.id, title: e.title, org: e.org_id })))
 
 // Conversion des événements demo vers EventDTO
 const mockEvents: EventDTO[] = demoEvents.map(event => ({
@@ -25,9 +23,6 @@ const mockEvents: EventDTO[] = demoEvents.map(event => ({
   created_by: '1',
   tags: [event.category]
 }))
-
-console.log('🔄 Événements mockEvents après conversion:', mockEvents.length)
-console.log('📋 Mock events détails:', mockEvents.map(e => ({ id: e.id, name: e.name, org_id: e.org_id })))
 
 const mockAttendees: AttendeeDTO[] = [
   {
@@ -135,27 +130,16 @@ export const handlers = [
       // Recherche de l'utilisateur dans nos données de démo
       const currentUser = users.find(u => u.id === payload.userId)
       
-      console.log('🔍 Handler getEvents appelé:')
-      console.log('- Token payload:', payload)
-      console.log('- Utilisateur trouvé:', currentUser?.firstName, currentUser?.lastName)
-      console.log('- Événements totaux disponibles:', mockEvents.length)
-      
       let filteredEvents = mockEvents
       
       // Filtrage selon le rôle utilisateur
       if (currentUser) {
-        console.log('- Rôle utilisateur:', currentUser.role.code)
-        console.log('- Organisation:', currentUser.orgId)
-        console.log('- EventIds:', currentUser.eventIds)
-        
         // Super Admin voit tous les événements
         if (currentUser.isSuperAdmin) {
           filteredEvents = mockEvents
-          console.log('✅ Super Admin - tous les événements:', filteredEvents.length)
         } else {
           // Filtrer par organisation d'abord pour les utilisateurs normaux
           filteredEvents = mockEvents.filter(event => event.org_id === currentUser.orgId)
-          console.log('📂 Après filtrage par org:', filteredEvents.length, 'événements')
           
           // Filtrage spécifique pour les utilisateurs avec eventIds restreints
           // MAIS les admins d'organisation voient tout dans leur org
@@ -163,14 +147,9 @@ export const handlers = [
             filteredEvents = filteredEvents.filter(event => 
               currentUser.eventIds!.includes(event.id)
             )
-            console.log('🎯 Après filtrage par eventIds:', filteredEvents.length, 'événements')
           }
         }
-      } else {
-        console.log('❌ Aucun utilisateur trouvé')
       }
-      
-      console.log('📤 Événements retournés:', filteredEvents.map(e => ({ id: e.id, name: e.name })))
       
       return HttpResponse.json({
         events: filteredEvents,
@@ -207,21 +186,26 @@ export const handlers = [
         const currentUser = users.find(u => u.id === payload.userId)
         
         if (currentUser) {
-          // Vérifier l'organisation
-          if (event.org_id !== currentUser.orgId) {
-            return HttpResponse.json(
-              { message: 'Event not found' },
-              { status: 404 }
-            )
-          }
-          
-          // Vérifier les permissions spécifiques des partenaires
-          if (currentUser.eventIds && currentUser.eventIds.length > 0) {
-            if (!currentUser.eventIds.includes(event.id)) {
+          // Super Admin a accès à tous les événements
+          if (currentUser.isSuperAdmin) {
+            // Pas de vérification pour les Super Admins
+          } else {
+            // Vérifier l'organisation pour les autres utilisateurs
+            if (event.org_id !== currentUser.orgId) {
               return HttpResponse.json(
                 { message: 'Event not found' },
                 { status: 404 }
               )
+            }
+            
+            // Vérifier les permissions spécifiques des partenaires
+            if (currentUser.eventIds && currentUser.eventIds.length > 0 && currentUser.role.code !== 'ORG_ADMIN') {
+              if (!currentUser.eventIds.includes(event.id)) {
+                return HttpResponse.json(
+                  { message: 'Event not found' },
+                  { status: 404 }
+                )
+              }
             }
           }
         }

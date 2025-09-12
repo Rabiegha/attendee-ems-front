@@ -248,15 +248,14 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
               </div>
               
               <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
-                <Can do="read" on="Event" data={event}>
-                  <Link
-                    to={`/events/${event.id}`}
-                    className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    <Eye className="h-4 w-4 mr-1" />
-                    Voir détails
-                  </Link>
-                </Can>
+                {/* Lien "Voir détails" toujours visible pour les événements affichés */}
+                <Link
+                  to={`/events/${event.id}`}
+                  className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  <Eye className="h-4 w-4 mr-1" />
+                  Voir détails
+                </Link>
                 
                 <div className="flex items-center space-x-2">
                   <Can do="update" on="Event" data={event}>

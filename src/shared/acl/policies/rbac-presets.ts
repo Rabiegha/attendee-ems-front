@@ -94,6 +94,8 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
 
     case 'DEVELOPER':
       return [
+        // Accès au dashboard de base
+        { action: 'read', subject: 'Organization', conditions: { id: orgId } },
         // Accès aux projets de développement
         { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
         { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email', 'status'] },
@@ -103,6 +105,8 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
 
     case 'GRAPHIC_DESIGNER':
       return [
+        // Accès au dashboard de base
+        { action: 'read', subject: 'Organization', conditions: { id: orgId } },
         // Accès aux projets de design graphique
         { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
         { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email', 'status'] },
@@ -112,6 +116,8 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
 
     case 'JOURNALIST':
       return [
+        // Accès au dashboard de base
+        { action: 'read', subject: 'Organization', conditions: { id: orgId } },
         // Accès aux projets de journalisme
         { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
         { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email'] },
@@ -120,6 +126,8 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
 
     case 'EDITOR':
       return [
+        // Accès au dashboard de base
+        { action: 'read', subject: 'Organization', conditions: { id: orgId } },
         // Accès aux projets éditoriaux
         { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
         { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email'] },

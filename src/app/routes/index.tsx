@@ -1,5 +1,6 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { createBrowserRouter, Navigate, useParams } from 'react-router-dom'
 import { GuardedRoute } from '@/shared/acl/guards/GuardedRoute'
+import { EventGuard } from '@/shared/acl/guards/EventGuard'
 import { SmartRedirect } from '@/shared/ui/SmartRedirect'
 
 // Layouts
@@ -14,6 +15,21 @@ import { Attendees } from '@/pages/Attendees'
 import { LoginPage } from '@/pages/Login'
 import { ForbiddenPage } from '@/pages/Forbidden'
 import { NotFoundPage } from '@/pages/NotFound'
+
+// Component wrapper pour EventDetails avec guard spécialisé
+const EventDetailsWithGuard: React.FC = () => {
+  const { id } = useParams<{ id: string }>()
+  
+  if (!id) {
+    return <Navigate to="/events" replace />
+  }
+  
+  return (
+    <EventGuard eventId={id} action="read">
+      <EventDetails />
+    </EventGuard>
+  )
+}
 
 export const router = createBrowserRouter([
   {
@@ -42,9 +58,7 @@ export const router = createBrowserRouter([
           {
             path: ':id',
             element: (
-              <GuardedRoute action="read" subject="Event">
-                <EventDetails />
-              </GuardedRoute>
+              <EventDetailsWithGuard />
             ),
           },
         ],

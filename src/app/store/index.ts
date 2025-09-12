@@ -3,6 +3,7 @@ import { setupListeners } from '@reduxjs/toolkit/query'
 import { authApi } from '@/features/auth/api/authApi'
 import { eventsApi } from '@/features/events/api/eventsApi'
 import { attendeesApi } from '@/features/attendees/api/attendeesApi'
+import { invitationsApi } from '@/features/invitations/api/invitationsApi'
 import { sessionSlice } from '@/features/auth/model/sessionSlice'
 import { eventsSlice } from '@/features/events/model/eventsSlice'
 import { attendeesSlice } from '@/features/attendees/model/attendeesSlice'
@@ -14,6 +15,7 @@ export const store = configureStore({
     [authApi.reducerPath]: authApi.reducer,
     [eventsApi.reducerPath]: eventsApi.reducer,
     [attendeesApi.reducerPath]: attendeesApi.reducer,
+    [invitationsApi.reducerPath]: invitationsApi.reducer,
     
     // UI state slices
     session: sessionSlice.reducer,
@@ -51,7 +53,8 @@ export const store = configureStore({
     })
       .concat(authApi.middleware)
       .concat(eventsApi.middleware)
-      .concat(attendeesApi.middleware),
+      .concat(attendeesApi.middleware)
+      .concat(invitationsApi.middleware),
   devTools: process.env.NODE_ENV !== 'production',
 })
 

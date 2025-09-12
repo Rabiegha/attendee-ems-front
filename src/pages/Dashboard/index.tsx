@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux'
 import { selectUser, selectOrganization } from '@/features/auth/model/sessionSlice'
 import { StatsCards } from '@/widgets/StatsCards'
 import { EventList } from '@/features/events/ui/EventList'
+import { InviteUserWidget } from '@/widgets/InviteUserWidget'
 import { Can } from '@/shared/acl/guards/Can'
 import { useCan } from '@/shared/acl/hooks/useCan'
 import { Button } from '@/shared/ui/Button'
@@ -71,35 +72,41 @@ export const Dashboard: React.FC = () => {
             <EventList events={events} isLoading={eventsLoading} />
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              {t('attendees:attendees.recent')}
-            </h2>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              {attendeesLoading ? (
-                <div className="animate-pulse space-y-2">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="h-4 bg-gray-200 rounded"></div>
-                  ))}
-                </div>
-              ) : attendees.length > 0 ? (
-                <div className="space-y-2">
-                  {attendees.slice(0, 5).map((attendee) => (
-                    <div key={attendee.id} className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        {attendee.firstName} {attendee.lastName}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {attendee.email}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">
-                  {t('attendees:attendees.empty')}
-                </p>
-              )}
+          <div className="space-y-6">
+            {/* Widget Invitations */}
+            <InviteUserWidget />
+
+            {/* Participants récents */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {t('attendees:attendees.recent')}
+              </h2>
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                {attendeesLoading ? (
+                  <div className="animate-pulse space-y-2">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-4 bg-gray-200 rounded"></div>
+                    ))}
+                  </div>
+                ) : attendees.length > 0 ? (
+                  <div className="space-y-2">
+                    {attendees.slice(0, 5).map((attendee) => (
+                      <div key={attendee.id} className="flex items-center justify-between">
+                        <span className="text-sm font-medium">
+                          {attendee.firstName} {attendee.lastName}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {attendee.email}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    {t('attendees:attendees.empty')}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>

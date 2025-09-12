@@ -26,6 +26,7 @@
     "dashboard": "Tableau de bord",
     "events": "Événements",
     "attendees": "Participants",
+    "invitations": "Invitations",
     "reports": "Rapports",
     "settings": "Paramètres",
     "profile": "Profil",
@@ -50,5 +51,81 @@
     "forbidden": "Accès interdit",
     "not_found": "Ressource non trouvée",
     "server_error": "Erreur serveur"
+  },
+  "invitations": {
+    "title": "Gestion des utilisateurs",
+    "invite": "Inviter un utilisateur",
+    "inviteUser": "Inviter un utilisateur",
+    "pending": "En attente",
+    "accepted": "Acceptée",
+    "expired": "Expirée", 
+    "cancelled": "Annulée",
+    "stats": {
+      "pending": "En attente",
+      "thisWeek": "Cette semaine",
+      "total": "Total envoyées"
+    },
+    "form": {
+      "email": {
+        "label": "Adresse email",
+        "placeholder": "user@example.com",
+        "description": "L'utilisateur recevra un lien d'invitation par email"
+      },
+      "role": {
+        "label": "Rôle",
+        "placeholder": "Sélectionner un rôle",
+        "description": "Définit les permissions de l'utilisateur dans l'organisation"
+      },
+      "organization": {
+        "label": "Organisation",
+        "placeholder": "Sélectionner une organisation", 
+        "description": "Organisation dans laquelle inviter l'utilisateur"
+      },
+      "events": {
+        "label": "Événements associés",
+        "placeholder": "Sélectionner des événements",
+        "description": "Événements pour lesquels ce rôle s'applique"
+      },
+      "message": {
+        "label": "Message personnalisé (optionnel)",
+        "placeholder": "Ajoutez un message personnel à l'invitation...",
+        "description": "Ce message sera inclus dans l'email d'invitation"
+      },
+      "submit": "Envoyer l'invitation"
+    },
+    "roles": {
+      "ORG_ADMIN": {
+        "name": "Administrateur d'organisation",
+        "description": "Accès complet à l'organisation, gestion des utilisateurs et événements"
+      },
+      "ORG_MANAGER": {
+        "name": "Gestionnaire d'organisation", 
+        "description": "Gestion des événements et participants de l'organisation"
+      },
+      "EVENT_MANAGER": {
+        "name": "Gestionnaire d'événement",
+        "description": "Gestion complète des événements spécifiques assignés"
+      },
+      "CHECKIN_STAFF": {
+        "name": "Personnel d'accueil",
+        "description": "Check-in des participants et gestion des présences"
+      },
+      "PARTNER": {
+        "name": "Partenaire",
+        "description": "Accès limité aux événements partenaires"
+      },
+      "READONLY": {
+        "name": "Lecture seule",
+        "description": "Consultation des données sans modification"
+      }
+    },
+    "messages": {
+      "success": "Invitation envoyée avec succès",
+      "error": "Erreur lors de l'envoi de l'invitation",
+      "emailExists": "Un utilisateur avec cette adresse email existe déjà",
+      "limitReached": "Limite d'invitations atteinte ({{limit}} max)",
+      "cancelled": "Invitation annulée",
+      "resent": "Invitation renvoyée"
+    }
   }
 }

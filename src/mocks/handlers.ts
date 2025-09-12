@@ -346,4 +346,252 @@ export const handlers = [
     
     return HttpResponse.json({ message: 'Event deleted successfully' })
   }),
+
+  // ======================
+  // INVITATIONS HANDLERS
+  // ======================
+
+  // Simuler un stockage des invitations
+  ...(function() {
+    const mockInvitations: any[] = []
+    let invitationIdCounter = 1
+
+    return [
+      // POST /api/invitations - Envoyer une invitation
+      http.post(`${env.VITE_API_BASE_URL}/invitations`, async ({ request }) => {
+        const body = await request.json() as any
+        const { email, role, orgId, eventIds, personalizedMessage } = body
+
+        // Validation basique
+        if (!email || !role) {
+          return HttpResponse.json(
+            { message: 'Email and role are required' },
+            { status: 400 }
+          )
+        }
+
+        // Vérifier si l'email existe déjà
+        const existingUser = users.find(u => u.email === email)
+        if (existingUser) {
+          return HttpResponse.json(
+            { message: 'User with this email already exists' },
+            { status: 409 }
+          )
+        }
+
+        // Vérifier la limite d'invitations (10 max)
+        const pendingInvitations = mockInvitations.filter(i => i.status === 'pending')
+        if (pendingInvitations.length >= 10) {
+          return HttpResponse.json(
+            { message: 'Invitation limit reached (10 max)' },
+            { status: 429 }
+          )
+        }
+
+        // Créer l'invitation
+        const newInvitation = {
+          id: `invitation-${invitationIdCounter++}`,
+          email,
+          role,
+          orgId: orgId || 'org-1',
+          eventIds: eventIds || [],
+          personalizedMessage: personalizedMessage || null,
+          status: 'pending',
+          token: `token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          createdAt: new Date().toISOString(),
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 jours
+          invitedBy: 'current-user-id'
+        }
+
+        mockInvitations.push(newInvitation)
+
+        console.log('📧 Nouvelle invitation créée:', newInvitation)
+
+        return HttpResponse.json({
+          invitation: newInvitation,
+          emailSent: true
+        })
+      }),
+
+      // GET /api/invitations - Liste des invitations
+      http.get(`${env.VITE_API_BASE_URL}/invitations`, ({ request }) => {
+        const url = new URL(request.url)
+        const status = url.searchParams.get('status')
+        
+        let filteredInvitations = [...mockInvitations]
+        
+        if (status) {
+          filteredInvitations = filteredInvitations.filter(i => i.status === status)
+        }
+
+        // Trier par date de création (plus récent en premier)
+        filteredInvitations.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+
+        return HttpResponse.json({
+          invitations: filteredInvitations,
+          total: filteredInvitations.length
+        })
+      }),
+
+      // POST /api/invitations/:id/resend - Renvoyer une invitation
+      http.post(`${env.VITE_API_BASE_URL}/invitations/:id/resend`, ({ params }) => {
+        const { id } = params
+        const invitation = mockInvitations.find(i => i.id === id)
+
+        if (!invitation) {
+          return HttpResponse.json(
+            { message: 'Invitation not found' },
+            { status: 404 }
+          )
+        }
+
+        if (invitation.status !== 'pending') {
+          return HttpResponse.json(
+            { message: 'Cannot resend non-pending invitation' },
+            { status: 400 }
+          )
+        }
+
+        // Générer un nouveau token et prolonger l'expiration
+        invitation.token = `token-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        invitation.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+
+        console.log('📧 Invitation renvoyée:', invitation)
+
+        return HttpResponse.json({
+          invitation,
+          emailSent: true
+        })
+      }),
+
+      // DELETE /api/invitations/:id - Annuler une invitation
+      http.delete(`${env.VITE_API_BASE_URL}/invitations/:id`, ({ params }) => {
+        const { id } = params
+        const invitationIndex = mockInvitations.findIndex(i => i.id === id)
+
+        if (invitationIndex === -1) {
+          return HttpResponse.json(
+            { message: 'Invitation not found' },
+            { status: 404 }
+          )
+        }
+
+        const invitation = mockInvitations[invitationIndex]
+        
+        if (invitation.status !== 'pending') {
+          return HttpResponse.json(
+            { message: 'Cannot cancel non-pending invitation' },
+            { status: 400 }
+          )
+        }
+
+        // Marquer comme annulée au lieu de supprimer
+        invitation.status = 'cancelled'
+        invitation.cancelledAt = new Date().toISOString()
+
+        console.log('❌ Invitation annulée:', invitation)
+
+        return HttpResponse.json({ message: 'Invitation cancelled successfully' })
+      }),
+
+      // GET /api/invitations/validate/:token - Valider un token d'invitation (public)
+      http.get(`${env.VITE_API_BASE_URL}/invitations/validate/:token`, ({ params }) => {
+        const { token } = params
+        const invitation = mockInvitations.find(i => i.token === token)
+
+        if (!invitation) {
+          return HttpResponse.json(
+            { message: 'Invalid invitation token' },
+            { status: 404 }
+          )
+        }
+
+        if (invitation.status !== 'pending') {
+          return HttpResponse.json(
+            { message: 'Invitation is no longer valid' },
+            { status: 400 }
+          )
+        }
+
+        if (new Date() > new Date(invitation.expiresAt)) {
+          invitation.status = 'expired'
+          return HttpResponse.json(
+            { message: 'Invitation has expired' },
+            { status: 410 }
+          )
+        }
+
+        return HttpResponse.json({
+          invitation: {
+            id: invitation.id,
+            email: invitation.email,
+            role: invitation.role,
+            orgId: invitation.orgId,
+            eventIds: invitation.eventIds,
+            personalizedMessage: invitation.personalizedMessage,
+            expiresAt: invitation.expiresAt
+          }
+        })
+      }),
+
+      // POST /api/invitations/accept/:token - Accepter une invitation et créer un compte
+      http.post(`${env.VITE_API_BASE_URL}/invitations/accept/:token`, async ({ params, request }) => {
+        const { token } = params
+        const body = await request.json() as any
+        const { firstName, lastName } = body
+
+        const invitation = mockInvitations.find(i => i.token === token)
+
+        if (!invitation || invitation.status !== 'pending') {
+          return HttpResponse.json(
+            { message: 'Invalid or expired invitation' },
+            { status: 400 }
+          )
+        }
+
+        if (new Date() > new Date(invitation.expiresAt)) {
+          invitation.status = 'expired'
+          return HttpResponse.json(
+            { message: 'Invitation has expired' },
+            { status: 410 }
+          )
+        }
+
+        // Créer le nouvel utilisateur
+        const newUser = {
+          id: `user-${users.length + 1}`,
+          email: invitation.email,
+          firstName,
+          lastName,
+          roleId: invitation.role,
+          role: { 
+            id: invitation.role, 
+            orgId: invitation.orgId,
+            code: invitation.role,
+            name: invitation.role,
+            description: `${invitation.role} role` 
+          },
+          orgId: invitation.orgId,
+          eventIds: invitation.eventIds || [],
+          isActive: true
+        }
+
+        users.push(newUser)
+
+        // Marquer l'invitation comme acceptée
+        invitation.status = 'accepted'
+        invitation.acceptedAt = new Date().toISOString()
+        invitation.acceptedBy = newUser.id
+
+        console.log('✅ Invitation acceptée, nouvel utilisateur créé:', newUser)
+
+        return HttpResponse.json({
+          user: newUser,
+          message: 'Account created successfully'
+        })
+      })
+    ]
+  })(),
 ]

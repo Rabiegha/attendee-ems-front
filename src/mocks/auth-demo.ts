@@ -1,7 +1,18 @@
+/**
+ * 🔧 DONNÉES DEMO pour l'authentification
+ * 
+ * ORGANIZATIONS:
+ * - Choyou (Fred admin, Claudia graphiste, Rabie développeur)
+ * - IT for Business (Thomas admin, Alessandro journaliste, Thierry rédacteur)
+ * 
+ * SUPER ADMIN:
+ * - Corentin Kistler (accès global)
+ */
+
 import { http, HttpResponse } from 'msw'
 import { env } from '@/app/config/env'
 
-// Types pour les données de démo
+// Types
 interface Organization {
   id: string
   name: string
@@ -28,230 +39,261 @@ interface User {
   role: Role
   isActive: boolean
   isSuperAdmin?: boolean
-  eventIds?: string[]  // IDs des événements accessibles (pour les partenaires)
+  eventIds?: string[]
 }
 
-// Organisations de démo
+// 🏢 ORGANISATIONS
 export const organizations: Organization[] = [
   {
-    id: 'org-1',
-    name: 'TechCorp',
-    slug: 'techcorp',
+    id: 'org-choyou',
+    name: 'Choyou',
+    slug: 'choyou',
     timezone: 'Europe/Paris',
     planCode: 'ENTERPRISE'
   },
   {
-    id: 'org-2',
-    name: 'Creative Agency',
-    slug: 'creative-agency',
-    timezone: 'Europe/London',
+    id: 'org-itforbusiness',
+    name: 'IT for Business',
+    slug: 'it-for-business',
+    timezone: 'Europe/Paris',
     planCode: 'PROFESSIONAL'
-  },
-  {
-    id: 'org-3',
-    name: 'Startup Hub',
-    slug: 'startup-hub',
-    timezone: 'America/New_York',
-    planCode: 'BASIC'
   }
 ]
 
-// Rôles par organisation
+// 🎯 RÔLES PAR ORGANISATION
 export const roles: Role[] = [
-  // TechCorp roles
+  // Super Admin (pas d'org spécifique)
   {
-    id: 'role-1-admin',
-    orgId: 'org-1',
+    id: 'role-super-admin',
+    orgId: '',
+    code: 'SUPER_ADMIN',
+    name: 'Super Administrateur',
+    description: 'Accès global à toutes les organisations'
+  },
+
+  // CHOYOU
+  {
+    id: 'role-choyou-admin',
+    orgId: 'org-choyou',
     code: 'ORG_ADMIN',
     name: 'Administrateur Organisation',
-    description: 'Accès complet à l\'organisation'
+    description: 'Accès complet à Choyou'
   },
   {
-    id: 'role-1-manager',
-    orgId: 'org-1',
-    code: 'EVENT_MANAGER',
-    name: 'Gestionnaire Événements',
-    description: 'Gestion des événements et participants'
+    id: 'role-choyou-graphic',
+    orgId: 'org-choyou',
+    code: 'GRAPHIC_DESIGNER',
+    name: 'Graphiste',
+    description: 'Spécialiste design et créativité'
   },
   {
-    id: 'role-1-staff',
-    orgId: 'org-1',
-    code: 'CHECKIN_STAFF',
-    name: 'Personnel Check-in',
-    description: 'Check-in et gestion des présences'
+    id: 'role-choyou-dev',
+    orgId: 'org-choyou',
+    code: 'DEVELOPER',
+    name: 'Développeur',
+    description: 'Spécialiste développement logiciel'
   },
-  // Creative Agency roles
+
+  // IT FOR BUSINESS
   {
-    id: 'role-2-admin',
-    orgId: 'org-2',
+    id: 'role-itfb-admin',
+    orgId: 'org-itforbusiness',
     code: 'ORG_ADMIN',
     name: 'Administrateur Organisation',
-    description: 'Accès complet à l\'organisation'
+    description: 'Accès complet à IT for Business'
   },
   {
-    id: 'role-2-partner',
-    orgId: 'org-2',
-    code: 'PARTNER',
-    name: 'Partenaire',
-    description: 'Accès aux événements partenaires'
+    id: 'role-itfb-journalist',
+    orgId: 'org-itforbusiness',
+    code: 'JOURNALIST',
+    name: 'Journaliste',
+    description: 'Spécialiste investigation et rédaction'
   },
   {
-    id: 'role-2-partner-tech',
-    orgId: 'org-2',
-    code: 'PARTNER_TECH',
-    name: 'Partenaire Tech',
-    description: 'Partenaire spécialisé événements tech'
-  },
-  {
-    id: 'role-2-partner-design',
-    orgId: 'org-2',
-    code: 'PARTNER_DESIGN',
-    name: 'Partenaire Design',
-    description: 'Partenaire spécialisé événements design'
-  },
-  {
-    id: 'role-2-readonly',
-    orgId: 'org-2',
-    code: 'READONLY',
-    name: 'Lecture seule',
-    description: 'Consultation uniquement'
-  },
-  // Startup Hub roles
-  {
-    id: 'role-3-admin',
-    orgId: 'org-3',
-    code: 'ORG_ADMIN',
-    name: 'Administrateur Organisation',
-    description: 'Accès complet à l\'organisation'
-  },
-  {
-    id: 'role-3-manager',
-    orgId: 'org-3',
-    code: 'ORG_MANAGER',
-    name: 'Gestionnaire Organisation',
-    description: 'Gestion de l\'organisation'
-  },
-  {
-    id: 'role-3-staff',
-    orgId: 'org-3',
-    code: 'CHECKIN_STAFF',
-    name: 'Personnel Check-in',
-    description: 'Check-in et gestion des présences'
+    id: 'role-itfb-editor',
+    orgId: 'org-itforbusiness',
+    code: 'EDITOR',
+    name: 'Rédacteur',
+    description: 'Spécialiste édition et contenus'
   }
 ]
 
-// Utilisateurs de démo
+// 👥 UTILISATEURS
 export const users: User[] = [
-  // Super Admin (peut naviguer entre toutes les orgs)
+  // 🌟 SUPER ADMIN
   {
     id: 'user-super-admin',
-    orgId: 'org-1',
-    email: 'super@admin.com',
-    firstName: 'Super',
-    lastName: 'Admin',
-    roleId: 'role-1-admin',
-    role: roles.find(r => r.id === 'role-1-admin')!,
+    orgId: '',
+    email: 'corentin@kistler.com',
+    firstName: 'Corentin',
+    lastName: 'Kistler',
+    roleId: 'role-super-admin',
+    role: roles.find(r => r.id === 'role-super-admin')!,
     isActive: true,
     isSuperAdmin: true
   },
-  // TechCorp users
+
+  // 🎨 CHOYOU
   {
-    id: 'user-1-admin',
-    orgId: 'org-1',
-    email: 'admin@techcorp.com',
-    firstName: 'Alice',
-    lastName: 'Martin',
-    roleId: 'role-1-admin',
-    role: roles.find(r => r.id === 'role-1-admin')!,
+    id: 'user-choyou-admin',
+    orgId: 'org-choyou',
+    email: 'fred@choyou.com',
+    firstName: 'Fred',
+    lastName: 'Ktorza',
+    roleId: 'role-choyou-admin',
+    role: roles.find(r => r.id === 'role-choyou-admin')!,
     isActive: true
   },
   {
-    id: 'user-1-manager',
-    orgId: 'org-1',
-    email: 'manager@techcorp.com',
-    firstName: 'Bob',
-    lastName: 'Dupont',
-    roleId: 'role-1-manager',
-    role: roles.find(r => r.id === 'role-1-manager')!,
-    isActive: true
-  },
-  {
-    id: 'user-1-staff',
-    orgId: 'org-1',
-    email: 'staff@techcorp.com',
-    firstName: 'Charlie',
-    lastName: 'Durand',
-    roleId: 'role-1-staff',
-    role: roles.find(r => r.id === 'role-1-staff')!,
-    isActive: true
-  },
-  // Creative Agency users
-  {
-    id: 'user-2-admin',
-    orgId: 'org-2',
-    email: 'admin@creative.com',
-    firstName: 'Diana',
-    lastName: 'Smith',
-    roleId: 'role-2-admin',
-    role: roles.find(r => r.id === 'role-2-admin')!,
-    isActive: true
-  },
-  {
-    id: 'user-2-partner-tech',
-    orgId: 'org-2',
-    email: 'tech@creative.com',
-    firstName: 'Alex',
-    lastName: 'Chen',
-    roleId: 'role-2-partner-tech',
-    role: roles.find(r => r.id === 'role-2-partner-tech')!,
+    id: 'user-choyou-graphic',
+    orgId: 'org-choyou',
+    email: 'claudia@choyou.com',
+    firstName: 'Claudia',
+    lastName: 'Tessier',
+    roleId: 'role-choyou-graphic',
+    role: roles.find(r => r.id === 'role-choyou-graphic')!,
     isActive: true,
-    eventIds: ['event-tech-1', 'event-tech-2', 'event-shared-1'] // Événements spécifiques + partagé
+    eventIds: ['choyou-design-1', 'choyou-design-2', 'choyou-shared']
   },
   {
-    id: 'user-2-partner-design',
-    orgId: 'org-2',
-    email: 'design@creative.com',
-    firstName: 'Sophie',
-    lastName: 'Martin',
-    roleId: 'role-2-partner-design',
-    role: roles.find(r => r.id === 'role-2-partner-design')!,
+    id: 'user-choyou-dev',
+    orgId: 'org-choyou',
+    email: 'rabie@choyou.com',
+    firstName: 'Rabie',
+    lastName: 'Gharghar',
+    roleId: 'role-choyou-dev',
+    role: roles.find(r => r.id === 'role-choyou-dev')!,
     isActive: true,
-    eventIds: ['event-design-1', 'event-design-2', 'event-shared-1'] // Événements spécifiques + partagé
+    eventIds: ['choyou-dev-1', 'choyou-dev-2', 'choyou-shared']
   },
+
+  // 📰 IT FOR BUSINESS
   {
-    id: 'user-2-readonly',
-    orgId: 'org-2',
-    email: 'readonly@creative.com',
-    firstName: 'Frank',
-    lastName: 'Brown',
-    roleId: 'role-2-readonly',
-    role: roles.find(r => r.id === 'role-2-readonly')!,
-    isActive: true
-  },
-  // Startup Hub users
-  {
-    id: 'user-3-admin',
-    orgId: 'org-3',
-    email: 'admin@startup.com',
-    firstName: 'Grace',
-    lastName: 'Wilson',
-    roleId: 'role-3-admin',
-    role: roles.find(r => r.id === 'role-3-admin')!,
+    id: 'user-itfb-admin',
+    orgId: 'org-itforbusiness',
+    email: 'thomas@itforbusiness.com',
+    firstName: 'Thomas',
+    lastName: 'Pagbe',
+    roleId: 'role-itfb-admin',
+    role: roles.find(r => r.id === 'role-itfb-admin')!,
     isActive: true
   },
   {
-    id: 'user-3-manager',
-    orgId: 'org-3',
-    email: 'manager@startup.com',
-    firstName: 'Henry',
-    lastName: 'Davis',
-    roleId: 'role-3-manager',
-    role: roles.find(r => r.id === 'role-3-manager')!,
-    isActive: true
+    id: 'user-itfb-journalist',
+    orgId: 'org-itforbusiness',
+    email: 'alessandro@itforbusiness.com',
+    firstName: 'Alessandro',
+    lastName: 'Rossi',
+    roleId: 'role-itfb-journalist',
+    role: roles.find(r => r.id === 'role-itfb-journalist')!,
+    isActive: true,
+    eventIds: ['itfb-journalism']
+  },
+  {
+    id: 'user-itfb-editor',
+    orgId: 'org-itforbusiness',
+    email: 'thierry@itforbusiness.com',
+    firstName: 'Thierry',
+    lastName: 'Martin',
+    roleId: 'role-itfb-editor',
+    role: roles.find(r => r.id === 'role-itfb-editor')!,
+    isActive: true,
+    eventIds: ['itfb-editorial']
   }
 ]
 
-// Utilitaires pour trouver les utilisateurs
+// 🎯 ÉVÉNEMENTS/PROJETS
+export const events = [
+  // CHOYOU (5 projets)
+  {
+    id: 'choyou-dev-1',
+    title: 'Application Mobile E-commerce',
+    description: 'Développement d\'une app mobile pour la vente en ligne',
+    startDate: '2024-11-15T09:00:00Z',
+    endDate: '2024-12-15T17:00:00Z',
+    location: 'Choyou - Lab Développement',
+    maxAttendees: 50,
+    status: 'published',
+    org_id: 'org-choyou',
+    category: 'development'
+  },
+  {
+    id: 'choyou-dev-2',
+    title: 'Plateforme Web SaaS',
+    description: 'Création d\'une plateforme SaaS pour la gestion de projets',
+    startDate: '2024-12-01T08:30:00Z',
+    endDate: '2024-12-30T18:00:00Z',
+    location: 'Choyou - Espace Tech',
+    maxAttendees: 30,
+    status: 'published',
+    org_id: 'org-choyou',
+    category: 'development'
+  },
+  {
+    id: 'choyou-design-1',
+    title: 'Identité Visuelle Startup',
+    description: 'Création d\'une identité visuelle complète pour une startup tech',
+    startDate: '2024-11-20T10:00:00Z',
+    endDate: '2024-12-10T16:00:00Z',
+    location: 'Choyou - Studio Créatif',
+    maxAttendees: 25,
+    status: 'published',
+    org_id: 'org-choyou',
+    category: 'design'
+  },
+  {
+    id: 'choyou-design-2',
+    title: 'Campagne Publicitaire Digital',
+    description: 'Design d\'une campagne publicitaire multi-supports',
+    startDate: '2024-12-05T09:30:00Z',
+    endDate: '2024-12-25T17:30:00Z',
+    location: 'Choyou - Atelier Design',
+    maxAttendees: 20,
+    status: 'published',
+    org_id: 'org-choyou',
+    category: 'design'
+  },
+  {
+    id: 'choyou-shared',
+    title: 'Projet Innovation Collaborative',
+    description: 'Projet mixte alliant développement et design pour l\'innovation',
+    startDate: '2024-12-20T09:00:00Z',
+    endDate: '2024-12-22T18:00:00Z',
+    location: 'Choyou - Espace Collaboration',
+    maxAttendees: 40,
+    status: 'published',
+    org_id: 'org-choyou',
+    category: 'collaboration'
+  },
+
+  // IT FOR BUSINESS (2 projets)
+  {
+    id: 'itfb-journalism',
+    title: 'Investigation Tech & IA',
+    description: 'Enquête journalistique sur l\'impact de l\'IA dans les entreprises',
+    startDate: '2024-11-25T08:00:00Z',
+    endDate: '2024-12-15T19:00:00Z',
+    location: 'IT for Business - Salle de Rédaction',
+    maxAttendees: 15,
+    status: 'published',
+    org_id: 'org-itforbusiness',
+    category: 'journalism'
+  },
+  {
+    id: 'itfb-editorial',
+    title: 'Guide Transformation Numérique',
+    description: 'Rédaction d\'un guide complet sur la transformation numérique des PME',
+    startDate: '2024-12-01T09:00:00Z',
+    endDate: '2024-12-20T17:00:00Z',
+    location: 'IT for Business - Bureau Éditorial',
+    maxAttendees: 10,
+    status: 'published',
+    org_id: 'org-itforbusiness',
+    category: 'editorial'
+  }
+]
+
+// Utilitaires
 function findUserByEmail(email: string): User | undefined {
   return users.find(user => user.email === email && user.isActive)
 }
@@ -263,46 +305,43 @@ function findUserByEmailAndOrg(email: string, orgId?: string): User | undefined 
   return findUserByEmail(email)
 }
 
-// Données de démo complètes avec organisations, rôles et utilisateurs
+// Données complètes
 export const demoData = {
   organizations,
   roles,
   users,
+  events,
   
-  // Helpers pour les tests
+  // Helpers
   findUserByEmail,
   findUserByEmailAndOrg,
   
   // Exemples de connexion
   loginExamples: [
-    { email: 'super@admin.com', password: 'demo123', description: 'Super Admin (peut naviguer entre toutes les orgs)' },
-    { email: 'admin@techcorp.com', password: 'demo123', description: 'Admin TechCorp' },
-    { email: 'manager@techcorp.com', password: 'demo123', description: 'Manager TechCorp' },
-    { email: 'admin@creative.com', password: 'demo123', description: 'Admin Creative Agency' },
-    { email: 'tech@creative.com', password: 'demo123', description: 'Partenaire Tech Creative (événements tech + partagés)' },
-    { email: 'design@creative.com', password: 'demo123', description: 'Partenaire Design Creative (événements design + partagés)' },
-    { email: 'readonly@creative.com', password: 'demo123', description: 'Lecture seule Creative Agency' },
-    { email: 'admin@startup.com', password: 'demo123', description: 'Admin Startup Hub' }
+    { email: 'corentin@kistler.com', password: 'demo123', description: 'Super Admin (accès global)' },
+    { email: 'fred@choyou.com', password: 'demo123', description: 'Fred Ktorza - Admin Choyou' },
+    { email: 'claudia@choyou.com', password: 'demo123', description: 'Claudia Tessier - Graphiste Choyou' },
+    { email: 'rabie@choyou.com', password: 'demo123', description: 'Rabie Gharghar - Développeur Choyou' },
+    { email: 'thomas@itforbusiness.com', password: 'demo123', description: 'Thomas Pagbe - Admin IT for Business' },
+    { email: 'alessandro@itforbusiness.com', password: 'demo123', description: 'Alessandro Rossi - Journaliste' },
+    { email: 'thierry@itforbusiness.com', password: 'demo123', description: 'Thierry Martin - Rédacteur' }
   ]
 }
 
-// Handlers MSW pour l'authentification multi-tenant
-console.log('🔧 Configuration des handlers de démo avec base URL:', env.VITE_API_BASE_URL)
+// Handlers MSW
+console.log('🔧 Configuration des nouveaux handlers de démo')
 
 export const authDemoHandlers = [
-  // Login avec support multi-org
+  // Login
   http.post('http://localhost:3001/api/auth/login', async ({ request }) => {
-    console.log('🎯 Handler de démo appelé pour login:', `${env.VITE_API_BASE_URL}/auth/login`)
+    console.log('🎯 Handler de login appelé')
     
     const body = await request.json() as { email: string; password: string; orgId?: string }
     const { email, password, orgId } = body
     
-    console.log('📧 Tentative de connexion:', { email, password, orgId })
+    console.log('📧 Tentative de connexion:', { email, orgId })
     
-    // Trouve l'utilisateur par email et org (ou org par défaut)
     const user = findUserByEmailAndOrg(email, orgId)
-    
-    console.log('👤 Utilisateur trouvé:', user ? `${user.firstName} ${user.lastName}` : 'Aucun')
     
     if (!user || password !== 'demo123') {
       return HttpResponse.json(
@@ -311,13 +350,16 @@ export const authDemoHandlers = [
       )
     }
 
-    // Génère un token JWT mock
-    const token = btoa(JSON.stringify({
-      userId: user.id,
-      orgId: user.orgId,
-      role: user.role.code,
-      exp: Date.now() + 24 * 60 * 60 * 1000 // 24h
-    }))
+    console.log('✅ Connexion réussie:', user.firstName, user.lastName)
+
+    // Pour le Super Admin, assigner la première organisation par défaut s'il n'en a pas
+    let effectiveOrgId = user.orgId
+    let currentOrganization = organizations.find(org => org.id === user.orgId)
+    
+    if (user.isSuperAdmin && !user.orgId) {
+      effectiveOrgId = organizations[0]?.id || ''
+      currentOrganization = organizations[0]
+    }
 
     return HttpResponse.json({
       user: {
@@ -326,24 +368,26 @@ export const authDemoHandlers = [
         firstName: user.firstName,
         lastName: user.lastName,
         roles: [user.role.code],
-        orgId: user.orgId,
-        eventIds: user.eventIds || [], // ← Utiliser les eventIds de l'utilisateur
+        orgId: effectiveOrgId,
+        eventIds: user.eventIds || [],
         isSuperAdmin: user.isSuperAdmin || false
       },
-      token,
-      organization: organizations.find(org => org.id === user.orgId)
+      token: btoa(JSON.stringify({
+        userId: user.id,
+        orgId: effectiveOrgId,
+        role: user.role.code,
+        exp: Date.now() + 24 * 60 * 60 * 1000
+      })),
+      organization: currentOrganization
     })
   }),
 
-  // Récupération du profil utilisateur
+  // Profil utilisateur
   http.get('http://localhost:3001/api/auth/me', ({ request }) => {
     const authHeader = request.headers.get('Authorization')
     
     if (!authHeader?.startsWith('Bearer ')) {
-      return HttpResponse.json(
-        { error: 'Token manquant' },
-        { status: 401 }
-      )
+      return HttpResponse.json({ error: 'Token manquant' }, { status: 401 })
     }
 
     try {
@@ -351,19 +395,13 @@ export const authDemoHandlers = [
       const payload = JSON.parse(atob(token))
       
       if (payload.exp < Date.now()) {
-        return HttpResponse.json(
-          { error: 'Token expiré' },
-          { status: 401 }
-        )
+        return HttpResponse.json({ error: 'Token expiré' }, { status: 401 })
       }
 
-      const user = users.find(u => u.id === payload.userId && u.orgId === payload.orgId)
+      const user = users.find(u => u.id === payload.userId)
       
       if (!user) {
-        return HttpResponse.json(
-          { error: 'Utilisateur introuvable' },
-          { status: 404 }
-        )
+        return HttpResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
       }
 
       return HttpResponse.json({
@@ -373,33 +411,27 @@ export const authDemoHandlers = [
         lastName: user.lastName,
         roles: [user.role.code],
         orgId: user.orgId,
-        eventIds: [],
+        eventIds: user.eventIds || [],
         isSuperAdmin: user.isSuperAdmin || false
       })
     } catch (error) {
-      return HttpResponse.json(
-        { error: 'Token invalide' },
-        { status: 401 }
-      )
+      return HttpResponse.json({ error: 'Token invalide' }, { status: 401 })
     }
   }),
 
-  // Liste des organisations (pour super admin ou sélection)
+  // Liste des organisations
   http.get('http://localhost:3001/api/organizations', () => {
     return HttpResponse.json(organizations)
   }),
 
-  // Changement d'organisation (pour super admin)
+  // Changement d'organisation (super admin)
   http.post('http://localhost:3001/api/auth/switch-org', async ({ request }) => {
     const body = await request.json() as { orgId: string }
     const { orgId } = body
     const authHeader = request.headers.get('Authorization')
     
     if (!authHeader?.startsWith('Bearer ')) {
-      return HttpResponse.json(
-        { error: 'Token manquant' },
-        { status: 401 }
-      )
+      return HttpResponse.json({ error: 'Token manquant' }, { status: 401 })
     }
 
     try {
@@ -409,32 +441,19 @@ export const authDemoHandlers = [
       const currentUser = users.find(u => u.id === payload.userId)
       
       if (!currentUser?.isSuperAdmin) {
-        return HttpResponse.json(
-          { error: 'Accès refusé' },
-          { status: 403 }
-        )
+        return HttpResponse.json({ error: 'Accès refusé' }, { status: 403 })
       }
 
       const targetOrg = organizations.find(org => org.id === orgId)
-      
       if (!targetOrg) {
-        return HttpResponse.json(
-          { error: 'Organisation introuvable' },
-          { status: 404 }
-        )
+        return HttpResponse.json({ error: 'Organisation introuvable' }, { status: 404 })
       }
 
-      // Pour un super admin, on utilise le rôle ORG_ADMIN par défaut
       const adminRole = roles.find(r => r.orgId === orgId && r.code === 'ORG_ADMIN')
-      
       if (!adminRole) {
-        return HttpResponse.json(
-          { error: 'Rôle admin introuvable pour cette organisation' },
-          { status: 500 }
-        )
+        return HttpResponse.json({ error: 'Rôle admin introuvable' }, { status: 500 })
       }
 
-      // Nouveau token avec la nouvelle org
       const newToken = btoa(JSON.stringify({
         userId: currentUser.id,
         orgId: orgId,
@@ -457,10 +476,7 @@ export const authDemoHandlers = [
         organization: targetOrg
       })
     } catch (error) {
-      return HttpResponse.json(
-        { error: 'Token invalide' },
-        { status: 401 }
-      )
+      return HttpResponse.json({ error: 'Token invalide' }, { status: 401 })
     }
   }),
 
@@ -469,11 +485,10 @@ export const authDemoHandlers = [
     return HttpResponse.json({ success: true })
   }),
 
-  // Récupération des règles CASL pour une organisation
+  // Politique CASL
   http.get(`${env.VITE_API_BASE_URL}/auth/policy/:orgId`, ({ params }) => {
     const { orgId } = params
     
-    // Pour la démo, on retourne des règles basiques basées sur l'organisation
     const baseRules = [
       { action: 'read', subject: 'Organization', conditions: { id: orgId } },
       { action: 'read', subject: 'Event', conditions: { orgId } },

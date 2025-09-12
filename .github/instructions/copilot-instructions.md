@@ -2,6 +2,35 @@
 applyTo: '**'
 ---
 
+# 🎯 ATTENDEE EMS - PRODUCT SPECIFICATIONS
+
+## ⚠️ EXIGENCES PRODUIT COMMERCIAL
+
+**CETTE APPLICATION EST UN PRODUIT COMMERCIAL DESTINÉ À LA VENTE B2B.**
+
+### Qualité Production Requise
+- **ZÉRO TOLÉRANCE BUGS** : Chaque fonctionnalité doit être testée et fonctionnelle à 100%
+- **SÉCURITÉ RENFORCÉE** : Authentification JWT réelle, validation côté serveur, protection CSRF, headers sécurisés
+- **PERFORMANCES OPTIMALES** : Lazy loading, code splitting, mise en cache, métriques de performance
+- **MONITORING & LOGGING** : Système complet de logging d'erreurs pour la production
+- **TESTS EXHAUSTIFS** : Couverture E2E complète, tests d'intégration, validation RBAC en conditions réelles
+
+### Standards de Développement
+- **Architecture strictement respectée** (feature-sliced domain-driven)
+- **TypeScript strict mode** obligatoire
+- **Code propre et documenté** : commentaires, JSDoc, README complets
+- **Gestion d'erreurs robuste** : Error Boundaries, fallbacks, retry logic
+- **Accessibilité WCAG 2.1** : navigation clavier, screen readers, contraste
+- **Internationalisation production** : français/anglais, gestion des formats de dates/nombres
+
+### Déploiement & Infrastructure
+- **Configuration production** : HTTPS, CSP, variables d'environnement sécurisées
+- **Docker & CI/CD** : Prêt pour déploiement automatisé
+- **Scalabilité** : Architecture préparée pour montée en charge
+- **Backup & Recovery** : Stratégies de sauvegarde des données
+
+---
+
 BUT
 Créer un projet **React 18 + TypeScript + Vite** pour un Event Management System (EMS) B2B, avec :
 Redux Toolkit + RTK Query (state management + cache API)
@@ -238,3 +267,57 @@ GET /attendees/:id → Profil complet + historique
 POST /events/:eventId/register → Inscription (crée attendee si besoin)
 GET /events/:eventId/registrations → Inscriptions à l'événement
 PUT /registrations/:id/status → Changement statut inscription
+
+---
+
+## 🚀 ROADMAP PRODUCTION
+
+### Phase 1 : Sécurité & Authentification ⚡
+- [x] **CRITIQUE RÉSOLU** : Cache RTK Query vidé lors de la déconnexion (fuite de données corrigée)
+- [ ] Remplacer MSW par authentification JWT réelle
+- [ ] Validation Zod complète côté serveur
+- [ ] Protection CSRF et headers de sécurité
+- [ ] Gestion des refresh tokens
+- [ ] Rate limiting et protection DDoS
+
+### Phase 2 : Qualité & Monitoring 📊
+- [ ] Error Boundaries React dans tous les providers
+- [ ] Système de logging d'erreurs Sentry/LogRocket
+- [ ] Métriques de performance (Core Web Vitals)
+- [ ] Tests E2E exhaustifs avec Playwright
+- [ ] Tests d'intégration RTK Query
+
+### Phase 3 : Performance & Scalabilité ⚡
+- [ ] Lazy loading des routes et features
+- [ ] Code splitting optimisé (Vite bundles)
+- [ ] Cache Strategy avancée (RTK Query + Service Worker)
+- [ ] Optimisation images et assets
+- [ ] Compression et minification production
+
+### Phase 4 : Déploiement & Infrastructure 🏗️
+- [ ] Configuration HTTPS et SSL
+- [ ] Content Security Policy (CSP)
+- [ ] Variables d'environnement sécurisées
+- [ ] Docker multi-stage builds
+- [ ] CI/CD Pipeline (GitHub Actions)
+- [ ] Health checks et monitoring
+
+### Phase 5 : UX & Accessibilité ♿
+- [ ] Validation WCAG 2.1 complète
+- [ ] Navigation clavier optimale
+- [ ] Support screen readers
+- [ ] Tests utilisateurs et optimisation UX
+- [ ] Thèmes et préférences utilisateur
+
+**PRINCIPE : Chaque phase doit être 100% fonctionnelle avant passage à la suivante.**
+
+---
+
+## 🔧 CORRECTIONS CRITIQUES APPLIQUÉES
+
+### ✅ Cache RTK Query après Déconnexion (RÉSOLU)
+- **Problème** : Données persistantes après logout, violation sécurité
+- **Solution** : `resetApiState()` pour authApi, eventsApi, attendeesApi
+- **Impact** : Isolation complète des sessions utilisateur
+- **Fichier** : `src/widgets/Header/index.tsx`
+- **Documentation** : `docs/LOGOUT_CACHE_FIX.md`

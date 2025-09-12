@@ -2,174 +2,32 @@ import { http, HttpResponse } from 'msw'
 import { env } from '@/app/config/env'
 import type { EventDTO } from '@/features/events/dpo/event.dto'
 import type { AttendeeDTO } from '@/features/attendees/dpo/attendee.dto'
-import { authDemoHandlers, users } from './auth-demo'
+import { authDemoHandlers, users, events as demoEvents } from './auth-demo'
 
-console.log('📋 Nombre de handlers de démo importés:', authDemoHandlers.length)
+console.log('📋 Nouveaux handlers de démo importés:', authDemoHandlers.length)
+console.log('🎯 Événements demo chargés:', demoEvents.length)
+console.log('📝 Liste des événements:', demoEvents.map(e => ({ id: e.id, title: e.title, org: e.org_id })))
 
-// Mock data
-const mockEvents: EventDTO[] = [
-  {
-    id: 'event-1',
-    name: 'Conférence Tech 2024',
-    description: 'Une conférence sur les dernières technologies web et mobiles',
-    start_date: '2024-06-15T09:00:00Z',
-    end_date: '2024-06-15T18:00:00Z',
-    location: 'Centre de Conférences Paris',
-    max_attendees: 200,
-    current_attendees: 150,
-    status: 'active',
-    org_id: 'org-1',
-    created_at: '2024-01-15T10:00:00Z',
-    updated_at: '2024-01-20T14:30:00Z',
-    created_by: '1',
-    tags: ['tech', 'conference', 'web'],
-  },
-  {
-    id: 'event-2',
-    name: 'Workshop React',
-    description: 'Atelier pratique sur React et TypeScript pour débutants',
-    start_date: '2024-07-10T14:00:00Z',
-    end_date: '2024-07-10T17:00:00Z',
-    location: 'Salle de Formation A',
-    max_attendees: 30,
-    current_attendees: 25,
-    status: 'published',
-    org_id: 'org-1',
-    created_at: '2024-02-01T09:00:00Z',
-    updated_at: '2024-02-05T11:00:00Z',
-    created_by: '1',
-    tags: ['workshop', 'react', 'typescript'],
-  },
-  {
-    id: 'event-3',
-    name: 'Meetup DevOps',
-    description: 'Rencontre mensuelle des professionnels DevOps',
-    start_date: '2024-08-20T19:00:00Z',
-    end_date: '2024-08-20T21:30:00Z',
-    location: 'Espace Coworking Lyon',
-    max_attendees: 50,
-    current_attendees: 12,
-    status: 'published',
-    org_id: 'org-1',
-    created_at: '2024-02-15T16:00:00Z',
-    updated_at: '2024-02-15T16:00:00Z',
-    created_by: '1',
-    tags: ['meetup', 'devops', 'networking'],
-  },
-  {
-    id: 'event-4',
-    name: 'Formation Sécurité Web',
-    description: 'Formation intensive sur la sécurité des applications web',
-    start_date: '2024-09-25T09:00:00Z',
-    end_date: '2024-09-27T17:00:00Z',
-    location: 'Centre de Formation Marseille',
-    max_attendees: 20,
-    current_attendees: 18,
-    status: 'draft',
-    org_id: 'org-1',
-    created_at: '2024-03-01T11:00:00Z',
-    updated_at: '2024-03-10T15:30:00Z',
-    created_by: '1',
-    tags: ['formation', 'security', 'web'],
-  },
-  {
-    id: 'event-5',
-    name: 'Hackathon AI 2024',
-    description: 'Compétition de développement sur l\'intelligence artificielle',
-    start_date: '2024-10-15T09:00:00Z',
-    end_date: '2024-10-17T18:00:00Z',
-    location: 'Campus Université Toulouse',
-    max_attendees: 100,
-    current_attendees: 87,
-    status: 'active',
-    org_id: 'org-1',
-    created_at: '2024-03-15T14:00:00Z',
-    updated_at: '2024-04-01T09:30:00Z',
-    created_by: '1',
-    tags: ['hackathon', 'ai', 'competition'],
-  },
-  // Événements Creative Agency - Tests isolation partenaires
-  {
-    id: 'event-tech-1',
-    name: 'Workshop React Native',
-    description: 'Atelier développement mobile avec React Native',
-    start_date: '2024-11-15T09:00:00Z',
-    end_date: '2024-11-15T17:00:00Z',
-    location: 'Creative Agency - Salle Tech',
-    max_attendees: 25,
-    current_attendees: 15,
-    status: 'published',
-    org_id: 'org-2',
-    created_at: '2024-04-01T10:00:00Z',
-    updated_at: '2024-04-01T10:00:00Z',
-    created_by: 'user-2-admin',
-    tags: ['tech', 'mobile', 'react'],
-  },
-  {
-    id: 'event-tech-2',
-    name: 'Conférence DevOps & Cloud',
-    description: 'Dernières tendances en DevOps et infrastructure cloud',
-    start_date: '2024-12-05T14:00:00Z',
-    end_date: '2024-12-05T18:00:00Z',
-    location: 'Creative Agency - Auditorium',
-    max_attendees: 100,
-    current_attendees: 78,
-    status: 'published',
-    org_id: 'org-2',
-    created_at: '2024-04-02T11:00:00Z',
-    updated_at: '2024-04-02T11:00:00Z',
-    created_by: 'user-2-admin',
-    tags: ['tech', 'devops', 'cloud'],
-  },
-  {
-    id: 'event-design-1',
-    name: 'Atelier UX Design Thinking',
-    description: 'Méthodes de design thinking appliquées à l\'UX',
-    start_date: '2024-11-20T10:00:00Z',
-    end_date: '2024-11-20T16:00:00Z',
-    location: 'Creative Agency - Studio Design',
-    max_attendees: 20,
-    current_attendees: 18,
-    status: 'published',
-    org_id: 'org-2',
-    created_at: '2024-04-03T09:00:00Z',
-    updated_at: '2024-04-03T09:00:00Z',
-    created_by: 'user-2-admin',
-    tags: ['design', 'ux', 'thinking'],
-  },
-  {
-    id: 'event-design-2',
-    name: 'Masterclass UI Animation',
-    description: 'Techniques avancées d\'animation d\'interfaces',
-    start_date: '2024-12-10T13:00:00Z',
-    end_date: '2024-12-10T17:00:00Z',
-    location: 'Creative Agency - Lab Animation',
-    max_attendees: 15,
-    current_attendees: 12,
-    status: 'published',
-    org_id: 'org-2',
-    created_at: '2024-04-04T14:00:00Z',
-    updated_at: '2024-04-04T14:00:00Z',
-    created_by: 'user-2-admin',
-    tags: ['design', 'ui', 'animation'],
-  },
-  {
-    id: 'event-shared-1',
-    name: 'Creative & Tech Summit',
-    description: 'Conférence commune design et développement',
-    start_date: '2024-12-15T09:00:00Z',
-    end_date: '2024-12-15T18:00:00Z',
-    location: 'Creative Agency - Grand Amphithéâtre',
-    max_attendees: 200,
-    current_attendees: 145,
-    status: 'published',
-    org_id: 'org-2',
-    created_at: '2024-04-05T08:00:00Z',
-    updated_at: '2024-04-05T08:00:00Z',
-    created_by: 'user-2-admin',
-    tags: ['tech', 'design', 'collaboration'],
-  },
-]
+// Conversion des événements demo vers EventDTO
+const mockEvents: EventDTO[] = demoEvents.map(event => ({
+  id: event.id,
+  name: event.title,
+  description: event.description,
+  start_date: event.startDate,
+  end_date: event.endDate,
+  location: event.location,
+  max_attendees: event.maxAttendees,
+  current_attendees: Math.floor(event.maxAttendees * 0.7), // 70% de remplissage par défaut
+  status: event.status as 'active' | 'published' | 'draft',
+  org_id: event.org_id,
+  created_at: '2024-01-01T10:00:00Z',
+  updated_at: '2024-01-01T10:00:00Z',
+  created_by: '1',
+  tags: [event.category]
+}))
+
+console.log('🔄 Événements mockEvents après conversion:', mockEvents.length)
+console.log('📋 Mock events détails:', mockEvents.map(e => ({ id: e.id, name: e.name, org_id: e.org_id })))
 
 const mockAttendees: AttendeeDTO[] = [
   {
@@ -277,20 +135,42 @@ export const handlers = [
       // Recherche de l'utilisateur dans nos données de démo
       const currentUser = users.find(u => u.id === payload.userId)
       
+      console.log('🔍 Handler getEvents appelé:')
+      console.log('- Token payload:', payload)
+      console.log('- Utilisateur trouvé:', currentUser?.firstName, currentUser?.lastName)
+      console.log('- Événements totaux disponibles:', mockEvents.length)
+      
       let filteredEvents = mockEvents
       
       // Filtrage selon le rôle utilisateur
       if (currentUser) {
-        // Filtrer par organisation d'abord
-        filteredEvents = mockEvents.filter(event => event.org_id === currentUser.orgId)
+        console.log('- Rôle utilisateur:', currentUser.role.code)
+        console.log('- Organisation:', currentUser.orgId)
+        console.log('- EventIds:', currentUser.eventIds)
         
-        // Filtrage spécifique pour les partenaires avec eventIds
-        if (currentUser.eventIds && currentUser.eventIds.length > 0) {
-          filteredEvents = filteredEvents.filter(event => 
-            currentUser.eventIds!.includes(event.id)
-          )
+        // Super Admin voit tous les événements
+        if (currentUser.isSuperAdmin) {
+          filteredEvents = mockEvents
+          console.log('✅ Super Admin - tous les événements:', filteredEvents.length)
+        } else {
+          // Filtrer par organisation d'abord pour les utilisateurs normaux
+          filteredEvents = mockEvents.filter(event => event.org_id === currentUser.orgId)
+          console.log('📂 Après filtrage par org:', filteredEvents.length, 'événements')
+          
+          // Filtrage spécifique pour les utilisateurs avec eventIds restreints
+          // MAIS les admins d'organisation voient tout dans leur org
+          if (currentUser.eventIds && currentUser.eventIds.length > 0 && currentUser.role.code !== 'ORG_ADMIN') {
+            filteredEvents = filteredEvents.filter(event => 
+              currentUser.eventIds!.includes(event.id)
+            )
+            console.log('🎯 Après filtrage par eventIds:', filteredEvents.length, 'événements')
+          }
         }
+      } else {
+        console.log('❌ Aucun utilisateur trouvé')
       }
+      
+      console.log('📤 Événements retournés:', filteredEvents.map(e => ({ id: e.id, name: e.name })))
       
       return HttpResponse.json({
         events: filteredEvents,

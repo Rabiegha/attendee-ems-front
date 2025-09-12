@@ -1,13 +1,16 @@
 import type { AppRule } from '../app-ability'
 
 export type UserRole = 
+  | 'SUPER_ADMIN'
   | 'ORG_ADMIN'
   | 'ORG_MANAGER' 
   | 'EVENT_MANAGER'
+  | 'DEVELOPER'
+  | 'GRAPHIC_DESIGNER'
+  | 'JOURNALIST'
+  | 'EDITOR'
   | 'CHECKIN_STAFF'
   | 'PARTNER'
-  | 'PARTNER_TECH'
-  | 'PARTNER_DESIGN'
   | 'READONLY'
 
 export interface RoleContext {
@@ -26,6 +29,12 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
   const { orgId, eventIds = [] } = ctx
 
   switch (role) {
+    case 'SUPER_ADMIN':
+      return [
+        // Accès total à tout
+        { action: 'manage', subject: 'all' },
+      ]
+
     case 'ORG_ADMIN':
       return [
         // Organization admin can manage everything in their organization
@@ -83,15 +92,45 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
         { action: 'print', subject: 'Badge', conditions: { eventId: { $in: eventIds }, orgId } },
       ]
 
-    case 'PARTNER':
-    case 'PARTNER_TECH':
-    case 'PARTNER_DESIGN':
+    case 'DEVELOPER':
       return [
-        // Can read events they're partnered with
+        // Accès aux projets de développement
         { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
-        // Can read attendees (limited fields)
         { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email', 'status'] },
-        // Can invite attendees
+        { action: 'create', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId } },
+        { action: 'invite', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId } },
+      ]
+
+    case 'GRAPHIC_DESIGNER':
+      return [
+        // Accès aux projets de design graphique
+        { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
+        { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email', 'status'] },
+        { action: 'create', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId } },
+        { action: 'invite', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId } },
+      ]
+
+    case 'JOURNALIST':
+      return [
+        // Accès aux projets de journalisme
+        { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
+        { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email'] },
+        { action: 'export', subject: 'Report', conditions: { eventId: { $in: eventIds }, orgId } },
+      ]
+
+    case 'EDITOR':
+      return [
+        // Accès aux projets éditoriaux
+        { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
+        { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email'] },
+        { action: 'export', subject: 'Report', conditions: { eventId: { $in: eventIds }, orgId } },
+      ]
+
+    case 'PARTNER':
+      return [
+        // Accès partenaire standard
+        { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds }, orgId } },
+        { action: 'read', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId }, fields: ['id', 'firstName', 'lastName', 'email', 'status'] },
         { action: 'invite', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId } },
         { action: 'create', subject: 'Attendee', conditions: { eventId: { $in: eventIds }, orgId } },
       ]

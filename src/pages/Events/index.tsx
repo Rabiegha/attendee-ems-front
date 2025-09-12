@@ -1,9 +1,7 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
-import { selectUser, selectUserRoles } from '@/features/auth/model/sessionSlice'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
@@ -29,8 +27,6 @@ interface EventsPageProps {}
 
 export const EventsPage: React.FC<EventsPageProps> = () => {
   const { t } = useTranslation(['events', 'common'])
-  const user = useSelector(selectUser)
-  const userRoles = useSelector(selectUserRoles)
   
   // État pour les modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -64,25 +60,8 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
   const { data: events = [], isLoading, error } = useGetEventsQuery(queryParams)
 
-  // Filtrage des événements selon les permissions utilisateur
-  const filteredEvents = useMemo(() => {
-    if (!events || !user) return []
-    
-    return events.filter(event => {
-      // Si l'utilisateur est ORG_ADMIN ou ORG_MANAGER, il voit tous les événements de l'org
-      if (userRoles.includes('ORG_ADMIN') || userRoles.includes('ORG_MANAGER')) {
-        return event.orgId === user.orgId
-      }
-      
-      // Pour les autres rôles, vérifier les événements assignés
-      if (user.eventIds && user.eventIds.includes(event.id)) {
-        return true
-      }
-      
-      // Pour les événements publics ou si l'utilisateur a des droits de lecture globaux
-      return event.status === 'published' && event.orgId === user.orgId
-    })
-  }, [events, user, userRoles])
+  // Pas de filtrage côté client - l'API fait déjà le bon filtrage selon les permissions
+  const filteredEvents = events
 
   const handleCreateEvent = () => {
     setIsCreateModalOpen(true)

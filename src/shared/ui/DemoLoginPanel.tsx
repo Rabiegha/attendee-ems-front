@@ -48,7 +48,7 @@ export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }
   return (
     <div className={`p-6 bg-gray-50 border border-gray-200 rounded-lg ${className}`}>
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        🧪 Comptes de Démo Multi-Organisations
+        Comptes de Démo Multi-Organisations
       </h3>
       
       <p className="text-sm text-gray-600 mb-4">
@@ -80,16 +80,11 @@ export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }
         ))}
       </div>
 
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-        <p className="text-xs text-blue-700">
-          <strong>💡 Astuce :</strong> Le Super Admin peut naviguer entre toutes les organisations. 
-          Les autres utilisateurs sont limités à leur organisation respective.
-        </p>
-      </div>
+
 
       <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
         <p className="text-xs text-yellow-700">
-          <strong>🔑 Mot de passe :</strong> Tous les comptes utilisent le mot de passe <code className="font-mono bg-yellow-100 px-1 rounded">demo123</code>
+          Tous les comptes utilisent le mot de passe <code className="font-mono bg-yellow-100 px-1 rounded">demo123</code>
         </p>
       </div>
     </div>

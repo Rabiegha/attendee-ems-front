@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { LogOut, User } from 'lucide-react'
 import { selectUser, selectOrganization, clearSession } from '@/features/auth/model/sessionSlice'
+import { authApi } from '@/features/auth/api/authApi'
+import { eventsApi } from '@/features/events/api/eventsApi'
+import { attendeesApi } from '@/features/attendees/api/attendeesApi'
 import { Button } from '@/shared/ui/Button'
 // import { Can } from '@/shared/acl/guards/Can'
 
@@ -14,7 +17,16 @@ export const Header: React.FC = () => {
   const organization = useSelector(selectOrganization)
 
   const handleLogout = () => {
+    // 1. Nettoyer la session utilisateur
     dispatch(clearSession())
+    
+    // 2. Vider TOUS les caches RTK Query pour éviter les données persistantes
+    dispatch(authApi.util.resetApiState())
+    dispatch(eventsApi.util.resetApiState())
+    dispatch(attendeesApi.util.resetApiState())
+    
+    // 3. Optionnel: appeler l'endpoint logout (pour invalider le token côté serveur)
+    // Note: On ne fait pas de mutation ici car ça pourrait créer des erreurs si l'API est down
   }
 
   return (

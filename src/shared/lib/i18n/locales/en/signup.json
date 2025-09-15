@@ -1,0 +1,68 @@
+{
+  "signup": {
+    "title": "Complete your registration",
+    "subtitle": "Complete your profile to activate your account",
+    "form": {
+      "email": "Email address",
+      "emailHint": "This email address cannot be modified",
+      "firstName": "First name",
+      "lastName": "Last name", 
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "phone": "Phone",
+      "phoneHint": "Optional - French format expected",
+      "acceptTerms": "I accept the terms of use and privacy policy",
+      "submit": "Create my account",
+      "submitting": "Creating account..."
+    },
+    "password": {
+      "strength": {
+        "veryWeak": "Very weak",
+        "weak": "Weak", 
+        "medium": "Medium",
+        "strong": "Strong",
+        "veryStrong": "Very strong"
+      },
+      "requirements": "Password must contain at least 8 characters with uppercase, lowercase, numbers and special characters."
+    },
+    "invitation": {
+      "valid": "Valid invitation",
+      "invitedBy": "Invited by",
+      "organization": "Organization",
+      "expiresOn": "Expires on",
+      "expiringSoon": "Expiring soon"
+    },
+    "errors": {
+      "invalidToken": {
+        "title": "Invalid invitation",
+        "message": "This invitation link is not valid or has been corrupted."
+      },
+      "tokenExpired": {
+        "title": "Invitation expired", 
+        "message": "This invitation has expired. Request a new invitation from your administrator."
+      },
+      "emailMismatch": {
+        "title": "Security error",
+        "message": "An inconsistency has been detected. Please contact your administrator."
+      },
+      "userAlreadyActive": {
+        "title": "Account already activated",
+        "message": "This account has already been created. You can log in directly."
+      },
+      "invitationUsed": {
+        "title": "Invitation already used",
+        "message": "This invitation has already been used to create an account."
+      }
+    },
+    "actions": {
+      "login": "Log in",
+      "requestNewInvitation": "Request new invitation",
+      "backToHome": "Back to home",
+      "contactSupport": "Contact support"
+    },
+    "loading": {
+      "validating": "Validating your invitation...",
+      "creating": "Creating account..."
+    }
+  }
+}

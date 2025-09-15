@@ -594,4 +594,124 @@ export const handlers = [
       })
     ]
   })(),
+
+  // =====================================================
+  // 🔐 HANDLERS SIGNUP SÉCURISÉ
+  // =====================================================
+
+  // Validation de token d'invitation
+  http.get(`${env.VITE_API_BASE_URL}/auth/signup/:token/validate`, ({ params }) => {
+    console.log('🔍 Validation token signup:', params.token)
+    
+    const { token } = params
+    
+    // Simuler différents cas d'erreur selon le token
+    if (token === 'expired-token') {
+      return HttpResponse.json({
+        valid: false,
+        error: {
+          type: 'TOKEN_EXPIRED',
+          message: 'Cette invitation a expiré'
+        }
+      })
+    }
+    
+    if (token === 'invalid-token') {
+      return HttpResponse.json({
+        valid: false,
+        error: {
+          type: 'INVALID_TOKEN', 
+          message: 'Token invalide'
+        }
+      })
+    }
+    
+    if (token === 'used-token') {
+      return HttpResponse.json({
+        valid: false,
+        error: {
+          type: 'INVITATION_USED',
+          message: 'Invitation déjà utilisée'
+        }
+      })
+    }
+
+    // Token valide - Retourner les infos d'invitation
+    return HttpResponse.json({
+      valid: true,
+      invitation: {
+        id: 'invitation-123',
+        email: 'nouveau@example.com',
+        role: 'EVENT_MANAGER',
+        orgId: 'org-choyou',
+        orgName: 'Choyou',
+        invitedBy: 'user-choyou-admin',
+        invitedByName: 'Fred Ktorza',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 jours
+        isExpired: false
+      }
+    })
+  }),
+
+  // Complétion de l'inscription
+  http.post(`${env.VITE_API_BASE_URL}/auth/signup/:token`, async ({ params, request }) => {
+    console.log('📝 Complétion signup:', params.token)
+    
+    const { token } = params
+    const body = await request.json() as {
+      firstName: string
+      lastName: string
+      password: string
+      phone?: string
+    }
+
+    // Simuler validation du token
+    if (token === 'expired-token' || token === 'invalid-token') {
+      return HttpResponse.json(
+        { 
+          error: 'Token invalide ou expiré',
+          type: 'INVALID_TOKEN'
+        },
+        { status: 400 }
+      )
+    }
+
+    // Créer le nouvel utilisateur activé
+    const newUser = {
+      id: `user-${Date.now()}`,
+      email: 'nouveau@example.com',
+      firstName: body.firstName,
+      lastName: body.lastName,
+      roles: ['EVENT_MANAGER'],
+      orgId: 'org-choyou',
+      eventIds: [],
+      isSuperAdmin: false,
+      isActive: true,
+      profileCompleted: true
+    }
+
+    // Simuler JWT token
+    const authToken = btoa(JSON.stringify({
+      userId: newUser.id,
+      orgId: newUser.orgId,
+      role: 'EVENT_MANAGER',
+      exp: Date.now() + 24 * 60 * 60 * 1000
+    }))
+
+    console.log('✅ Compte créé et activé:', newUser)
+
+    return HttpResponse.json({
+      success: true,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: 'EVENT_MANAGER',
+        orgId: newUser.orgId
+      },
+      token: authToken,
+      message: 'Compte créé avec succès'
+    })
+  }),
 ]

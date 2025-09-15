@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { setupListeners } from '@reduxjs/toolkit/query'
 import { authApi } from '@/features/auth/api/authApi'
+import { signupApi } from '@/features/auth/api/signupApi'
 import { eventsApi } from '@/features/events/api/eventsApi'
 import { attendeesApi } from '@/features/attendees/api/attendeesApi'
 import { invitationsApi } from '@/features/invitations/api/invitationsApi'
@@ -13,6 +14,7 @@ export const store = configureStore({
   reducer: {
     // RTK Query APIs
     [authApi.reducerPath]: authApi.reducer,
+    [signupApi.reducerPath]: signupApi.reducer,
     [eventsApi.reducerPath]: eventsApi.reducer,
     [attendeesApi.reducerPath]: attendeesApi.reducer,
     [invitationsApi.reducerPath]: invitationsApi.reducer,
@@ -36,6 +38,8 @@ export const store = configureStore({
           'eventsApi/executeMutation/fulfilled',
           'attendeesApi/executeQuery/fulfilled',
           'attendeesApi/executeMutation/fulfilled',
+          'signupApi/executeQuery/fulfilled',
+          'signupApi/executeMutation/fulfilled',
         ],
         ignoredActionsPaths: [
           'meta.arg',
@@ -48,10 +52,12 @@ export const store = configureStore({
           'eventsApi',
           'attendeesApi',
           'authApi',
+          'signupApi',
         ],
       },
     })
       .concat(authApi.middleware)
+      .concat(signupApi.middleware)
       .concat(eventsApi.middleware)
       .concat(attendeesApi.middleware)
       .concat(invitationsApi.middleware),

@@ -31,6 +31,29 @@ applyTo: '**'
 
 ---
 
+## 🔐 WORKFLOW DE CRÉATION D'UTILISATEUR - RÈGLE CRITIQUE
+
+**⚠️ RÈGLE ABSOLUE : AUCUN UTILISATEUR NE PEUT SE CRÉER UN COMPTE DIRECTEMENT**
+
+### Processus Obligatoire :
+1. **Admin invite** → Saisie email + rôle + organisation
+2. **User créé en DB** → `isActive: false`, `profileCompleted: false`, `invitationId`
+3. **Email envoyé** → Lien `/signup/{token}` avec expiration
+4. **Validation token** → Vérification token + email correspondent
+5. **Complétion profil** → Formulaire prénom/nom/mot de passe
+6. **Activation compte** → `isActive: true`, `profileCompleted: true`
+
+### Sécurités Implémentées :
+- 🔐 Token unique UUID par invitation
+- ⏰ Expiration automatique (7 jours)
+- 📧 Vérification email obligatoire  
+- 🚫 Aucune création directe possible
+- 🛡️ Validation multi-niveau (token/email/user)
+
+**Documentation complète : `docs/USER_CREATION_WORKFLOW.md`**
+
+---
+
 BUT
 Créer un projet **React 18 + TypeScript + Vite** pour un Event Management System (EMS) B2B, avec :
 Redux Toolkit + RTK Query (state management + cache API)

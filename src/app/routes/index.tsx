@@ -13,6 +13,8 @@ import { EventsPage } from '@/pages/Events'
 import { EventDetails } from '@/pages/EventDetails'
 import { Attendees } from '@/pages/Attendees'
 import { LoginPage } from '@/pages/Login'
+import { SignupPage } from '@/pages/Signup'
+import { SignupTestPage } from '@/pages/SignupTest'
 import { ForbiddenPage } from '@/pages/Forbidden'
 import { NotFoundPage } from '@/pages/NotFound'
 
@@ -74,6 +76,10 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: '/signup-test',
+    element: <SignupTestPage />,
+  },
+  {
     path: '/auth',
     element: <AuthLayout />,
     children: [
@@ -82,6 +88,10 @@ export const router = createBrowserRouter([
         element: <LoginPage />,
       },
     ],
+  },
+  {
+    path: '/signup/:token',
+    element: <SignupPage />,
   },
   {
     path: '/login',

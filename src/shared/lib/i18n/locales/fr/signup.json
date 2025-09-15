@@ -1,0 +1,68 @@
+{
+  "signup": {
+    "title": "Finaliser votre inscription",
+    "subtitle": "Complétez votre profil pour activer votre compte",
+    "form": {
+      "email": "Adresse email",
+      "emailHint": "Cette adresse email ne peut pas être modifiée",
+      "firstName": "Prénom",
+      "lastName": "Nom de famille", 
+      "password": "Mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "phone": "Téléphone",
+      "phoneHint": "Optionnel - Format français attendu",
+      "acceptTerms": "J'accepte les conditions d'utilisation et la politique de confidentialité",
+      "submit": "Créer mon compte",
+      "submitting": "Création du compte..."
+    },
+    "password": {
+      "strength": {
+        "veryWeak": "Très faible",
+        "weak": "Faible", 
+        "medium": "Moyen",
+        "strong": "Fort",
+        "veryStrong": "Très fort"
+      },
+      "requirements": "Le mot de passe doit contenir au moins 8 caractères avec majuscules, minuscules, chiffres et caractères spéciaux."
+    },
+    "invitation": {
+      "valid": "Invitation valide",
+      "invitedBy": "Invité par",
+      "organization": "Organisation",
+      "expiresOn": "Expire le",
+      "expiringSoon": "Expire bientôt"
+    },
+    "errors": {
+      "invalidToken": {
+        "title": "Invitation invalide",
+        "message": "Ce lien d'invitation n'est pas valide ou a été corrompu."
+      },
+      "tokenExpired": {
+        "title": "Invitation expirée", 
+        "message": "Cette invitation a expiré. Demandez une nouvelle invitation à votre administrateur."
+      },
+      "emailMismatch": {
+        "title": "Erreur de sécurité",
+        "message": "Une incohérence a été détectée. Veuillez contacter votre administrateur."
+      },
+      "userAlreadyActive": {
+        "title": "Compte déjà activé",
+        "message": "Ce compte a déjà été créé. Vous pouvez vous connecter directement."
+      },
+      "invitationUsed": {
+        "title": "Invitation déjà utilisée",
+        "message": "Cette invitation a déjà été utilisée pour créer un compte."
+      }
+    },
+    "actions": {
+      "login": "Se connecter",
+      "requestNewInvitation": "Demander une nouvelle invitation",
+      "backToHome": "Retour à l'accueil",
+      "contactSupport": "Contacter le support"
+    },
+    "loading": {
+      "validating": "Validation de votre invitation...",
+      "creating": "Création du compte..."
+    }
+  }
+}

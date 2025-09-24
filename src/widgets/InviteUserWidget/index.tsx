@@ -19,17 +19,17 @@ export const InviteUserWidget: React.FC = () => {
 
   return (
     <Can do="invite" on="User">
-      <div className="bg-white rounded-lg border p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <UserPlus className="h-8 w-8 text-blue-600" />
+              <UserPlus className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="ml-4">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Gestion des utilisateurs
               </h3>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Créez de nouveaux utilisateurs dans votre organisation
               </p>
             </div>
@@ -41,32 +41,32 @@ export const InviteUserWidget: React.FC = () => {
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
               <div className="flex items-center justify-center">
-                <Users className="h-5 w-5 text-gray-400 mr-1" />
-                <span className="text-2xl font-bold text-gray-900">{stats.total}</span>
+                <Users className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-1" />
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</span>
               </div>
-              <p className="text-xs text-gray-500">Total utilisateurs</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Total utilisateurs</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center">
                 <CheckCircle className="h-5 w-5 text-green-400 mr-1" />
-                <span className="text-2xl font-bold text-green-600">{stats.active}</span>
+                <span className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.active}</span>
               </div>
-              <p className="text-xs text-gray-500">Actifs</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Actifs</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center">
                 <XCircle className="h-5 w-5 text-red-400 mr-1" />
-                <span className="text-2xl font-bold text-red-600">{stats.inactive}</span>
+                <span className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.inactive}</span>
               </div>
-              <p className="text-xs text-gray-500">Inactifs</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Inactifs</p>
             </div>
           </div>
         )}
 
         {/* Description */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">Création d'utilisateur</h4>
-          <p className="text-sm text-blue-700">
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 mb-6 transition-colors duration-200">
+          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Création d'utilisateur</h4>
+          <p className="text-sm text-blue-700 dark:text-blue-400">
             Créez directement des comptes utilisateur avec email et mot de passe. 
             Les utilisateurs peuvent se connecter immédiatement.
           </p>

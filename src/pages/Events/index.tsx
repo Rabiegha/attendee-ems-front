@@ -120,10 +120,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       </div>
 
       {/* Filtres et recherche */}
-      <div className="bg-white p-6 rounded-lg border space-y-4">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4 transition-colors duration-200">
         <div className="flex items-center space-x-4">
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
             <Input
               type="text"
               placeholder="Rechercher des événements..."
@@ -136,7 +136,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
           >
             <option value="all">Tous les statuts</option>
             <option value="draft">Brouillon</option>
@@ -166,12 +166,12 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
       {/* Liste des événements */}
       {filteredEvents.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border">
-          <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-4 text-lg font-medium text-gray-900">
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+          <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
             Aucun événement trouvé
           </h3>
-          <p className="mt-2 text-gray-500">
+          <p className="mt-2 text-gray-500 dark:text-gray-400">
             {searchQuery 
               ? "Aucun événement ne correspond à votre recherche."
               : "Commencez par créer votre premier événement."
@@ -189,11 +189,11 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
           {filteredEvents.map((event) => (
             <div
               key={event.id}
-              className="bg-white rounded-lg border shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
                     {event.name}
                   </h3>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
@@ -202,12 +202,12 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 </div>
                 
                 {event.description && (
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
                     {event.description}
                   </p>
                 )}
                 
-                <div className="space-y-2 text-sm text-gray-500">
+                <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
                   <div className="flex items-center">
                     <Clock className="h-4 w-4 mr-2" />
                     <span>{formatDateForDisplay(event.startDate)}</span>
@@ -233,7 +233,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                     {event.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
+                        className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                       >
                         {tag}
                       </span>

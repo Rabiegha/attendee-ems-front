@@ -39,10 +39,10 @@ export const Attendees: React.FC = () => {
 
       <AttendeeFilters />
 
-      <div className="bg-white rounded-lg border">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
         {error ? (
           <div className="p-6 text-center">
-            <p className="text-red-600">Erreur lors du chargement des participants</p>
+            <p className="text-red-600 dark:text-red-400">Erreur lors du chargement des participants</p>
           </div>
         ) : (
           <AttendeeTable attendees={attendees} isLoading={isLoading} />

@@ -67,7 +67,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoadi
 
   if (attendees.length === 0) {
     return (
-      <div className="p-6 text-center text-gray-500">
+      <div className="p-6 text-center text-gray-500 dark:text-gray-400">
         <p>Aucun participant trouvé</p>
       </div>
     )
@@ -75,40 +75,40 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoadi
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Participant
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Contact
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Entreprise
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Statut
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Inscription
             </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors duration-200">
           {attendees.map((attendee) => (
-            <tr key={attendee.id} className="hover:bg-gray-50">
+            <tr key={attendee.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                   <div>
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                       {attendee.displayName}
                     </div>
                     {attendee.jobTitle && (
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
                         {attendee.jobTitle}
                       </div>
                     )}
@@ -116,12 +116,12 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoadi
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{attendee.email}</div>
+                <div className="text-sm text-gray-900 dark:text-white">{attendee.email}</div>
                 {attendee.phone && (
-                  <div className="text-sm text-gray-500">{attendee.phone}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{attendee.phone}</div>
                 )}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                 {attendee.company || '-'}
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
@@ -132,7 +132,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoadi
                   </span>
                 </div>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {formatDate(attendee.registrationDate)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

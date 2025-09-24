@@ -22,6 +22,17 @@ applyTo: '**'
 - **Gestion d'erreurs robuste** : Error Boundaries, fallbacks, retry logic
 - **Accessibilité WCAG 2.1** : navigation clavier, screen readers, contraste
 - **Internationalisation production** : français/anglais, gestion des formats de dates/nombres
+- **🌙 DARK MODE OBLIGATOIRE** : Toute nouvelle page, composant, modal, popup doit inclure le support complet du dark mode avec classes `dark:` et transitions fluides
+
+### Règles Dark Mode - OBLIGATOIRES
+- ✅ **Chaque élément UI** doit avoir ses variants `dark:` (bg, text, border, etc.)
+- ✅ **Transitions fluides** : `transition-colors duration-200` sur tous les containers
+- ✅ **Cohérence visuelle** : respecter la palette existante (gray-800/700 pour les fonds, white/gray-200 pour les textes)
+- ✅ **Tests visuels** : vérifier le rendu dans les deux modes avant validation
+- ✅ **Loading states** : skeletons adaptés avec `dark:bg-gray-600`
+- ✅ **Empty states** : icônes et textes avec variants dark
+- ✅ **Form elements** : inputs, selects, boutons avec support complet
+- ✅ **Modals/Popups** : backdrop et contenu avec thème approprié
 
 ### Déploiement & Infrastructure
 - **Configuration production** : HTTPS, CSP, variables d'environnement sécurisées
@@ -233,6 +244,39 @@ Story pour Button (shared/ui/Button)
 Story pour EventCard
 Addon a11y, controls
 
+DARK MODE - RÈGLES STRICTES
+**⚠️ OBLIGATOIRE : CHAQUE NOUVEAU COMPOSANT DOIT SUPPORTER LE DARK MODE**
+
+SYSTÈME IMPLÉMENTÉ :
+- ThemeProvider global avec persistance localStorage
+- useThemeContext() hook pour accéder au thème
+- ThemeToggle composant (modes : light, dark, system)
+- Classes CSS : `dark:` variants pour tous les éléments
+
+RÈGLES DE DÉVELOPPEMENT :
+1. **Container backgrounds** : `bg-white dark:bg-gray-800`
+2. **Text colors** : `text-gray-900 dark:text-white` (headings), `text-gray-600 dark:text-gray-300` (body)
+3. **Borders** : `border-gray-200 dark:border-gray-700`
+4. **Transitions** : `transition-colors duration-200` OBLIGATOIRE
+5. **Form elements** : inputs, selects, buttons avec variants dark complets
+6. **Hover states** : `hover:bg-gray-100 dark:hover:bg-gray-700`
+7. **Loading/Empty states** : skeletons et icônes avec support dark
+
+EXEMPLES TYPES :
+```tsx
+// ✅ BON - Support dark mode complet
+<div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+  <h2 className="text-gray-900 dark:text-white">Title</h2>
+  <p className="text-gray-600 dark:text-gray-300">Description</p>
+</div>
+
+// ❌ MAUVAIS - Pas de support dark mode
+<div className="bg-white border border-gray-200">
+  <h2 className="text-gray-900">Title</h2>
+  <p className="text-gray-600">Description</p>
+</div>
+```
+
 ANIMATIONS & MODALS
 TOUJOURS utiliser le composant Modal de base (shared/ui/Modal.tsx) pour toutes les modals.
 Animations subtiles et élégantes : 
@@ -243,6 +287,7 @@ Animations subtiles et élégantes :
 Tailles supportées: sm, md, lg, xl, 2xl, 4xl
 Props: title, maxWidth, showCloseButton, closeOnBackdropClick
 Exemples: CreateEventModal, EditEventModal, DeleteEventModal
+**🌙 DARK MODE OBLIGATOIRE** : backdrop et contenu avec thème approprié
 
 TOASTS SYSTÈME
 TOUJOURS utiliser le système de toast centralisé (shared/ui/Toast.tsx).
@@ -251,6 +296,7 @@ TOUJOURS utiliser le système de toast centralisé (shared/ui/Toast.tsx).
 - Auto-dismiss 5s, closable manuellement
 - Hook useToast() pour usage simple
 - Store Redux dédié (toast-slice.ts)
+- **🌙 DARK MODE REQUIS** : Support automatique via classes `dark:`
 Exemples: toast.success('Événement créé !', 'Message détaillé.')
 
 ARCHITECTURE DONNÉES ATTENDEES/REGISTRATIONS

@@ -9,6 +9,7 @@ import { eventsApi } from '@/features/events/api/eventsApi'
 import { attendeesApi } from '@/features/attendees/api/attendeesApi'
 import { getRoleLabel } from '@/shared/acl/role-mapping'
 import { Button } from '@/shared/ui/Button'
+import { ThemeToggle } from '@/shared/ui/ThemeToggle'
 // import { Can } from '@/shared/acl/guards/Can'
 
 export const Header: React.FC = () => {
@@ -31,7 +32,7 @@ export const Header: React.FC = () => {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors duration-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link to="/dashboard" className="flex items-center">
@@ -42,7 +43,7 @@ export const Header: React.FC = () => {
             />
           </Link>
           {organization && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
               {organization.name}
             </span>
           )}
@@ -51,9 +52,9 @@ export const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           {user && (
             <div className="flex items-center space-x-2">
-              <User className="h-4 w-4 text-gray-500" />
+              <User className="h-4 w-4 text-gray-500 dark:text-gray-400" />
               <div className="text-sm">
-                <div className="text-gray-700 font-medium">
+                <div className="text-gray-700 dark:text-gray-200 font-medium">
                   {/* Support both firstName/lastName and first_name/last_name formats */}
                   {(() => {
                     const firstName = user.firstName || user.first_name
@@ -64,13 +65,15 @@ export const Header: React.FC = () => {
                     return user.email || 'Utilisateur'
                   })()}
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   {/* Display the proper role label */}
                   {user.roles?.[0] ? getRoleLabel(user.roles[0]) : 'Utilisateur'}
                 </div>
               </div>
             </div>
           )}
+          
+          <ThemeToggle size="sm" />
           
           <Button
             variant="ghost"

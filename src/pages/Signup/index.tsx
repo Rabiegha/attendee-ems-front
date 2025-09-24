@@ -129,13 +129,13 @@ export const SignupPage: React.FC = () => {
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
           Finaliser votre inscription
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
           Complétez votre profil pour activer votre compte
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow rounded-lg">
+        <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow rounded-lg transition-colors duration-200">
           <TokenInfo 
             invitation={validation.invitation!} 
             isLoading={false}
@@ -154,12 +154,12 @@ export const SignupPage: React.FC = () => {
 
 // Composant d'état de chargement
 const LoadingState: React.FC<{ message: string }> = ({ message }) => (
-  <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
     <div className="sm:mx-auto sm:w-full sm:max-w-md">
-      <div className="bg-white py-8 px-6 shadow rounded-lg">
+      <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow rounded-lg transition-colors duration-200">
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-sm text-gray-600">{message}</p>
+          <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">{message}</p>
         </div>
       </div>
     </div>
@@ -200,21 +200,21 @@ const ErrorState: React.FC<ErrorStateProps> = ({ type, title, message, redirectT
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           {getIcon()}
         </div>
-        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+        <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
           {title}
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
           {message}
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-6 shadow rounded-lg">
+        <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow rounded-lg transition-colors duration-200">
           <Button
             onClick={() => navigate(redirectTo)}
             className="w-full"
@@ -226,7 +226,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({ type, title, message, redirectT
             <div className="mt-4 text-center">
               <a 
                 href="mailto:support@attendee-ems.com" 
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 Contacter le support
               </a>

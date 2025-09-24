@@ -12,6 +12,7 @@ import { Input } from '@/shared/ui/Input'
 import { FormField } from '@/shared/ui/FormField'
 import { Alert } from '@/shared/ui/Alert'
 import { AnimatedContainer } from '@/shared/ui/AnimatedContainer'
+import { ThemeToggle } from '@/shared/ui/ThemeToggle'
 import { TestAccountsHelper } from '@/shared/ui/TestAccountsModal'
 
 const loginSchema = z.object({
@@ -129,6 +130,11 @@ export const LoginPage: React.FC = () => {
 
   return (
     <>
+      {/* Theme Toggle en haut à droite */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
       {/* Header avec logo et titre */}
       <AnimatedContainer animation="fade-in" delay={100}>
         <div className="text-center">
@@ -141,10 +147,10 @@ export const LoginPage: React.FC = () => {
           </AnimatedContainer>
           
           <AnimatedContainer animation="slide-up" delay={300}>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {t('login.title')}
             </h2>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-300">
               {t('login.subtitle', 'Accédez à votre espace de gestion d\'événements')}
             </p>
           </AnimatedContainer>
@@ -153,7 +159,7 @@ export const LoginPage: React.FC = () => {
 
       {/* Formulaire de connexion */}
       <AnimatedContainer animation="slide-up" delay={400}>
-        <div className={`bg-white py-8 px-6 shadow-xl rounded-2xl border-0 ${containerClasses}`}>
+        <div className={`bg-white dark:bg-gray-800 py-8 px-6 shadow-xl rounded-2xl border-0 transition-colors duration-300 ${containerClasses}`}>
           {/* Message de succès */}
           {showSuccess && (
             <AnimatedContainer animation="scale-in" className="mb-6">

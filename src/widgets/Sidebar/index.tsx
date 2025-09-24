@@ -48,7 +48,7 @@ export const Sidebar: React.FC = () => {
   const { t } = useTranslation('common')
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 min-h-screen">
+    <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen transition-colors duration-200">
       <nav className="mt-8 px-4">
         <ul className="space-y-2">
           {navigation.map((item) => (
@@ -60,8 +60,8 @@ export const Sidebar: React.FC = () => {
                     cn(
                       'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors',
                       isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-blue-600 text-white dark:bg-blue-700'
+                        : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                     )
                   }
                 >

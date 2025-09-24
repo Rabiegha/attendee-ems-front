@@ -45,7 +45,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="relative">
         {leftIcon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground z-10 pointer-events-none">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 z-10 pointer-events-none">
             {leftIcon}
           </div>
         )}
@@ -53,13 +53,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <input
           type={inputType}
           className={cn(
-            'flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200',
+            'flex h-10 w-full rounded-md border bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200',
             
             // États de base
-            'border-input focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+            'border-gray-300 dark:border-gray-600 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
             
             // États d'erreur
-            error && 'border-destructive focus-visible:ring-destructive',
+            error && 'border-red-500 focus-visible:ring-red-500',
             
             // États de succès
             success && 'border-green-500 focus-visible:ring-green-500',
@@ -92,7 +92,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               <button
                 type="button"
                 onClick={togglePasswordVisibility}
-                className="text-muted-foreground hover:text-foreground transition-colors p-0.5 rounded hover:bg-accent"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
                 tabIndex={-1}
               >
                 {showPassword ? (
@@ -102,7 +102,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 )}
               </button>
             ) : (
-              rightIcon && <span className="text-muted-foreground pointer-events-none">{rightIcon}</span>
+              rightIcon && <span className="text-gray-500 dark:text-gray-400 pointer-events-none">{rightIcon}</span>
             )}
           </div>
         )}

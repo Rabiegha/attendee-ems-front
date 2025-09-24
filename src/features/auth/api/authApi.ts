@@ -11,8 +11,8 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   access_token: string
-  user?: User
-  organization?: Organization | null
+  user?: User | undefined
+  organization?: Organization | null | undefined
 }
 
 export interface User {

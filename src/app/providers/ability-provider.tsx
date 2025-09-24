@@ -5,6 +5,7 @@ import { useGetPolicyQuery } from '@/features/auth/api/authApi'
 import { setRules } from '@/features/auth/model/sessionSlice'
 import { createAbilityFromRules } from '@/shared/acl/ability-factory'
 import { rulesFor, fallbackRules } from '@/shared/acl/policies/rbac-presets'
+import { mapBackendRolesToCASQL } from '@/shared/acl/role-mapping'
 import type { AppAbility } from '@/shared/acl/app-ability'
 import type { UserRole } from '@/shared/acl/policies/rbac-presets'
 
@@ -41,13 +42,20 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
 
     // If we have user info but no rules yet, use preset rules based on roles
     if (user && orgId) {
-      const userRoles = user.roles as UserRole[]
+      // Map backend roles to CASL roles 
+      const backendRoles = user.roles || []
+      const caslRoles = mapBackendRolesToCASQL(backendRoles)
       const eventIds = user.eventIds || []
       
+      console.log('[RBAC] Backend roles:', backendRoles)
+      console.log('[RBAC] Mapped CASL roles:', caslRoles)
+      
       // Combine rules from all user roles
-      const combinedRules = userRoles.flatMap(role => 
+      const combinedRules = caslRoles.flatMap(role => 
         rulesFor(role, { orgId, userId: user.id, eventIds })
       )
+      
+      console.log('[RBAC] Generated rules:', combinedRules)
       
       return createAbilityFromRules(combinedRules)
     }

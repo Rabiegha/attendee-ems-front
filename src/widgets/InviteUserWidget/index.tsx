@@ -1,20 +1,20 @@
 import React, { useState } from 'react'
 import { Button } from '@/shared/ui/Button'
 import { Can } from '@/shared/acl/guards/Can'
-import { InviteUserModal } from '@/features/invitations/ui/InviteUserModal'
-import { useGetInvitationsQuery } from '@/features/invitations/api/invitationsApi'
-import { UserPlus, Users, Clock, CheckCircle } from 'lucide-react'
+import { CreateUserModal } from '@/features/users/ui/CreateUserModal'
+import { useGetUsersQuery, type User } from '@/features/users/api/usersApi'
+import { UserPlus, Users, CheckCircle, XCircle } from 'lucide-react'
 
 export const InviteUserWidget: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   
-  // Récupérer les statistiques des invitations
-  const { data: invitationsData } = useGetInvitationsQuery({ limit: 100 })
+  // Récupérer les statistiques des utilisateurs
+  const { data: usersData } = useGetUsersQuery({ limit: 100 })
 
   const stats = {
-    total: invitationsData?.total || 0,
-    pending: invitationsData?.pending || 0,
-    accepted: invitationsData?.invitations?.filter((inv: any) => inv.status === 'accepted').length || 0,
+    total: usersData?.total || 0,
+    active: usersData?.users?.filter((user: User) => user.is_active).length || 0,
+    inactive: usersData?.users?.filter((user: User) => !user.is_active).length || 0,
   }
 
   return (
@@ -30,13 +30,13 @@ export const InviteUserWidget: React.FC = () => {
                 Gestion des utilisateurs
               </h3>
               <p className="text-sm text-gray-500">
-                Invitez de nouveaux utilisateurs dans votre organisation
+                Créez de nouveaux utilisateurs dans votre organisation
               </p>
             </div>
           </div>
         </div>
 
-        {/* Statistiques des invitations */}
+        {/* Statistiques des utilisateurs */}
         {stats.total > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-6">
             <div className="text-center">
@@ -44,48 +44,47 @@ export const InviteUserWidget: React.FC = () => {
                 <Users className="h-5 w-5 text-gray-400 mr-1" />
                 <span className="text-2xl font-bold text-gray-900">{stats.total}</span>
               </div>
-              <p className="text-xs text-gray-500">Total invitations</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center">
-                <Clock className="h-5 w-5 text-orange-400 mr-1" />
-                <span className="text-2xl font-bold text-orange-600">{stats.pending}</span>
-              </div>
-              <p className="text-xs text-gray-500">En attente</p>
+              <p className="text-xs text-gray-500">Total utilisateurs</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center">
                 <CheckCircle className="h-5 w-5 text-green-400 mr-1" />
-                <span className="text-2xl font-bold text-green-600">{stats.accepted}</span>
+                <span className="text-2xl font-bold text-green-600">{stats.active}</span>
               </div>
-              <p className="text-xs text-gray-500">Acceptées</p>
+              <p className="text-xs text-gray-500">Actifs</p>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center">
+                <XCircle className="h-5 w-5 text-red-400 mr-1" />
+                <span className="text-2xl font-bold text-red-600">{stats.inactive}</span>
+              </div>
+              <p className="text-xs text-gray-500">Inactifs</p>
             </div>
           </div>
         )}
 
-        {/* Bouton d'invitation */}
-        <div className="space-y-3">
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="w-full flex items-center justify-center space-x-2"
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Inviter un utilisateur</span>
-          </Button>
-
-          {stats.total > 0 && (
-            <Button
-              variant="outline"
-              onClick={() => {/* TODO: Naviguer vers la page de gestion des invitations */}}
-              className="w-full"
-            >
-              Gérer les invitations ({stats.pending} en attente)
-            </Button>
-          )}
+        {/* Description */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h4 className="text-sm font-medium text-blue-900 mb-2">Création d'utilisateur</h4>
+          <p className="text-sm text-blue-700">
+            Créez directement des comptes utilisateur avec email et mot de passe. 
+            Les utilisateurs peuvent se connecter immédiatement.
+          </p>
         </div>
 
-        {/* Modal d'invitation */}
-        <InviteUserModal
+        {/* Action Button */}
+        <div className="flex justify-center">
+          <Button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center"
+          >
+            <UserPlus className="h-4 w-4 mr-2" />
+            Créer un utilisateur
+          </Button>
+        </div>
+
+        {/* Modal */}
+        <CreateUserModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
         />

@@ -7,6 +7,7 @@ import { selectUser, selectOrganization, clearSession } from '@/features/auth/mo
 import { authApi } from '@/features/auth/api/authApi'
 import { eventsApi } from '@/features/events/api/eventsApi'
 import { attendeesApi } from '@/features/attendees/api/attendeesApi'
+import { getRoleLabel } from '@/shared/acl/role-mapping'
 import { Button } from '@/shared/ui/Button'
 // import { Can } from '@/shared/acl/guards/Can'
 
@@ -51,9 +52,23 @@ export const Header: React.FC = () => {
           {user && (
             <div className="flex items-center space-x-2">
               <User className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-700">
-                {user.firstName} {user.lastName}
-              </span>
+              <div className="text-sm">
+                <div className="text-gray-700 font-medium">
+                  {/* Support both firstName/lastName and first_name/last_name formats */}
+                  {(() => {
+                    const firstName = user.firstName || user.first_name
+                    const lastName = user.lastName || user.last_name
+                    if (firstName && lastName) {
+                      return `${firstName} ${lastName}`
+                    }
+                    return user.email || 'Utilisateur'
+                  })()}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {/* Display the proper role label */}
+                  {user.roles?.[0] ? getRoleLabel(user.roles[0]) : 'Utilisateur'}
+                </div>
+              </div>
             </div>
           )}
           

@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import { env } from '@/app/config/env'
 import { API_ENDPOINTS } from '@/app/config/constants'
+import { normalizeUserData, normalizeOrganizationData } from '@/shared/lib/user-utils'
 import type { AppRule } from '@/shared/acl/app-ability'
 
 export interface LoginRequest {
@@ -9,20 +10,34 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string
-  user: User
-  organization: Organization
+  access_token: string
+  user?: User
+  organization?: Organization | null
 }
 
 export interface User {
   id: string
   email: string
-  firstName: string
-  lastName: string
+  firstName?: string
+  lastName?: string
+  first_name?: string  // Support backend format
+  last_name?: string   // Support backend format
   roles: string[]
-  orgId: string
+  orgId?: string
+  org_id?: string      // Support backend format
   eventIds?: string[]
   isSuperAdmin?: boolean
+}
+
+export interface UserProfileResponse {
+  id: string
+  email: string
+  first_name: string | null
+  last_name: string | null
+  org_id: string
+  role: string
+  permissions: string[]
+  is_active: boolean
 }
 
 export interface Organization {
@@ -56,10 +71,18 @@ export const authApi = createApi({
         method: 'POST',
         body: credentials,
       }),
+      transformResponse: (response: any) => {
+        // Normaliser les données utilisateur et organisation
+        return {
+          access_token: response.access_token,
+          user: response.user ? normalizeUserData(response.user) : undefined,
+          organization: response.organization ? normalizeOrganizationData(response.organization) : undefined,
+        }
+      },
       invalidatesTags: ['Auth'],
     }),
     
-    me: builder.query<User, void>({
+    me: builder.query<UserProfileResponse, void>({
       query: () => API_ENDPOINTS.AUTH.ME,
       providesTags: ['Auth'],
     }),

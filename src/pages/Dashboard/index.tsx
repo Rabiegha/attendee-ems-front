@@ -46,6 +46,50 @@ export const Dashboard: React.FC = () => {
   if (canReadOrganization) {
     return (
       <div className="space-y-6">
+        {/* User & Organization Info */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="bg-blue-100 p-3 rounded-full">
+                <Building2 className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {organization?.name || 'Organisation inconnue'}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Organisation ID: {organization?.id || 'N/A'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-right">
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <Shield className="h-4 w-4" />
+                <span>Rôle: {currentUser?.roles?.[0] || 'Inconnu'}</span>
+              </div>
+              {currentUser?.email && (
+                <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
+                  <Mail className="h-4 w-4" />
+                  <span>{currentUser.email}</span>
+                </div>
+              )}
+              <p className="text-xs text-gray-500 mt-2">
+                Utilisateur ID: {currentUser?.id || 'N/A'}
+              </p>
+            </div>
+          </div>
+          
+          {/* Welcome message */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-gray-700">
+              Bienvenue{currentUser?.firstName ? ` ${currentUser.firstName}` : ''} ! 
+              Vous êtes connecté en tant que <span className="font-medium">{currentUser?.roles?.[0]}</span> 
+              {organization?.name && ` dans l'organisation ${organization.name}`}.
+            </p>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">
             {t('navigation.dashboard')}

@@ -8,8 +8,8 @@ Votre projet est configuré avec Mock Service Worker (MSW) pour simuler un backe
 
 **URL :** http://localhost:5174/login
 **Identifiants :**
-- Email: `admin@example.com`
-- Password: `password`
+- Email: `admin@acme.test`
+- Password: `Admin#12345`
 
 ## 📊 Données de Test Disponibles
 

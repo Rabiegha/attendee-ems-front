@@ -188,9 +188,9 @@ npm run prepare         # Installation des hooks Husky
 
 ## 🔑 Connexion de Démonstration
 
-Pour tester l'application avec les données mockées :
-- **Email** : `admin@example.com`
-- **Mot de passe** : `password`
+Pour tester l'application avec la base de données réelle :
+- **Email** : `admin@acme.test`
+- **Mot de passe** : `Admin#12345`
 
 ## 🏗 Flux de Développement Démonstratif
 

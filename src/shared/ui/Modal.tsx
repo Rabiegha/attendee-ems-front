@@ -1,17 +1,42 @@
 import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/lib/utils'
 
-interface ModalProps {
+const modalVariants = cva(
+  'modal-content',
+  {
+    variants: {
+      size: {
+        sm: 'max-w-sm',
+        md: 'max-w-md',
+        lg: 'max-w-lg',
+        xl: 'max-w-xl',
+        '2xl': 'max-w-2xl',
+        '3xl': 'max-w-3xl',
+        '4xl': 'max-w-4xl',
+        '5xl': 'max-w-5xl',
+        full: 'max-w-full mx-8'
+      }
+    },
+    defaultVariants: {
+      size: 'lg'
+    }
+  }
+)
+
+interface ModalProps extends VariantProps<typeof modalVariants> {
   isOpen: boolean
   onClose: () => void
   children: React.ReactNode
   title?: string
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl'
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full' // Étendu
   showCloseButton?: boolean
   closeOnBackdropClick?: boolean
   className?: string
+  contentPadding?: boolean
+  headerBorder?: boolean // Nouveau : contrôler la bordure du header
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -22,7 +47,9 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = 'lg',
   showCloseButton = true,
   closeOnBackdropClick = true,
-  className
+  className,
+  contentPadding = true,
+  headerBorder = true
 }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [shouldRender, setShouldRender] = useState(false)
@@ -64,30 +91,15 @@ export const Modal: React.FC<ModalProps> = ({
     }
   }
 
-  const maxWidthClasses = {
-    sm: 'max-w-sm',
-    md: 'max-w-md', 
-    lg: 'max-w-lg',
-    xl: 'max-w-xl',
-    '2xl': 'max-w-2xl',
-    '4xl': 'max-w-4xl'
-  }
-
   if (!shouldRender) return null
 
   return createPortal(
-    <div 
-      className={cn(
-        "fixed inset-0 z-50 flex items-center justify-center",
-        "transition-all duration-200 ease-out",
-        isVisible ? "opacity-100" : "opacity-0"
-      )}
-    >
+    <div className="modal-base">
       {/* Backdrop avec fade */}
       <div 
         className={cn(
-          "absolute inset-0 bg-black transition-opacity duration-200 ease-out",
-          isVisible ? "bg-opacity-50" : "bg-opacity-0"
+          "modal-backdrop transition-opacity duration-200 ease-out",
+          isVisible ? "opacity-100" : "opacity-0"
         )}
         onClick={handleBackdropClick}
       />
@@ -95,9 +107,8 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal avec slide + scale */}
       <div 
         className={cn(
-          "relative bg-white rounded-lg shadow-xl w-full mx-4 max-h-[90vh] overflow-hidden",
-          "transition-all duration-200 ease-out transform",
-          maxWidthClasses[maxWidth],
+          modalVariants({ size: maxWidth }),
+          "transition-all duration-200 ease-out transform max-h-[90vh] overflow-hidden",
           isVisible 
             ? "scale-100 translate-y-0 opacity-100" 
             : "scale-95 translate-y-4 opacity-0",
@@ -106,16 +117,19 @@ export const Modal: React.FC<ModalProps> = ({
       >
         {/* Header optionnel */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b">
+          <div className={cn(
+            "flex items-center justify-between p-6 transition-colors duration-200",
+            headerBorder && "border-b border-gray-200 dark:border-gray-700"
+          )}>
             {title && (
-              <h2 className="text-2xl font-semibold text-gray-900">
+              <h2 className="text-heading-lg text-gray-900 dark:text-white">
                 {title}
               </h2>
             )}
             {showCloseButton && (
               <button
                 onClick={handleClose}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 transition-colors"
+                className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -124,7 +138,10 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Contenu */}
-        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+        <div className={cn(
+          "overflow-y-auto max-h-[calc(90vh-80px)]",
+          contentPadding && "p-6"
+        )}>
           {children}
         </div>
       </div>

@@ -116,15 +116,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         error={errors.firstName?.message}
         required
       >
-        <div className="relative">
-          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            {...register('firstName')}
-            placeholder="Jean"
-            className="pl-10"
-            autoComplete="given-name"
-          />
-        </div>
+        <Input
+          {...register('firstName')}
+          placeholder="Jean"
+          leftIcon={<User className="h-4 w-4" />}
+          autoComplete="given-name"
+        />
       </FormField>
 
       {/* Nom */}
@@ -133,15 +130,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         error={errors.lastName?.message}
         required
       >
-        <div className="relative">
-          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            {...register('lastName')}
-            placeholder="Dupont"
-            className="pl-10"
-            autoComplete="family-name"
-          />
-        </div>
+        <Input
+          {...register('lastName')}
+          placeholder="Dupont"
+          leftIcon={<User className="h-4 w-4" />}
+          autoComplete="family-name"
+        />
       </FormField>
 
       {/* Mot de passe */}
@@ -150,23 +144,22 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         error={errors.password?.message}
         required
       >
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            {...register('password')}
-            type={showPassword ? 'text' : 'password'}
-            placeholder="••••••••"
-            className="pl-10 pr-10"
-            autoComplete="new-password"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
-        </div>
+        <Input
+          {...register('password')}
+          type={showPassword ? 'text' : 'password'}
+          placeholder="••••••••"
+          leftIcon={<Lock className="h-4 w-4" />}
+          rightIcon={
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          }
+          autoComplete="new-password"
+        />
         
         {/* Indicateur de force du mot de passe */}
         {password && passwordStrength && (
@@ -193,23 +186,22 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         error={errors.confirmPassword?.message}
         required
       >
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            {...register('confirmPassword')}
-            type={showConfirmPassword ? 'text' : 'password'}
-            placeholder="••••••••"
-            className="pl-10 pr-10"
-            autoComplete="new-password"
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </button>
-        </div>
+        <Input
+          {...register('confirmPassword')}
+          type={showConfirmPassword ? 'text' : 'password'}
+          placeholder="••••••••"
+          leftIcon={<Lock className="h-4 w-4" />}
+          rightIcon={
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          }
+          autoComplete="new-password"
+        />
       </FormField>
 
       {/* Téléphone (optionnel) */}
@@ -218,16 +210,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         error={errors.phone?.message}
         hint="Optionnel - Format français attendu"
       >
-        <div className="relative">
-          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            {...register('phone')}
-            type="tel"
-            placeholder="+33 1 23 45 67 89"
-            className="pl-10"
-            autoComplete="tel"
-          />
-        </div>
+        <Input
+          {...register('phone')}
+          type="tel"
+          placeholder="+33 1 23 45 67 89"
+          leftIcon={<Phone className="h-4 w-4" />}
+          autoComplete="tel"
+        />
       </FormField>
 
       {/* Conditions d'utilisation */}
@@ -236,15 +225,15 @@ export const SignupForm: React.FC<SignupFormProps> = ({
           <input
             {...register('acceptTerms')}
             type="checkbox"
-            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            className="mt-1 h-4 w-4 text-blue-600 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded focus:ring-blue-500 focus:ring-2 transition-colors duration-200"
           />
-          <label className="text-sm text-gray-700">
+          <label className="text-sm text-gray-700 dark:text-gray-300">
             J'accepte les{' '}
-            <a href="/conditions" target="_blank" className="text-blue-600 hover:text-blue-800 underline">
+            <a href="/conditions" target="_blank" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">
               conditions d'utilisation
             </a>
             {' '}et la{' '}
-            <a href="/confidentialite" target="_blank" className="text-blue-600 hover:text-blue-800 underline">
+            <a href="/confidentialite" target="_blank" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">
               politique de confidentialité
             </a>
           </label>

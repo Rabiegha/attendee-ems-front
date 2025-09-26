@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/shared/ui/Button';
 import { Modal } from '@/shared/ui/Modal';
+import { Select, SelectOption } from '@/shared/ui/Select';
 import { Copy, Users, Key, Globe, Clock, Eye, EyeOff } from 'lucide-react';
 
 interface TestAccount {
@@ -259,21 +260,20 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
         {/* Filtres */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <select
+            <Select
               value={selectedOrg}
               onChange={(e) => setSelectedOrg(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="all">Toutes les organisations</option>
+              <SelectOption value="all">Toutes les organisations</SelectOption>
               {organizations.map(orgSlug => {
                 const org = TEST_ACCOUNTS.find(acc => acc.orgSlug === orgSlug);
                 return (
-                  <option key={orgSlug} value={orgSlug}>
+                  <SelectOption key={orgSlug} value={orgSlug}>
                     {SECTOR_ICONS[org!.sector]} {org!.organization}
-                  </option>
+                  </SelectOption>
                 );
               })}
-            </select>
+            </Select>
           </div>
 
           <Button
@@ -312,21 +312,21 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
         {/* Liste des comptes */}
         <div className="space-y-4 max-h-96 overflow-y-auto">
           {filteredAccounts.map((account, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+            <div key={index} className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
                     <span className="text-lg">{SECTOR_ICONS[account.sector]}</span>
                     <div>
-                      <h3 className="font-medium text-gray-900">{account.organization}</h3>
-                      <p className="text-sm text-gray-500">{account.description}</p>
+                      <h3 className="font-medium text-gray-900 dark:text-white">{account.organization}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{account.description}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-mono">{account.email}</span>
+                      <Users className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm font-mono text-gray-900 dark:text-white">{account.email}</span>
                       <Button
                         size="sm"
                         variant="secondary"
@@ -338,8 +338,8 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
 
                     {showPasswords && (
                       <div className="flex items-center space-x-2">
-                        <Key className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm font-mono">{account.password}</span>
+                        <Key className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                        <span className="text-sm font-mono text-gray-900 dark:text-white">{account.password}</span>
                         <Button
                           size="sm"
                           variant="secondary"
@@ -351,13 +351,13 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
                     )}
 
                     <div className="flex items-center space-x-2">
-                      <Globe className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">{account.sector}</span>
+                      <Globe className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{account.sector}</span>
                     </div>
 
                     <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">{account.timezone}</span>
+                      <Clock className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{account.timezone}</span>
                     </div>
                   </div>
                 </div>
@@ -406,19 +406,19 @@ export const TestAccountsHelper: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="bg-white/80 backdrop-blur-sm border border-white/20 rounded-xl p-4 shadow-lg">
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-xl p-4 shadow-lg transition-colors duration-200">
         <div className="text-center">
-          <h3 className="text-sm font-medium text-gray-900 mb-2">🧪 Mode Développement</h3>
-          <p className="text-xs text-gray-600 mb-3">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">🧪 Mode Développement</h3>
+          <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
             Testez l'application avec différents comptes et permissions
           </p>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsModalOpen(true)}
-            className="w-full bg-white/50 hover:bg-white/80 transition-all"
+            className="w-full bg-white/50 dark:bg-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-700/80 transition-all"
           >
-            <Users className="h-4 w-4 mr-2" />
+            <Users className="h-4 w-4 mr-2 text-gray-600 dark:text-gray-300" />
             Voir les comptes de test
           </Button>
         </div>

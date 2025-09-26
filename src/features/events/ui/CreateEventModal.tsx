@@ -68,14 +68,12 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       title="Créer un nouvel événement"
       maxWidth="4xl"
     >
-      <div className="p-6">
-        <EventForm
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-          isLoading={isLoading}
-          mode="create"
-        />
-      </div>
+      <EventForm
+        onSubmit={handleSubmit}
+        onCancel={onClose}
+        isLoading={isLoading}
+        mode="create"
+      />
     </Modal>
   )
 }

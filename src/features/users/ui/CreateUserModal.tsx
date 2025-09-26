@@ -2,10 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, User, Mail, Lock, Shield } from 'lucide-react';
-import { Button } from '@/shared/ui/Button';
-import { Input } from '@/shared/ui/Input';
-import { FormField } from '@/shared/ui/FormField';
-import { Modal } from '@/shared/ui/Modal';
+import { Button, Input, FormField, Modal, Select, SelectOption } from '@/shared/ui';
 import { useToast } from '@/shared/ui/useToast';
 import { useCreateUserMutation, useGetRolesQuery, type Role } from '@/features/users/api/usersApi';
 import { createUserSchema, mapCreateUserFormToDto, type CreateUserFormData, roleDescriptions } from '@/features/users/dpo/user.dpo';
@@ -82,16 +79,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           error={errors.email?.message}
           required
         >
-          <div className="relative">
-            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              {...register('email')}
-              type="email"
-              placeholder="nom@entreprise.com"
-              className="pl-10"
-              autoComplete="email"
-            />
-          </div>
+          <Input
+            {...register('email')}
+            type="email"
+            placeholder="nom@entreprise.com"
+            leftIcon={<Mail className="h-5 w-5" />}
+            autoComplete="email"
+          />
         </FormField>
 
         {/* Mot de passe */}
@@ -101,16 +95,13 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           required
           hint="Minimum 8 caractères avec majuscule, minuscule, chiffre et caractère spécial"
         >
-          <div className="relative">
-            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <Input
-              {...register('password')}
-              type="password"
-              placeholder="••••••••"
-              className="pl-10"
-              autoComplete="new-password"
-            />
-          </div>
+          <Input
+            {...register('password')}
+            type="password"
+            placeholder="••••••••"
+            leftIcon={<Lock className="h-5 w-5" />}
+            autoComplete="new-password"
+          />
         </FormField>
 
         {/* Rôle */}
@@ -119,35 +110,30 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           error={errors.role_id?.message}
           required
         >
-          <div className="relative">
-            <Shield className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <select
-              {...register('role_id')}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white"
-              disabled={isLoadingRoles}
-            >
-              <option value="">
-                {isLoadingRoles ? 'Chargement des rôles...' : 'Sélectionnez un rôle'}
-              </option>
-              {rolesData?.map((role: Role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            {...register('role_id')}
+            leftIcon={<Shield className="h-5 w-5" />}
+            disabled={isLoadingRoles}
+            placeholder={isLoadingRoles ? 'Chargement des rôles...' : 'Sélectionnez un rôle'}
+          >
+            {rolesData?.map((role: Role) => (
+              <SelectOption key={role.id} value={role.id}>
+                {role.name}
+              </SelectOption>
+            ))}
+          </Select>
         </FormField>
 
         {/* Description du rôle sélectionné */}
         {selectedRole && roleDescriptions[selectedRole.code] && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 transition-colors duration-200">
             <div className="flex items-start space-x-2">
-              <Shield className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <Shield className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-blue-900">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
                   {selectedRole.name}
                 </p>
-                <p className="text-sm text-blue-700 mt-1">
+                <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
                   {roleDescriptions[selectedRole.code]}
                 </p>
               </div>
@@ -162,16 +148,16 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               {...register('is_active')}
               type="checkbox"
               id="is_active"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded transition-colors duration-200"
             />
-            <label htmlFor="is_active" className="text-sm text-gray-700">
+            <label htmlFor="is_active" className="text-sm text-gray-700 dark:text-gray-300">
               Compte activé (l'utilisateur pourra se connecter immédiatement)
             </label>
           </div>
         </FormField>
 
         {/* Actions */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
           <Button
             type="button"
             variant="secondary"

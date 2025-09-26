@@ -7,6 +7,8 @@ import { selectUser, selectOrganization, clearSession } from '@/features/auth/mo
 import { authApi } from '@/features/auth/api/authApi'
 import { eventsApi } from '@/features/events/api/eventsApi'
 import { attendeesApi } from '@/features/attendees/api/attendeesApi'
+import { invitationsApi } from '@/features/invitations/api/invitationsApi'
+import { usersApi } from '@/features/users/api/usersApi'
 import { getRoleLabel } from '@/shared/acl/role-mapping'
 import { Button } from '@/shared/ui/Button'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
@@ -26,6 +28,8 @@ export const Header: React.FC = () => {
     dispatch(authApi.util.resetApiState())
     dispatch(eventsApi.util.resetApiState())
     dispatch(attendeesApi.util.resetApiState())
+    dispatch(invitationsApi.util.resetApiState())
+    dispatch(usersApi.util.resetApiState())
     
     // 3. Optionnel: appeler l'endpoint logout (pour invalider le token côté serveur)
     // Note: On ne fait pas de mutation ici car ça pourrait créer des erreurs si l'API est down

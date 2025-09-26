@@ -122,14 +122,13 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       {/* Filtres et recherche */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4 transition-colors duration-200">
         <div className="flex items-center space-x-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+          <div className="flex-1">
             <Input
               type="text"
               placeholder="Rechercher des événements..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              leftIcon={<Search className="h-4 w-4" />}
             />
           </div>
           
@@ -153,7 +152,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
               setSortBy(field as any)
               setSortOrder(order as any)
             }}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
           >
             <option value="startDate-asc">Date (plus ancien)</option>
             <option value="startDate-desc">Date (plus récent)</option>

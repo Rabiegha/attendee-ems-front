@@ -87,17 +87,15 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
       title="Modifier l'événement"
       maxWidth="4xl"
     >
-      <div className="p-6">
-        {initialData && (
-          <EventForm
-            initialData={initialData}
-            onSubmit={handleSubmit}
-            onCancel={onClose}
-            isLoading={isLoading}
-            mode="edit"
-          />
-        )}
-      </div>
+      {initialData && (
+        <EventForm
+          initialData={initialData}
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+          isLoading={isLoading}
+          mode="edit"
+        />
+      )}
     </Modal>
   )
 }

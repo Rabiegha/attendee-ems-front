@@ -47,14 +47,15 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
       onClose={onClose}
       maxWidth="md"
       showCloseButton={false}
+      contentPadding={false}
     >
       {/* Header personnalisé avec icône d'alerte */}
-      <div className="flex items-center justify-between p-6 border-b">
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
-            <AlertTriangle className="h-6 w-6 text-red-600" />
+            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-500" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Supprimer l'événement
           </h2>
         </div>
@@ -62,12 +63,12 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
 
       {/* Content */}
       <div className="p-6">
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-600 dark:text-gray-300 mb-4">
           Êtes-vous sûr de vouloir supprimer l'événement{' '}
-          <span className="font-semibold text-gray-900">"{event.name}"</span> ?
+          <span className="font-semibold text-gray-900 dark:text-white">"{event.name}"</span> ?
         </p>
-        <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-6">
-          <p className="text-sm text-red-800">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-md p-3 mb-6 transition-colors duration-200">
+          <p className="text-sm text-red-800 dark:text-red-300">
             <strong>Attention :</strong> Cette action est irréversible. Tous les participants 
             associés à cet événement seront également supprimés.
           </p>

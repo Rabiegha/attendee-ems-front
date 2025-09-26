@@ -47,14 +47,13 @@ export const AttendeeFilters: React.FC = () => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
       <div className="flex items-center space-x-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+        <div className="flex-1">
           <Input
             type="text"
             placeholder={t('filters.search_placeholder')}
             value={searchQuery}
             onChange={handleSearchChange}
-            className="pl-10"
+            leftIcon={<Search className="h-4 w-4" />}
           />
         </div>
         

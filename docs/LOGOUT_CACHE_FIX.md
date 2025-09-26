@@ -25,6 +25,8 @@ const handleLogout = () => {
   dispatch(authApi.util.resetApiState())
   dispatch(eventsApi.util.resetApiState())
   dispatch(attendeesApi.util.resetApiState())
+  dispatch(invitationsApi.util.resetApiState())
+  dispatch(usersApi.util.resetApiState())
   
   // 3. Optionnel: appeler l'endpoint logout (pour invalider le token côté serveur)
 }
@@ -35,6 +37,8 @@ const handleLogout = () => {
 import { authApi } from '@/features/auth/api/authApi'
 import { eventsApi } from '@/features/events/api/eventsApi'
 import { attendeesApi } from '@/features/attendees/api/attendeesApi'
+import { invitationsApi } from '@/features/invitations/api/invitationsApi'
+import { usersApi } from '@/features/users/api/usersApi'
 ```
 
 ## 🧪 Tests de Validation

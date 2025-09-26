@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { X, Plus, Calendar, MapPin, Users, Tag } from 'lucide-react'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
+import { Textarea } from '@/shared/ui/Textarea'
 import { FormField } from '@/shared/ui/FormField'
 import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
 import { createEventSchema, type CreateEventFormData } from '../lib/validation'
@@ -79,15 +80,12 @@ export const EventForm: React.FC<EventFormProps> = ({
         error={errors.name?.message}
         required
       >
-        <div className="relative">
-          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            {...register('name')}
-            placeholder="Conférence Tech 2024"
-            className="pl-10"
-            disabled={isLoading}
-          />
-        </div>
+        <Input
+          {...register('name')}
+          placeholder="Conférence Tech 2024"
+          leftIcon={<Calendar className="h-4 w-4" />}
+          disabled={isLoading}
+        />
       </FormField>
 
       {/* Description */}
@@ -95,11 +93,10 @@ export const EventForm: React.FC<EventFormProps> = ({
         label="Description (optionnel)"
         error={errors.description?.message}
       >
-        <textarea
+        <Textarea
           {...register('description')}
           rows={4}
           placeholder="Décrivez votre événement en détail..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           disabled={isLoading}
         />
       </FormField>
@@ -138,15 +135,12 @@ export const EventForm: React.FC<EventFormProps> = ({
         label="Lieu (optionnel)"
         error={errors.location?.message}
       >
-        <div className="relative">
-          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            {...register('location')}
-            placeholder="Centre de Conférences Paris"
-            className="pl-10"
-            disabled={isLoading}
-          />
-        </div>
+        <Input
+          {...register('location')}
+          placeholder="Centre de Conférences Paris"
+          leftIcon={<MapPin className="h-4 w-4" />}
+          disabled={isLoading}
+        />
       </FormField>
 
       {/* Capacité maximum */}
@@ -155,24 +149,21 @@ export const EventForm: React.FC<EventFormProps> = ({
         error={errors.maxAttendees?.message}
         hint="Laissez vide pour sans limite"
       >
-        <div className="relative">
-          <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            type="number"
-            min="1"
-            max="10000"
-            placeholder="Sans limite"
-            {...register('maxAttendees', { 
-              setValueAs: (value: string) => {
-                // Si vide ou non numérique, retourner undefined pour "sans limite"
-                const num = parseInt(value, 10)
-                return isNaN(num) || value === '' ? undefined : num
-              }
-            })}
-            className="pl-10"
-            disabled={isLoading}
-          />
-        </div>
+        <Input
+          type="number"
+          min="1"
+          max="10000"
+          placeholder="Sans limite"
+          {...register('maxAttendees', { 
+            setValueAs: (value: string) => {
+              // Si vide ou non numérique, retourner undefined pour "sans limite"
+              const num = parseInt(value, 10)
+              return isNaN(num) || value === '' ? undefined : num
+            }
+          })}
+          leftIcon={<Users className="h-4 w-4" />}
+          disabled={isLoading}
+        />
       </FormField>
 
       {/* Tags */}

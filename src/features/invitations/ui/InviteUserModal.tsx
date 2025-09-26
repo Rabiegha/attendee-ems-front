@@ -7,6 +7,7 @@ import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { FormField } from '@/shared/ui/FormField'
 import { Input } from '@/shared/ui/Input'
+import { Textarea } from '@/shared/ui/Textarea'
 import { useToast } from '../../../shared/ui/useToast'
 import { useSendInvitationMutation } from '../api/invitationsApi'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
@@ -158,8 +159,7 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
       title="Inviter un utilisateur"
       maxWidth="2xl"
     >
-      <div className="p-6">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Email */}
         <FormField
           label="Adresse email"
@@ -180,7 +180,7 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
           >
             <select
               {...register('orgId')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
             >
               <option value="">Sélectionner une organisation</option>
               <option value="org-choyou">Choyou</option>
@@ -239,14 +239,14 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
             label="Événements autorisés"
             error={errors.eventIds?.message}
           >
-            <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md p-3 space-y-2">
+            <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md p-3 space-y-2 transition-colors duration-200">
               {eventsData.map((event) => (
-                <label key={event.id} className="flex items-center space-x-3">
+                <label key={event.id} className="flex items-center space-x-3 text-gray-900 dark:text-white">
                   <input
                     type="checkbox"
                     value={event.id}
                     {...register('eventIds')}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-blue-600 focus:ring-blue-500 focus:ring-2 transition-colors duration-200"
                   />
                   <div className="flex-1">
                     <span className="text-sm font-medium text-gray-900">
@@ -269,16 +269,15 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
         <FormField
           label="Message personnalisé (optionnel)"
         >
-          <textarea
+          <Textarea
             {...register('personalizedMessage')}
             rows={3}
             placeholder="Ajoutez un message personnel à l'invitation..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
         </FormField>
 
         {/* Actions */}
-        <div className="flex items-center justify-end space-x-3 pt-6 border-t">
+        <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             variant="outline"
@@ -294,8 +293,7 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
             {isSending ? 'Envoi en cours...' : 'Envoyer l\'invitation'}
           </Button>
         </div>
-        </form>
-      </div>
+      </form>
     </Modal>
   )
 }

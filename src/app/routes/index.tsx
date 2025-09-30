@@ -12,6 +12,9 @@ import { Dashboard } from '@/pages/Dashboard'
 import { EventsPage } from '@/pages/Events'
 import { EventDetails } from '@/pages/EventDetails'
 import { Attendees } from '@/pages/Attendees'
+import { UsersPage } from '@/pages/Users'
+import { ChangePasswordPage } from '@/pages/ChangePassword'
+import { UserCreationTestPage } from '@/pages/UserCreationTest'
 import { LoginPage } from '@/pages/Login'
 import { SignupPage } from '@/pages/Signup'
 import { SignupTestPage } from '@/pages/SignupTest'
@@ -73,11 +76,23 @@ export const router = createBrowserRouter([
           </GuardedRoute>
         ),
       },
+      {
+        path: 'users',
+        element: (
+          <GuardedRoute action="read" subject="User">
+            <UsersPage />
+          </GuardedRoute>
+        ),
+      },
     ],
   },
   {
     path: '/signup-test',
     element: <SignupTestPage />,
+  },
+  {
+    path: '/user-creation-test',
+    element: <UserCreationTestPage />,
   },
   {
     path: '/auth',
@@ -96,6 +111,10 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <Navigate to="/auth/login" replace />,
+  },
+  {
+    path: '/change-password',
+    element: <ChangePasswordPage />,
   },
   {
     path: '/403',

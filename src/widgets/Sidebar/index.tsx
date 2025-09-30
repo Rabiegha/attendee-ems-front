@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LayoutDashboard, Calendar, Users, BarChart3, Settings } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, UserCog, BarChart3, Settings } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
 import { cn } from '@/shared/lib/utils'
@@ -27,6 +27,13 @@ const navigation = [
     icon: Users,
     action: 'read' as const,
     subject: 'Attendee' as const,
+  },
+  {
+    name: 'navigation.users',
+    href: ROUTES.USERS,
+    icon: UserCog,
+    action: 'read' as const,
+    subject: 'User' as const,
   },
   {
     name: 'navigation.reports',

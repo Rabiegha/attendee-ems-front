@@ -28,8 +28,41 @@ export const createUserSchema = z.object({
 
 export type CreateUserFormData = z.infer<typeof createUserSchema>;
 
+// 🆕 Nouveau schéma pour création avec mot de passe généré
+export const createUserWithGeneratedPasswordSchema = z.object({
+  firstName: z
+    .string()
+    .min(2, 'Le prénom doit contenir au moins 2 caractères'),
+  
+  lastName: z
+    .string()
+    .min(2, 'Le nom doit contenir au moins 2 caractères'),
+  
+  email: z
+    .string()
+    .email('Email invalide')
+    .min(1, 'Email requis'),
+  
+  roleId: z
+    .string()
+    .min(1, 'Rôle requis'),
+  
+  phone: z
+    .string()
+    .optional(),
+});
+
+export type CreateUserWithGeneratedPasswordFormData = z.infer<typeof createUserWithGeneratedPasswordSchema>;
+
 // Types DTO pour le mapping
 export interface CreateUserDto {
+  email: string;
+  password: string;
+  role_id: string;
+  is_active?: boolean;
+}
+
+export interface CreateUserWithGeneratedPasswordDto {
   email: string;
   password: string;
   role_id: string;
@@ -60,6 +93,34 @@ export const mapCreateUserFormToDto = (formData: CreateUserFormData): CreateUser
   is_active: formData.is_active ?? true,
 });
 
+// 🆕 Mapper pour le nouveau workflow avec mot de passe généré
+export const mapCreateUserWithGeneratedPasswordFormToDto = (
+  formData: CreateUserWithGeneratedPasswordFormData
+): { dto: CreateUserWithGeneratedPasswordDto; temporaryPassword: string } => {
+  const temporaryPassword = generateTemporaryPassword();
+  
+  return {
+    dto: {
+      email: formData.email,
+      password: temporaryPassword,
+      role_id: formData.roleId,
+      is_active: true,
+    },
+    temporaryPassword, // Retourner aussi le mot de passe pour l'afficher
+  };
+};
+
+// Générateur de mot de passe temporaire (12 caractères sécurisés)
+const generateTemporaryPassword = (): string => {
+  const length = 12;
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%&*';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+};
+
 // Mapper pour afficher les données utilisateur
 export const mapUserResponseToDisplay = (user: UserResponse) => ({
   id: user.id,
@@ -81,10 +142,14 @@ export interface RoleOption {
 
 // Mappage des codes de rôles vers des descriptions
 export const roleDescriptions: Record<string, string> = {
-  'org_admin': 'Administrateur de l\'organisation avec tous les droits',
-  'staff': 'Membre du personnel avec droits limités',
-  'event_manager': 'Gestionnaire d\'événements',
-  'checkin_staff': 'Personnel d\'accueil',
-  'partner': 'Partenaire externe',
-  'readonly': 'Lecture seule',
+  'SUPER_ADMIN': 'Accès global à toutes les organisations et fonctionnalités',
+  'ORG_ADMIN': 'Administrateur de l\'organisation avec tous les droits de gestion',
+  'EVENT_MANAGER': 'Création et gestion d\'événements, gestion des participants',
+  'CHECKIN_STAFF': 'Accès check-in/check-out des participants uniquement',
+  'PARTNER': 'Accès limité à certains événements spécifiques',
+  'READONLY': 'Accès en consultation uniquement, aucune modification autorisée',
+  'GRAPHIC_DESIGNER': 'Spécialiste design et créativité pour les événements',
+  'DEVELOPER': 'Spécialiste développement technique et intégrations',
+  'JOURNALIST': 'Spécialiste investigation et rédaction de contenus',
+  'EDITOR': 'Spécialiste édition et gestion de contenus médias',
 };

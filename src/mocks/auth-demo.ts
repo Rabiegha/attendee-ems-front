@@ -115,6 +115,43 @@ export const roles: Role[] = [
     code: 'EDITOR',
     name: 'Rédacteur',
     description: 'Spécialiste édition et contenus'
+  },
+
+  // 🆕 RÔLES STANDARDS EMS (org-1 par défaut)
+  {
+    id: 'role-org-admin',
+    orgId: 'org-1',
+    code: 'ORG_ADMIN',
+    name: 'Admin Organisation',
+    description: 'Accès complet à l\'organisation avec gestion des utilisateurs'
+  },
+  {
+    id: 'role-event-manager',
+    orgId: 'org-1',
+    code: 'EVENT_MANAGER',
+    name: 'Gestionnaire Événement',
+    description: 'Création et gestion d\'événements, gestion des participants'
+  },
+  {
+    id: 'role-checkin-staff',
+    orgId: 'org-1',
+    code: 'CHECKIN_STAFF',
+    name: 'Staff Check-in',
+    description: 'Accès check-in/check-out des participants uniquement'
+  },
+  {
+    id: 'role-partner',
+    orgId: 'org-1',
+    code: 'PARTNER',
+    name: 'Partenaire',
+    description: 'Accès limité à certains événements spécifiques'
+  },
+  {
+    id: 'role-readonly',
+    orgId: 'org-1',
+    code: 'READONLY',
+    name: 'Lecture seule',
+    description: 'Accès en consultation uniquement, aucune modification'
   }
 ]
 

@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Loader2, User, Mail, Lock, Shield } from 'lucide-react';
+import { Loader2, User, Mail, Shield } from 'lucide-react';
 import { Button, Input, FormField, Modal, Select, SelectOption } from '@/shared/ui';
 import { useToast } from '@/shared/ui/useToast';
-import { useCreateUserMutation, useGetRolesQuery, type Role } from '@/features/users/api/usersApi';
-import { createUserSchema, mapCreateUserFormToDto, type CreateUserFormData, roleDescriptions } from '@/features/users/dpo/user.dpo';
+import { useCreateUserWithGeneratedPasswordMutation, useGetRolesQuery, type Role } from '@/features/users/api/usersApi';
+import { 
+  createUserWithGeneratedPasswordSchema, 
+  mapCreateUserWithGeneratedPasswordFormToDto, 
+  type CreateUserWithGeneratedPasswordFormData, 
+  roleDescriptions 
+} from '@/features/users/dpo/user.dpo';
+import { UserCredentialsModal } from './UserCredentialsModal';
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -17,7 +23,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   onClose,
 }) => {
   const { success, error: showError } = useToast();
-  const [createUser, { isLoading: isCreating }] = useCreateUserMutation();
+  const [createUser, { isLoading: isCreating }] = useCreateUserWithGeneratedPasswordMutation();
   const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
 
   const {
@@ -26,37 +32,56 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     formState: { errors, isValid },
     reset,
     watch,
-  } = useForm<CreateUserFormData>({
-    resolver: zodResolver(createUserSchema),
+  } = useForm<CreateUserWithGeneratedPasswordFormData>({
+    resolver: zodResolver(createUserWithGeneratedPasswordSchema),
     mode: 'onChange',
-    defaultValues: {
-      is_active: true,
-    },
   });
 
-  const selectedRoleId = watch('role_id');
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [userCredentials, setUserCredentials] = useState<{
+    email: string;
+    temporaryPassword: string;
+    firstName: string;
+    lastName: string;
+  } | null>(null);
+
+  const selectedRoleId = watch('roleId');
   const selectedRole = rolesData?.find((role: Role) => role.id === selectedRoleId);
 
-  const onSubmit = async (data: CreateUserFormData) => {
+  const onSubmit = async (data: CreateUserWithGeneratedPasswordFormData) => {
     try {
-      const createUserDto = mapCreateUserFormToDto(data);
-      const result = await createUser(createUserDto).unwrap();
+      const { dto: createUserDto, temporaryPassword } = mapCreateUserWithGeneratedPasswordFormToDto(data);
+      await createUser(createUserDto).unwrap();
       
-      success(
-        'Utilisateur créé avec succès !',
-        `L'utilisateur ${result.email} a été créé avec le rôle ${result.role.name}.`
-      );
+      // Préparer les données pour la modal des identifiants
+      setUserCredentials({
+        email: data.email,
+        temporaryPassword,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      });
+      
+      setShowCredentials(true);
       
       reset();
       onClose();
     } catch (error: any) {
       console.error('Erreur lors de la création de l\'utilisateur:', error);
       
-      const errorMessage = error?.data?.message || 
-                          error?.message || 
-                          'Une erreur est survenue lors de la création de l\'utilisateur';
+      // Gestion des erreurs spécifiques
+      let errorMessage = 'Une erreur est survenue lors de la création de l\'utilisateur';
       
-      showError('Erreur', errorMessage);
+      if (error?.data?.message?.includes('already exists')) {
+        errorMessage = 'Cet email est déjà utilisé par un autre utilisateur de l\'organisation.';
+      } else if (error?.data?.message?.includes('Invalid credentials')) {
+        errorMessage = 'Permissions insuffisantes pour créer un utilisateur.';
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      showError('Erreur de création', errorMessage);
     }
   };
 
@@ -66,6 +91,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   };
 
   return (
+    <>
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
@@ -73,7 +99,34 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       maxWidth="md"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Email */}
+        {/* 👤 Informations personnelles */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            label="Prénom"
+            error={errors.firstName?.message}
+            required
+          >
+            <Input
+              {...register('firstName')}
+              placeholder="Jean"
+              leftIcon={<User className="h-5 w-5" />}
+            />
+          </FormField>
+          
+          <FormField
+            label="Nom"
+            error={errors.lastName?.message}
+            required
+          >
+            <Input
+              {...register('lastName')}
+              placeholder="Dupont"
+              leftIcon={<User className="h-5 w-5" />}
+            />
+          </FormField>
+        </div>
+
+        {/* 📧 Email */}
         <FormField
           label="Adresse email"
           error={errors.email?.message}
@@ -82,36 +135,32 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           <Input
             {...register('email')}
             type="email"
-            placeholder="nom@entreprise.com"
+            placeholder="jean.dupont@example.com"
             leftIcon={<Mail className="h-5 w-5" />}
             autoComplete="email"
           />
         </FormField>
 
-        {/* Mot de passe */}
+        {/* 📱 Téléphone (optionnel) */}
         <FormField
-          label="Mot de passe"
-          error={errors.password?.message}
-          required
-          hint="Minimum 8 caractères avec majuscule, minuscule, chiffre et caractère spécial"
+          label="Téléphone (optionnel)"
+          error={errors.phone?.message}
         >
           <Input
-            {...register('password')}
-            type="password"
-            placeholder="••••••••"
-            leftIcon={<Lock className="h-5 w-5" />}
-            autoComplete="new-password"
+            {...register('phone')}
+            type="tel"
+            placeholder="+33 6 12 34 56 78"
           />
         </FormField>
 
-        {/* Rôle */}
+        {/* 🔐 Rôle */}
         <FormField
           label="Rôle"
-          error={errors.role_id?.message}
+          error={errors.roleId?.message}
           required
         >
           <Select
-            {...register('role_id')}
+            {...register('roleId')}
             leftIcon={<Shield className="h-5 w-5" />}
             disabled={isLoadingRoles}
             placeholder={isLoadingRoles ? 'Chargement des rôles...' : 'Sélectionnez un rôle'}
@@ -141,20 +190,25 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           </div>
         )}
 
-        {/* Compte actif */}
-        <FormField label="État du compte">
-          <div className="flex items-center space-x-3">
-            <input
-              {...register('is_active')}
-              type="checkbox"
-              id="is_active"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded transition-colors duration-200"
-            />
-            <label htmlFor="is_active" className="text-sm text-gray-700 dark:text-gray-300">
-              Compte activé (l'utilisateur pourra se connecter immédiatement)
-            </label>
+        {/* 💡 Info box - Workflow sécurisé */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 transition-colors duration-200">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Création sécurisée
+              </h4>
+              <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                Un mot de passe temporaire sera généré et envoyé par email. 
+                L'utilisateur devra le changer lors de sa première connexion.
+              </p>
+            </div>
           </div>
-        </FormField>
+        </div>
 
         {/* Actions */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-200">
@@ -186,5 +240,25 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
         </div>
       </form>
     </Modal>
+
+    {/* Modal d'affichage des identifiants */}
+    <>
+      {userCredentials && (
+        <UserCredentialsModal
+          isOpen={showCredentials}
+          onClose={() => {
+            setShowCredentials(false);
+            setUserCredentials(null);
+            reset();
+            onClose();
+          }}
+          email={userCredentials.email}
+          temporaryPassword={userCredentials.temporaryPassword}
+          firstName={userCredentials.firstName}
+          lastName={userCredentials.lastName}
+        />
+      )}
+    </>
+    </>
   );
 };

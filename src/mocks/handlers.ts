@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { env } from '@/app/config/env'
 import type { EventDTO } from '@/features/events/dpo/event.dto'
 import type { AttendeeDTO } from '@/features/attendees/dpo/attendee.dto'
-import { authDemoHandlers, users, events as demoEvents } from './auth-demo'
+import { authDemoHandlers, users, events as demoEvents, roles } from './auth-demo'
 
 console.log('📋 Nouveaux handlers de démo importés:', authDemoHandlers.length)
 
@@ -678,40 +678,204 @@ export const handlers = [
 
     // Créer le nouvel utilisateur activé
     const newUser = {
-      id: `user-${Date.now()}`,
+      id: `user-${users.length + 1}`,
       email: 'nouveau@example.com',
       firstName: body.firstName,
       lastName: body.lastName,
-      roles: ['EVENT_MANAGER'],
+      phone: body.phone,
+      roleId: 'role-event-manager',
+      role: {
+        id: 'role-event-manager',
+        code: 'EVENT_MANAGER',
+        name: 'Gestionnaire Événement'
+      },
       orgId: 'org-choyou',
-      eventIds: [],
-      isSuperAdmin: false,
       isActive: true,
-      profileCompleted: true
+      isAccountComplete: true
     }
 
-    // Simuler JWT token
-    const authToken = btoa(JSON.stringify({
-      userId: newUser.id,
-      orgId: newUser.orgId,
-      role: 'EVENT_MANAGER',
-      exp: Date.now() + 24 * 60 * 60 * 1000
-    }))
-
-    console.log('✅ Compte créé et activé:', newUser)
+    users.push(newUser)
 
     return HttpResponse.json({
-      success: true,
+      user: newUser,
+      message: 'Compte créé avec succès'
+    })
+  }),
+
+  // =====================================================
+  // 🆕 NOUVEAU WORKFLOW: CRÉATION UTILISATEUR AVEC MDP GÉNÉRÉ
+  // =====================================================
+
+  // POST /v1/users - Créer un utilisateur avec mdp généré
+  http.post(`${env.VITE_API_BASE_URL}/users`, async ({ request }) => {
+    console.log('👤 Création nouvel utilisateur avec mdp généré')
+    
+    const body = await request.json() as {
+      firstName: string
+      lastName: string
+      email: string
+      roleId: string
+      phone?: string
+    }
+
+    // Simuler délai d'API
+    await new Promise(resolve => setTimeout(resolve, 1200))
+
+    // Validation: email unique par organisation
+    const existingUser = users.find(u => u.email === body.email)
+    if (existingUser) {
+      return HttpResponse.json(
+        { 
+          message: 'Un utilisateur avec cet email existe déjà dans cette organisation',
+          field: 'email'
+        },
+        { status: 409 }
+      )
+    }
+
+    // Générer mot de passe temporaire (simulation)
+    const generateTempPassword = () => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%'
+      let password = ''
+      for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length))
+      }
+      return password
+    }
+
+    const tempPassword = generateTempPassword()
+
+    // Créer l'utilisateur avec mdp temporaire
+    const newUser = {
+      id: `user-${Date.now()}`,
+      email: body.email,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      phone: body.phone || null,
+      roleId: body.roleId,
+      role: {
+        id: body.roleId,
+        code: body.roleId === 'role-org-admin' ? 'ORG_ADMIN' : 'EVENT_MANAGER',
+        name: body.roleId === 'role-org-admin' ? 'Admin Organisation' : 'Gestionnaire Événement'
+      },
+      orgId: 'org-1', // Organisation courante
+      isActive: true,
+      mustChangePassword: true, // 🔑 Doit changer son mdp à la première connexion
+      tempPassword, // Stocké temporairement pour les logs
+      createdAt: new Date().toISOString(),
+      createdBy: 'current-user-id'
+    }
+
+    users.push(newUser)
+
+    // Simuler l'envoi d'email
+    console.log('📧 Email envoyé à', body.email, 'avec mdp temporaire:', tempPassword)
+
+    return HttpResponse.json({
       user: {
         id: newUser.id,
         email: newUser.email,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
-        role: 'EVENT_MANAGER',
-        orgId: newUser.orgId
+        phone: newUser.phone,
+        role: newUser.role,
+        isActive: newUser.isActive,
+        mustChangePassword: newUser.mustChangePassword,
+        createdAt: newUser.createdAt
       },
-      token: authToken,
-      message: 'Compte créé avec succès'
+      emailSent: true,
+      tempPasswordSent: true // Confirmation que l'email a été envoyé
+    }, { status: 201 })
+  }),
+
+  // POST /v1/auth/change-password - Première connexion obligatoire
+  http.post(`${env.VITE_API_BASE_URL}/auth/change-password`, async ({ request }) => {
+    console.log('🔐 Changement de mot de passe première connexion')
+    
+    const body = await request.json() as {
+      currentPassword: string
+      newPassword: string
+    }
+
+    // Simuler délai
+    await new Promise(resolve => setTimeout(resolve, 800))
+
+    // Dans un vrai système, on validerait le token JWT
+    // Ici on simule la réussite
+    
+    return HttpResponse.json({
+      success: true,
+      message: 'Mot de passe mis à jour avec succès',
+      mustChangePassword: false // Plus besoin de changer le mdp
     })
+  }),
+
+  // GET /v1/users - Lister utilisateurs avec filtrage super admin
+  http.get(`${env.VITE_API_BASE_URL}/users`, () => {
+    console.log('📋 Liste des utilisateurs (mock)')
+    
+    const mockUsers = users.map(user => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      orgId: user.orgId,
+      isActive: user.isActive,
+      mustChangePassword: (user as any).mustChangePassword || false,
+      createdAt: (user as any).createdAt || new Date().toISOString()
+    }))
+
+    return HttpResponse.json({
+      users: mockUsers,
+      total: mockUsers.length,
+      page: 1,
+      limit: 50
+    })
+  }),
+
+  // GET /v1/roles - Lister les rôles disponibles
+  http.get(`${env.VITE_API_BASE_URL}/v1/roles`, ({ request }) => {
+    console.log('🎭 Liste des rôles (mock) - URL complète:', `${env.VITE_API_BASE_URL}/v1/roles`)
+    console.log('🎭 Rôles disponibles:', roles.length)
+    
+    const authHeader = request.headers.get('Authorization')
+    
+    // Si pas d'auth, retourner rôles de base
+    if (!authHeader?.startsWith('Bearer ')) {
+      const basicRoles = roles.filter(role => ['ORG_ADMIN', 'EVENT_MANAGER'].includes(role.code))
+      return HttpResponse.json(basicRoles)
+    }
+
+    try {
+      // Extraction des informations utilisateur du token
+      const token = authHeader.replace('Bearer ', '')
+      const payload = JSON.parse(atob(token))
+      
+      // Recherche de l'utilisateur actuel
+      const currentUser = users.find(u => u.id === payload.userId)
+      
+      if (!currentUser) {
+        return HttpResponse.json([])
+      }
+
+      // Super Admin voit tous les rôles
+      if (currentUser.isSuperAdmin) {
+        return HttpResponse.json(roles)
+      }
+
+      // Utilisateurs normaux voient les rôles de leur organisation + rôles génériques
+      const orgRoles = roles.filter(role => 
+        role.orgId === currentUser.orgId || 
+        ['ORG_ADMIN', 'EVENT_MANAGER', 'CHECKIN_STAFF', 'PARTNER', 'READONLY'].includes(role.code)
+      )
+      
+      return HttpResponse.json(orgRoles)
+    } catch (error) {
+      console.error('Erreur parsing token pour rôles:', error)
+      // En cas d'erreur, retourner rôles de base
+      const basicRoles = roles.filter(role => ['ORG_ADMIN', 'EVENT_MANAGER'].includes(role.code))
+      return HttpResponse.json(basicRoles)
+    }
   }),
 ]

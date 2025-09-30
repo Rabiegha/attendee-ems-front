@@ -46,22 +46,224 @@ applyTo: '**'
 
 **⚠️ RÈGLE ABSOLUE : AUCUN UTILISATEUR NE PEUT SE CRÉER UN COMPTE DIRECTEMENT**
 
-### Processus Obligatoire :
-1. **Admin invite** → Saisie email + rôle + organisation
-2. **User créé en DB** → `isActive: false`, `profileCompleted: false`, `invitationId`
-3. **Email envoyé** → Lien `/signup/{token}` avec expiration
-4. **Validation token** → Vérification token + email correspondent
-5. **Complétion profil** → Formulaire prénom/nom/mot de passe
-6. **Activation compte** → `isActive: true`, `profileCompleted: true`
+### Processus Obligatoire (Mis à jour 30/09/2025) :
+1. **Admin créé compte** → Saisie prénom + nom + email + rôle + organisation
+2. **Système génère** → Mot de passe temporaire sécurisé (12 caractères)
+3. **User créé en DB** → `isActive: true`, `mustChangePassword: true`
+4. **Email envoyé** → Identifiants de connexion (email + mot de passe temporaire)
+5. **Première connexion** → Redirection forcée vers page changement mot de passe
+6. **Changement mdp** → `mustChangePassword: false`, accès complet au système
+
+### Architecture Base de Données :
+```sql
+-- Colonne ajoutée à la table users
+ALTER TABLE users ADD COLUMN must_change_password BOOLEAN DEFAULT false;
+
+-- Workflow de création
+CREATE TABLE user_creation_logs (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id),
+  created_by UUID REFERENCES users(id),
+  temp_password VARCHAR(255),  -- Hash du mot de passe temporaire
+  created_at TIMESTAMP DEFAULT NOW(),
+  password_changed_at TIMESTAMP
+);
+```
 
 ### Sécurités Implémentées :
-- 🔐 Token unique UUID par invitation
-- ⏰ Expiration automatique (7 jours)
-- 📧 Vérification email obligatoire  
-- 🚫 Aucune création directe possible
-- 🛡️ Validation multi-niveau (token/email/user)
+- 🔐 **Mot de passe généré** : 12 caractères (majuscules, minuscules, chiffres, symboles)
+- 📧 **Email sécurisé** : Identifiants transmis par email chiffré
+- 🚫 **Aucune création directe** possible
+- � **Changement obligatoire** : Impossible d'utiliser le système sans changer le mdp
+- 📊 **Audit trail** : Log de toutes les créations de comptes
+- ⏰ **Expiration** : Mots de passe temporaires expirent après 30 jours
 
-**Documentation complète : `docs/USER_CREATION_WORKFLOW.md`**
+### Avantages du Nouveau Système :
+- ✅ **Plus simple** : Pas de token/lien complexe
+- ✅ **Plus rapide** : Compte immédiatement utilisable
+- ✅ **Plus sécurisé** : Obligation de changer le mot de passe
+- ✅ **Meilleure UX** : Email clair avec identifiants
+- ✅ **Traçabilité** : Logs complets des créations
+
+**Documentation complète : `docs/USER_CREATION_WORKFLOW_V2.md`**
+
+---
+
+## 📧 MODULE EMAIL POUR CRÉATION DE COMPTES
+
+### Architecture Email Système :
+**Backend (attendee-ems-back) :**
+- Module Email avec Nodemailer/SendGrid pour envoi d'identifiants
+- Service de génération de mots de passe sécurisés
+- Templates HTML pour emails d'identifiants
+- Logs d'audit pour traçabilité des créations
+
+**Workflow Backend :**
+```typescript
+// Service de création d'utilisateur
+async createUser(userData, creatorId) {
+  // 1. Générer mot de passe temporaire
+  const tempPassword = generateSecurePassword(12);
+  const hashedPassword = await bcrypt.hash(tempPassword, 10);
+  
+  // 2. Créer utilisateur en DB
+  const user = await User.create({
+    ...userData,
+    password_hash: hashedPassword,
+    is_active: true,
+    must_change_password: true
+  });
+  
+  // 3. Log de création
+  await UserCreationLog.create({
+    user_id: user.id,
+    created_by: creatorId,
+    temp_password: hashedPassword
+  });
+  
+  // 4. Envoyer email avec identifiants
+  await this.emailService.sendCredentials(user.email, tempPassword);
+  
+  return user;
+}
+```
+
+**Frontend Integration :**
+- Page `/admin/users` avec formulaire création
+- Modal de confirmation avant envoi email
+- Interface de gestion des utilisateurs avec statut "Doit changer mdp"
+- Page `/change-password` pour première connexion (redirection forcée)
+
+### Middleware de Contrôle First Login :
+```typescript
+// Guard pour forcer changement de mot de passe
+@Injectable()
+export class MustChangePasswordGuard implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    
+    // Si must_change_password = true, rediriger vers /change-password
+    if (user.must_change_password && request.path !== '/auth/change-password') {
+      throw new ForbiddenException('Must change password first');
+    }
+    
+    return true;
+  }
+}
+```
+
+**PRIORITÉ** : Module Email + Interface création utilisateur.
+
+---
+
+## 🎯 SYSTÈME DE FORMULAIRES EMBEDDABLES - ARCHITECTURE SaaS B2B
+
+**🎯 VISION PRODUIT (29/09/2025)** : Créer un SaaS multi-tenant où les clients peuvent créer des événements et collecter des inscriptions via des formulaires embeddables sur leurs propres sites.
+
+### Modèle Business Multi-Tenant :
+**VOTRE PLATEFORME** → **CLIENTS (Organizations)** → **ÉVÉNEMENTS** → **FORMULAIRES EMBED** → **PARTICIPANTS**
+
+1. **Clients** s'inscrivent et ont leur compte admin sur votre plateforme
+2. **Admins clients** invitent leur équipe dans leur organisation  
+3. **Équipes** créent des événements pour leur organisation
+4. **Événements** génèrent automatiquement un formulaire d'inscription embeddable
+5. **Public** s'inscrit via ce formulaire intégré sur le site du client
+6. **Inscriptions** arrivent automatiquement dans le back-office du client
+
+### Architecture Données CRM Intégrée :
+
+**ATTENDEES (Base Globale CRM)** - **RÈGLE CRITIQUE**
+- Table `attendees` : profils uniques par personne dans l'organisation
+- Lien vers `persons` (table globale cross-org)  
+- Historique complet de toutes les participations
+- CRM intégré avec labels, notes, segmentation
+
+**REGISTRATIONS (Inscriptions Spécifiques)**
+- Table `registrations` : inscription à un événement spécifique
+- Lien vers `attendee` global (attendeeId)
+- Statut d'inscription (awaiting, approved, refused, cancelled)
+- Données contextuelles (type participation, réponses formulaires)
+- Badges, présences, check-ins liés
+
+**FLUX D'INSCRIPTION AVEC CRM :**
+1. Formulaire Embed → Soumission inscription  
+2. **Vérification existence attendee** (par email + org_id)
+3. **Si nouveau** → Création profil attendee global
+4. **Si existant** → Récupération profil existant  
+5. **Création registration** liée à l'attendee
+6. **Mise à jour historique** et CRM automatique
+
+### Workflow Technique :
+```sql
+-- Events avec token public pour embed
+CREATE TABLE events (
+  id UUID PRIMARY KEY,
+  org_id UUID NOT NULL,
+  public_token VARCHAR(255) UNIQUE NOT NULL,  -- Pour formulaires embeds
+  title VARCHAR(255) NOT NULL,
+  form_fields JSONB DEFAULT '[...]'            -- Configuration formulaire
+);
+
+-- CRM Global Attendees  
+CREATE TABLE attendees (
+  id UUID PRIMARY KEY,
+  org_id UUID NOT NULL,        -- Isolation multi-tenant
+  person_id UUID,              -- Lien vers profil global cross-org
+  email VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255),
+  last_name VARCHAR(255),
+  tags JSONB DEFAULT '[]',     -- Labels CRM
+  notes TEXT,                  -- Notes CRM
+  created_at TIMESTAMP
+);
+
+-- Inscriptions spécifiques par événement
+CREATE TABLE registrations (
+  id UUID PRIMARY KEY,
+  event_id UUID NOT NULL REFERENCES events(id),
+  attendee_id UUID NOT NULL REFERENCES attendees(id),
+  org_id UUID NOT NULL,       -- Sécurité multi-tenant
+  status VARCHAR(50) DEFAULT 'registered',
+  form_data JSONB NOT NULL,   -- Données saisies dans le formulaire
+  source_url VARCHAR(255),    -- URL où était intégré le formulaire
+  registered_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### API Endpoints :
+```typescript
+// ===== API ADMIN (Clients) =====
+POST   /v1/events                        // Créer événement
+GET    /v1/events/:id/embed-code         // Générer code HTML embed
+GET    /v1/events/:id/registrations      // Liste participants  
+GET    /v1/attendees                     // CRM global organisation
+GET    /v1/attendees/:id                 // Profil + historique complet
+
+// ===== API PUBLIQUE (Formulaires) =====  
+GET    /public/events/:token             // Info événement pour formulaire
+POST   /public/events/:token/register    // Soumission inscription
+```
+
+### Code Embed Généré :
+```html
+<!-- Ce que reçoivent les clients -->
+<div id="ems-registration-form"></div>
+<script src="https://votre-ems.com/embed.js" 
+        data-event-token="abc-123-def-456"
+        data-target="#ems-registration-form">
+</script>
+```
+
+### Avantages Architecture CRM :
+- ✅ **CRM unifié** avec vue globale par participant
+- ✅ **Évite les doublons** de profils  
+- ✅ **Historique cross-événements** pour analytics
+- ✅ **Marketing ciblé** basé sur comportement
+- ✅ **Support multi-événements** et récurrents
+- ✅ **Isolation multi-tenant** sécurisée
+
+**PRIORITÉ DÉVELOPPEMENT** : Module Events Backend → Module Attendees/Registrations → API Publique Embed
 
 ---
 

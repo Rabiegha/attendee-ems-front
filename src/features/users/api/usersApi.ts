@@ -28,7 +28,8 @@ export interface Role {
   id: string;
   code: string;
   name: string;
-  org_id: string;
+  orgId: string;
+  description?: string;
 }
 
 // RTK Query API definition
@@ -109,6 +110,47 @@ export const usersApi = createApi({
       query: () => '/roles',
       providesTags: ['Roles'],
     }),
+
+    // 🆕 Créer un utilisateur avec mot de passe généré automatiquement
+    createUserWithGeneratedPassword: builder.mutation<
+      {
+        user: User & { mustChangePassword: boolean };
+        emailSent: boolean;
+        tempPasswordSent: boolean;
+      },
+      {
+        email: string;
+        password: string;
+        role_id: string;
+        is_active?: boolean;
+      }
+    >({
+      query: (userData) => ({
+        url: '/users',
+        method: 'POST',
+        body: userData,
+      }),
+      invalidatesTags: ['Users'],
+    }),
+
+    // 🆕 Changer le mot de passe (première connexion obligatoire)
+    changePassword: builder.mutation<
+      {
+        success: boolean;
+        message: string;
+        mustChangePassword: boolean;
+      },
+      {
+        currentPassword: string;
+        newPassword: string;
+      }
+    >({
+      query: (passwordData) => ({
+        url: '/auth/change-password',
+        method: 'POST',
+        body: passwordData,
+      }),
+    }),
   }),
 });
 
@@ -119,4 +161,7 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useGetRolesQuery,
+  // 🆕 Nouveaux hooks pour le workflow avec mdp généré
+  useCreateUserWithGeneratedPasswordMutation,
+  useChangePasswordMutation,
 } = usersApi;

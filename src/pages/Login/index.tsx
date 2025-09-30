@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -59,12 +59,24 @@ export const LoginPage: React.FC = () => {
   })
 
   const watchedFields = watch()
+  const prevFieldsRef = useRef({ email: '', password: '' })
 
-  // Effacer les erreurs quand l'utilisateur tape
+  // Effacer les erreurs seulement quand l'utilisateur modifie réellement les champs
   useEffect(() => {
-    if (lastError && (watchedFields.email || watchedFields.password)) {
+    const currentEmail = watchedFields.email || ''
+    const currentPassword = watchedFields.password || ''
+    
+    // Vérifier si les valeurs ont réellement changé (pas juste initialisées)
+    const emailChanged = currentEmail !== prevFieldsRef.current.email
+    const passwordChanged = currentPassword !== prevFieldsRef.current.password
+    
+    // Nettoyer l'erreur seulement si l'utilisateur modifie après une erreur
+    if (lastError && (emailChanged || passwordChanged)) {
       setLastError(null)
     }
+    
+    // Mettre à jour les valeurs de référence
+    prevFieldsRef.current = { email: currentEmail, password: currentPassword }
   }, [watchedFields.email, watchedFields.password, lastError])
 
   const onSubmit = async (data: LoginFormData) => {
@@ -107,18 +119,22 @@ export const LoginPage: React.FC = () => {
       }, 1000)
       
     } catch (err: any) {
-      console.error('Login failed:', err)
       setLoginAttempts(prev => prev + 1)
       
-      // Messages d'erreur personnalisés
-      if (err?.status === 401) {
+      // RTK Query structure: err.status contient le code HTTP
+      const status = err?.status || err?.originalStatus
+      
+      // Messages d'erreur personnalisés basés sur le statut
+      if (status === 401) {
         setLastError(t('login.invalid_credentials'))
-      } else if (err?.status === 429) {
+      } else if (status === 429) {
         setLastError(t('login.too_many_attempts'))
-      } else if (err?.status >= 500) {
+      } else if (status >= 500) {
         setLastError(t('login.server_error'))
-      } else {
+      } else if (err?.message === 'Failed to fetch' || err?.name === 'TypeError') {
         setLastError(t('login.network_error'))
+      } else {
+        setLastError(t('login.invalid_credentials'))
       }
     }
   }

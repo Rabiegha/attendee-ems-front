@@ -36,8 +36,10 @@
     --color-warning-600: 217 119 6;    /* yellow-600 */
     
     --color-error-50: 254 242 242;     /* red-50 */
+    --color-error-400: 248 113 113;    /* red-400 - Better for dark mode */
     --color-error-500: 239 68 68;      /* red-500 */
     --color-error-600: 220 38 38;      /* red-600 */
+    --color-error-700: 185 28 28;      /* red-700 */
     --color-error-700: 185 28 28;      /* red-700 */
     
     /* === SPACING - Système d'espacement cohérent === */

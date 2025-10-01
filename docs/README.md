@@ -22,12 +22,12 @@ Ce dossier contient toute la documentation technique et utilisateur du système 
 | [`EVENT_LIST_ACCESS_FIX.md`](./EVENT_LIST_ACCESS_FIX.md) | Fix liste des événements | ✅ Résolu |
 | [`SUPER_ADMIN_EVENT_ACCESS_FIX.md`](./SUPER_ADMIN_EVENT_ACCESS_FIX.md) | Correction accès super admin | ✅ Résolu |
 
-## 🧪 Environnement de test
+##  Environnement de test
 
 ### Accès aux comptes de test
 ```bash
 # Via l'interface (développement uniquement)
-# Bouton "🧪 Comptes test" en bas à droite de l'écran de login
+# Bouton " Comptes test" en bas à droite de l'écran de login
 
 # Via la documentation
 # Voir TEST_ACCOUNTS.md pour la liste complète
@@ -60,7 +60,7 @@ docker-compose exec api npx sequelize-cli db:migrate
 ```
 docs/
 ├── README.md                           # Ce fichier
-├── TEST_ACCOUNTS.md                    # 🧪 Comptes de test (PRINCIPAL)
+├── TEST_ACCOUNTS.md                    #  Comptes de test (PRINCIPAL)
 ├── ATTENDEES_ARCHITECTURE.md          # Architecture système
 ├── USER_CREATION_WORKFLOW.md          # Workflow création utilisateur
 ├── LOGOUT_CACHE_FIX.md               # Fix critique cache RTK Query

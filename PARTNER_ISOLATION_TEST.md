@@ -54,7 +54,7 @@ Vérifier que chaque partenaire ne voit que les événements qui lui sont spéci
    - Date: 15 décembre 2024
    - Lieu: Creative Agency - Grand Amphithéâtre
 
-## 🧪 Procédure de Test
+##  Procédure de Test
 
 ### Étape 1: Test Partenaire Tech
 1. Se connecter avec `tech@creative.com` / `demo123`

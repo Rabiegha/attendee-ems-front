@@ -253,7 +253,7 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="🧪 Comptes de test disponibles"
+      title=" Comptes de test disponibles"
       maxWidth="4xl"
     >
       <div className="space-y-6">
@@ -408,7 +408,7 @@ export const TestAccountsHelper: React.FC = () => {
     <div className="w-full">
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-xl p-4 shadow-lg transition-colors duration-200">
         <div className="text-center">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">🧪 Mode Développement</h3>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2"> Mode Développement</h3>
           <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
             Testez l'application avec différents comptes et permissions
           </p>

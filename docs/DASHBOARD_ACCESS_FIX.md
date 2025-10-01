@@ -61,7 +61,7 @@ Chaque rôle spécialisé peut maintenant :
 - **Sécurité par Couches** : Dashboard + composants internes avec leurs propres guards
 - **UX Cohérente** : Tous les utilisateurs connectés voient le Dashboard dans la navigation
 
-## 🧪 Tests de Validation
+##  Tests de Validation
 
 ### Test 1 : Claudia (Graphiste)
 1. **Se connecter** avec `claudia@choyou.com`

@@ -286,7 +286,7 @@ transition-colors duration-200
 <Modal contentPadding={true}>  <!-- Padding uniforme -->
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Checklist qualité
 

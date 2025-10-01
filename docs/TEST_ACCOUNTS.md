@@ -1,4 +1,4 @@
-# 🧪 COMPTES DE TEST - EMS
+#  COMPTES DE TEST - EMS
 
 ## 📋 Vue d'ensemble
 
@@ -98,7 +98,7 @@ Ce document recense tous les comptes de test disponibles pour tester les fonctio
 | `partner` | Accès limité événements | Sports Hub |
 | `readonly` | Consultation uniquement | Université |
 
-## 🧪 Scénarios de test recommandés
+##  Scénarios de test recommandés
 
 ### 1. **Test d'isolation des organisations**
 - Se connecter avec `admin@techstart.test`

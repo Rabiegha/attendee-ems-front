@@ -170,4 +170,4 @@ const newUser = {
 
 **✅ Status:** Frontend complet et fonctionnel avec MSW
 **🔄 Next:** Développement backend pour production
-**🧪 Test:** Accédez à `/user-creation-test` pour voir la démo
+** Test:** Accédez à `/user-creation-test` pour voir la démo

@@ -243,7 +243,7 @@ export const getApiConfig = () => ({
    - Ajuster les types TypeScript
    - Mettre à jour la configuration API
 
-3. **🧪 Mettre à jour les mocks MSW**
+3. ** Mettre à jour les mocks MSW**
    - Adapter les handlers aux nouvelles structures
    - Tester en mode développement
 

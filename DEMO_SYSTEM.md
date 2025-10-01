@@ -99,7 +99,7 @@ import { DemoLoginPanel } from '@/shared/ui/DemoLoginPanel'
 {import.meta.env.DEV && <DemoLoginPanel />}
 ```
 
-## 🧪 Scénarios de Test
+##  Scénarios de Test
 
 ### 1. Test Multi-Tenant
 1. Connectez-vous comme Super Admin

@@ -73,7 +73,7 @@ if (currentUser) {
 6. **EventId autorisé** ? → Sinon 404
 7. ✅ **Accès accordé**
 
-## 🧪 Tests de Validation
+##  Tests de Validation
 
 ### Test 1 : Super Admin (Corentin)
 1. **Se connecter** avec `corentin@kistler.com`

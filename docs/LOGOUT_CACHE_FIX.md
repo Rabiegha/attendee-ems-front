@@ -41,7 +41,7 @@ import { invitationsApi } from '@/features/invitations/api/invitationsApi'
 import { usersApi } from '@/features/users/api/usersApi'
 ```
 
-## 🧪 Tests de Validation
+##  Tests de Validation
 
 ### Procédure de Test
 1. **Se connecter** avec un utilisateur (ex: `admin@choyou.fr`)

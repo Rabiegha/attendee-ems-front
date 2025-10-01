@@ -229,7 +229,7 @@ L'application inclut un flux complet de démonstration :
 - Mode sombre/clair (prêt)
 - Responsive design
 
-## 🧪 Tests
+##  Tests
 
 ### Tests Unitaires
 ```bash

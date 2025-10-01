@@ -94,7 +94,7 @@ const EventDetailsWithGuard: React.FC = () => {
 - 📝 Actions limitées (créer, inviter)
 - ❌ Aucun accès
 
-## 🧪 Tests de Validation
+##  Tests de Validation
 
 ### Scénario 1 : Utilisateur Spécialisé
 1. **Se connecter** avec `claudia@choyou.com` (Graphiste)

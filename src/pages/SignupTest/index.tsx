@@ -1,5 +1,5 @@
 /**
- * 🧪 PAGE DE TEST POUR LE SIGNUP
+ *  PAGE DE TEST POUR LE SIGNUP
  * 
  * Cette page permet de tester les différents cas du signup :
  * - Token valide → Formulaire de complétion
@@ -42,7 +42,7 @@ export const SignupTestPage: React.FC = () => {
         <div className="bg-white shadow rounded-lg">
           <div className="px-6 py-4 border-b border-gray-200">
             <h1 className="text-2xl font-bold text-gray-900">
-              🧪 Test de la Page Signup
+               Test de la Page Signup
             </h1>
             <p className="mt-2 text-sm text-gray-600">
               Testez les différents scénarios de signup sécurisé

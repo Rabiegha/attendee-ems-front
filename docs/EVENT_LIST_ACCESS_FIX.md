@@ -56,7 +56,7 @@
 | **Route Guard** | Accès détails | Vérification eventIds + permissions |
 | **Page Details** | Actions | Boutons conditionnels selon permissions |
 
-## 🧪 Tests de Validation
+##  Tests de Validation
 
 ### Test 1 : Utilisateur Spécialisé
 1. **Se connecter** avec `claudia@choyou.com`

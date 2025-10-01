@@ -265,7 +265,7 @@ export function UserCreationTestPage() {
           </div>
         </div>
 
-        {/* 🧪 Actions de test */}
+        {/*  Actions de test */}
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 transition-colors duration-200">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Tester le système

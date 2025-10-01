@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Plus, Users, Mail, Calendar, UserCheck, UserX, User as UserIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/Button'
-import { CreateUserModal } from '@/features/users/ui/CreateUserModal'
+import { CreateUserEnhancedModal } from '@/features/users/ui/CreateUserEnhancedModal'
 import { useGetUsersQuery, useGetRolesQuery } from '@/features/users/api/usersApi'
 import { Can } from '@/shared/acl/guards/Can'
 
@@ -259,7 +259,7 @@ export function UsersPage() {
       </div>
 
       {/* 🎯 Modal de création */}
-      <CreateUserModal
+      <CreateUserEnhancedModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
       />

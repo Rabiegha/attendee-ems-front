@@ -147,6 +147,13 @@ export const roles: Role[] = [
     description: 'Accès limité à certains événements spécifiques'
   },
   {
+    id: 'role-hotesse',
+    orgId: 'org-1',
+    code: 'HOTESSE',
+    name: 'Hôtesse d\'accueil',
+    description: 'Scan QR codes et check-in des participants sur événements assignés'
+  },
+  {
     id: 'role-readonly',
     orgId: 'org-1',
     code: 'READONLY',
@@ -236,6 +243,30 @@ export const users: User[] = [
     role: roles.find(r => r.id === 'role-itfb-editor')!,
     isActive: true,
     eventIds: ['itfb-editorial']
+  },
+
+  // 🏢 HÔTESSES D'ACCUEIL
+  {
+    id: 'user-hotesse-1',
+    orgId: 'org-1',
+    email: 'sophie.accueil@ems.com',
+    firstName: 'Sophie',
+    lastName: 'Dubois',
+    roleId: 'role-hotesse',
+    role: roles.find(r => r.id === 'role-hotesse')!,
+    isActive: true,
+    eventIds: ['event-1', 'event-2'] // Événements assignés pour le scan
+  },
+  {
+    id: 'user-hotesse-2',
+    orgId: 'org-1',
+    email: 'marie.reception@ems.com',
+    firstName: 'Marie',
+    lastName: 'Leroy',
+    roleId: 'role-hotesse',
+    role: roles.find(r => r.id === 'role-hotesse')!,
+    isActive: true,
+    eventIds: ['event-3'] // Événement spécifique assigné
   }
 ]
 

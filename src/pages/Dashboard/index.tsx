@@ -11,6 +11,8 @@ import { Can } from '@/shared/acl/guards/Can'
 import { useCan } from '@/shared/acl/hooks/useCan'
 import { Button } from '@/shared/ui/Button'
 import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
+import { UserInfo } from '@/shared/ui/UserInfo'
+import { RolePermissionsTest } from '@/shared/ui/RolePermissionsTest'
 import { Plus, Users, Calendar, Building2, Mail, Shield } from 'lucide-react'
 
 export const Dashboard: React.FC = () => {
@@ -166,6 +168,12 @@ export const Dashboard: React.FC = () => {
   // Dashboard simplifié pour les utilisateurs avec permissions limitées (partenaires, staff, etc.)
   return (
     <div className="space-y-6">
+      {/* Affichage des informations utilisateur et permissions */}
+      <UserInfo />
+      
+      {/* Test complet des permissions par rôle */}
+      <RolePermissionsTest />
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">

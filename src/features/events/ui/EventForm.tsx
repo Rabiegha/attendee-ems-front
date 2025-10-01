@@ -8,6 +8,7 @@ import { Textarea } from '@/shared/ui/Textarea'
 import { FormField } from '@/shared/ui/FormField'
 import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
 import { createEventSchema, type CreateEventFormData } from '../lib/validation'
+import { PartnerSelect } from './PartnerSelect'
 
 interface EventFormProps {
   initialData?: Partial<CreateEventFormData>
@@ -26,6 +27,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 }) => {
   const [tags, setTags] = useState<string[]>(initialData?.tags || [])
   const [newTag, setNewTag] = useState('')
+  const [partnerIds, setPartnerIds] = useState<string[]>(initialData?.partnerIds || [])
 
   const {
     register,
@@ -42,7 +44,8 @@ export const EventForm: React.FC<EventFormProps> = ({
       endDate: initialData?.endDate || '',
       location: initialData?.location || '',
       maxAttendees: initialData?.maxAttendees || undefined, // Sans limite par défaut
-      tags: initialData?.tags || []
+      tags: initialData?.tags || [],
+      partnerIds: initialData?.partnerIds || []
     }
   })
 
@@ -66,7 +69,7 @@ export const EventForm: React.FC<EventFormProps> = ({
 
   const onFormSubmit = async (data: CreateEventFormData) => {
     try {
-      await onSubmit({ ...data, tags })
+      await onSubmit({ ...data, tags, partnerIds })
     } catch (error) {
       console.error('Erreur lors de la soumission:', error)
     }
@@ -222,6 +225,22 @@ export const EventForm: React.FC<EventFormProps> = ({
             </div>
           )}
         </div>
+      </FormField>
+
+      {/* Partenaires autorisés */}
+      <FormField
+        label="Partenaires autorisés (optionnel)"
+        hint="Sélectionnez les partenaires qui auront accès à cet événement"
+        error={errors.partnerIds?.message}
+      >
+        <PartnerSelect
+          value={partnerIds}
+          onChange={(newPartnerIds) => {
+            setPartnerIds(newPartnerIds)
+            setValue('partnerIds', newPartnerIds)
+          }}
+          disabled={isLoading}
+        />
       </FormField>
 
       {/* Actions */}

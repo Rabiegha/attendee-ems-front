@@ -47,6 +47,25 @@ export const createUserWithGeneratedPasswordSchema = z.object({
     .string()
     .min(1, 'Rôle requis'),
   
+  // 🆕 Organisation - obligatoire pour SUPER_ADMIN, automatique pour autres rôles
+  orgId: z
+    .string()
+    .optional(),
+    
+  // 🆕 Création d'organisation - uniquement pour SUPER_ADMIN
+  createNewOrg: z
+    .boolean()
+    .optional()
+    .default(false),
+    
+  newOrgName: z
+    .string()
+    .optional(),
+    
+  newOrgSlug: z
+    .string()
+    .optional(),
+  
   phone: z
     .string()
     .optional(),
@@ -60,6 +79,7 @@ export interface CreateUserDto {
   password: string;
   role_id: string;
   is_active?: boolean;
+  org_id?: string; // 🆕 Pour SUPER_ADMIN qui peut choisir l'organisation
 }
 
 export interface CreateUserWithGeneratedPasswordDto {
@@ -67,6 +87,15 @@ export interface CreateUserWithGeneratedPasswordDto {
   password: string;
   role_id: string;
   is_active?: boolean;
+  org_id?: string; // 🆕 Pour SUPER_ADMIN qui peut choisir l'organisation
+  first_name?: string; // 🆕 Ajout des noms
+  last_name?: string; // 🆕 Ajout des noms
+}
+
+// 🆕 DTO pour créer une nouvelle organisation (SUPER_ADMIN uniquement)
+export interface CreateOrganizationDto {
+  name: string;
+  slug: string;
 }
 
 export interface UserResponse {
@@ -96,18 +125,40 @@ export const mapCreateUserFormToDto = (formData: CreateUserFormData): CreateUser
 // 🆕 Mapper pour le nouveau workflow avec mot de passe généré
 export const mapCreateUserWithGeneratedPasswordFormToDto = (
   formData: CreateUserWithGeneratedPasswordFormData
-): { dto: CreateUserWithGeneratedPasswordDto; temporaryPassword: string } => {
+): { 
+  dto: CreateUserWithGeneratedPasswordDto; 
+  temporaryPassword: string;
+  newOrgData?: CreateOrganizationDto;
+} => {
   const temporaryPassword = generateTemporaryPassword();
   
-  return {
+  const result: {
+    dto: CreateUserWithGeneratedPasswordDto;
+    temporaryPassword: string;
+    newOrgData?: CreateOrganizationDto;
+  } = {
     dto: {
       email: formData.email,
       password: temporaryPassword,
       role_id: formData.roleId,
       is_active: true,
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      // Inclure org_id seulement si spécifié (SUPER_ADMIN)
+      ...(formData.orgId && { org_id: formData.orgId }),
     },
-    temporaryPassword, // Retourner aussi le mot de passe pour l'afficher
+    temporaryPassword,
   };
+  
+  // Si création d'une nouvelle organisation
+  if (formData.createNewOrg && formData.newOrgName && formData.newOrgSlug) {
+    result.newOrgData = {
+      name: formData.newOrgName,
+      slug: formData.newOrgSlug,
+    };
+  }
+  
+  return result;
 };
 
 // Générateur de mot de passe temporaire (12 caractères sécurisés)

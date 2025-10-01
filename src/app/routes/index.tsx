@@ -79,7 +79,7 @@ export const router = createBrowserRouter([
       {
         path: 'users',
         element: (
-          <GuardedRoute action="read" subject="User">
+          <GuardedRoute action="manage" subject="User">
             <UsersPage />
           </GuardedRoute>
         ),

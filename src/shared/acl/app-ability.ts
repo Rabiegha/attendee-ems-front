@@ -13,6 +13,11 @@ export type Actions =
   | 'approve'
   | 'refuse'
   | 'print'
+  | 'scan' // Scan QR codes (HOTESSE)
+  | 'check-in' // Check-in attendees (HOTESSE)
+  | 'assign' // Assign users to events/roles
+  | 'view-all' // View all resources in organization (vs assigned only)
+  | 'approve' // Approve invoices/payments
 
 // Define all possible subjects (resources) in the system
 export type Subjects =
@@ -25,6 +30,11 @@ export type Subjects =
   | 'Scan'
   | 'Report'
   | 'Settings'
+  | 'QRCode' // QR code scanning (HOTESSE)
+  | 'Role' // Role management (future)
+  | 'Permission' // Permission management (future)
+  | 'Invitation' // Invitation management
+  | 'Invoice' // Invoice management
   | 'all' // Special subject that represents all subjects
 
 // Define the shape of our ability using MongoAbility for conditions support

@@ -14,6 +14,7 @@ export interface EventDPO {
   updatedAt: string // ISO string for Redux serialization
   createdBy: string
   tags: string[]
+  partnerIds: string[]
   metadata: Record<string, any>
   // Computed properties
   isActive: boolean
@@ -35,6 +36,7 @@ export interface CreateEventDPO {
   maxAttendees?: number // Optionnel (sans limite par défaut)
   status?: EventStatus // Optionnel (sera 'published' par défaut)
   tags?: string[]
+  partnerIds?: string[]
   metadata?: Record<string, any>
 }
 

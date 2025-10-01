@@ -584,7 +584,64 @@ PUT /registrations/:id/status → Changement statut inscription
 
 ---
 
-## 🔧 CORRECTIONS CRITIQUES APPLIQUÉES
+## � ARCHITECTURE DES RÔLES - CRITIQUE
+
+⚠️ **ATTENTION** : Le système utilise exactement 5 rôles avec des permissions très spécifiques. Aucun autre rôle n'existe.
+
+### 1. SUPER_ADMIN
+- **Portée** : Accès global à toutes les données (toutes les organisations, tous les utilisateurs, tous les attendees)
+- **Particularité** : Peut avoir sa propre organisation ET voir les autres organisations
+- **Permissions** :
+  - Voir toutes les données de toutes les organisations
+  - Créer des comptes utilisateurs dans n'importe quelle organisation
+  - Créer de nouvelles organisations
+  - Accès à toutes les fonctionnalités existantes
+  - Dans les formulaires : peut choisir d'inviter dans une org existante OU créer un utilisateur dans une nouvelle org
+
+### 2. ADMIN
+- **Portée** : Limitée à sa propre organisation uniquement
+- **Permissions** :
+  - Voir tous les membres de son équipe/organisation
+  - Créer des événements pour son organisation
+  - Inviter des membres en leur créant des comptes (forcément dans sa propre organisation)
+  - Accès à toutes les fonctionnalités liées à son organisation
+  - Modifier les événements de son organisation
+
+### 3. MANAGER
+- **Portée** : Limitée à sa propre organisation uniquement
+- **Permissions** :
+  - Mêmes permissions que ADMIN SAUF inviter des membres
+  - Créer des événements
+  - Voir les inscrits aux événements
+  - Pas le droit de créer de nouveaux comptes
+
+### 4. VIEWER
+- **Portée** : Limitée à sa propre organisation uniquement
+- **Type** : Read-only sur TOUS les événements de l'organisation
+- **Permissions** :
+  - Voir tous les événements de son organisation
+  - Voir les détails et les inscrits
+  - Aucune permission de modification
+  - Membre de l'équipe avec accès en lecture seule
+
+### 5. PARTNER
+- **Portée** : Limitée aux événements spécifiques qui lui sont attribués
+- **Type** : Read-only sur des événements sélectionnés
+- **Permissions** :
+  - Voir uniquement les événements où il est assigné comme partner
+  - Aucune permission de modification
+  - Les créateurs d'événements peuvent attribuer des partners via un formulaire
+- **Workflow** : Dans le formulaire de création d'événement, lister tous les partners disponibles pour attribution
+
+### Règles critiques
+1. **JAMAIS de rôles fantaisistes** comme "Journaliste", "Graphiste", etc.
+2. **Hiérarchie stricte** : SUPER_ADMIN > ADMIN > MANAGER > VIEWER > PARTNER
+3. **Isolation des organisations** : sauf SUPER_ADMIN, tous les rôles sont limités à leur organisation
+4. **Attribution des partners** : doit être gérée au niveau de chaque événement
+
+---
+
+## �🔧 CORRECTIONS CRITIQUES APPLIQUÉES
 
 ### ✅ Cache RTK Query après Déconnexion (RÉSOLU)
 - **Problème** : Données persistantes après logout, violation sécurité

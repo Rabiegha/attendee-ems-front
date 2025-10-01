@@ -31,11 +31,11 @@ const initializeState = (): SessionState => {
           roles: [tokenData.role],
           orgId: tokenData.orgId,
         },
-        organization: {
+        organization: tokenData.orgId && tokenData.role !== 'SUPER_ADMIN' ? {
           id: tokenData.orgId,
           name: 'Loading...', // Will be filled by API call
           slug: '',
-        },
+        } : null, // SUPER_ADMIN n'a pas d'org
         rules: [],
         isAuthenticated: true,
       }
@@ -85,11 +85,15 @@ export const sessionSlice = createSlice({
           orgId: tokenData.orgId,
         }
         
-        // Create organization object (basic info, can be enhanced later)
-        state.organization = {
-          id: tokenData.orgId,
-          name: 'ACME Corporation', // Default name, should come from API later
-          slug: 'acme',
+        // Create organization object (SUPER_ADMIN n'a pas d'org)
+        if (tokenData.orgId && tokenData.role !== 'SUPER_ADMIN') {
+          state.organization = {
+            id: tokenData.orgId,
+            name: 'ACME Corporation', // Default name, should come from API later
+            slug: 'acme',
+          }
+        } else {
+          state.organization = null // SUPER_ADMIN n'appartient à aucune org
         }
       }
       

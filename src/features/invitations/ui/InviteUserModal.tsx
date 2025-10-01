@@ -17,6 +17,7 @@ import {
   type CreateInvitationRequest,
   ROLE_DESCRIPTIONS 
 } from '../types/invitation.types'
+import { useCan } from '@/shared/acl/hooks/useCan'
 
 // Schéma de validation
 const invitationSchema = z.object({
@@ -145,10 +146,14 @@ export const InviteUserModal: React.FC<InviteUserModalProps> = ({
     setValue('role', role, { shouldValidate: true })
   }
 
-  // Filtrer les rôles selon les permissions
+  // Filtrer les rôles selon les permissions RBAC
+  const canInviteAdmins = useCan('manage', 'Organization') // Seuls ceux qui gèrent l'org peuvent inviter des admins
+  const canCreateUsers = useCan('create', 'User') // Permission de base pour créer des utilisateurs
+  
   const availableRoles = Object.entries(ROLE_DESCRIPTIONS).filter(([role]) => {
-    if (role === 'SUPER_ADMIN') return false // Ne peut pas inviter de Super Admin
-    if (!isSuperAdmin && ['ORG_ADMIN', 'ORG_MANAGER'].includes(role)) return false // Org Admin ne peut pas inviter d'autres admins
+    if (role === 'SUPER_ADMIN') return false // SUPER_ADMIN ne peut jamais être invité
+    if (['ADMIN'].includes(role) && !canInviteAdmins) return false // Seuls les gestionnaires d'org peuvent inviter des admins
+    if (!canCreateUsers) return false // Permission de base requise
     return true
   }) as [UserRole, typeof ROLE_DESCRIPTIONS[UserRole]][]
 

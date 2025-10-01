@@ -21,9 +21,13 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
   const user = useSelector(selectUser)
   const orgId = useSelector(selectOrgId)
 
-  // Charger automatiquement les règles de politique si l'utilisateur est connecté
-  const { data: policyData } = useGetPolicyQuery(orgId!, {
-    skip: !orgId || !user || rules.length > 0 // Skip si pas d'orgId, pas d'user, ou si on a déjà des règles
+  // Vérifier si l'utilisateur est SUPER_ADMIN
+  const isSuperAdmin = user?.roles?.[0] === 'SUPER_ADMIN' || user?.roles?.includes('SUPER_ADMIN')
+
+  // Charger automatiquement les règles de politique si l'utilisateur est connecté (sauf SUPER_ADMIN)
+  const shouldSkipPolicy = Boolean(!orgId || !user || rules.length > 0 || isSuperAdmin)
+  const { data: policyData } = useGetPolicyQuery(orgId || '', {
+    skip: shouldSkipPolicy
   })
 
   // Mettre à jour les règles dans le store quand elles sont chargées
@@ -41,7 +45,7 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
     }
 
     // If we have user info but no rules yet, use preset rules based on roles
-    if (user && orgId) {
+    if (user && (orgId || isSuperAdmin)) {
       // Map backend roles to CASL roles 
       const backendRoles = user.roles || []
       const caslRoles = mapBackendRolesToCASQL(backendRoles)
@@ -50,9 +54,9 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
       console.log('[RBAC] Backend roles:', backendRoles)
       console.log('[RBAC] Mapped CASL roles:', caslRoles)
       
-      // Combine rules from all user roles
+      // Combine rules from all user roles (orgId optionnel pour SUPER_ADMIN)
       const combinedRules = caslRoles.flatMap(role => 
-        rulesFor(role, { orgId, userId: user.id, eventIds })
+        rulesFor(role, { orgId: orgId || '', userId: user.id, eventIds })
       )
       
       console.log('[RBAC] Generated rules:', combinedRules)

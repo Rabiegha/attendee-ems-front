@@ -32,10 +32,17 @@ export interface Role {
   description?: string;
 }
 
+// 🆕 Interface pour les organisations
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 // RTK Query API definition
 export const usersApi = createApi({
   reducerPath: 'usersApi',
-  tagTypes: ['Users', 'User', 'Roles'],
+  tagTypes: ['Users', 'User', 'Roles', 'Organizations'],
   baseQuery: fetchBaseQuery({
     baseUrl: `${env.VITE_API_BASE_URL}/v1`,
     prepareHeaders: (headers, { getState }) => {
@@ -111,6 +118,12 @@ export const usersApi = createApi({
       providesTags: ['Roles'],
     }),
 
+    // 🆕 Récupérer toutes les organisations (SUPER_ADMIN uniquement)
+    getOrganizations: builder.query<Organization[], void>({
+      query: () => '/organizations',
+      providesTags: ['Organizations'],
+    }),
+
     // 🆕 Créer un utilisateur avec mot de passe généré automatiquement
     createUserWithGeneratedPassword: builder.mutation<
       {
@@ -151,6 +164,12 @@ export const usersApi = createApi({
         body: passwordData,
       }),
     }),
+
+    // 🆕 Récupérer les utilisateurs PARTNER et HOTESSE de l'organisation pour sélection dans les événements
+    getPartnersForEvents: builder.query<Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>[], void>({
+      query: () => '/users?roles=PARTNER,HOTESSE',
+      providesTags: ['Users'],
+    }),
   }),
 });
 
@@ -161,6 +180,8 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useGetRolesQuery,
+  useGetOrganizationsQuery, // 🆕 Hook pour les organisations
+  useGetPartnersForEventsQuery, // 🆕 Hook pour les partenaires
   // 🆕 Nouveaux hooks pour le workflow avec mdp généré
   useCreateUserWithGeneratedPasswordMutation,
   useChangePasswordMutation,

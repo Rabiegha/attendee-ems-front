@@ -48,6 +48,10 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
         updateData.tags = data.tags
       }
       
+      if (data.partnerIds && data.partnerIds.length > 0) {
+        updateData.partnerIds = data.partnerIds
+      }
+      
       await updateEvent({
         id: event.id,
         data: updateData
@@ -75,7 +79,8 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
     endDate: event.endDate,
     location: event.location || undefined,
     maxAttendees: event.maxAttendees && event.maxAttendees < 100000 ? event.maxAttendees : undefined,
-    tags: event.tags || undefined
+    tags: event.tags || undefined,
+    partnerIds: event.partnerIds || undefined
   } : undefined
 
   if (!isOpen || !event) return null

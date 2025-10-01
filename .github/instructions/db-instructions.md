@@ -86,6 +86,12 @@ role_id uuid not null references roles(id) -- FK composite ci-dessous
 email text not null unique
 
 
+first_name text null
+
+
+last_name text null
+
+
 password_hash text null
 
 

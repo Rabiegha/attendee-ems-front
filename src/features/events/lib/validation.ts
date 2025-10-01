@@ -33,6 +33,11 @@ export const createEventSchema = z.object({
   
   tags: z.array(z.string())
     .max(10, 'Vous ne pouvez pas ajouter plus de 10 tags')
+    .optional(),
+    
+  // 🆕 Champ partenaires - liste des IDs d'utilisateurs PARTNER
+  partnerIds: z.array(z.string().uuid())
+    .max(50, 'Vous ne pouvez pas assigner plus de 50 partenaires')
     .optional()
 }).refine((data) => new Date(data.endDate) > new Date(data.startDate), {
   message: "La date de fin doit être après la date de début",
@@ -49,7 +54,8 @@ const baseEventSchema = z.object({
   endDate: z.string(),
   location: z.string().max(200).optional().or(z.literal('')),
   maxAttendees: z.number().min(1).max(10000).optional(),
-  tags: z.array(z.string()).max(10).optional()
+  tags: z.array(z.string()).max(10).optional(),
+  partnerIds: z.array(z.string().uuid()).max(50).optional()
 })
 
 // Schéma pour l'édition (tous les champs optionnels sauf l'ID)

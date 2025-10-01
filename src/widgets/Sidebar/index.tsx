@@ -12,27 +12,27 @@ const navigation = [
     href: ROUTES.DASHBOARD,
     icon: LayoutDashboard,
     action: 'read' as const,
-    subject: 'Organization' as const,
+    subject: 'Organization' as const, // Tous les rôles peuvent voir le dashboard
   },
   {
     name: 'navigation.events',
     href: ROUTES.EVENTS,
     icon: Calendar,
     action: 'read' as const,
-    subject: 'Event' as const,
+    subject: 'Event' as const, // VIEWER et + peuvent voir les événements
   },
   {
     name: 'navigation.attendees',
     href: ROUTES.ATTENDEES,
     icon: Users,
     action: 'read' as const,
-    subject: 'Attendee' as const,
+    subject: 'Attendee' as const, // VIEWER et + peuvent voir les participants
   },
   {
     name: 'navigation.users',
     href: ROUTES.USERS,
     icon: UserCog,
-    action: 'read' as const,
+    action: 'manage' as const, // Seuls SUPER_ADMIN et ADMIN peuvent gérer les utilisateurs
     subject: 'User' as const,
   },
   {
@@ -40,13 +40,13 @@ const navigation = [
     href: '/reports',
     icon: BarChart3,
     action: 'read' as const,
-    subject: 'Report' as const,
+    subject: 'Report' as const, // VIEWER et + peuvent voir les rapports
   },
   {
     name: 'navigation.settings',
     href: '/settings',
     icon: Settings,
-    action: 'read' as const,
+    action: 'manage' as const, // Seuls SUPER_ADMIN et ADMIN peuvent gérer les paramètres
     subject: 'Settings' as const,
   },
 ]

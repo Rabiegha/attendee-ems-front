@@ -16,204 +16,159 @@ interface TestAccount {
 }
 
 const TEST_ACCOUNTS: TestAccount[] = [
-  // ACME CORP
+  // === SUPER ADMIN - Accès global à toutes les données ===
   {
-    email: 'admin@acme.test',
-    password: 'Admin#12345',
-    role: 'org_admin',
-    organization: 'Acme Corp',
-    orgSlug: 'acme-corp',
-    description: 'Compte admin original',
-    sector: 'Généraliste',
-    timezone: 'UTC'
-  },
-  {
-    email: 'super.admin@ems.test',
-    password: 'SuperAdmin#2024',
-    role: 'org_admin',
-    organization: 'Acme Corp',
-    orgSlug: 'acme-corp',
-    description: 'Super administrateur',
-    sector: 'Généraliste',
-    timezone: 'UTC'
-  },
-
-  // TECHSTART INNOVATE
-  {
-    email: 'admin@techstart.test',
-    password: 'TechAdmin#2024',
-    role: 'org_admin',
-    organization: 'TechStart Innovate',
-    orgSlug: 'techstart-innovate',
-    description: 'Administrateur startup',
-    sector: 'Startup Tech',
-    timezone: 'Europe/Paris'
-  },
-  {
-    email: 'manager@techstart.test',
-    password: 'TechManager#2024',
-    role: 'org_manager',
-    organization: 'TechStart Innovate',
-    orgSlug: 'techstart-innovate',
-    description: 'Manager événements startup',
-    sector: 'Startup Tech',
-    timezone: 'Europe/Paris'
-  },
-  {
-    email: 'dev@techstart.test',
-    password: 'DevEvent#2024',
-    role: 'event_manager',
-    organization: 'TechStart Innovate',
-    orgSlug: 'techstart-innovate',
-    description: 'Développeur organisateur événements tech',
-    sector: 'Startup Tech',
+    email: 'superadmin@ems.com',
+    password: 'password123',
+    role: 'SUPER_ADMIN',
+    organization: 'TechCorp Solutions',
+    orgSlug: 'techcorp-solutions',
+    description: 'Accès complet - Toutes organisations, création orgs, toutes fonctionnalités',
+    sector: 'Administration',
     timezone: 'Europe/Paris'
   },
 
-  // GLOBAL EVENTS CORP
+  // === TECHCORP SOLUTIONS - Startup Tech ===
   {
-    email: 'admin@globalevents.test',
-    password: 'GlobalAdmin#2024',
-    role: 'org_admin',
-    organization: 'Global Events Corp',
-    orgSlug: 'global-events-corp',
-    description: 'Administrateur événements internationaux',
-    sector: 'Événementiel',
-    timezone: 'America/New_York'
-  },
-  {
-    email: 'coordinator@globalevents.test',
-    password: 'EventCoord#2024',
-    role: 'event_manager',
-    organization: 'Global Events Corp',
-    orgSlug: 'global-events-corp',
-    description: 'Coordinateur événements internationaux',
-    sector: 'Événementiel',
-    timezone: 'America/New_York'
-  },
-  {
-    email: 'checkin@globalevents.test',
-    password: 'CheckIn#2024',
-    role: 'checkin_staff',
-    organization: 'Global Events Corp',
-    orgSlug: 'global-events-corp',
-    description: 'Personnel accueil événements',
-    sector: 'Événementiel',
-    timezone: 'America/New_York'
-  },
-
-  // UNIVERSITÉ PARIS DIGITAL
-  {
-    email: 'admin@univ-paris.test',
-    password: 'UnivAdmin#2024',
-    role: 'org_admin',
-    organization: 'Université Paris Digital',
-    orgSlug: 'universite-paris-digital',
-    description: 'Administrateur université',
-    sector: 'Éducation',
+    email: 'admin@techcorp.com',
+    password: 'password123',
+    role: 'ADMIN',
+    organization: 'TechCorp Solutions',
+    orgSlug: 'techcorp-solutions',
+    description: 'Admin org - Gestion équipe, création événements, invitation membres',
+    sector: 'Tech',
     timezone: 'Europe/Paris'
   },
   {
-    email: 'prof@univ-paris.test',
-    password: 'ProfEvent#2024',
-    role: 'event_manager',
-    organization: 'Université Paris Digital',
-    orgSlug: 'universite-paris-digital',
-    description: 'Professeur organisateur conférences',
-    sector: 'Éducation',
+    email: 'manager@techcorp.com',
+    password: 'password123',
+    role: 'MANAGER',
+    organization: 'TechCorp Solutions',
+    orgSlug: 'techcorp-solutions',
+    description: 'Manager - Création/modification événements, pas d\'invitation membres',
+    sector: 'Tech',
     timezone: 'Europe/Paris'
   },
   {
-    email: 'etudiant@univ-paris.test',
-    password: 'Student#2024',
-    role: 'readonly',
-    organization: 'Université Paris Digital',
-    orgSlug: 'universite-paris-digital',
-    description: 'Étudiant accès lecture seule',
-    sector: 'Éducation',
+    email: 'viewer@techcorp.com',
+    password: 'password123',
+    role: 'VIEWER',
+    organization: 'TechCorp Solutions',
+    orgSlug: 'techcorp-solutions',
+    description: 'Visualiseur - Lecture seule sur TOUS les événements de l\'organisation',
+    sector: 'Tech',
+    timezone: 'Europe/Paris'
+  },
+  {
+    email: 'partner@techcorp.com',
+    password: 'password123',
+    role: 'PARTNER',
+    organization: 'TechCorp Solutions',
+    orgSlug: 'techcorp-solutions',
+    description: 'Partenaire - Lecture seule uniquement sur événements assignés',
+    sector: 'Tech',
     timezone: 'Europe/Paris'
   },
 
-  // MEDCONF INTERNATIONAL
+  // === MEDEVENTS INTERNATIONAL - Secteur Médical ===
   {
-    email: 'admin@medconf.test',
-    password: 'MedAdmin#2024',
-    role: 'org_admin',
-    organization: 'MedConf International',
-    orgSlug: 'medconf-international',
-    description: 'Administrateur conférences médicales',
+    email: 'admin@medevents.com',
+    password: 'password123',
+    role: 'ADMIN',
+    organization: 'MedEvents International',
+    orgSlug: 'medevents-international',
+    description: 'Admin org - Gestion complète équipe médicale et événements',
     sector: 'Médical',
     timezone: 'Europe/London'
   },
   {
-    email: 'doctor@medconf.test',
-    password: 'DocEvent#2024',
-    role: 'event_manager',
-    organization: 'MedConf International',
-    orgSlug: 'medconf-international',
-    description: 'Médecin organisateur conférences',
+    email: 'manager@medevents.com',
+    password: 'password123',
+    role: 'MANAGER',
+    organization: 'MedEvents International',
+    orgSlug: 'medevents-international',
+    description: 'Manager - Gestion événements médicaux sans invitation membres',
     sector: 'Médical',
     timezone: 'Europe/London'
   },
   {
-    email: 'nurse@medconf.test',
-    password: 'NurseStaff#2024',
-    role: 'checkin_staff',
-    organization: 'MedConf International',
-    orgSlug: 'medconf-international',
-    description: 'Infirmière personnel événements',
+    email: 'viewer@medevents.com',
+    password: 'password123',
+    role: 'VIEWER',
+    organization: 'MedEvents International',
+    orgSlug: 'medevents-international',
+    description: 'Visualiseur - Lecture seule tous événements médicaux de l\'org',
     sector: 'Médical',
     timezone: 'Europe/London'
   },
 
-  // SPORTS & WELLNESS HUB
+  // === CREATIVE HUB AGENCY - Secteur Créatif ===
   {
-    email: 'admin@sportshub.test',
-    password: 'SportAdmin#2024',
-    role: 'org_admin',
-    organization: 'Sports & Wellness Hub',
-    orgSlug: 'sports-wellness-hub',
-    description: 'Administrateur centre sportif',
-    sector: 'Sport',
-    timezone: 'Australia/Sydney'
+    email: 'admin@creativehub.com',
+    password: 'password123',
+    role: 'ADMIN',
+    organization: 'Creative Hub Agency',
+    orgSlug: 'creative-hub-agency',
+    description: 'Admin org - Gestion équipe créative et événements artistiques',
+    sector: 'Créatif',
+    timezone: 'Europe/Paris'
   },
   {
-    email: 'coach@sportshub.test',
-    password: 'CoachEvent#2024',
-    role: 'event_manager',
-    organization: 'Sports & Wellness Hub',
-    orgSlug: 'sports-wellness-hub',
-    description: 'Coach organisateur événements sportifs',
-    sector: 'Sport',
-    timezone: 'Australia/Sydney'
+    email: 'partner1@creativehub.com',
+    password: 'password123',
+    role: 'PARTNER',
+    organization: 'Creative Hub Agency',
+    orgSlug: 'creative-hub-agency',
+    description: 'Partenaire créatif - Accès limité aux événements attribués',
+    sector: 'Créatif',
+    timezone: 'Europe/Paris'
   },
   {
-    email: 'partner@sportshub.test',
-    password: 'Partner#2024',
-    role: 'partner',
-    organization: 'Sports & Wellness Hub',
-    orgSlug: 'sports-wellness-hub',
-    description: 'Partenaire commercial',
+    email: 'partner2@creativehub.com',
+    password: 'password123',
+    role: 'PARTNER',
+    organization: 'Creative Hub Agency',
+    orgSlug: 'creative-hub-agency',
+    description: 'Partenaire créatif - Accès limité aux événements attribués',
+    sector: 'Créatif',
+    timezone: 'Europe/Paris'
+  },
+
+  // === GLOBAL SPORTS NETWORK - Secteur Sportif ===
+  {
+    email: 'admin@globalsports.com',
+    password: 'password123',
+    role: 'ADMIN',
+    organization: 'Global Sports Network',
+    orgSlug: 'global-sports-network',
+    description: 'Admin org - Gestion équipe sportive et événements internationaux',
     sector: 'Sport',
-    timezone: 'Australia/Sydney'
+    timezone: 'America/New_York'
+  },
+  {
+    email: 'manager@globalsports.com',
+    password: 'password123',
+    role: 'MANAGER',
+    organization: 'Global Sports Network',
+    orgSlug: 'global-sports-network',
+    description: 'Manager - Gestion événements sportifs sans invitation membres',
+    sector: 'Sport',
+    timezone: 'America/New_York'
   }
 ];
 
 const ROLE_COLORS: Record<string, string> = {
-  'org_admin': 'bg-red-100 text-red-800',
-  'org_manager': 'bg-orange-100 text-orange-800',
-  'event_manager': 'bg-blue-100 text-blue-800',
-  'checkin_staff': 'bg-green-100 text-green-800',
-  'partner': 'bg-purple-100 text-purple-800',
-  'readonly': 'bg-gray-100 text-gray-800'
+  'SUPER_ADMIN': 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-300',
+  'ADMIN': 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
+  'MANAGER': 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300',
+  'VIEWER': 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300',
+  'PARTNER': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
 };
 
 const SECTOR_ICONS: Record<string, string> = {
-  'Généraliste': '🏢',
   'Startup Tech': '💻',
-  'Événementiel': '🌍',
-  'Éducation': '🎓',
-  'Médical': '🏥',
+  'Médical': '�',
+  'Créatif': '�',
   'Sport': '🏃‍♂️'
 };
 
@@ -253,7 +208,7 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title=" Comptes de test disponibles"
+      title="Comptes de test - Base de données réelle"
       maxWidth="4xl"
     >
       <div className="space-y-6">
@@ -381,13 +336,14 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
         </div>
 
         {/* Instructions */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-medium text-yellow-800 mb-2">💡 Instructions d'utilisation</h4>
-          <ul className="text-sm text-yellow-700 space-y-1">
-            <li>• Utilisez ces comptes pour tester les différents niveaux de permissions</li>
-            <li>• Chaque organisation est complètement isolée des autres</li>
-            <li>• Les rôles sont hiérarchiques : org_admin {`>`} org_manager {`>`} event_manager {`>`} etc.</li>
-            <li>• Le compte "readonly" ne permet que la consultation</li>
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg p-4">
+          <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">💡 Instructions d'utilisation</h4>
+          <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+            <li>• <strong>Mot de passe universel :</strong> demo123</li>
+            <li>• <strong>4 organisations</strong> avec différents secteurs d'activité</li>
+            <li>• <strong>5 niveaux de rôles :</strong> ADMIN {`>`} MANAGER {`>`} ORGANIZER {`>`} MODERATOR {`>`} VIEWER</li>
+            <li>• <strong>Isolation complète :</strong> chaque organisation est séparée</li>
+            <li>• <strong>Données réelles :</strong> connectées à la base de données PostgreSQL</li>
           </ul>
         </div>
       </div>
@@ -408,9 +364,9 @@ export const TestAccountsHelper: React.FC = () => {
     <div className="w-full">
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-white/20 dark:border-gray-700/20 rounded-xl p-4 shadow-lg transition-colors duration-200">
         <div className="text-center">
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2"> Mode Développement</h3>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Mode Développement</h3>
           <p className="text-xs text-gray-600 dark:text-gray-300 mb-3">
-            Testez l'application avec différents comptes et permissions
+            Comptes réels en base • 4 organisations • 5 niveaux de rôles
           </p>
           <Button
             variant="outline"

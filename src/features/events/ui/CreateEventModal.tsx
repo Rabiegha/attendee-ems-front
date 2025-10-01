@@ -44,6 +44,10 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
         eventData.tags = data.tags
       }
       
+      if (data.partnerIds && data.partnerIds.length > 0) {
+        eventData.partnerIds = data.partnerIds
+      }
+      
       await createEvent(eventData).unwrap()
       toast.success(
         'Événement créé !',

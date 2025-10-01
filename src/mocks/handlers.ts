@@ -867,7 +867,7 @@ export const handlers = [
       // Utilisateurs normaux voient les rôles de leur organisation + rôles génériques
       const orgRoles = roles.filter(role => 
         role.orgId === currentUser.orgId || 
-        ['ORG_ADMIN', 'EVENT_MANAGER', 'CHECKIN_STAFF', 'PARTNER', 'READONLY'].includes(role.code)
+        ['ORG_ADMIN', 'EVENT_MANAGER', 'CHECKIN_STAFF', 'PARTNER', 'HOTESSE', 'READONLY'].includes(role.code)
       )
       
       return HttpResponse.json(orgRoles)
@@ -877,5 +877,46 @@ export const handlers = [
       const basicRoles = roles.filter(role => ['ORG_ADMIN', 'EVENT_MANAGER'].includes(role.code))
       return HttpResponse.json(basicRoles)
     }
+  }),
+
+  // GET /v1/users?roles=PARTNER,HOTESSE - Récupérer les utilisateurs pour sélection d'événements
+  http.get(`${env.VITE_API_BASE_URL}/users`, ({ request }) => {
+    const url = new URL(request.url)
+    const rolesParam = url.searchParams.get('roles')
+    
+    // Si on demande spécifiquement PARTNER,HOTESSE pour les événements
+    if (rolesParam === 'PARTNER,HOTESSE') {
+      const eventUsers = users.filter(user => 
+        user.role && ['PARTNER', 'HOTESSE'].includes(user.role.code)
+      ).map(user => ({
+        id: user.id,
+        first_name: user.firstName,
+        last_name: user.lastName, 
+        email: user.email
+      }))
+      
+      console.log('👥 Utilisateurs PARTNER/HOTESSE pour événements:', eventUsers.length)
+      return HttpResponse.json(eventUsers)
+    }
+
+    // Sinon, retourner la logique existante pour la liste complète des utilisateurs
+    const mockUsers = users.map(user => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      orgId: user.orgId,
+      isActive: user.isActive,
+      mustChangePassword: (user as any).mustChangePassword || false,
+      createdAt: (user as any).createdAt || new Date().toISOString()
+    }))
+
+    return HttpResponse.json({
+      users: mockUsers,
+      total: mockUsers.length,
+      page: 1,
+      limit: 50
+    })
   }),
 ]

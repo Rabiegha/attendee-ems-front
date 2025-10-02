@@ -2,7 +2,7 @@ import { MongoAbility, createMongoAbility } from '@casl/ability'
 
 // Define all possible actions in the system
 export type Actions =
-  | 'manage' // Special action that represents all actions
+  | 'manage'
   | 'create'
   | 'read'
   | 'update'
@@ -13,11 +13,11 @@ export type Actions =
   | 'approve'
   | 'refuse'
   | 'print'
-  | 'scan' // Scan QR codes (HOTESSE)
-  | 'check-in' // Check-in attendees (HOTESSE)
-  | 'assign' // Assign users to events/roles
-  | 'view-all' // View all resources in organization (vs assigned only)
-  | 'approve' // Approve invoices/payments
+  | 'scan'
+  | 'check-in'
+  | 'assign'
+  | 'view-all'
+  | 'approve'
 
 // Define all possible subjects (resources) in the system
 export type Subjects =
@@ -30,12 +30,12 @@ export type Subjects =
   | 'Scan'
   | 'Report'
   | 'Settings'
-  | 'QRCode' // QR code scanning (HOTESSE)
-  | 'Role' // Role management (future)
-  | 'Permission' // Permission management (future)
-  | 'Invitation' // Invitation management
-  | 'Invoice' // Invoice management
-  | 'all' // Special subject that represents all subjects
+  | 'QRCode'
+  | 'Role'
+  | 'Permission'
+  | 'Invitation'
+  | 'Invoice'
+  | 'all'
 
 // Define the shape of our ability using MongoAbility for conditions support
 export type AppAbility = MongoAbility<[Actions, Subjects]>

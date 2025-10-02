@@ -38,6 +38,7 @@ export const ROUTES = {
   EVENT_DETAILS: (id: string) => `/events/${id}`,
   ATTENDEES: '/attendees',
   USERS: '/users',
+  ROLES_PERMISSIONS: '/roles-permissions',
   LOGIN: '/login',
   FORBIDDEN: '/403',
 } as const

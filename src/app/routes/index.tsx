@@ -13,6 +13,7 @@ import { EventsPage } from '@/pages/Events'
 import { EventDetails } from '@/pages/EventDetails'
 import { Attendees } from '@/pages/Attendees'
 import { UsersPage } from '@/pages/Users'
+import { RolePermissionsAdmin } from '@/pages/RolePermissionsAdmin'
 import { ChangePasswordPage } from '@/pages/ChangePassword'
 import { UserCreationTestPage } from '@/pages/UserCreationTest'
 import { LoginPage } from '@/pages/Login'
@@ -81,6 +82,14 @@ export const router = createBrowserRouter([
         element: (
           <GuardedRoute action="manage" subject="User">
             <UsersPage />
+          </GuardedRoute>
+        ),
+      },
+      {
+        path: 'roles-permissions',
+        element: (
+          <GuardedRoute action="manage" subject="Role">
+            <RolePermissionsAdmin />
           </GuardedRoute>
         ),
       },

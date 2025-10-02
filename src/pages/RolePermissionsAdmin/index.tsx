@@ -1,0 +1,1 @@
+export { RolePermissionsAdmin } from './RolePermissionsAdmin'

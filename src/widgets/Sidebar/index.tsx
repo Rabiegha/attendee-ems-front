@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LayoutDashboard, Calendar, Users, UserCog, BarChart3, Settings } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, UserCog, Shield, BarChart3, Settings } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
 import { cn } from '@/shared/lib/utils'
@@ -34,6 +34,13 @@ const navigation = [
     icon: UserCog,
     action: 'manage' as const, // Seuls SUPER_ADMIN et ADMIN peuvent gérer les utilisateurs
     subject: 'User' as const,
+  },
+  {
+    name: 'navigation.roles_permissions',
+    href: ROUTES.ROLES_PERMISSIONS,
+    icon: Shield,
+    action: 'manage' as const, // Seuls SUPER_ADMIN et ADMIN peuvent gérer les rôles et permissions
+    subject: 'Role' as const,
   },
   {
     name: 'navigation.reports',

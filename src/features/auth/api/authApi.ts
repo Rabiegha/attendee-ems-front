@@ -22,11 +22,18 @@ export interface User {
   lastName?: string
   first_name?: string  // Support backend format
   last_name?: string   // Support backend format
+  phone?: string
+  company?: string
+  job_title?: string
+  country?: string
+  metadata?: any
   roles: string[]
   orgId?: string
   org_id?: string      // Support backend format
   eventIds?: string[]
   isSuperAdmin?: boolean
+  is_active?: boolean
+  must_change_password?: boolean
 }
 
 export interface UserProfileResponse {
@@ -34,10 +41,22 @@ export interface UserProfileResponse {
   email: string
   first_name: string | null
   last_name: string | null
+  phone: string | null
+  company: string | null
+  job_title: string | null
+  country: string | null
+  metadata: any
   org_id: string
-  role: string
-  permissions: string[]
+  role: {
+    id: string
+    code: string
+    name: string
+    description?: string
+  }
   is_active: boolean
+  must_change_password: boolean
+  created_at: string
+  updated_at: string
 }
 
 export interface Organization {

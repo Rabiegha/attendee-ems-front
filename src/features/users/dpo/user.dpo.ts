@@ -45,7 +45,7 @@ export const createUserWithGeneratedPasswordSchema = z.object({
   
   roleId: z
     .string()
-    .min(1, 'Rôle requis'),
+    .optional(),
   
   // 🆕 Organisation - obligatoire pour SUPER_ADMIN, automatique pour autres rôles
   orgId: z
@@ -69,6 +69,23 @@ export const createUserWithGeneratedPasswordSchema = z.object({
   phone: z
     .string()
     .optional(),
+    
+  // 🆕 Nouveaux champs backend
+  company: z
+    .string()
+    .optional(),
+    
+  job_title: z
+    .string()
+    .optional(),
+    
+  country: z
+    .string()
+    .optional(),
+    
+  metadata: z
+    .any()
+    .optional(),
 });
 
 export type CreateUserWithGeneratedPasswordFormData = z.infer<typeof createUserWithGeneratedPasswordSchema>;
@@ -85,11 +102,16 @@ export interface CreateUserDto {
 export interface CreateUserWithGeneratedPasswordDto {
   email: string;
   password: string;
-  role_id: string;
+  role_id?: string; // Optionnel - le backend créera un rôle par défaut si non fourni
   is_active?: boolean;
   org_id?: string; // 🆕 Pour SUPER_ADMIN qui peut choisir l'organisation
-  first_name?: string; // 🆕 Ajout des noms
-  last_name?: string; // 🆕 Ajout des noms
+  first_name?: string; // Prénom utilisateur
+  last_name?: string;  // Nom utilisateur
+  phone?: string;      // Téléphone optionnel
+  company?: string;    // Entreprise
+  job_title?: string;  // Poste/titre
+  country?: string;    // Pays de résidence
+  metadata?: any;      // Métadonnées additionnelles
 }
 
 // 🆕 DTO pour créer une nouvelle organisation (SUPER_ADMIN uniquement)
@@ -140,10 +162,17 @@ export const mapCreateUserWithGeneratedPasswordFormToDto = (
     dto: {
       email: formData.email,
       password: temporaryPassword,
-      role_id: formData.roleId,
       is_active: true,
       first_name: formData.firstName,
       last_name: formData.lastName,
+      // Inclure tous les champs optionnels s'ils sont fournis
+      ...(formData.phone && { phone: formData.phone }),
+      ...(formData.company && { company: formData.company }),
+      ...(formData.job_title && { job_title: formData.job_title }),
+      ...(formData.country && { country: formData.country }),
+      ...(formData.metadata && { metadata: formData.metadata }),
+      // Ne pas inclure role_id pour utiliser le rôle par défaut du backend
+      // ...(formData.roleId && { role_id: formData.roleId }),
       // Inclure org_id seulement si spécifié (SUPER_ADMIN)
       ...(formData.orgId && { org_id: formData.orgId }),
     },

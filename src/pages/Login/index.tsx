@@ -98,18 +98,23 @@ export const LoginPage: React.FC = () => {
       // 2. Récupérer les données complètes de l'utilisateur
       try {
         const profileResult = await getProfile()
+        console.log('Profile result:', profileResult)
         if (profileResult.data) {
           const profile = profileResult.data
-          dispatch(updateUser({
+          console.log('Profile data:', profile)
+          const userUpdate = {
             ...(profile.first_name && { firstName: profile.first_name }),
             ...(profile.last_name && { lastName: profile.last_name }),
             email: profile.email,
-            roles: [profile.role],
+            // Correctement extraire le rôle selon la nouvelle structure
+            roles: [typeof profile.role === 'string' ? profile.role : profile.role.code],
             orgId: profile.org_id,
-          }))
+          }
+          console.log('Updating user with:', userUpdate)
+          dispatch(updateUser(userUpdate))
         }
       } catch (profileError) {
-        console.warn('Failed to fetch user profile:', profileError)
+        console.error('Failed to fetch user profile:', profileError)
         // On continue même si on ne peut pas récupérer le profil
       }
       

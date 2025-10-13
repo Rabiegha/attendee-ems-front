@@ -4,7 +4,7 @@ export const APP_VERSION = '1.0.0'
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/v1/auth/login',
-    ME: '/v1/auth/me',
+    ME: '/v1/users/me',
     LOGOUT: '/v1/auth/logout',
     POLICY: '/v1/auth/policy',
   },

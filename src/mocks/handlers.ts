@@ -714,7 +714,7 @@ export const handlers = [
       firstName: string
       lastName: string
       email: string
-      roleId: string
+      roleId?: string // Optionnel - rôle par défaut si absent
       phone?: string
     }
 
@@ -745,6 +745,19 @@ export const handlers = [
 
     const tempPassword = generateTempPassword()
 
+    // Gérer le rôle par défaut si non fourni
+    const defaultRoleId = 'role-user-standard'
+    const finalRoleId = body.roleId || defaultRoleId
+    
+    // Trouver ou créer le rôle par défaut
+    const defaultRole = roles.find(r => r.id === finalRoleId) || {
+      id: defaultRoleId,
+      orgId: 'org-1',
+      code: 'USER_STANDARD',
+      name: 'Utilisateur Standard',
+      description: 'Rôle par défaut pour les nouveaux utilisateurs'
+    }
+    
     // Créer l'utilisateur avec mdp temporaire
     const newUser = {
       id: `user-${Date.now()}`,
@@ -752,19 +765,15 @@ export const handlers = [
       firstName: body.firstName,
       lastName: body.lastName,
       phone: body.phone || null,
-      roleId: body.roleId,
-      role: {
-        id: body.roleId,
-        code: body.roleId === 'role-org-admin' ? 'ORG_ADMIN' : 'EVENT_MANAGER',
-        name: body.roleId === 'role-org-admin' ? 'Admin Organisation' : 'Gestionnaire Événement'
-      },
+      roleId: finalRoleId,
+      role: defaultRole,
       orgId: 'org-1', // Organisation courante
       isActive: true,
       mustChangePassword: true, // 🔑 Doit changer son mdp à la première connexion
       tempPassword, // Stocké temporairement pour les logs
       createdAt: new Date().toISOString(),
       createdBy: 'current-user-id'
-    }
+    } as any // Type assertion pour éviter les erreurs TypeScript dans le mock
 
     users.push(newUser)
 

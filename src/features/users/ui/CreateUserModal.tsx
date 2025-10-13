@@ -153,42 +153,66 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           />
         </FormField>
 
-        {/* 🔐 Rôle */}
-        <FormField
-          label="Rôle"
-          error={errors.roleId?.message}
-          required
-        >
-          <Select
-            {...register('roleId')}
-            leftIcon={<Shield className="h-5 w-5" />}
-            disabled={isLoadingRoles}
-            placeholder={isLoadingRoles ? 'Chargement des rôles...' : 'Sélectionnez un rôle'}
+        {/* 🏢 Entreprise et poste */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormField
+            label="Entreprise (optionnel)"
+            error={errors.company?.message}
           >
-            {rolesData?.map((role: Role) => (
-              <SelectOption key={role.id} value={role.id}>
-                {role.name}
-              </SelectOption>
-            ))}
-          </Select>
+            <Input
+              {...register('company')}
+              placeholder="ACME Corporation"
+            />
+          </FormField>
+          
+          <FormField
+            label="Poste (optionnel)"
+            error={errors.job_title?.message}
+          >
+            <Input
+              {...register('job_title')}
+              placeholder="Responsable Marketing"
+            />
+          </FormField>
+        </div>
+
+        {/* 🌍 Pays */}
+        <FormField
+          label="Pays (optionnel)"
+          error={errors.country?.message}
+        >
+          <Input
+            {...register('country')}
+            placeholder="France"
+          />
         </FormField>
 
-        {/* Description du rôle sélectionné */}
-        {selectedRole && roleDescriptions[selectedRole.code] && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 transition-colors duration-200">
-            <div className="flex items-start space-x-2">
-              <Shield className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
-                  {selectedRole.name}
-                </p>
-                <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                  {roleDescriptions[selectedRole.code]}
-                </p>
-              </div>
+        {/* 🔐 Rôle - Temporairement fixé pour les tests */}
+        <FormField
+          label="Rôle assigné"
+        >
+          <Input
+            value="Utilisateur Standard (par défaut)"
+            leftIcon={<Shield className="h-5 w-5" />}
+            disabled
+            className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+          />
+        </FormField>
+
+        {/* Info sur le rôle par défaut */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3 transition-colors duration-200">
+          <div className="flex items-start space-x-2">
+            <Shield className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                Utilisateur Standard
+              </p>
+              <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
+                Rôle par défaut pour les tests - Accès aux fonctionnalités de base
+              </p>
             </div>
           </div>
-        )}
+        </div>
 
         {/* 💡 Info box - Workflow sécurisé */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 transition-colors duration-200">

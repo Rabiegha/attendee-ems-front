@@ -44,7 +44,14 @@ export const UserInfo: React.FC = () => {
           <strong>Email:</strong> {user.email || 'Non disponible'}
         </div>
         <div>
-          <strong>Nom:</strong> {user.firstName} {user.lastName}
+          <strong>Nom:</strong> {(() => {
+            const firstName = user.firstName || user.first_name
+            const lastName = user.lastName || user.last_name
+            if (firstName && lastName) {
+              return `${firstName} ${lastName}`
+            }
+            return 'Non disponible'
+          })()}
         </div>
         <div>
           <strong>Rôle:</strong> <span className="px-2 py-1 bg-blue-100 rounded text-blue-800">

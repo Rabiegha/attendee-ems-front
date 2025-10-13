@@ -24,7 +24,14 @@ export const PermissionsTestPage: React.FC = () => {
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Informations Utilisateur</h2>
         <p><strong>Email:</strong> {user?.email}</p>
-        <p><strong>Nom:</strong> {user?.firstName} {user?.lastName}</p>
+        <p><strong>Nom:</strong> {(() => {
+          const firstName = user?.firstName || user?.first_name
+          const lastName = user?.lastName || user?.last_name
+          if (firstName && lastName) {
+            return `${firstName} ${lastName}`
+          }
+          return 'Non disponible'
+        })()}</p>
         <p><strong>Rôles:</strong> {roles.join(', ')}</p>
       </div>
 

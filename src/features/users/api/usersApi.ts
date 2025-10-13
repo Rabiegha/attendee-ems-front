@@ -5,6 +5,13 @@ export interface CreateUserRequest {
   email: string;
   password: string;
   role_id: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  company?: string;
+  job_title?: string;
+  country?: string;
+  metadata?: any;
   is_active?: boolean;
 }
 
@@ -13,12 +20,21 @@ export interface User {
   email: string;
   first_name?: string;
   last_name?: string;
+  phone?: string;
+  company?: string;
+  job_title?: string;
+  country?: string;
+  metadata?: any;
   is_active: boolean;
+  must_change_password?: boolean;
+  reset_token?: string;
+  reset_token_expires_at?: string;
   org_id: string;
   role: {
     id: string;
     code: string;
     name: string;
+    description?: string;
   };
   created_at: string;
   updated_at: string;
@@ -28,7 +44,6 @@ export interface Role {
   id: string;
   code: string;
   name: string;
-  orgId: string;
   description?: string;
 }
 

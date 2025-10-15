@@ -21,6 +21,7 @@ import { SignupPage } from '@/pages/Signup'
 import { SignupTestPage } from '@/pages/SignupTest'
 import { InvitationsPage } from '@/pages/Invitations'
 import { CompleteInvitationPage } from '@/pages/CompleteInvitation'
+import { OrganizationsPage } from '@/features/organizations/pages'
 import { ForbiddenPage } from '@/pages/Forbidden'
 import { NotFoundPage } from '@/pages/NotFound'
 
@@ -100,6 +101,14 @@ export const router = createBrowserRouter([
         element: (
           <GuardedRoute action="manage" subject="User">
             <InvitationsPage />
+          </GuardedRoute>
+        ),
+      },
+      {
+        path: 'organizations',
+        element: (
+          <GuardedRoute action="read" subject="Organization">
+            <OrganizationsPage />
           </GuardedRoute>
         ),
       },

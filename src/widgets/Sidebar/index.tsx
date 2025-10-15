@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LayoutDashboard, Calendar, Users, UserCog, Shield, BarChart3, Settings, Mail } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, UserCog, Shield, BarChart3, Settings, Mail, Building2 } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
 import { cn } from '@/shared/lib/utils'
@@ -41,6 +41,13 @@ const navigation = [
     icon: Mail,
     action: 'manage' as const, // Seuls SUPER_ADMIN et ADMIN peuvent envoyer des invitations
     subject: 'User' as const,
+  },
+  {
+    name: 'navigation.organizations',
+    href: '/organizations',
+    icon: Building2,
+    action: 'read' as const, // SUPER_ADMIN voit toutes les orgs, ADMIN voit la sienne
+    subject: 'Organization' as const,
   },
   {
     name: 'navigation.roles_permissions',

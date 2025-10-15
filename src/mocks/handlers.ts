@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { env } from '@/app/config/env'
 import type { EventDTO } from '@/features/events/dpo/event.dto'
 import type { AttendeeDTO } from '@/features/attendees/dpo/attendee.dto'
+import type { Organization, CreateOrganizationRequest, OrganizationUser } from '@/features/organizations/types'
 import { authDemoHandlers, users, events as demoEvents, roles } from './auth-demo'
 
 console.log('📋 Nouveaux handlers de démo importés:', authDemoHandlers.length)
@@ -101,6 +102,28 @@ const mockAttendees: AttendeeDTO[] = [
     registration_date: '2024-02-05T11:00:00Z',
     created_at: '2024-02-05T11:00:00Z',
     updated_at: '2024-02-05T11:00:00Z',
+  },
+]
+
+// Mock organizations data - synchronisées avec auth-demo.ts
+const mockOrganizations: Organization[] = [
+  {
+    id: '1',
+    name: 'ACME Corporation',
+    slug: 'acme-corporation',
+    timezone: 'Europe/Paris',
+    plan_code: 'standard',
+    created_at: '2024-02-01T10:00:00Z',
+    updated_at: '2024-02-01T10:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'TechCorp Solutions',
+    slug: 'techcorp-solutions',
+    timezone: 'Europe/Paris',
+    plan_code: 'pro',
+    created_at: '2024-02-15T10:00:00Z',
+    updated_at: '2024-02-15T10:00:00Z',
   },
 ]
 
@@ -643,7 +666,7 @@ export const handlers = [
         id: 'invitation-123',
         email: 'nouveau@example.com',
         role: 'EVENT_MANAGER',
-        orgId: 'org-choyou',
+        orgId: '1',
         orgName: 'Choyou',
         invitedBy: 'user-choyou-admin',
         invitedByName: 'Fred Ktorza',
@@ -689,7 +712,7 @@ export const handlers = [
         code: 'EVENT_MANAGER',
         name: 'Gestionnaire Événement'
       },
-      orgId: 'org-choyou',
+      orgId: '1',
       isActive: true,
       isAccountComplete: true
     }
@@ -927,5 +950,94 @@ export const handlers = [
       page: 1,
       limit: 50
     })
+  }),
+
+  // Organizations endpoints
+  http.get(`${env.VITE_API_BASE_URL}/v1/organizations`, () => {
+    console.log('🔍 Mock: GET /v1/organizations called, returning:', mockOrganizations)
+    return HttpResponse.json({
+      organizations: mockOrganizations
+    })
+  }),
+
+  http.get(`${env.VITE_API_BASE_URL}/v1/organizations/:orgId/users`, ({ params }) => {
+    const { orgId } = params
+    console.log('🔍 Mock: GET /v1/organizations/:orgId/users called for org:', orgId)
+    
+    // Filtrer les utilisateurs par organisation depuis auth-demo
+    const orgUsers = users.filter(user => user.orgId === orgId)
+    console.log('🔍 Found users for org', orgId, ':', orgUsers)
+    
+    const mockOrgUsers: OrganizationUser[] = orgUsers.map(user => ({
+      id: user.id,
+      email: user.email,
+      first_name: user.firstName,
+      last_name: user.lastName,
+      phone: (user as any).phone || '',
+      company: '',
+      job_title: '',
+      country: '',
+      is_active: user.isActive,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      role: {
+        id: user.role.id,
+        code: user.role.code,
+        name: user.role.name,
+        description: user.role.description || '',
+      }
+    }))
+    
+    return HttpResponse.json({
+      users: mockOrgUsers
+    })
+  }),
+
+  http.post(`${env.VITE_API_BASE_URL}/v1/organizations`, async ({ request }) => {
+    const body = await request.json() as CreateOrganizationRequest
+    
+    // Générer slug automatiquement
+    const slug = body.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+    
+    const newOrg: Organization = {
+      id: `org-${Date.now()}`,
+      name: body.name,
+      slug: slug,
+      timezone: 'Europe/Paris', // Par défaut
+      plan_code: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    
+    mockOrganizations.push(newOrg)
+    
+    return HttpResponse.json({
+      organization: newOrg
+    })
+  }),
+
+
+
+  // Endpoint pour récupérer l'organisation de l'utilisateur connecté
+  http.get(`${env.VITE_API_BASE_URL}/v1/organizations/me`, ({ request }) => {
+    const authHeader = request.headers.get('Authorization')
+    
+    if (!authHeader?.startsWith('Bearer ')) {
+      return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Simulation : retourner l'organisation Choyou pour les tests
+    // Dans un vrai backend, l'utilisateur serait extrait du JWT token
+    const organization = mockOrganizations.find(org => org.id === '1')
+    
+    if (!organization) {
+      return HttpResponse.json({ error: 'Organization not found' }, { status: 404 })
+    }
+
+    console.log('🏢 Mock: Returning organization for current user:', organization)
+    return HttpResponse.json(organization)
   }),
 ]

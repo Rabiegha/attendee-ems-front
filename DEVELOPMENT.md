@@ -24,10 +24,38 @@ Votre projet est configuré avec Mock Service Worker (MSW) pour simuler un backe
 - **5 participants** avec différents statuts (confirmed, checked_in, pending, etc.)
 - Données réalistes (entreprises, postes, téléphones)
 
-## 🛠 APIs Mockées Disponibles
+## � Architecture API - ROOTAPI CENTRALISÉ ✅
+
+### Refactoring majeur terminé (15/10/2025)
+
+**Ancien système** : 7 APIs séparées (authApi, eventsApi, usersApi, etc.)
+**Nouveau système** : rootApi unique avec injection d'endpoints
+
+```typescript
+// ✅ Architecture centralisée
+src/services/rootApi.ts          // API hub avec auto-refresh
+├── features/auth/api/           // authApi.injectEndpoints()
+├── features/events/api/         // eventsApi.injectEndpoints()  
+├── features/users/api/          // usersApi.injectEndpoints()
+├── features/attendees/api/      // attendeesApi.injectEndpoints()
+├── features/roles/api/          // rolesApi.injectEndpoints()
+├── features/invitations/api/    // invitationsApi.injectEndpoints()
+└── features/organizations/api/  // signupApi.injectEndpoints()
+```
+
+### Avantages de la nouvelle architecture
+
+✅ **Gestion automatique 401** - Refresh token transparent  
+✅ **Store unifié** - Un seul reducer/middleware  
+✅ **Cache centralisé** - Système de tags optimisé  
+✅ **Code simplifié** - Moins de duplication  
+✅ **Maintenance facile** - Configuration unique  
+
+## 🛠 APIs Disponibles (via rootApi)
 
 ### Authentification
 - `POST /auth/login` - Connexion
+- `POST /auth/refresh` - Refresh token (automatique)
 - `GET /auth/me` - Profil utilisateur
 - `GET /auth/policy` - Permissions RBAC
 
@@ -88,10 +116,12 @@ npm run build
 ## 📝 Notes Importantes
 
 1. **MSW intercepte automatiquement** les requêtes API
-2. **Données persistées** uniquement en mémoire (rechargement = reset)
-3. **Permissions RBAC** fonctionnelles avec les mocks
-4. **TypeScript strict** - toutes les APIs sont typées
-5. **Hot reload** actif pour un développement rapide
+2. **rootApi centralisé** - Gestion automatique des tokens et 401
+3. **Refresh automatique** - Plus besoin de gérer manuellement l'expiration
+4. **Données persistées** uniquement en mémoire (rechargement = reset)
+5. **Permissions RBAC** fonctionnelles avec les mocks
+6. **TypeScript strict** - toutes les APIs sont typées
+7. **Hot reload** actif pour un développement rapide
 
 ## 🐛 Corrections Apportées
 
@@ -126,8 +156,10 @@ npm run build
 - **Hot reload fonctionnel** : Développement sans interruption
 
 ### ✅ Architecture Technique
-- **Redux Store corrigé** : Sérialisation des dates gérée correctement
-- **MSW simple start** : Plus de doublons au démarrage
+- **rootApi centralisé** : API unique avec auto-refresh (15/10/2025)
+- **Redux Store unifié** : Un seul reducer/middleware RTK Query
+- **Gestion automatique 401** : Refresh token transparent
+- **MSW simple start** : Plus de doublons au démarrage  
 - **TypeScript strict** : Tous les types cohérents sur toute la stack
 - **Feature-sliced architecture** : Maintenue et respectée
 

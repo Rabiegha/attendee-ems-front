@@ -28,7 +28,11 @@ export const API_ENDPOINTS = {
     CREATE: '/v1/users',
   },
   ORGANIZATIONS: {
+    LIST: '/v1/organizations',
+    BY_ID: (id: string) => `/v1/organizations/${id}`,
     ME: '/v1/organizations/me',
+    USERS: (orgId: string) => `/v1/organizations/${orgId}/users`,
+    CREATE: '/v1/organizations',
   },
   ROLES: {
     LIST: '/v1/roles',

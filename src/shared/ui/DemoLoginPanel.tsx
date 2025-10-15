@@ -24,7 +24,11 @@ export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }
       }).unwrap()
       
       // Mettre à jour la session Redux (comme dans LoginPage)
-      dispatch(setSession(result))
+      dispatch(setSession({
+        access_token: result.access_token,
+        ...(result.user && { user: result.user }),
+        ...(result.organization && { organization: result.organization })
+      }))
       
       dispatch(addToast({
         type: 'success',

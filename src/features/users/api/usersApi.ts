@@ -1,5 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { env } from '@/app/config/env';
+import { rootApi } from '@/services/rootApi';
+import { API_ENDPOINTS } from '@/app/config/constants';
 
 export interface CreateUserRequest {
   email: string;
@@ -55,25 +55,12 @@ export interface Organization {
 }
 
 // RTK Query API definition
-export const usersApi = createApi({
-  reducerPath: 'usersApi',
-  tagTypes: ['Users', 'User', 'Roles', 'Organizations'],
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${env.VITE_API_BASE_URL}/v1`,
-    prepareHeaders: (headers, { getState }) => {
-      const state = getState() as any;
-      const token = state.session?.token;
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+export const usersApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     // Créer un utilisateur
     createUser: builder.mutation<User, CreateUserRequest>({
       query: (userData) => ({
-        url: '/users',
+        url: API_ENDPOINTS.USERS.CREATE,
         method: 'POST',
         body: userData,
       }),
@@ -92,7 +79,7 @@ export const usersApi = createApi({
       search?: string;
     }>({
       query: ({ page = 1, limit = 10, search }) => ({
-        url: '/users',
+        url: API_ENDPOINTS.USERS.LIST,
         params: {
           page: page.toString(),
           limit: limit.toString(),
@@ -121,7 +108,7 @@ export const usersApi = createApi({
     // Supprimer un utilisateur
     deleteUser: builder.mutation<void, string>({
       query: (id) => ({
-        url: `/users/${id}`,
+        url: API_ENDPOINTS.USERS.BY_ID(id),
         method: 'DELETE',
       }),
       invalidatesTags: ['Users'],
@@ -129,13 +116,19 @@ export const usersApi = createApi({
 
     // Récupérer les rôles disponibles
     getRoles: builder.query<Role[], void>({
-      query: () => '/roles',
+      query: () => API_ENDPOINTS.ROLES.LIST,
       providesTags: ['Roles'],
     }),
 
     // 🆕 Récupérer toutes les organisations (SUPER_ADMIN uniquement)
     getOrganizations: builder.query<Organization[], void>({
-      query: () => '/organizations',
+      query: () => '/v1/organizations',
+      providesTags: ['Organizations'],
+    }),
+
+    // 🆕 Récupérer une organisation par ID
+    getOrganization: builder.query<Organization, string>({
+      query: (id) => `/v1/organizations/${id}`,
       providesTags: ['Organizations'],
     }),
 
@@ -154,7 +147,7 @@ export const usersApi = createApi({
       }
     >({
       query: (userData) => ({
-        url: '/users',
+        url: API_ENDPOINTS.USERS.CREATE,
         method: 'POST',
         body: userData,
       }),
@@ -174,7 +167,7 @@ export const usersApi = createApi({
       }
     >({
       query: (passwordData) => ({
-        url: '/auth/change-password',
+        url: API_ENDPOINTS.AUTH.CHANGE_PASSWORD,
         method: 'POST',
         body: passwordData,
       }),
@@ -182,10 +175,11 @@ export const usersApi = createApi({
 
     // 🆕 Récupérer les utilisateurs PARTNER et HOTESSE de l'organisation pour sélection dans les événements
     getPartnersForEvents: builder.query<Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>[], void>({
-      query: () => '/users?roles=PARTNER,HOTESSE',
+      query: () => `${API_ENDPOINTS.USERS.LIST}?roles=PARTNER,HOTESSE`,
       providesTags: ['Users'],
     }),
   }),
+  overrideExisting: false,
 });
 
 export const {
@@ -196,6 +190,7 @@ export const {
   useDeleteUserMutation,
   useGetRolesQuery,
   useGetOrganizationsQuery, // 🆕 Hook pour les organisations
+  useGetOrganizationQuery, // 🆕 Hook pour une organisation spécifique
   useGetPartnersForEventsQuery, // 🆕 Hook pour les partenaires
   // 🆕 Nouveaux hooks pour le workflow avec mdp généré
   useCreateUserWithGeneratedPasswordMutation,

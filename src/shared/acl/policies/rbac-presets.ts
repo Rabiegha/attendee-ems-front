@@ -6,7 +6,7 @@ export type UserRole =
   | 'MANAGER'      // Gestion événements sans invitations (scope org)
   | 'VIEWER'       // Lecture seule tous événements org (scope org)
   | 'PARTNER'      // Lecture seule événements assignés (scope org)
-  | 'HOTESSE'      // Scan QR codes événements assignés uniquement (scope org)
+  | 'HOSTESS'      // Scan QR codes événements assignés uniquement (scope org)
 
 export interface RoleContext {
   orgId?: string    // Optionnel car SUPER_ADMIN n'a pas d'org
@@ -118,8 +118,8 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
         { action: 'read', subject: 'Badge', conditions: { eventId: { $in: eventIds }, orgId } },
       ]
 
-    case 'HOTESSE':
-      // HOTESSE doit avoir une organisation
+    case 'HOSTESS':
+      // HOSTESS doit avoir une organisation
       if (!orgId) return []
       return [
         // Accès minimal pour scan QR codes uniquement sur événements assignés

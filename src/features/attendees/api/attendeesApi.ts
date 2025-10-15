@@ -1,5 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { env } from '@/app/config/env'
+import { rootApi } from '@/services/rootApi'
 import { API_ENDPOINTS } from '@/app/config/constants'
 import type {
   AttendeeDTO,
@@ -30,19 +29,7 @@ export interface AttendeesListParams {
   sortOrder?: 'asc' | 'desc'
 }
 
-export const attendeesApi = createApi({
-  reducerPath: 'attendeesApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: env.VITE_API_BASE_URL,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as any).session.token
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`)
-      }
-      return headers
-    },
-  }),
-  tagTypes: ['Attendees', 'Attendee'],
+export const attendeesApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     getAttendees: builder.query<AttendeeDPO[], AttendeesListParams>({
       query: (params) => {
@@ -164,6 +151,7 @@ export const attendeesApi = createApi({
       ],
     }),
   }),
+  overrideExisting: false,
 })
 
 export const {

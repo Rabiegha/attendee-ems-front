@@ -2,6 +2,11 @@
 
 Un système de gestion d'événements B2B moderne et complet, construit avec React 18, TypeScript, et une architecture feature-sliced robuste.
 
+**🎯 Status : Version 1.0.0-dev - Système d'invitation fonctionnel !**
+
+> **Dernière mise à jour** : 13 octobre 2025  
+> **Fonctionnalités principales** : ✅ Auth, ✅ RBAC, ✅ Events, ✅ Users, ✅ **Invitations complètes**
+
 ## 🚀 Stack Technique
 
 ### Core
@@ -121,15 +126,36 @@ src/
 └── styles/            # Styles globaux
 ```
 
+## 🆕 Système d'Invitation - NOUVEAU !
+
+### Fonctionnalités complètes ✅
+- **Page d'invitation** (`/invitations`) - Interface admin pour envoyer des invitations
+- **Sélection de rôles** - Dropdown automatique depuis l'API backend
+- **Envoi d'emails** - SMTP automatique avec templates HTML
+- **Tokens sécurisés** - Génération et expiration (48h)
+- **Page de complétion** (`/complete-invitation/:token`) - Interface publique
+- **Validation forte** - Mots de passe avec indicateur de force
+- **Intégration RBAC** - Permissions et rôles automatiques
+
+### Workflow testé ✅
+1. **Admin** → Accès `/invitations` → Formulaire (email + rôle)
+2. **Système** → Génération token + Envoi email automatique
+3. **Invité** → Clic lien email → Complétion profil
+4. **Validation** → Création compte + Connexion immédiate
+
+### API Endpoints
+- `POST /v1/invitations/invitations/send` - Envoyer une invitation
+- `POST /v1/invitations/invitations/complete/:token` - Compléter l'inscription
+
 ## 🔐 Système RBAC (CASL)
 
 ### Rôles Disponibles
-- **ORG_ADMIN** : Accès complet à l'organisation
-- **ORG_MANAGER** : Gestion des événements et participants
-- **EVENT_MANAGER** : Gestion d'événements spécifiques
-- **CHECKIN_STAFF** : Enregistrement des participants
+- **SUPER_ADMIN** : Accès complet système multi-tenant
+- **ADMIN** : Accès complet à l'organisation
+- **MANAGER** : Gestion des événements et participants
+- **VIEWER** : Accès en lecture seule
 - **PARTNER** : Accès limité pour les partenaires
-- **READONLY** : Accès en lecture seule
+- **HOSTESS** : Personnel d'accueil événements
 
 ### Actions Supportées
 - `manage`, `create`, `read`, `update`, `delete`

@@ -3,7 +3,7 @@ import type { RootState } from '@/app/store'
 import type { User, Organization } from '../api/authApi'
 import type { AppRule } from '@/shared/acl/app-ability'
 import { extractUserFromToken } from '@/shared/lib/jwt-utils'
-import { saveAuthToken, removeAuthToken, getAuthToken, isTokenExpired } from '@/shared/lib/auth-storage'
+// Plus d'imports d'auth-storage car on ne persiste plus le token
 
 export interface SessionState {
   token: string | null
@@ -13,67 +13,31 @@ export interface SessionState {
   isAuthenticated: boolean
 }
 
-// Fonction pour initialiser l'état depuis le localStorage
-const initializeState = (): SessionState => {
-  const savedToken = getAuthToken()
-  
-  if (savedToken && !isTokenExpired(savedToken)) {
-    // Token valide trouvé, reconstituer l'état
-    const tokenData = extractUserFromToken(savedToken)
-    if (tokenData) {
-      return {
-        token: savedToken,
-        user: {
-          id: tokenData.id,
-          email: '', // Will be filled by API call
-          firstName: '',
-          lastName: '',
-          roles: [tokenData.role],
-          orgId: tokenData.orgId,
-        },
-        organization: tokenData.orgId && tokenData.role !== 'SUPER_ADMIN' ? {
-          id: tokenData.orgId,
-          name: 'Loading...', // Will be filled by API call
-          slug: '',
-        } : null, // SUPER_ADMIN n'a pas d'org
-        rules: [],
-        isAuthenticated: true,
-      }
-    }
-  }
-  
-  // Pas de token ou token expiré
-  if (savedToken) {
-    removeAuthToken() // Nettoyer le token expiré
-  }
-  
-  return {
-    token: null,
-    user: null,
-    organization: null,
-    rules: [],
-    isAuthenticated: false,
-  }
+// État initial : pas de persistance, token uniquement en mémoire
+const initialState: SessionState = {
+  token: null,
+  user: null,
+  organization: null,
+  rules: [],
+  isAuthenticated: false,
 }
-
-const initialState: SessionState = initializeState()
 
 export const sessionSlice = createSlice({
   name: 'session',
   initialState,
   reducers: {
     setSession: (state, action: PayloadAction<{
-      access_token: string
+      access_token?: string
+      token?: string
       user?: User
       organization?: Organization
     }>) => {
-      state.token = action.payload.access_token
+      // Support both access_token and token fields for compatibility
+      state.token = action.payload.access_token || action.payload.token || null
       
-      // Sauvegarder le token dans le localStorage
-      saveAuthToken(action.payload.access_token)
-      
-      // Extract user info from JWT token
-      const tokenData = extractUserFromToken(action.payload.access_token)
+      // Extract user info from JWT token if available
+      const token = action.payload.access_token || action.payload.token
+      const tokenData = token ? extractUserFromToken(token) : null
       if (tokenData) {
         // Create user object from token data
         state.user = {
@@ -119,9 +83,7 @@ export const sessionSlice = createSlice({
     },
     
     clearSession: (state) => {
-      // Supprimer le token du localStorage
-      removeAuthToken()
-      
+      // Clear all session data (token reste uniquement en mémoire)
       state.token = null
       state.user = null
       state.organization = null

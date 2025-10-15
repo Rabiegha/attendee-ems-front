@@ -1,29 +1,17 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { env } from '@/app/config/env'
+import { rootApi } from '@/services/rootApi'
 import type { 
-  UserInvitation, 
   CreateInvitationRequest, 
-  CreateInvitationResponse 
+  CreateInvitationResponse,
+  CompleteInvitationRequest,
+  UserInvitation
 } from '../types/invitation.types'
 
-export const invitationsApi = createApi({
-  reducerPath: 'invitationsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${env.VITE_API_BASE_URL}/invitations`,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as any).session.token
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`)
-      }
-      return headers
-    },
-  }),
-  tagTypes: ['Invitation'],
+export const invitationsApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     // Envoyer une invitation
     sendInvitation: builder.mutation<CreateInvitationResponse, CreateInvitationRequest>({
       query: (invitation) => ({
-        url: '',
+        url: '/v1/invitations/send',
         method: 'POST',
         body: invitation,
       }),
@@ -48,7 +36,7 @@ export const invitationsApi = createApi({
         if (status) {
           params.append('status', status)
         }
-        return `?${params}`
+        return `/v1/invitations?${params}`
       },
       providesTags: [{ type: 'Invitation', id: 'LIST' }],
     }),
@@ -56,7 +44,7 @@ export const invitationsApi = createApi({
     // Annuler une invitation
     cancelInvitation: builder.mutation<void, string>({
       query: (invitationId) => ({
-        url: `/${invitationId}`,
+        url: `/v1/invitations/${invitationId}`,
         method: 'DELETE',
       }),
       invalidatesTags: [{ type: 'Invitation', id: 'LIST' }],
@@ -65,7 +53,7 @@ export const invitationsApi = createApi({
     // Renvoyer une invitation
     resendInvitation: builder.mutation<CreateInvitationResponse, string>({
       query: (invitationId) => ({
-        url: `/${invitationId}/resend`,
+        url: `/v1/invitations/${invitationId}/resend`,
         method: 'POST',
       }),
       invalidatesTags: [{ type: 'Invitation', id: 'LIST' }],
@@ -74,31 +62,30 @@ export const invitationsApi = createApi({
     // Valider un token d'invitation (page publique)
     validateInvitationToken: builder.query<{
       valid: boolean
-      invitation?: Omit<UserInvitation, 'token'>
-      expired?: boolean
+      email: string
+      organization: string
+      role: string
+      expiresAt: string
     }, string>({
-      query: (token) => `/validate/${token}`,
+      query: (token) => `/v1/invitations/validate/${token}`,
     }),
 
-    // Accepter une invitation (page publique)
-    acceptInvitation: builder.mutation<{
-      success: boolean
-      userId: string
+    // Compléter une invitation (page publique)
+    completeInvitation: builder.mutation<{
+      user: any
+      message: string
     }, {
       token: string
-      profileData: {
-        firstName: string
-        lastName: string
-        password: string
-      }
+      userData: CompleteInvitationRequest
     }>({
-      query: ({ token, profileData }) => ({
-        url: `/accept/${token}`,
+      query: ({ token, userData }) => ({
+        url: `/v1/invitations/complete/${token}`,
         method: 'POST',
-        body: profileData,
+        body: userData,
       }),
     }),
   }),
+  overrideExisting: false,
 })
 
 export const {
@@ -107,5 +94,5 @@ export const {
   useCancelInvitationMutation,
   useResendInvitationMutation,
   useValidateInvitationTokenQuery,
-  useAcceptInvitationMutation,
+  useCompleteInvitationMutation,
 } = invitationsApi

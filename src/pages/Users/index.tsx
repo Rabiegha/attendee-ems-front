@@ -1,30 +1,19 @@
-import { useState } from 'react'
-import { Plus, Users, Mail, Calendar, UserCheck, UserX, User as UserIcon } from 'lucide-react'
+import { Users, Mail, Calendar, UserCheck, UserX, User as UserIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/Button'
-import { CreateUserEnhancedModal } from '@/features/users/ui/CreateUserEnhancedModal'
-import { useGetUsersQuery, useGetRolesQuery } from '@/features/users/api/usersApi'
+import { useNavigate } from 'react-router-dom'
+import { useGetUsersQuery } from '@/features/users/api/usersApi'
 import { Can } from '@/shared/acl/guards/Can'
 
 export function UsersPage() {
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const navigate = useNavigate()
   const { data: usersData, isLoading, refetch } = useGetUsersQuery({})
-  const { data: rolesData, isLoading: isLoadingRoles, error: rolesError } = useGetRolesQuery()
 
   const handleRefresh = () => {
     refetch()
   }
 
-  const handleDebugRoles = () => {
-    console.log('🎭 Debug Rôles:')
-    console.log('  - isLoadingRoles:', isLoadingRoles)
-    console.log('  - rolesData:', rolesData)
-    console.log('  - rolesError:', rolesError)
-    if (rolesData) {
-      console.log(`  - Nombre de rôles trouvés: ${rolesData.length}`)
-      rolesData.forEach((role, index) => {
-        console.log(`    ${index + 1}. ${role.name} (${role.code}) - ID: ${role.id}`)
-      })
-    }
+  const handleInviteUser = () => {
+    navigate('/invitations')
   }
 
   return (
@@ -50,21 +39,14 @@ export function UsersPage() {
             Actualiser
           </Button>
           
-          <Button 
-            variant="outline" 
-            onClick={handleDebugRoles}
-            className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700"
-          >
-            🎭 Debug Rôles
-          </Button>
-          
           <Can do="create" on="User">
             <Button 
-              onClick={() => setIsCreateModalOpen(true)}
+              variant="outline"
+              onClick={handleInviteUser}
               className="flex items-center gap-2"
             >
-              <Plus className="h-5 w-5" />
-              Créer un utilisateur
+              <Mail className="h-5 w-5" />
+              Inviter utilisateur
             </Button>
           </Can>
         </div>
@@ -158,9 +140,9 @@ export function UsersPage() {
               Commencez par créer votre premier utilisateur.
             </p>
             <Can do="create" on="User">
-              <Button onClick={() => setIsCreateModalOpen(true)}>
-                <Plus className="h-5 w-5 mr-2" />
-                Créer un utilisateur
+              <Button onClick={handleInviteUser}>
+                <Mail className="h-5 w-5 mr-2" />
+                Inviter un utilisateur
               </Button>
             </Can>
           </div>
@@ -257,12 +239,6 @@ export function UsersPage() {
           </div>
         )}
       </div>
-
-      {/* 🎯 Modal de création */}
-      <CreateUserEnhancedModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
     </div>
   )
 }

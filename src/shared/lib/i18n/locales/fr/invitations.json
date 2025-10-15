@@ -1,0 +1,41 @@
+{
+  "title": "Invitations",
+  "subtitle": "Inviter de nouveaux utilisateurs dans votre organisation",
+  "send_invitation": "Envoyer une invitation",
+  "form": {
+    "email": "Adresse email",
+    "email_placeholder": "utilisateur@exemple.com",
+    "role": "Rôle",
+    "role_placeholder": "Sélectionnez un rôle",
+    "organization": "Organisation"
+  },
+  "complete": {
+    "title": "Complétez votre inscription",
+    "subtitle": "Bienvenue ! Veuillez remplir vos informations pour terminer votre inscription.",
+    "form": {
+      "first_name": "Prénom",
+      "first_name_placeholder": "Votre prénom",
+      "last_name": "Nom",
+      "last_name_placeholder": "Votre nom",
+      "password": "Mot de passe",
+      "password_placeholder": "Choisissez un mot de passe sécurisé",
+      "confirm_password": "Confirmer le mot de passe",
+      "confirm_password_placeholder": "Confirmez votre mot de passe"
+    },
+    "password_strength": {
+      "weak": "Faible",
+      "medium": "Moyen",
+      "strong": "Fort"
+    },
+    "complete_registration": "Terminer l'inscription"
+  },
+  "messages": {
+    "send_success": "Invitation envoyée avec succès !",
+    "send_error": "Erreur lors de l'envoi de l'invitation",
+    "complete_success": "Inscription terminée avec succès !",
+    "complete_error": "Erreur lors de la finalisation de l'inscription",
+    "invalid_token": "Token d'invitation invalide ou expiré",
+    "loading_roles": "Chargement des rôles...",
+    "password_mismatch": "Les mots de passe ne correspondent pas"
+  }
+}

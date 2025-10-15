@@ -1,5 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { env } from '@/app/config/env'
+import { rootApi } from '@/services/rootApi'
 import { API_ENDPOINTS } from '@/app/config/constants'
 import type { EventDTO } from '../dpo/event.dto'
 import type { EventDPO, CreateEventDPO, UpdateEventDPO } from '../dpo/event.dpo'
@@ -22,19 +21,7 @@ export interface EventsListResponse {
   limit: number
 }
 
-export const eventsApi = createApi({
-  reducerPath: 'eventsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: env.VITE_API_BASE_URL,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as any).session.token
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`)
-      }
-      return headers
-    },
-  }),
-  tagTypes: ['Events', 'Event'],
+export const eventsApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     getEvents: builder.query<EventDPO[], EventsListParams>({
       query: (params) => {
@@ -114,6 +101,7 @@ export const eventsApi = createApi({
       ],
     }),
   }),
+  overrideExisting: false,
 })
 
 export const {

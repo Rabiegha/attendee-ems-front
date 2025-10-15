@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
     ME: '/v1/users/me',
     LOGOUT: '/v1/auth/logout',
     POLICY: '/v1/auth/policy',
+    CHANGE_PASSWORD: '/v1/auth/change-password',
   },
   EVENTS: {
     LIST: '/v1/events',
@@ -28,6 +29,10 @@ export const API_ENDPOINTS = {
   },
   ORGANIZATIONS: {
     ME: '/v1/organizations/me',
+  },
+  ROLES: {
+    LIST: '/v1/roles',
+    BY_ID: (id: string) => `/v1/roles/${id}`,
   },
 } as const
 

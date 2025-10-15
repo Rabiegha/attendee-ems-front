@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LayoutDashboard, Calendar, Users, UserCog, Shield, BarChart3, Settings } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, UserCog, Shield, BarChart3, Settings, Mail } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
 import { cn } from '@/shared/lib/utils'
@@ -36,6 +36,13 @@ const navigation = [
     subject: 'User' as const,
   },
   {
+    name: 'navigation.invitations',
+    href: '/invitations',
+    icon: Mail,
+    action: 'manage' as const, // Seuls SUPER_ADMIN et ADMIN peuvent envoyer des invitations
+    subject: 'User' as const,
+  },
+  {
     name: 'navigation.roles_permissions',
     href: ROUTES.ROLES_PERMISSIONS,
     icon: Shield,
@@ -62,8 +69,8 @@ export const Sidebar: React.FC = () => {
   const { t } = useTranslation('common')
 
   return (
-    <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 min-h-screen transition-colors duration-200">
-      <nav className="mt-8 px-4">
+    <aside className="fixed top-20 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen transition-colors duration-200">
+      <nav className="mt-8 px-4 overflow-y-auto h-full pb-20">
         <ul className="space-y-2">
           {navigation.map((item) => (
             <Can key={item.href} do={item.action} on={item.subject}>

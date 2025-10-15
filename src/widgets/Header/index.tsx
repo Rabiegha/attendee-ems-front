@@ -3,12 +3,9 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { LogOut, User } from 'lucide-react'
-import { selectUser, selectOrganization, clearSession } from '@/features/auth/model/sessionSlice'
-import { authApi } from '@/features/auth/api/authApi'
-import { eventsApi } from '@/features/events/api/eventsApi'
-import { attendeesApi } from '@/features/attendees/api/attendeesApi'
-import { invitationsApi } from '@/features/invitations/api/invitationsApi'
-import { usersApi } from '@/features/users/api/usersApi'
+import { selectUser, selectOrganization, clearSession, selectIsAuthenticated } from '@/features/auth/model/sessionSlice'
+import { rootApi } from '@/services/rootApi'
+import { useMeQuery } from '@/features/auth/api/authApi'
 import { getRoleLabel } from '@/shared/acl/role-mapping'
 import { Button } from '@/shared/ui/Button'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
@@ -19,24 +16,29 @@ export const Header: React.FC = () => {
   const dispatch = useDispatch()
   const user = useSelector(selectUser)
   const organization = useSelector(selectOrganization)
+  const isAuthenticated = useSelector(selectIsAuthenticated)
+  
+  // Récupérer les informations utilisateur complètes avec l'organisation
+  const { data: userProfile } = useMeQuery(undefined, {
+    skip: !isAuthenticated
+  })
+  
+  // Utiliser l'organisation du profil utilisateur si disponible, sinon celle du store
+  const displayOrganization = userProfile?.organization || organization
 
   const handleLogout = () => {
     // 1. Nettoyer la session utilisateur
     dispatch(clearSession())
     
-    // 2. Vider TOUS les caches RTK Query pour éviter les données persistantes
-    dispatch(authApi.util.resetApiState())
-    dispatch(eventsApi.util.resetApiState())
-    dispatch(attendeesApi.util.resetApiState())
-    dispatch(invitationsApi.util.resetApiState())
-    dispatch(usersApi.util.resetApiState())
+    // 2. Vider le cache RTK Query (un seul rootApi maintenant)
+    dispatch(rootApi.util.resetApiState())
     
     // 3. Optionnel: appeler l'endpoint logout (pour invalider le token côté serveur)
     // Note: On ne fait pas de mutation ici car ça pourrait créer des erreurs si l'API est down
   }
 
   return (
-    <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors duration-200">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors duration-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link to="/dashboard" className="flex items-center">
@@ -46,9 +48,9 @@ export const Header: React.FC = () => {
               className="h-8 w-auto hover:opacity-80 transition-opacity cursor-pointer"
             />
           </Link>
-          {organization && (
+          {displayOrganization && (
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              {organization.name}
+              {displayOrganization.name}
             </span>
           )}
         </div>

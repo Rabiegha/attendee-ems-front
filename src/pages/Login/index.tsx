@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { authApi } from '@/features/auth/api/authApi'
+import { useLoginMutation, useLazyMeQuery } from '@/features/auth/api/authApi'
 import { setSession, updateUser } from '@/features/auth/model/sessionSlice'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
@@ -39,8 +39,8 @@ export const LoginPage: React.FC = () => {
   const { t } = useTranslation('auth')
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const [login, { isLoading, error }] = authApi.useLoginMutation()
-  const [getProfile] = authApi.useLazyMeQuery()
+  const [login, { isLoading, error }] = useLoginMutation()
+  const [getProfile] = useLazyMeQuery()
   
   const [loginAttempts, setLoginAttempts] = useState(0)
   const [lastError, setLastError] = useState<string | null>(null)

@@ -6,26 +6,20 @@
  * - completeSignup: Complète l'inscription et active le compte
  */
 
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { env } from '@/app/config/env'
+import { rootApi } from '@/services/rootApi'
 import type { 
   TokenValidationResponse, 
   CompleteSignupRequest, 
   CompleteSignupResponse 
 } from '../types/signup.types'
 
-export const signupApi = createApi({
-  reducerPath: 'signupApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${env.VITE_API_BASE_URL}/auth`,
-  }),
-  tagTypes: ['Signup'],
+export const signupApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     
     // Valider un token d'invitation
     validateToken: builder.query<TokenValidationResponse, string>({
       query: (token) => ({
-        url: `/signup/${token}/validate`,
+        url: `/auth/signup/${token}/validate`,
         method: 'GET',
       }),
       providesTags: ['Signup'],
@@ -34,7 +28,7 @@ export const signupApi = createApi({
     // Compléter l'inscription
     completeSignup: builder.mutation<CompleteSignupResponse, CompleteSignupRequest>({
       query: (data) => ({
-        url: `/signup/${data.token}`,
+        url: `/auth/signup/${data.token}`,
         method: 'POST',
         body: {
           firstName: data.firstName,
@@ -47,6 +41,7 @@ export const signupApi = createApi({
     }),
     
   }),
+  overrideExisting: false,
 })
 
 export const {

@@ -6,7 +6,7 @@ import { useSelector } from 'react-redux'
 import { selectUser, selectOrganization } from '@/features/auth/model/sessionSlice'
 import { StatsCards } from '@/widgets/StatsCards'
 import { EventList } from '@/features/events/ui/EventList'
-import { InviteUserWidget } from '@/widgets/InviteUserWidget'
+
 import { Can } from '@/shared/acl/guards/Can'
 import { useCan } from '@/shared/acl/hooks/useCan'
 import { Button } from '@/shared/ui/Button'
@@ -119,9 +119,6 @@ export const Dashboard: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            {/* Widget Invitations */}
-            <InviteUserWidget />
-
             {/* Participants récents */}
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">

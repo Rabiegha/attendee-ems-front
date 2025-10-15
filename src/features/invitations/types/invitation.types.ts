@@ -14,57 +14,60 @@ export interface UserInvitation {
 
 export interface CreateInvitationRequest {
   email: string
-  role: UserRole
-  orgId?: string // Optionnel pour Super Admin, automatique pour Org Admin
-  eventIds?: string[]
-  personalizedMessage?: string
+  roleId: string
+  orgId: string
 }
 
 export interface CreateInvitationResponse {
-  invitation: UserInvitation
+  id: string
+  email: string
+  invitationToken: string
+  expiresAt: string
   emailSent: boolean
+  organization: string
+  role: string
+}
+
+export interface CompleteInvitationRequest {
+  firstName: string
+  lastName: string
+  password: string
 }
 
 export type UserRole = 
   | 'SUPER_ADMIN'
-  | 'ORG_ADMIN'
-  | 'ORG_MANAGER' 
-  | 'EVENT_MANAGER'
-  | 'CHECKIN_STAFF'
+  | 'HOSTESS'
   | 'PARTNER'
-  | 'READONLY'
+  | 'ADMIN'
+  | 'VIEWER'
+  | 'MANAGER'
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, { label: string; description: string; requiresEventSelection?: boolean }> = {
   SUPER_ADMIN: {
     label: 'Super Administrateur',
     description: 'Accès global à toutes les organisations'
   },
-  ORG_ADMIN: {
-    label: 'Administrateur Organisation',
+  ADMIN: {
+    label: 'Administrateur',
     description: 'Accès complet à l\'organisation'
   },
-  ORG_MANAGER: {
-    label: 'Manager Organisation',
+  MANAGER: {
+    label: 'Manager',
     description: 'Gestion des événements et utilisateurs'
   },
-  EVENT_MANAGER: {
-    label: 'Gestionnaire d\'Événements',
-    description: 'Gestion d\'événements spécifiques',
+  VIEWER: {
+    label: 'Visualiseur',
+    description: 'Accès en lecture seule',
     requiresEventSelection: true
   },
-  CHECKIN_STAFF: {
-    label: 'Staff Check-in',
+  HOSTESS: {
+    label: 'Hôtesse',
     description: 'Accès aux fonctions de check-in',
     requiresEventSelection: true
   },
   PARTNER: {
     label: 'Partenaire',
     description: 'Accès partenaire limité',
-    requiresEventSelection: true
-  },
-  READONLY: {
-    label: 'Lecture Seule',
-    description: 'Accès en lecture uniquement',
     requiresEventSelection: true
   }
 }

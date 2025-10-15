@@ -1,5 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
-import { env } from '@/app/config/env'
+import { rootApi } from '@/services/rootApi'
 import { API_ENDPOINTS } from '@/app/config/constants'
 import { normalizeUserData, normalizeOrganizationData } from '@/shared/lib/user-utils'
 import type { AppRule } from '@/shared/acl/app-ability'
@@ -53,6 +52,11 @@ export interface UserProfileResponse {
     name: string
     description?: string
   }
+  organization?: {
+    id: string
+    name: string
+    slug: string
+  }
   is_active: boolean
   must_change_password: boolean
   created_at: string
@@ -70,19 +74,7 @@ export interface PolicyResponse {
   version: string
 }
 
-export const authApi = createApi({
-  reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: env.VITE_API_BASE_URL,
-    prepareHeaders: (headers, { getState }) => {
-      const token = (getState() as any).session.token
-      if (token) {
-        headers.set('authorization', `Bearer ${token}`)
-      }
-      return headers
-    },
-  }),
-  tagTypes: ['Auth', 'Policy'],
+export const authApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
@@ -119,11 +111,13 @@ export const authApi = createApi({
       invalidatesTags: ['Auth', 'Policy'],
     }),
   }),
+  overrideExisting: false,
 })
 
 export const {
   useLoginMutation,
   useMeQuery,
+  useLazyMeQuery,
   useGetPolicyQuery,
   useLogoutMutation,
 } = authApi

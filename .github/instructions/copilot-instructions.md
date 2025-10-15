@@ -584,9 +584,9 @@ PUT /registrations/:id/status → Changement statut inscription
 
 ---
 
-## � ARCHITECTURE DES RÔLES - CRITIQUE
+## 📋 ARCHITECTURE DES RÔLES - CRITIQUE
 
-⚠️ **ATTENTION** : Le système utilise exactement 5 rôles avec des permissions très spécifiques. Aucun autre rôle n'existe.
+⚠️ **ATTENTION** : Le système utilise exactement 6 rôles avec des permissions très spécifiques. Aucun autre rôle n'existe.
 
 ### 1. SUPER_ADMIN
 - **Portée** : Accès global à toutes les données (toutes les organisations, tous les utilisateurs, tous les attendees)
@@ -633,11 +633,20 @@ PUT /registrations/:id/status → Changement statut inscription
   - Les créateurs d'événements peuvent attribuer des partners via un formulaire
 - **Workflow** : Dans le formulaire de création d'événement, lister tous les partners disponibles pour attribution
 
+### 6. HOSTESS
+- **Portée** : Limitée aux événements spécifiques qui lui sont attribués
+- **Type** : Accès aux fonctions de check-in et scan QR codes
+- **Permissions** :
+  - Scanner les QR codes pour les événements assignés
+  - Accès aux fonctions de check-in
+  - Voir les participants des événements assignés
+  - Aucune permission de modification des données
+
 ### Règles critiques
-1. **JAMAIS de rôles fantaisistes** comme "Journaliste", "Graphiste", etc.
-2. **Hiérarchie stricte** : SUPER_ADMIN > ADMIN > MANAGER > VIEWER > PARTNER
+1. **JAMAIS de rôles fantaisistes** en dehors de ces 6 rôles définis
+2. **Hiérarchie stricte** : SUPER_ADMIN > ADMIN > MANAGER > VIEWER > PARTNER > HOSTESS
 3. **Isolation des organisations** : sauf SUPER_ADMIN, tous les rôles sont limités à leur organisation
-4. **Attribution des partners** : doit être gérée au niveau de chaque événement
+4. **Attribution des partners et hostess** : doit être gérée au niveau de chaque événement
 
 ---
 

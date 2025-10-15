@@ -1,0 +1,41 @@
+{
+  "title": "Invitations",
+  "subtitle": "Invite new users to your organization",
+  "send_invitation": "Send Invitation",
+  "form": {
+    "email": "Email Address",
+    "email_placeholder": "user@example.com",
+    "role": "Role",
+    "role_placeholder": "Select a role",
+    "organization": "Organization"
+  },
+  "complete": {
+    "title": "Complete Your Registration",
+    "subtitle": "Welcome! Please fill in your information to complete your registration.",
+    "form": {
+      "first_name": "First Name",
+      "first_name_placeholder": "Your first name",
+      "last_name": "Last Name",
+      "last_name_placeholder": "Your last name",
+      "password": "Password",
+      "password_placeholder": "Choose a secure password",
+      "confirm_password": "Confirm Password",
+      "confirm_password_placeholder": "Confirm your password"
+    },
+    "password_strength": {
+      "weak": "Weak",
+      "medium": "Medium",
+      "strong": "Strong"
+    },
+    "complete_registration": "Complete Registration"
+  },
+  "messages": {
+    "send_success": "Invitation sent successfully!",
+    "send_error": "Error sending invitation",
+    "complete_success": "Registration completed successfully!",
+    "complete_error": "Error completing registration",
+    "invalid_token": "Invalid or expired invitation token",
+    "loading_roles": "Loading roles...",
+    "password_mismatch": "Passwords do not match"
+  }
+}

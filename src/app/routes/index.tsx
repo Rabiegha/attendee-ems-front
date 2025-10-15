@@ -19,6 +19,8 @@ import { UserCreationTestPage } from '@/pages/UserCreationTest'
 import { LoginPage } from '@/pages/Login'
 import { SignupPage } from '@/pages/Signup'
 import { SignupTestPage } from '@/pages/SignupTest'
+import { InvitationsPage } from '@/pages/Invitations'
+import { CompleteInvitationPage } from '@/pages/CompleteInvitation'
 import { ForbiddenPage } from '@/pages/Forbidden'
 import { NotFoundPage } from '@/pages/NotFound'
 
@@ -93,6 +95,14 @@ export const router = createBrowserRouter([
           </GuardedRoute>
         ),
       },
+      {
+        path: 'invitations',
+        element: (
+          <GuardedRoute action="manage" subject="User">
+            <InvitationsPage />
+          </GuardedRoute>
+        ),
+      },
     ],
   },
   {
@@ -124,6 +134,10 @@ export const router = createBrowserRouter([
   {
     path: '/change-password',
     element: <ChangePasswordPage />,
+  },
+  {
+    path: '/complete-invitation/:token',
+    element: <CompleteInvitationPage />,
   },
   {
     path: '/403',

@@ -32,7 +32,7 @@ export const RootLayout: React.FC = () => {
       <Header />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 p-6">
+        <main className="flex-1 ml-64 pt-20 p-6">
           <Outlet />
         </main>
       </div>

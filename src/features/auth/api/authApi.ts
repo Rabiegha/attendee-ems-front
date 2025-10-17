@@ -10,6 +10,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   access_token: string
+  expires_in: number
   user?: User | undefined
   organization?: Organization | null | undefined
 }
@@ -76,6 +77,9 @@ export interface PolicyResponse {
 
 export const authApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
+    refresh: builder.mutation<{ access_token: string; expires_in: number }, void>({
+      query: () => ({ url: API_ENDPOINTS.AUTH.REFRESH, method: 'POST' }),
+    }),
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
         url: API_ENDPOINTS.AUTH.LOGIN,
@@ -86,6 +90,7 @@ export const authApi = rootApi.injectEndpoints({
         // Normaliser les données utilisateur et organisation
         return {
           access_token: response.access_token,
+          expires_in: response.expires_in || 900, // 15 minutes par défaut
           user: response.user ? normalizeUserData(response.user) : undefined,
           organization: response.organization ? normalizeOrganizationData(response.organization) : undefined,
         }
@@ -103,7 +108,7 @@ export const authApi = rootApi.injectEndpoints({
       providesTags: ['Policy'],
     }),
     
-    logout: builder.mutation<void, void>({
+    logout: builder.mutation<{ ok: boolean }, void>({
       query: () => ({
         url: API_ENDPOINTS.AUTH.LOGOUT,
         method: 'POST',
@@ -115,6 +120,7 @@ export const authApi = rootApi.injectEndpoints({
 })
 
 export const {
+  useRefreshMutation,
   useLoginMutation,
   useMeQuery,
   useLazyMeQuery,

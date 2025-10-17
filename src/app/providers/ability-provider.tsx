@@ -7,7 +7,6 @@ import { createAbilityFromRules } from '@/shared/acl/ability-factory'
 import { rulesFor, fallbackRules } from '@/shared/acl/policies/rbac-presets'
 import { mapBackendRolesToCASQL } from '@/shared/acl/role-mapping'
 import type { AppAbility } from '@/shared/acl/app-ability'
-import type { UserRole } from '@/shared/acl/policies/rbac-presets'
 
 export const AbilityContext = createContext<AppAbility | null>(null)
 
@@ -25,7 +24,13 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
   const isSuperAdmin = user?.roles?.[0] === 'SUPER_ADMIN' || user?.roles?.includes('SUPER_ADMIN')
 
   // Charger automatiquement les règles de politique si l'utilisateur est connecté (sauf SUPER_ADMIN)
-  const shouldSkipPolicy = Boolean(!orgId || !user || rules.length > 0 || isSuperAdmin)
+  const shouldSkipPolicy = Boolean(
+    !user ||           // Pas d'utilisateur connecté
+    !orgId ||          // Pas d'organisation
+    rules.length > 0 || // Règles déjà chargées
+    isSuperAdmin       // Super admin n'a pas besoin de règles de politique
+  )
+  
   const { data: policyData } = useGetPolicyQuery(orgId || '', {
     skip: shouldSkipPolicy
   })

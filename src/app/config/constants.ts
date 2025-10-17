@@ -3,36 +3,37 @@ export const APP_VERSION = '1.0.0'
 
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/v1/auth/login',
-    ME: '/v1/users/me',
-    LOGOUT: '/v1/auth/logout',
-    POLICY: '/v1/auth/policy',
-    CHANGE_PASSWORD: '/v1/auth/change-password',
+    LOGIN: '/auth/login',
+    REFRESH: '/auth/refresh',
+    ME: '/users/me',
+    LOGOUT: '/auth/logout',
+    POLICY: '/auth/policy',
+    CHANGE_PASSWORD: '/auth/change-password',
   },
   EVENTS: {
-    LIST: '/v1/events',
-    BY_ID: (id: string) => `/v1/events/${id}`,
-    CREATE: '/v1/events',
-    UPDATE: (id: string) => `/v1/events/${id}`,
-    DELETE: (id: string) => `/v1/events/${id}`,
+    LIST: '/events',
+    BY_ID: (id: string) => `/events/${id}`,
+    CREATE: '/events',
+    UPDATE: (id: string) => `/events/${id}`,
+    DELETE: (id: string) => `/events/${id}`,
   },
   ATTENDEES: {
-    LIST: '/v1/attendees',
-    BY_ID: (id: string) => `/v1/attendees/${id}`,
-    UPDATE_STATUS: (id: string) => `/v1/attendees/${id}/status`,
-    EXPORT: '/v1/attendees/export',
+    LIST: '/attendees',
+    BY_ID: (id: string) => `/attendees/${id}`,
+    UPDATE_STATUS: (id: string) => `/attendees/${id}/status`,
+    EXPORT: '/attendees/export',
   },
   USERS: {
-    LIST: '/v1/users',
-    BY_ID: (id: string) => `/v1/users/${id}`,
-    CREATE: '/v1/users',
+    LIST: '/users',
+    BY_ID: (id: string) => `/users/${id}`,
+    CREATE: '/users',
   },
   ORGANIZATIONS: {
-    ME: '/v1/organizations/me',
+    ME: '/organizations/me',
   },
   ROLES: {
-    LIST: '/v1/roles',
-    BY_ID: (id: string) => `/v1/roles/${id}`,
+    LIST: '/roles',
+    BY_ID: (id: string) => `/roles/${id}`,
   },
 } as const
 

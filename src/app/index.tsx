@@ -5,17 +5,20 @@ import { AbilityProvider } from './providers/ability-provider'
 import { RouterProvider } from './providers/router-provider'
 import { ToastProvider } from './providers/toast-provider'
 import { ThemeProvider } from './providers/theme-provider'
+import { AuthLifecycleProvider } from './providers/auth-lifecycle-provider'
 
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
       <StoreProvider>
-        <I18nProvider>
-          <AbilityProvider>
-            <RouterProvider />
-            <ToastProvider />
-          </AbilityProvider>
-        </I18nProvider>
+        <AuthLifecycleProvider>
+          <I18nProvider>
+            <AbilityProvider>
+              <RouterProvider />
+              <ToastProvider />
+            </AbilityProvider>
+          </I18nProvider>
+        </AuthLifecycleProvider>
       </StoreProvider>
     </ThemeProvider>
   )

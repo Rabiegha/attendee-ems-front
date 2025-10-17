@@ -20,7 +20,7 @@ export const Header: React.FC = () => {
   
   // Récupérer les informations utilisateur complètes avec l'organisation
   const { data: userProfile } = useMeQuery(undefined, {
-    skip: !isAuthenticated
+    skip: !isAuthenticated || !user // Skip si pas authentifié OU pas d'utilisateur
   })
   
   // Utiliser l'organisation du profil utilisateur si disponible, sinon celle du store

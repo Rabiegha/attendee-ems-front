@@ -710,7 +710,9 @@ export const handlers = [
       role: {
         id: 'role-event-manager',
         code: 'EVENT_MANAGER',
-        name: 'Gestionnaire Événement'
+        name: 'Gestionnaire Événement',
+        orgId: '1',
+        description: 'Gestionnaire pour les événements'
       },
       orgId: '1',
       isActive: true,
@@ -821,13 +823,13 @@ export const handlers = [
   }),
 
   // POST /v1/auth/change-password - Première connexion obligatoire
-  http.post(`${env.VITE_API_BASE_URL}/auth/change-password`, async ({ request }) => {
+  http.post(`${env.VITE_API_BASE_URL}/auth/change-password`, async () => {
     console.log('🔐 Changement de mot de passe première connexion')
     
-    const body = await request.json() as {
-      currentPassword: string
-      newPassword: string
-    }
+    // const body = await request.json() as {
+    //   currentPassword: string
+    //   newPassword: string
+    // }
 
     // Simuler délai
     await new Promise(resolve => setTimeout(resolve, 800))

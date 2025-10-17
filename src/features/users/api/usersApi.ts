@@ -142,7 +142,7 @@ export const usersApi = rootApi.injectEndpoints({
       {
         email: string;
         password: string;
-        role_id: string;
+        role_id?: string;
         is_active?: boolean;
       }
     >({

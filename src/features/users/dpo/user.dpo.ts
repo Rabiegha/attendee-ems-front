@@ -171,8 +171,8 @@ export const mapCreateUserWithGeneratedPasswordFormToDto = (
       ...(formData.job_title && { job_title: formData.job_title }),
       ...(formData.country && { country: formData.country }),
       ...(formData.metadata && { metadata: formData.metadata }),
-      // Ne pas inclure role_id pour utiliser le rôle par défaut du backend
-      // ...(formData.roleId && { role_id: formData.roleId }),
+      // Inclure role_id seulement s'il est fourni
+      ...(formData.roleId && { role_id: formData.roleId }),
       // Inclure org_id seulement si spécifié (SUPER_ADMIN)
       ...(formData.orgId && { org_id: formData.orgId }),
     },

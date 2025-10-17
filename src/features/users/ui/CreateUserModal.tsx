@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, User, Mail, Shield } from 'lucide-react';
-import { Button, Input, FormField, Modal, Select, SelectOption, CloseButton } from '@/shared/ui';
+import { Button, Input, FormField, Modal, CloseButton } from '@/shared/ui';
 import { useToast } from '@/shared/ui/useToast';
-import { useCreateUserWithGeneratedPasswordMutation, useGetRolesQuery, type Role } from '@/features/users/api/usersApi';
+import { useCreateUserWithGeneratedPasswordMutation, useGetRolesQuery } from '@/features/users/api/usersApi';
 import { 
   createUserWithGeneratedPasswordSchema, 
   mapCreateUserWithGeneratedPasswordFormToDto, 
-  type CreateUserWithGeneratedPasswordFormData, 
-  roleDescriptions 
+  type CreateUserWithGeneratedPasswordFormData 
 } from '@/features/users/dpo/user.dpo';
 import { UserCredentialsModal } from './UserCredentialsModal';
 
@@ -22,16 +21,15 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { success, error: showError } = useToast();
+  const { error: showError } = useToast();
   const [createUser, { isLoading: isCreating }] = useCreateUserWithGeneratedPasswordMutation();
-  const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
+  const { isLoading: isLoadingRoles } = useGetRolesQuery();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isValid },
     reset,
-    watch,
   } = useForm<CreateUserWithGeneratedPasswordFormData>({
     resolver: zodResolver(createUserWithGeneratedPasswordSchema),
     mode: 'onChange',
@@ -45,8 +43,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     lastName: string;
   } | null>(null);
 
-  const selectedRoleId = watch('roleId');
-  const selectedRole = rolesData?.find((role: Role) => role.id === selectedRoleId);
+  // const selectedRoleId = watch('roleId');
 
   const onSubmit = async (data: CreateUserWithGeneratedPasswordFormData) => {
     try {

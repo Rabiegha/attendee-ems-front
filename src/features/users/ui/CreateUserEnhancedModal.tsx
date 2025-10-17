@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { Loader2, User, Mail, Shield, Building2, Plus } from 'lucide-react';
 import { Button, Input, FormField, Modal, Select, SelectOption, CloseButton, UniversalModal } from '@/shared/ui';
 import { useUniversalModal } from '@/shared/ui/useUniversalModal';
+import { useToast } from '@/shared/hooks/useToast';
 import { selectUser } from '@/features/auth/model/sessionSlice';
 import { useCan } from '@/shared/acl/hooks/useCan';
 import { 
@@ -33,6 +34,7 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
   onClose,
 }) => {
   const currentUser = useSelector(selectUser);
+  const { success } = useToast();
   const [createUser, { isLoading: isCreating }] = useCreateUserWithGeneratedPasswordMutation();
   const [createOrganization, { isLoading: isCreatingOrg }] = useCreateOrganizationMutation();
   const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
@@ -443,7 +445,10 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
       <UserCredentialsModal
         isOpen={showCredentials}
         onClose={() => setShowCredentials(false)}
-        userCredentials={userCredentials}
+        email={userCredentials.email}
+        temporaryPassword={userCredentials.temporaryPassword}
+        firstName={userCredentials.firstName}
+        lastName={userCredentials.lastName}
       />
     )}
 

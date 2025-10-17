@@ -112,7 +112,6 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
   config
 }) => {
   const modalConfig = modalConfigs[config.type];
-  const IconComponent = modalConfig.icon;
 
   const renderDetails = () => {
     if (!config.details) return null;

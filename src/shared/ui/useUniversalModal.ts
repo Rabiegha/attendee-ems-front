@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { ModalConfig, ModalType } from './UniversalModal';
+import type { ModalConfig } from './UniversalModal';
 
 export const useUniversalModal = () => {
   const [modalState, setModalState] = useState<{
@@ -30,7 +30,7 @@ export const useUniversalModal = () => {
       type: 'success',
       title,
       message,
-      actions,
+      ...(actions && { actions }),
     });
   };
 
@@ -39,7 +39,7 @@ export const useUniversalModal = () => {
       type: 'error',
       title,
       message,
-      actions,
+      ...(actions && { actions }),
     });
   };
 
@@ -48,7 +48,7 @@ export const useUniversalModal = () => {
       type: 'warning',
       title,
       message,
-      actions,
+      ...(actions && { actions }),
     });
   };
 
@@ -57,7 +57,7 @@ export const useUniversalModal = () => {
       type: 'info',
       title,
       message,
-      actions,
+      ...(actions && { actions }),
     });
   };
 
@@ -118,7 +118,7 @@ export const useUniversalModal = () => {
       type: 'user-created',
       title: 'Utilisateur créé avec succès !',
       message: `L'utilisateur ${email} a été créé et peut maintenant se connecter.`,
-      details: { email, organization },
+      details: { email, ...(organization && { organization }) },
       actions: {
         primary: {
           label: 'Parfait !',
@@ -143,7 +143,7 @@ export const useUniversalModal = () => {
       type: 'invitation-sent',
       title: 'Invitation envoyée !',
       message: `L'invitation a été envoyée à ${email}. L'utilisateur recevra un email avec un lien sécurisé.`,
-      details: { email, organization },
+      details: { email, ...(organization && { organization }) },
       actions: {
         primary: {
           label: 'Parfait !',

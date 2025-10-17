@@ -39,7 +39,7 @@ export const LoginPage: React.FC = () => {
   const { t } = useTranslation('auth')
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const [login, { isLoading, error }] = useLoginMutation()
+  const [login, { isLoading }] = useLoginMutation()
   const [getProfile] = useLazyMeQuery()
   
   const [loginAttempts, setLoginAttempts] = useState(0)
@@ -51,7 +51,6 @@ export const LoginPage: React.FC = () => {
     handleSubmit,
     formState: { errors, isValid, touchedFields },
     watch,
-    clearErrors,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     mode: 'onBlur', // Validation au blur (quand on quitte le champ)

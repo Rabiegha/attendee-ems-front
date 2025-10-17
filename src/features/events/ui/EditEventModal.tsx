@@ -1,5 +1,6 @@
 import React from 'react'
 import { Modal } from '@/shared/ui/Modal'
+import { CloseButton } from '@/shared/ui/CloseButton'
 import { EventForm } from './EventForm'
 import { useUpdateEventMutation } from '../api/eventsApi'
 import { type CreateEventFormData } from '../lib/validation'
@@ -89,18 +90,30 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
     <Modal 
       isOpen={isOpen} 
       onClose={onClose}
-      title="Modifier l'événement"
+      showCloseButton={false}
+      contentPadding={false}
       maxWidth="4xl"
     >
-      {initialData && (
-        <EventForm
-          initialData={initialData}
-          onSubmit={handleSubmit}
-          onCancel={onClose}
-          isLoading={isLoading}
-          mode="edit"
-        />
-      )}
+      <div className="relative p-8">
+        {/* Bouton fermeture moderne */}
+        <CloseButton onClick={onClose} />
+
+        {/* Titre moderne */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Modifier l'événement</h2>
+          <p className="text-gray-400">Mettez à jour les informations de votre événement</p>
+        </div>
+
+        {initialData && (
+          <EventForm
+            initialData={initialData}
+            onSubmit={handleSubmit}
+            onCancel={onClose}
+            isLoading={isLoading}
+            mode="edit"
+          />
+        )}
+      </div>
     </Modal>
   )
 }

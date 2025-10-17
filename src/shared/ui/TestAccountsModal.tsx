@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
-import { Copy, Users, Key, Globe, Clock, Eye, EyeOff } from 'lucide-react'
+import { CloseButton } from '@/shared/ui/CloseButton'
+import { Copy, Users, Key, Globe, Clock } from 'lucide-react'
 
 interface TestAccount {
   email: string
@@ -17,8 +18,8 @@ interface TestAccount {
 const TEST_ACCOUNTS: TestAccount[] = [
   // === SUPER ADMIN - Accès global omniscient ===
   {
-    email: 'superadmin@acme.com',
-    password: 'password123',
+    email: 'john.doe@system.com',
+    password: 'admin123',
     role: 'SUPER_ADMIN',
     organization: 'ACME Corporation',
     orgSlug: 'acme-corp',
@@ -26,128 +27,16 @@ const TEST_ACCOUNTS: TestAccount[] = [
     sector: 'Administration',
     timezone: 'Europe/Paris'
   },
-  // === ACME CORPORATION - Organisation principale ===
+  // === ADMIN - Gestion complète de l'organisation ===
   {
-    email: 'admin@acme.com',
-    password: 'password123',
+    email: 'ckistler@choyou.fr',
+    password: 'Admin123!',
     role: 'ADMIN',
     organization: 'ACME Corporation',
     orgSlug: 'acme-corp',
-    description: 'Admin ACME - Gestion complète organisation, équipe, invitations',
-    sector: 'Corporate',
+    description: 'Admin - Gestion complète de l\'organisation',
+    sector: 'Administration',
     timezone: 'Europe/Paris'
-  },
-  {
-    email: 'manager@acme.com',
-    password: 'password123',
-    role: 'MANAGER',
-    organization: 'ACME Corporation',
-    orgSlug: 'acme-corp',
-    description: 'Manager ACME - Gestion événements sans invitation utilisateurs',
-    sector: 'Corporate',
-    timezone: 'Europe/Paris'
-  },
-  {
-    email: 'viewer@acme.com',
-    password: 'password123',
-    role: 'VIEWER',
-    organization: 'ACME Corporation',
-    orgSlug: 'acme-corp',
-    description: 'Viewer ACME - Lecture seule sur tous événements de l\'organisation',
-    sector: 'Corporate',
-    timezone: 'Europe/Paris'
-  },
-  {
-    email: 'partner@acme.com',
-    password: 'password123',
-    role: 'PARTNER',
-    organization: 'ACME Corporation',
-    orgSlug: 'acme-corp',
-    description: 'Partner ACME - Lecture seule uniquement sur événements assignés',
-    sector: 'Corporate',
-    timezone: 'Europe/Paris'
-  },
-  {
-    email: 'hotesse@acme.com',
-    password: 'password123',
-    role: 'HOTESSE',
-    organization: 'ACME Corporation',
-    orgSlug: 'acme-corp',
-    description: 'Hôtesse ACME - Scanner QR codes et check-in participants',
-    sector: 'Corporate',
-    timezone: 'Europe/Paris'
-  },
-  // === TECH SOLUTIONS INC - Organisation tech ===
-  {
-    email: 'admin@techsolutions.com',
-    password: 'password123',
-    role: 'ADMIN',
-    organization: 'Tech Solutions Inc',
-    orgSlug: 'tech-solutions',
-    description: 'Admin Tech Solutions - Gestion complète organisation tech',
-    sector: 'Tech',
-    timezone: 'Europe/London'
-  },
-  {
-    email: 'manager@techsolutions.com',
-    password: 'password123',
-    role: 'MANAGER',
-    organization: 'Tech Solutions Inc',
-    orgSlug: 'tech-solutions',
-    description: 'Manager Tech Solutions - Gestion événements tech',
-    sector: 'Tech',
-    timezone: 'Europe/London'
-  },
-  {
-    email: 'viewer@techsolutions.com',
-    password: 'password123',
-    role: 'VIEWER',
-    organization: 'Tech Solutions Inc',
-    orgSlug: 'tech-solutions',
-    description: 'Viewer Tech Solutions - Lecture seule événements tech',
-    sector: 'Tech',
-    timezone: 'Europe/London'
-  },
-  // === EVENT MASTERS LTD - Organisation événementielle ===
-  {
-    email: 'admin@eventmasters.com',
-    password: 'password123',
-    role: 'ADMIN',
-    organization: 'Event Masters Ltd',
-    orgSlug: 'event-masters',
-    description: 'Admin Event Masters - Gestion complète organisation événementielle',
-    sector: 'Events',
-    timezone: 'America/New_York'
-  },
-  {
-    email: 'manager@eventmasters.com',
-    password: 'password123',
-    role: 'MANAGER',
-    organization: 'Event Masters Ltd',
-    orgSlug: 'event-masters',
-    description: 'Manager Event Masters - Gestion événements professionnels',
-    sector: 'Events',
-    timezone: 'America/New_York'
-  },
-  {
-    email: 'hotesse1@eventmasters.com',
-    password: 'password123',
-    role: 'HOTESSE',
-    organization: 'Event Masters Ltd',
-    orgSlug: 'event-masters',
-    description: 'Hôtesse 1 Event Masters - Scanner QR codes événements',
-    sector: 'Events',
-    timezone: 'America/New_York'
-  },
-  {
-    email: 'hotesse2@eventmasters.com',
-    password: 'password123',
-    role: 'HOTESSE',
-    organization: 'Event Masters Ltd',
-    orgSlug: 'event-masters',
-    description: 'Hôtesse 2 Event Masters - Scanner QR codes événements',
-    sector: 'Events',
-    timezone: 'America/New_York'
   }
 ]
 
@@ -160,13 +49,6 @@ const ROLE_COLORS: Record<string, string> = {
   'HOTESSE': 'bg-pink-100 text-pink-800 dark:bg-pink-900/20 dark:text-pink-300'
 }
 
-const SECTOR_ICONS: Record<string, string> = {
-  'Administration': '👑',
-  'Corporate': '🏢',
-  'Tech': '💻',
-  'Events': '🎪'
-}
-
 interface TestAccountsModalProps {
   isOpen: boolean
   onClose: () => void
@@ -176,10 +58,8 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
   isOpen,
   onClose
 }) => {
-  const [showPasswords, setShowPasswords] = useState(false)
   const [selectedOrg, setSelectedOrg] = useState<string>('all')
 
-  const organizations = Array.from(new Set(TEST_ACCOUNTS.map(acc => acc.orgSlug)))
   const filteredAccounts = selectedOrg === 'all' 
     ? TEST_ACCOUNTS 
     : TEST_ACCOUNTS.filter(acc => acc.orgSlug === selectedOrg)
@@ -202,10 +82,21 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Comptes de test - Base de données réelle"
+      showCloseButton={false}
+      contentPadding={false}
       maxWidth="4xl"
     >
-      <div className="space-y-6">
+      <div className="relative p-8">
+        {/* Bouton fermeture moderne */}
+        <CloseButton onClick={onClose} />
+
+        {/* Titre moderne */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Comptes de test</h2>
+          <p className="text-gray-400">Base de données réelle - Utilisez ces comptes pour tester</p>
+        </div>
+
+        <div className="space-y-6">
         {/* Filtres */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -215,47 +106,7 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">Toutes les organisations</option>
-              {organizations.map(orgSlug => {
-                const org = TEST_ACCOUNTS.find(acc => acc.orgSlug === orgSlug)
-                return (
-                  <option key={orgSlug} value={orgSlug}>
-                    {SECTOR_ICONS[org!.sector]} {org!.organization}
-                  </option>
-                )
-              })}
             </select>
-          </div>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowPasswords(!showPasswords)}
-            className="flex items-center space-x-2"
-          >
-            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            <span>{showPasswords ? 'Masquer' : 'Afficher'} les mots de passe</span>
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{filteredAccounts.length}</div>
-              <div className="text-sm text-blue-700 dark:text-blue-300">Comptes disponibles</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {new Set(filteredAccounts.map(acc => acc.orgSlug)).size}
-              </div>
-              <div className="text-sm text-blue-700 dark:text-blue-300">Organisations</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {new Set(filteredAccounts.map(acc => acc.role)).size}
-              </div>
-              <div className="text-sm text-blue-700 dark:text-blue-300">Rôles différents</div>
-            </div>
           </div>
         </div>
 
@@ -265,13 +116,6 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
             <div key={index} className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <span className="text-lg">{SECTOR_ICONS[account.sector]}</span>
-                    <div>
-                      <h3 className="font-medium text-gray-900 dark:text-white">{account.organization}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{account.description}</p>
-                    </div>
-                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     <div className="flex items-center space-x-2">
@@ -286,7 +130,7 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
                       </Button>
                     </div>
 
-                    {showPasswords && (
+                    {(
                       <div className="flex items-center space-x-2">
                         <Key className="h-4 w-4 text-gray-400" />
                         <span className="text-sm font-mono text-gray-900 dark:text-white">{account.password}</span>
@@ -329,18 +173,6 @@ export const TestAccountsModal: React.FC<TestAccountsModalProps> = ({
             </div>
           ))}
         </div>
-
-        {/* Instructions */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg p-4">
-          <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">💡 Instructions d'utilisation</h4>
-          <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-            <li>• <strong>Mot de passe universel :</strong> password123</li>
-            <li>• <strong>3 organisations</strong> avec différents secteurs d'activité</li>
-            <li>• <strong>6 niveaux de rôles :</strong> SUPER_ADMIN → ADMIN → MANAGER → VIEWER → PARTNER → HOTESSE</li>
-            <li>• <strong>Isolation complète :</strong> chaque organisation est séparée</li>
-            <li>• <strong>Données réelles :</strong> connectées à la base de données PostgreSQL</li>
-            <li>• <strong>Test RBAC :</strong> permissions granulaires selon le rôle et l'organisation</li>
-          </ul>
         </div>
       </div>
     </Modal>

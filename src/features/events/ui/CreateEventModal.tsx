@@ -1,5 +1,6 @@
 import React from 'react'
 import { Modal } from '@/shared/ui/Modal'
+import { CloseButton } from '@/shared/ui/CloseButton'
 import { EventForm } from './EventForm'
 import { useCreateEventMutation } from '../api/eventsApi'
 import { type CreateEventFormData } from '../lib/validation'
@@ -69,15 +70,27 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
     <Modal 
       isOpen={isOpen} 
       onClose={onClose}
-      title="Créer un nouvel événement"
+      showCloseButton={false}
+      contentPadding={false}
       maxWidth="4xl"
     >
-      <EventForm
-        onSubmit={handleSubmit}
-        onCancel={onClose}
-        isLoading={isLoading}
-        mode="create"
-      />
+      <div className="relative p-8">
+        {/* Bouton fermeture moderne */}
+        <CloseButton onClick={onClose} />
+
+        {/* Titre moderne */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Nouvel événement</h2>
+          <p className="text-gray-400">Créez un événement pour votre organisation</p>
+        </div>
+
+        <EventForm
+          onSubmit={handleSubmit}
+          onCancel={onClose}
+          isLoading={isLoading}
+          mode="create"
+        />
+      </div>
     </Modal>
   )
 }

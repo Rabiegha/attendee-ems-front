@@ -2,6 +2,7 @@ import React from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
+import { CloseButton } from '@/shared/ui/CloseButton'
 import { useDeleteEventMutation } from '../api/eventsApi'
 import type { EventDPO } from '../dpo/event.dpo'
 import { useToast } from '@/shared/hooks/useToast'
@@ -49,37 +50,42 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
       showCloseButton={false}
       contentPadding={false}
     >
-      {/* Header personnalisé avec icône d'alerte */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
-        <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
-            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-500" />
+      <div className="relative p-8">
+        {/* Bouton fermeture moderne */}
+        <CloseButton onClick={onClose} />
+
+        {/* Icône et titre moderne */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-500/25">
+            <AlertTriangle className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Supprimer l'événement
-          </h2>
+          <h2 className="text-2xl font-bold text-red-400 mb-2">Supprimer l'événement</h2>
+          <p className="text-gray-400">Cette action est irréversible</p>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="p-6">
-        <p className="text-gray-600 dark:text-gray-300 mb-4">
-          Êtes-vous sûr de vouloir supprimer l'événement{' '}
-          <span className="font-semibold text-gray-900 dark:text-white">"{event.name}"</span> ?
-        </p>
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 rounded-md p-3 mb-6 transition-colors duration-200">
-          <p className="text-sm text-red-800 dark:text-red-300">
-            <strong>Attention :</strong> Cette action est irréversible. Tous les participants 
-            associés à cet événement seront également supprimés.
+        {/* Message principal */}
+        <div className="text-center mb-8">
+          <p className="text-gray-300 mb-4">
+            Êtes-vous sûr de vouloir supprimer l'événement{' '}
+            <span className="font-semibold text-white">"{event.name}"</span> ?
           </p>
+          
+          {/* Avertissement moderne */}
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
+            <p className="text-sm text-gray-300">
+              <span className="font-medium text-red-400">Attention :</span> Tous les participants 
+              associés à cet événement seront également supprimés.
+            </p>
+          </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center justify-end space-x-3">
+        {/* Actions modernes */}
+        <div className="flex items-center justify-center space-x-4">
           <Button
-            variant="ghost"
+            variant="outline"
             onClick={onClose}
             disabled={isLoading}
+            className="px-6 py-3 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200 rounded-xl"
           >
             Annuler
           </Button>
@@ -87,7 +93,7 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
             variant="destructive"
             onClick={handleDelete}
             disabled={isLoading}
-            className="bg-red-600 hover:bg-red-700 text-white"
+            className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold shadow-lg shadow-red-500/25 hover:shadow-xl hover:scale-105 transition-all duration-200"
           >
             {isLoading ? 'Suppression...' : 'Supprimer définitivement'}
           </Button>

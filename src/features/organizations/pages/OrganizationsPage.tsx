@@ -3,6 +3,8 @@ import { ChevronDown, ChevronUp, Users, Plus } from 'lucide-react'
 import { Button } from '@/shared/ui/Button'
 import { Card } from '@/shared/ui/Card'
 import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
+import { UniversalModal } from '@/shared/ui/UniversalModal'
+import { useUniversalModal } from '@/shared/ui/useUniversalModal'
 
 import { useGetOrganizationsQuery, useGetMyOrganizationQuery, useGetOrganizationUsersQuery } from '../api/organizationsApi'
 import { selectUserRoles } from '@/features/auth/model/sessionSlice'
@@ -136,6 +138,14 @@ export const OrganizationsPage: React.FC = () => {
   
   const userRoles = useSelector(selectUserRoles)
   const isSuperAdmin = userRoles.includes('SUPER_ADMIN')
+  
+  // Modal universel
+  const {
+    modalState,
+    hideModal,
+    showOrganizationCreated,
+    showError
+  } = useUniversalModal()
 
 
 
@@ -199,7 +209,18 @@ export const OrganizationsPage: React.FC = () => {
   const isLoading = isSuperAdmin ? isLoadingOrgs : isLoadingMyOrg
   const error = isSuperAdmin ? orgsError : myOrgError
 
+  // Gestion du succès de création d'organisation
+  const handleOrganizationCreated = (name: string, slug: string) => {
+    showOrganizationCreated(name, slug)
+  }
 
+  // Gestion des erreurs de création
+  const handleCreateError = (error: any) => {
+    const errorMessage = error?.data?.message || 
+                        error?.message || 
+                        'Une erreur est survenue lors de la création de l\'organisation.'
+    showError('Erreur de création', errorMessage)
+  }
 
   if (isLoading) {
     return (
@@ -280,7 +301,18 @@ export const OrganizationsPage: React.FC = () => {
       <CreateOrganizationModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleOrganizationCreated}
+        onError={handleCreateError}
       />
+
+      {/* Modal universel pour les confirmations */}
+      {modalState.config && (
+        <UniversalModal
+          isOpen={modalState.isOpen}
+          onClose={hideModal}
+          config={modalState.config}
+        />
+      )}
     </div>
   )
 }

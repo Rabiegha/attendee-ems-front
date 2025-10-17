@@ -14,8 +14,8 @@ export interface CreateOrganizationRequest {
   timezone: string
 }
 
-export interface CreateOrganizationResponse {
-  organization: Organization
+export interface CreateOrganizationResponse extends Organization {
+  // Le backend retourne directement un objet Organization
 }
 
 export interface GetOrganizationsResponse {

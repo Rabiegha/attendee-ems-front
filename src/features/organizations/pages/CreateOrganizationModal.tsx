@@ -1,41 +1,41 @@
 import React from 'react'
 import { Modal } from '@/shared/ui/Modal'
+import { CloseButton } from '@/shared/ui/CloseButton'
 import { useCreateOrganizationMutation } from '../api/organizationsApi'
-import { useToast } from '@/shared/ui/useToast'
 import { OrganizationForm } from '../components/OrganizationForm'
 import type { CreateOrganizationRequest } from '../types'
 
 interface CreateOrganizationModalProps {
   isOpen: boolean
   onClose: () => void
+  onSuccess?: (organizationName: string, slug: string) => void
+  onError?: (error: any) => void
 }
 
 export const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
   isOpen,
   onClose,
+  onSuccess,
+  onError,
 }) => {
   const [createOrganization, { isLoading }] = useCreateOrganizationMutation()
-  const { success, error } = useToast()
 
   const handleSubmit = async (data: CreateOrganizationRequest) => {
     try {
-      await createOrganization(data).unwrap()
+      const result = await createOrganization(data).unwrap()
 
-      success(
-        'Organisation créée',
-        `L'organisation "${data.name}" a été créée avec succès.`
-      )
+      // Générer le slug depuis le nom si pas fourni par l'API
+      const slug = result.slug || data.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
 
+      onSuccess?.(data.name, slug)
       onClose()
     } catch (err) {
       console.error('Erreur lors de la création de l\'organisation:', err)
       
-      // Gestion d'erreur améliorée
-      const errorMessage = (err as any)?.data?.message || 
-                          (err as any)?.message || 
-                          'Une erreur est survenue lors de la création de l\'organisation.'
-      
-      error('Erreur', errorMessage)
+      // Passer l'erreur au parent pour affichage du modal
+      onError?.(err)
     }
   }
 
@@ -43,14 +43,27 @@ export const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Créer une organisation"
-      size="md"
+      showCloseButton={false}
+      contentPadding={false}
+      maxWidth="md"
     >
-      <OrganizationForm
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-        onCancel={onClose}
-      />
+      <div className="relative p-8">
+        {/* Bouton fermeture moderne en haut à droite */}
+        <CloseButton onClick={onClose} />
+
+        {/* Titre simple */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Nouvelle organisation</h2>
+          <p className="text-gray-400">Créez une nouvelle organisation</p>
+        </div>
+
+        {/* Formulaire */}
+        <OrganizationForm
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+          onCancel={onClose}
+        />
+      </div>
     </Modal>
   )
 }

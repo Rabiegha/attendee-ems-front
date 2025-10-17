@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, User, Mail, Shield } from 'lucide-react';
-import { Button, Input, FormField, Modal, Select, SelectOption } from '@/shared/ui';
+import { Button, Input, FormField, Modal, Select, SelectOption, CloseButton } from '@/shared/ui';
 import { useToast } from '@/shared/ui/useToast';
 import { useCreateUserWithGeneratedPasswordMutation, useGetRolesQuery, type Role } from '@/features/users/api/usersApi';
 import { 
@@ -95,10 +95,21 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Créer un utilisateur"
+      showCloseButton={false}
+      contentPadding={false}
       maxWidth="md"
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="relative p-8">
+        {/* Bouton fermeture moderne */}
+        <CloseButton onClick={handleClose} />
+
+        {/* Titre moderne */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-white mb-2">Créer un utilisateur</h2>
+          <p className="text-gray-400">Ajoutez un nouvel utilisateur avec un mot de passe généré</p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* 👤 Informations personnelles */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -263,6 +274,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           </Button>
         </div>
       </form>
+      </div>
     </Modal>
 
     {/* Modal d'affichage des identifiants */}

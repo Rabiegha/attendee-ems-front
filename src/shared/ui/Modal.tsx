@@ -31,12 +31,11 @@ interface ModalProps extends VariantProps<typeof modalVariants> {
   onClose: () => void
   children: React.ReactNode
   title?: string
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full' // Étendu
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | 'full'
   showCloseButton?: boolean
   closeOnBackdropClick?: boolean
   className?: string
   contentPadding?: boolean
-  headerBorder?: boolean // Nouveau : contrôler la bordure du header
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -49,7 +48,6 @@ export const Modal: React.FC<ModalProps> = ({
   closeOnBackdropClick = true,
   className,
   contentPadding = true,
-  headerBorder = true
 }) => {
   const [isVisible, setIsVisible] = useState(false)
   const [shouldRender, setShouldRender] = useState(false)
@@ -95,41 +93,38 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div className="modal-base">
-      {/* Backdrop avec fade */}
+      {/* Backdrop moderne avec blur plus intense */}
       <div 
         className={cn(
-          "modal-backdrop transition-opacity duration-200 ease-out",
+          "fixed inset-0 bg-black/60 backdrop-blur-md transition-all duration-300 ease-out",
           isVisible ? "opacity-100" : "opacity-0"
         )}
         onClick={handleBackdropClick}
       />
       
-      {/* Modal avec slide + scale */}
+      {/* Modal moderne épurée */}
       <div 
         className={cn(
           modalVariants({ size: maxWidth }),
-          "transition-all duration-200 ease-out transform max-h-[90vh] overflow-hidden",
+          "relative bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl transition-all duration-300 ease-out transform max-h-[90vh] overflow-hidden",
           isVisible 
             ? "scale-100 translate-y-0 opacity-100" 
-            : "scale-95 translate-y-4 opacity-0",
+            : "scale-95 translate-y-8 opacity-0",
           className
         )}
       >
-        {/* Header optionnel */}
+        {/* Header optionnel simplifié */}
         {(title || showCloseButton) && (
-          <div className={cn(
-            "flex items-center justify-between p-6 transition-colors duration-200",
-            headerBorder && "border-b border-gray-200 dark:border-gray-700"
-          )}>
+          <div className="flex items-center justify-between p-6">
             {title && (
-              <h2 className="text-heading-lg text-gray-900 dark:text-white">
+              <h2 className="text-xl font-semibold text-white">
                 {title}
               </h2>
             )}
             {showCloseButton && (
               <button
                 onClick={handleClose}
-                className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800/50 transition-all duration-200"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -137,7 +132,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        {/* Contenu */}
+        {/* Contenu sans bordures */}
         <div className={cn(
           "overflow-y-auto max-h-[calc(90vh-80px)]",
           contentPadding && "p-6"

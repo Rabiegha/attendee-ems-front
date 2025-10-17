@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react'
-import { Mail, Users, Building, Send, CheckCircle } from 'lucide-react'
+import { Mail, Users, Building, Send, CheckCircle, Plus } from 'lucide-react'
 import { FormField } from '@/shared/ui/FormField'
 import { Button } from '@/shared/ui/Button'
 import { Select } from '@/shared/ui/Select'
 import { Card } from '@/shared/ui/Card'
+import { Input } from '@/shared/ui/Input'
+import { UniversalModal, useUniversalModal } from '@/shared/ui'
 import { useSendInvitationMutation } from '@/features/invitations/api/invitationsApi'
 import { useGetRolesQuery } from '@/features/roles/api/rolesApi'
 import { useGetOrganizationsQuery } from '@/features/users/api/usersApi'
+import { useCreateOrganizationMutation } from '@/features/organizations/api/organizationsApi'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
-import { SuccessModal, ErrorModal, UserExistsModal } from './components/InvitationModals'
+// Anciens modals remplacés par UniversalModal
 
 interface InvitationFormData {
   email: string
   roleId: string
   orgId: string
+  createNewOrg: boolean
+  newOrgName: string
 }
 
 export const InvitationsPage: React.FC = () => {
@@ -31,6 +36,8 @@ export const InvitationsPage: React.FC = () => {
     email: '',
     roleId: '',
     orgId: '', // Initialement vide, sera mis à jour dans useEffect
+    createNewOrg: false,
+    newOrgName: ''
   })
 
   // Mettre à jour l'orgId selon le type d'utilisateur
@@ -50,30 +57,20 @@ export const InvitationsPage: React.FC = () => {
     }
   }, [isSuperAdmin, currentUser?.orgId])
 
-  // États pour les modals
-  const [successModal, setSuccessModal] = useState<{ isOpen: boolean; email: string }>({
-    isOpen: false,
-    email: ''
-  })
-  const [errorModal, setErrorModal] = useState<{ 
-    isOpen: boolean; 
-    title: string; 
-    message: string; 
-    type: 'error' | 'warning' 
-  }>({
-    isOpen: false,
-    title: '',
-    message: '',
-    type: 'error'
-  })
-  const [userExistsModal, setUserExistsModal] = useState<{ isOpen: boolean; email: string }>({
-    isOpen: false,
-    email: ''
-  })
+  // Modal universel
+  const {
+    modalState,
+    hideModal,
+    showError,
+    showWarning,
+    showOrganizationCreated,
+    showInvitationSent,
+  } = useUniversalModal()
 
   const [sendInvitation, { isLoading: isSending }] = useSendInvitationMutation()
+  const [createOrganization, { isLoading: isCreatingOrg }] = useCreateOrganizationMutation()
   const { data: roles, isLoading: isLoadingRoles, error: rolesError } = useGetRolesQuery()
-  const { data: organizations, isLoading: isLoadingOrganizations, error: organizationsError } = useGetOrganizationsQuery(undefined, {
+  const { data: organizations, isLoading: isLoadingOrganizations } = useGetOrganizationsQuery(undefined, {
     skip: !isSuperAdmin // Ne charger que si l'utilisateur est SUPER_ADMIN
   })
 
@@ -82,73 +79,150 @@ export const InvitationsPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.email || !formData.roleId || (isSuperAdmin && !formData.orgId)) {
-      setErrorModal({
-        isOpen: true,
-        title: '⚠️ Champs requis',
-        message: 'Veuillez remplir tous les champs requis avant d\'envoyer l\'invitation.',
-        type: 'warning'
-      })
+    // Validation des champs
+    if (!formData.email || !formData.roleId) {
+      showWarning(
+        '⚠️ Champs requis',
+        'Veuillez remplir tous les champs requis avant d\'envoyer l\'invitation.'
+      )
       return
     }
 
+    // Validation spécifique pour Super Admin
+    if (isSuperAdmin) {
+      if (formData.createNewOrg && !formData.newOrgName) {
+        showWarning(
+          '⚠️ Nom d\'organisation requis',
+          'Veuillez saisir le nom de la nouvelle organisation.'
+        )
+        return
+      } else if (!formData.createNewOrg && !formData.orgId) {
+        showWarning(
+          '⚠️ Organisation requise',
+          'Veuillez sélectionner une organisation ou créer une nouvelle.'
+        )
+        return
+      }
+    }
+
     try {
-      await sendInvitation(formData).unwrap()
+      let finalOrgId = formData.orgId
+
+      // Si on doit créer une nouvelle organisation
+      if (isSuperAdmin && formData.createNewOrg && formData.newOrgName) {
+        console.log('🏢 Création de la nouvelle organisation:', formData.newOrgName)
+        
+        // Générer le slug simple à partir du nom
+        const orgSlug = formData.newOrgName
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim()
+        
+        try {
+          // Créer d'abord l'organisation
+          const createdOrg = await createOrganization({
+            name: formData.newOrgName,
+            slug: orgSlug,
+            timezone: 'Europe/Paris'
+          }).unwrap()
+          
+          console.log('✅ Organisation créée:', createdOrg)
+          finalOrgId = createdOrg.id
+          
+          // Afficher le modal de confirmation de création d'organisation
+          showOrganizationCreated(
+            createdOrg.name,
+            createdOrg.slug,
+            () => window.location.href = '/organizations'
+          )
+        } catch (orgError: any) {
+          console.error('Erreur lors de la création de l\'organisation:', orgError)
+          
+          // Gestion spécifique des erreurs d'organisation
+          const orgErrorMessage = orgError?.data?.message || orgError?.message || 'Erreur lors de la création de l\'organisation'
+          
+          if (orgErrorMessage.includes('existe déjà') || orgErrorMessage.includes('already exists') || orgErrorMessage.includes('unique constraint')) {
+            showWarning(
+              '🏢 Organisation existante',
+              `Une organisation avec le nom "${formData.newOrgName}" existe déjà. Veuillez choisir un nom différent ou sélectionner l'organisation existante.`
+            )
+          } else {
+            showError(
+              '🏢 Erreur de création d\'organisation',
+              orgErrorMessage
+            )
+          }
+          return // Arrêter ici si la création d'organisation échoue
+        }
+      }
+
+      // Envoyer l'invitation avec l'organisation appropriée
+      await sendInvitation({
+        email: formData.email,
+        roleId: formData.roleId,
+        orgId: finalOrgId
+      }).unwrap()
       
       // Modal de succès
-      setSuccessModal({
-        isOpen: true,
-        email: formData.email
-      })
+      showInvitationSent(formData.email)
 
       // Reset form
       setFormData({
         email: '',
         roleId: '',
         orgId: currentUser?.orgId || '',
+        createNewOrg: false,
+        newOrgName: ''
       })
 
     } catch (error: any) {
       console.error('Erreur lors de l\'envoi de l\'invitation:', error)
       
-      // Gestion spécifique des erreurs
+      // Gestion spécifique des erreurs d'invitation (les erreurs d'organisation sont gérées séparément)
       const errorMessage = error?.data?.message || error?.message || 'Une erreur inattendue s\'est produite'
       
       if (errorMessage.includes('already exists') || errorMessage.includes('déjà')) {
-        setUserExistsModal({
-          isOpen: true,
-          email: formData.email
-        })
+        showWarning(
+          '👤 Utilisateur existant',
+          `Un utilisateur avec l'email ${formData.email} existe déjà.`
+        )
       } else if (errorMessage.includes('invalid email') || errorMessage.includes('email invalide')) {
-        setErrorModal({
-          isOpen: true,
-          title: '📧 Email invalide',
-          message: 'L\'adresse email fournie n\'est pas valide. Veuillez vérifier le format.',
-          type: 'error'
-        })
+        showError(
+          '📧 Email invalide',
+          'L\'adresse email fournie n\'est pas valide. Veuillez vérifier le format.'
+        )
       } else if (errorMessage.includes('unauthorized') || errorMessage.includes('non autorisé')) {
-        setErrorModal({
-          isOpen: true,
-          title: '🔒 Accès refusé',
-          message: 'Vous n\'avez pas les permissions nécessaires pour envoyer cette invitation.',
-          type: 'error'
-        })
+        showError(
+          '🔒 Accès refusé',
+          'Vous n\'avez pas les permissions nécessaires pour envoyer cette invitation.'
+        )
       } else {
-        setErrorModal({
-          isOpen: true,
-          title: 'Erreur lors de l\'envoi',
-          message: errorMessage,
-          type: 'error'
-        })
+        showError(
+          'Erreur lors de l\'envoi',
+          errorMessage
+        )
       }
     }
   }
 
-  const handleInputChange = (field: keyof InvitationFormData, value: string) => {
+  const handleInputChange = (field: keyof InvitationFormData, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }))
+  }
+
+  // Fonction pour générer et afficher le slug
+  const generateSlug = (name: string) => {
+    if (!name) return ''
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim()
   }
 
   return (
@@ -242,24 +316,91 @@ export const InvitationsPage: React.FC = () => {
                   required
                   hint="Sélectionnez l'organisation pour cet utilisateur"
                 >
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                    <Select
-                      value={formData.orgId}
-                      onChange={(e) => handleInputChange('orgId', e.target.value)}
-                      className="pl-10"
-                      required
-                      disabled={isLoadingOrganizations}
-                    >
-                      <option value="">
-                        {isLoadingOrganizations ? 'Chargement...' : 'Sélectionner une organisation'}
-                      </option>
-                      {organizations?.map((org) => (
-                        <option key={org.id} value={org.id}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </Select>
+                  <div className="space-y-4">
+                    {/* Option: Organisation existante */}
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="existing-org"
+                        name="orgOption"
+                        checked={!formData.createNewOrg}
+                        onChange={() => handleInputChange('createNewOrg', false)}
+                        className="text-blue-600"
+                      />
+                      <label htmlFor="existing-org" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Assigner à une organisation existante
+                      </label>
+                    </div>
+
+                    {!formData.createNewOrg && (
+                      <div className="relative">
+                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+                        <Select
+                          value={formData.orgId}
+                          onChange={(e) => handleInputChange('orgId', e.target.value)}
+                          className="pl-10"
+                          required
+                          disabled={isLoadingOrganizations}
+                        >
+                          <option value="">
+                            {isLoadingOrganizations ? 'Chargement...' : 'Sélectionner une organisation'}
+                          </option>
+                          {organizations?.map((org) => (
+                            <option key={org.id} value={org.id}>
+                              {org.name}
+                            </option>
+                          ))}
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Option: Nouvelle organisation */}
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="new-org"
+                        name="orgOption"
+                        checked={formData.createNewOrg}
+                        onChange={() => handleInputChange('createNewOrg', true)}
+                        className="text-blue-600"
+                      />
+                      <label htmlFor="new-org" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                        <Plus className="h-4 w-4 mr-1" />
+                        Créer une nouvelle organisation
+                      </label>
+                    </div>
+
+                    {formData.createNewOrg && (
+                      <div className="space-y-4 pl-6 border-l-2 border-blue-200">
+                        <FormField
+                          label="Nom de l'organisation"
+                          required
+                        >
+                          <Input
+                            value={formData.newOrgName}
+                            onChange={(e) => handleInputChange('newOrgName', e.target.value)}
+                            placeholder="Ex: ACME Corporation"
+                            className="w-full"
+                          />
+                          {formData.newOrgName && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Slug généré : <span className="font-mono text-blue-600 dark:text-blue-400">{generateSlug(formData.newOrgName)}</span>
+                            </p>
+                          )}
+                        </FormField>
+                        
+                        <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                          <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                            Informations automatiques
+                          </h4>
+                          <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                            <li>• Le slug sera généré automatiquement (ex: acme-corporation)</li>
+                            <li>• Le fuseau horaire sera défini sur Europe/Paris</li>
+                            <li>• L'utilisateur sera automatiquement assigné à cette organisation</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </FormField>
               )}
@@ -267,18 +408,18 @@ export const InvitationsPage: React.FC = () => {
               <div className="pt-6">
                 <Button
                   type="submit"
-                  disabled={isSending}
+                  disabled={isSending || isCreatingOrg}
                   className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  {isSending ? (
+                  {(isSending || isCreatingOrg) ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
-                      Envoi en cours...
+                      {isCreatingOrg ? 'Création de l\'organisation...' : 'Envoi en cours...'}
                     </>
                   ) : (
                     <>
                       <Send className="w-5 h-5 mr-3" />
-                      Envoyer l'invitation
+                      {isSuperAdmin && formData.createNewOrg ? 'Créer l\'organisation et envoyer l\'invitation' : 'Envoyer l\'invitation'}
                     </>
                   )}
                 </Button>
@@ -360,26 +501,14 @@ export const InvitationsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modals */}
-      <SuccessModal
-        isOpen={successModal.isOpen}
-        onClose={() => setSuccessModal({ isOpen: false, email: '' })}
-        email={successModal.email}
-      />
-
-      <ErrorModal
-        isOpen={errorModal.isOpen}
-        onClose={() => setErrorModal({ isOpen: false, title: '', message: '', type: 'error' })}
-        title={errorModal.title}
-        message={errorModal.message}
-        type={errorModal.type}
-      />
-
-      <UserExistsModal
-        isOpen={userExistsModal.isOpen}
-        onClose={() => setUserExistsModal({ isOpen: false, email: '' })}
-        email={userExistsModal.email}
-      />
+      {/* Modal universel */}
+      {modalState.config && (
+        <UniversalModal
+          isOpen={modalState.isOpen}
+          onClose={hideModal}
+          config={modalState.config}
+        />
+      )}
     </div>
   )
 }

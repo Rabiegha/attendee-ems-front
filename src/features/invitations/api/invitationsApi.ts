@@ -11,7 +11,7 @@ export const invitationsApi = rootApi.injectEndpoints({
     // Envoyer une invitation
     sendInvitation: builder.mutation<CreateInvitationResponse, CreateInvitationRequest>({
       query: (invitation) => ({
-        url: '/v1/invitations/send',
+        url: '/invitations/send',
         method: 'POST',
         body: invitation,
       }),
@@ -36,7 +36,7 @@ export const invitationsApi = rootApi.injectEndpoints({
         if (status) {
           params.append('status', status)
         }
-        return `/v1/invitations?${params}`
+        return `/invitations?${params}`
       },
       providesTags: [{ type: 'Invitation', id: 'LIST' }],
     }),
@@ -44,7 +44,7 @@ export const invitationsApi = rootApi.injectEndpoints({
     // Annuler une invitation
     cancelInvitation: builder.mutation<void, string>({
       query: (invitationId) => ({
-        url: `/v1/invitations/${invitationId}`,
+        url: `/invitations/${invitationId}`,
         method: 'DELETE',
       }),
       invalidatesTags: [{ type: 'Invitation', id: 'LIST' }],
@@ -53,7 +53,7 @@ export const invitationsApi = rootApi.injectEndpoints({
     // Renvoyer une invitation
     resendInvitation: builder.mutation<CreateInvitationResponse, string>({
       query: (invitationId) => ({
-        url: `/v1/invitations/${invitationId}/resend`,
+        url: `/invitations/${invitationId}/resend`,
         method: 'POST',
       }),
       invalidatesTags: [{ type: 'Invitation', id: 'LIST' }],
@@ -67,7 +67,7 @@ export const invitationsApi = rootApi.injectEndpoints({
       role: string
       expiresAt: string
     }, string>({
-      query: (token) => `/v1/invitations/validate/${token}`,
+      query: (token) => `/invitations/validate/${token}`,
     }),
 
     // Compléter une invitation (page publique)
@@ -79,7 +79,7 @@ export const invitationsApi = rootApi.injectEndpoints({
       userData: CompleteInvitationRequest
     }>({
       query: ({ token, userData }) => ({
-        url: `/v1/invitations/complete/${token}`,
+        url: `/invitations/complete/${token}`,
         method: 'POST',
         body: userData,
       }),

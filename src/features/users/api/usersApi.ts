@@ -122,13 +122,13 @@ export const usersApi = rootApi.injectEndpoints({
 
     // 🆕 Récupérer toutes les organisations (SUPER_ADMIN uniquement)
     getOrganizations: builder.query<Organization[], void>({
-      query: () => '/v1/organizations',
+      query: () => '/organizations',
       providesTags: ['Organizations'],
     }),
 
     // 🆕 Récupérer une organisation par ID
     getOrganization: builder.query<Organization, string>({
-      query: (id) => `/v1/organizations/${id}`,
+      query: (id) => `/organizations/${id}`,
       providesTags: ['Organizations'],
     }),
 

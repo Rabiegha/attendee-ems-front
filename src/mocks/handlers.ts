@@ -731,7 +731,7 @@ export const handlers = [
   // 🆕 NOUVEAU WORKFLOW: CRÉATION UTILISATEUR AVEC MDP GÉNÉRÉ
   // =====================================================
 
-  // POST /v1/users - Créer un utilisateur avec mdp généré
+  // POST /users - Créer un utilisateur avec mdp généré
   http.post(`${env.VITE_API_BASE_URL}/users`, async ({ request }) => {
     console.log('👤 Création nouvel utilisateur avec mdp généré')
     
@@ -822,7 +822,7 @@ export const handlers = [
     }, { status: 201 })
   }),
 
-  // POST /v1/auth/change-password - Première connexion obligatoire
+  // POST /auth/change-password - Première connexion obligatoire
   http.post(`${env.VITE_API_BASE_URL}/auth/change-password`, async () => {
     console.log('🔐 Changement de mot de passe première connexion')
     
@@ -844,7 +844,7 @@ export const handlers = [
     })
   }),
 
-  // GET /v1/users - Lister utilisateurs avec filtrage super admin
+  // GET /users - Lister utilisateurs avec filtrage super admin
   http.get(`${env.VITE_API_BASE_URL}/users`, () => {
     console.log('📋 Liste des utilisateurs (mock)')
     
@@ -868,9 +868,9 @@ export const handlers = [
     })
   }),
 
-  // GET /v1/roles - Lister les rôles disponibles
-  http.get(`${env.VITE_API_BASE_URL}/v1/roles`, ({ request }) => {
-    console.log('🎭 Liste des rôles (mock) - URL complète:', `${env.VITE_API_BASE_URL}/v1/roles`)
+  // GET /roles - Lister les rôles disponibles
+  http.get(`${env.VITE_API_BASE_URL}/roles`, ({ request }) => {
+    console.log('🎭 Liste des rôles (mock) - URL complète:', `${env.VITE_API_BASE_URL}/roles`)
     console.log('🎭 Rôles disponibles:', roles.length)
     
     const authHeader = request.headers.get('Authorization')
@@ -913,7 +913,7 @@ export const handlers = [
     }
   }),
 
-  // GET /v1/users?roles=PARTNER,HOTESSE - Récupérer les utilisateurs pour sélection d'événements
+  // GET /users?roles=PARTNER,HOTESSE - Récupérer les utilisateurs pour sélection d'événements
   http.get(`${env.VITE_API_BASE_URL}/users`, ({ request }) => {
     const url = new URL(request.url)
     const rolesParam = url.searchParams.get('roles')
@@ -955,16 +955,16 @@ export const handlers = [
   }),
 
   // Organizations endpoints
-  http.get(`${env.VITE_API_BASE_URL}/v1/organizations`, () => {
-    console.log('🔍 Mock: GET /v1/organizations called, returning:', mockOrganizations)
+  http.get(`${env.VITE_API_BASE_URL}/organizations`, () => {
+    console.log('🔍 Mock: GET /organizations called, returning:', mockOrganizations)
     return HttpResponse.json({
       organizations: mockOrganizations
     })
   }),
 
-  http.get(`${env.VITE_API_BASE_URL}/v1/organizations/:orgId/users`, ({ params }) => {
+  http.get(`${env.VITE_API_BASE_URL}/organizations/:orgId/users`, ({ params }) => {
     const { orgId } = params
-    console.log('🔍 Mock: GET /v1/organizations/:orgId/users called for org:', orgId)
+    console.log('🔍 Mock: GET /organizations/:orgId/users called for org:', orgId)
     
     // Filtrer les utilisateurs par organisation depuis auth-demo
     const orgUsers = users.filter(user => user.orgId === orgId)
@@ -995,7 +995,7 @@ export const handlers = [
     })
   }),
 
-  http.post(`${env.VITE_API_BASE_URL}/v1/organizations`, async ({ request }) => {
+  http.post(`${env.VITE_API_BASE_URL}/organizations`, async ({ request }) => {
     const body = await request.json() as CreateOrganizationRequest
     
     // Générer slug automatiquement
@@ -1024,7 +1024,7 @@ export const handlers = [
 
 
   // Endpoint pour récupérer l'organisation de l'utilisateur connecté
-  http.get(`${env.VITE_API_BASE_URL}/v1/organizations/me`, ({ request }) => {
+  http.get(`${env.VITE_API_BASE_URL}/organizations/me`, ({ request }) => {
     const authHeader = request.headers.get('Authorization')
     
     if (!authHeader?.startsWith('Bearer ')) {

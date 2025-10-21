@@ -401,7 +401,7 @@ console.log('🔧 Configuration des nouveaux handlers de démo')
 
 export const authDemoHandlers = [
   // Login
-  http.post(`${env.VITE_API_BASE_URL}/v1/auth/login`, async ({ request }) => {
+  http.post(`${env.VITE_API_BASE_URL}/auth/login`, async ({ request }) => {
     console.log('🎯 Handler de login appelé')
     
     const body = await request.json() as { email: string; password: string; orgId?: string }
@@ -456,7 +456,7 @@ export const authDemoHandlers = [
   }),
 
   // Profil utilisateur
-  http.get(`${env.VITE_API_BASE_URL}/v1/auth/me`, ({ request }) => {
+  http.get(`${env.VITE_API_BASE_URL}/auth/me`, ({ request }) => {
     const authHeader = request.headers.get('Authorization')
     
     if (!authHeader?.startsWith('Bearer ')) {
@@ -493,12 +493,12 @@ export const authDemoHandlers = [
   }),
 
   // Liste des organisations
-  http.get(`${env.VITE_API_BASE_URL}/v1/organizations/me`, () => {
+  http.get(`${env.VITE_API_BASE_URL}/organizations/me`, () => {
     return HttpResponse.json(organizations)
   }),
 
   // Changement d'organisation (super admin)
-  http.post(`${env.VITE_API_BASE_URL}/v1/auth/switch-org`, async ({ request }) => {
+  http.post(`${env.VITE_API_BASE_URL}/auth/switch-org`, async ({ request }) => {
     const body = await request.json() as { orgId: string }
     const { orgId } = body
     const authHeader = request.headers.get('Authorization')

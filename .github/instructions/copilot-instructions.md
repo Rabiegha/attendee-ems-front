@@ -4,6 +4,31 @@ applyTo: '**'
 
 # 🎯 ATTENDEE EMS - PRODUCT SPECIFICATIONS
 
+## 📋 RÈGLES DE GESTION DES INSTRUCTIONS & DOCUMENTATION
+
+### ⚠️ RÈGLE ABSOLUE : STRUCTURE ET ORGANISATION
+
+**AVANT TOUTE CRÉATION DE DOCUMENTATION :**
+1. ✅ **Vérifier si documentation existante** dans `.github/instructions/` ou `/docs`
+2. ✅ **Mettre à jour** le fichier existant si possible
+3. ✅ **Créer nouveau fichier** SEULEMENT si thème totalement nouveau
+4. ✅ **Placer dans bon répertoire** :
+   - `.github/instructions/` : Instructions pour IA et développeurs
+   - `/docs` : Documentation technique détaillée
+
+**INTERDICTIONS STRICTES :**
+- ❌ **PAS de documentation à la racine** du projet
+- ❌ **PAS de fichiers temporaires** non nettoyés
+- ❌ **PAS de duplication** d'informations existantes
+- ❌ **PAS de noms vagues** : toujours explicite et structuré
+
+**CONVENTION DE NOMMAGE :**
+- Instructions IA : `copilot-instructions.md`, `db-instructions.md`
+- Documentation : `NOM_FEATURE.md` (ex: `DEMO_SYSTEM.md`)
+- Guides : `GUIDE_SUJET.md` (ex: `DEVELOPMENT_GUIDE.md`)
+
+---
+
 ## ⚠️ EXIGENCES PRODUIT COMMERCIAL
 
 **CETTE APPLICATION EST UN PRODUIT COMMERCIAL DESTINÉ À LA VENTE B2B.**
@@ -23,6 +48,7 @@ applyTo: '**'
 - **Accessibilité WCAG 2.1** : navigation clavier, screen readers, contraste
 - **Internationalisation production** : français/anglais, gestion des formats de dates/nombres
 - **🌙 DARK MODE OBLIGATOIRE** : Toute nouvelle page, composant, modal, popup doit inclure le support complet du dark mode avec classes `dark:` et transitions fluides
+- **🚫 PAS D'EMOJIS SUR LE SITE** : Interdits dans toute interface utilisateur visible (OK dans logs/code/documentation)
 
 ### Règles Dark Mode - OBLIGATOIRES
 - ✅ **Chaque élément UI** doit avoir ses variants `dark:` (bg, text, border, etc.)
@@ -33,6 +59,41 @@ applyTo: '**'
 - ✅ **Empty states** : icônes et textes avec variants dark
 - ✅ **Form elements** : inputs, selects, boutons avec support complet
 - ✅ **Modals/Popups** : backdrop et contenu avec thème approprié
+
+### 🚫 Règle "Pas d'Emojis sur le Site" - OBLIGATOIRE (21/10/2025)
+
+**⚠️ RÈGLE STRICTE :** Les emojis sont **INTERDITS** dans toute interface visible par les utilisateurs finaux.
+
+**AUTORISÉ** ✅ :
+- Dans les commentaires du code
+- Dans les console.log() et logs de développement
+- Dans la documentation technique (fichiers .md)
+- Dans les fichiers d'instructions
+
+**INTERDIT** ❌ :
+- Dans les textes affichés à l'écran (titres, boutons, labels, messages)
+- Dans les notifications/toasts visibles par les utilisateurs
+- Dans les placeholders de formulaires
+- Dans les messages d'erreur/succès UI
+
+**Exemples :**
+```tsx
+// ❌ INTERDIT
+<Button>🎉 Créer un événement</Button>
+<h1>Dashboard 📊</h1>
+toast.success('✅ Événement créé !')
+
+// ✅ CORRECT
+<Button>Créer un événement</Button>
+<h1>Dashboard</h1>
+toast.success('Événement créé avec succès')
+
+// ✅ OK dans le code
+console.log('🎉 Événement créé') // OK
+// 📝 Note: Cette fonction gère la création // OK
+```
+
+**EXISTANT :** Ne pas supprimer les emojis déjà présents dans le code actuel, mais ne plus en ajouter de nouveaux dans l'UI.
 
 ### Déploiement & Infrastructure
 - **Configuration production** : HTTPS, CSP, variables d'environnement sécurisées
@@ -391,9 +452,10 @@ Playwright prêt (1 spec e2e ex: login → liste événements).
 Sentry prêt à brancher (optionnel: DSN via env).
 
 CASL RBAC (DÉTAILS À IMPLÉMENTER)
-Actions: manage, create, read, update, delete, checkin, export, invite, approve, refuse, print
-Subjects: Organization, Event, Subevent, Attendee, User, Badge, Scan, Report, Settings, all
-Rôles par défaut: ORG_ADMIN, ORG_MANAGER, EVENT_MANAGER, CHECKIN_STAFF, PARTNER, READONLY
+Actions: manage, create, read, update, delete, check_in, scan, export, invite, approve, refuse, print
+Subjects: Organization, Event, Subevent, Attendee, User, Badge, Registration, Invitation, Report, Settings, all
+Rôles du système: SUPER_ADMIN, ADMIN, MANAGER, VIEWER, PARTNER, HOSTESS
+⚠️ **IMPORTANT** : Utiliser EXACTEMENT ces 6 rôles. Pas d'autres rôles (ORG_ADMIN, ORG_MANAGER, EVENT_MANAGER, etc. sont OBSOLÈTES)
 
 app/providers/ability-provider.tsx : AbilityContext provider.
 shared/acl/app-ability.ts : types Actions/Subjects + AppAbility (MongoAbility<[Actions, Subjects]>).
@@ -404,21 +466,34 @@ shared/acl/guards/Can.tsx : wrapper JSX conditionnel.
 shared/acl/guards/GuardedRoute.tsx : guard de route avec fallback /403.
 
 REDUX + RTK QUERY (SPÉCIFICATIONS)
-app/store/index.ts : configureStore avec { authApi, eventsApi, attendeesApi }, slices UI, middleware RTKQ.
+⚠️ **ARCHITECTURE UNIFIÉE** : Utiliser un seul rootApi pour tous les endpoints (pas de authApi, eventsApi séparés)
+app/store/rootApi.ts : API unique avec injectEndpoints() par feature
+app/store/index.ts : configureStore avec rootApi, slices UI, middleware RTKQ
+
 features/auth/api/authApi.ts :
-  - endpoints: login, me, getPolicy(orgId) → { rules } (CASL) ou policyVersion.
+  - Injecter dans rootApi avec rootApi.injectEndpoints()
+  - endpoints: login, logout, me, refresh, getPolicy(orgId) → { rules } (CASL)
+  - ⚠️ **CRITIQUE** : resetApiState() dans logout pour vider le cache (sécurité)
+
 features/auth/model/sessionSlice.ts :
-  - state: user, orgId, roles, rules; selectors: selectAbilityRules, selectOrgId.
+  - state: user, orgId, roles, rules; selectors: selectAbilityRules, selectOrgId, selectUser
 features/events/api/eventsApi.ts :
-  - tagTypes: ["Events","Event"]
-  - queries: list(params), byId(id)
-  - mutations: create, update, remove
-  - providesTags/invalidatesTags corrects + exemples d’optimistic update (updateQueryData).
+  - Injecter dans rootApi avec rootApi.injectEndpoints()
+  - tagTypes: ["Event"] (définis dans rootApi)
+  - queries: getEvents(params), getEventById(id)
+  - mutations: createEvent, updateEvent, deleteEvent
+  - providesTags/invalidatesTags corrects + optimistic updates (updateQueryData)
+
 features/attendees/api/attendeesApi.ts :
-  - tagTypes: ["Attendees","Attendee"]
-  - queries: list(params), byId(id)
-  - mutations: updateStatus, exportCsv (mutation qui renvoie une URL).
-Exemple d’usage selectFromResult dans EventList pour limiter les re-renders.
+  - Injecter dans rootApi avec rootApi.injectEndpoints()
+  - tagTypes: ["Attendee"] (définis dans rootApi)
+  - queries: getAttendees(params), getAttendeeById(id)
+  - mutations: updateAttendeeStatus, exportAttendeesCsv
+
+⚠️ **TAGS RTK QUERY** : Tous définis dans rootApi :
+['Auth', 'User', 'Event', 'Attendee', 'Registration', 'Role', 'Invitation', 'Organization']
+
+Exemple d'usage selectFromResult dans EventList pour limiter les re-renders.
 
 PROVIDERS À MONTER DANS src/app/index.tsx
 Redux Provider (store)
@@ -437,9 +512,10 @@ GuardedRoute pour routes sensibles (ex: /events/:id/edit → manage Event)
 Page 403 simple
 
 TESTS
-Vitest + RTL config, 1 test de composant (EventCard)
-MSW pour mocker auth/events/attendees
-Playwright: spec de base (login → Dashboard)
+Vitest + RTL config pour tests unitaires
+Playwright pour tests E2E (login → Dashboard → Création événement)
+⚠️ **MSW N'EST PLUS UTILISÉ** : L'application utilise une vraie API backend (attendee-ems-back)
+Pour les tests : utiliser l'API backend en mode test ou des fixtures JSON
 
 STORYBOOK
 Story pour Button (shared/ui/Button)
@@ -545,11 +621,11 @@ PUT /registrations/:id/status → Changement statut inscription
 
 ### Phase 1 : Sécurité & Authentification ⚡
 - [x] **CRITIQUE RÉSOLU** : Cache RTK Query vidé lors de la déconnexion (fuite de données corrigée)
-- [ ] Remplacer MSW par authentification JWT réelle
-- [ ] Validation Zod complète côté serveur
+- [x] **IMPLÉMENTÉ** : Authentification JWT réelle avec backend NestJS
+- [x] **IMPLÉMENTÉ** : Refresh tokens avec rotation (cookies HttpOnly)
+- [ ] Validation Zod complète côté client (formulaires)
 - [ ] Protection CSRF et headers de sécurité
-- [ ] Gestion des refresh tokens
-- [ ] Rate limiting et protection DDoS
+- [ ] Rate limiting côté client (throttle requests)
 
 ### Phase 2 : Qualité & Monitoring 📊
 - [ ] Error Boundaries React dans tous les providers

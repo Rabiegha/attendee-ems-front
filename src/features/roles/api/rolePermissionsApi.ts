@@ -116,7 +116,7 @@ class RolePermissionsApi {
   
   /**
    * Récupère tous les rôles avec leurs permissions
-   * 🔮 Future API: GET /api/v1/roles?include=permissions
+   * 🔮 Future API: GET /api/roles?include=permissions
    */
   async getRoles(): Promise<Role[]> {
     // Simulate network delay
@@ -126,7 +126,7 @@ class RolePermissionsApi {
 
   /**
    * Récupère toutes les permissions disponibles
-   * 🔮 Future API: GET /api/v1/permissions
+   * 🔮 Future API: GET /api/permissions
    */
   async getPermissions(): Promise<Permission[]> {
     // Simulate network delay
@@ -136,7 +136,7 @@ class RolePermissionsApi {
 
   /**
    * Met à jour les permissions d'un rôle
-   * 🔮 Future API: PUT /api/v1/roles/:roleId/permissions
+   * 🔮 Future API: PUT /api/roles/:roleId/permissions
    */
   async updateRolePermissions(request: UpdateRolePermissionsRequest): Promise<UpdateRolePermissionsResponse> {
     // Simulate network delay
@@ -161,7 +161,7 @@ class RolePermissionsApi {
 
   /**
    * Toggle une permission spécifique pour un rôle
-   * 🔮 Future API: PATCH /api/v1/roles/:roleId/permissions/:permissionId
+   * 🔮 Future API: PATCH /api/roles/:roleId/permissions/:permissionId
    */
   async toggleRolePermission(roleId: string, permissionId: string): Promise<UpdateRolePermissionsResponse> {
     const role = MOCK_ROLES.find(role => role.id === roleId)

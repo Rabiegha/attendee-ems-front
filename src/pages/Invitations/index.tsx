@@ -63,8 +63,8 @@ export const InvitationsPage: React.FC = () => {
     hideModal,
     showError,
     showWarning,
-    showOrganizationCreated,
     showInvitationSent,
+    showInvitationSentWithOrg,
   } = useUniversalModal()
 
   const [sendInvitation, { isLoading: isSending }] = useSendInvitationMutation()
@@ -107,6 +107,8 @@ export const InvitationsPage: React.FC = () => {
 
     try {
       let finalOrgId = formData.orgId
+      let createdOrgName: string | undefined
+      let createdOrgSlug: string | undefined
 
       // Si on doit créer une nouvelle organisation
       if (isSuperAdmin && formData.createNewOrg && formData.newOrgName) {
@@ -131,12 +133,12 @@ export const InvitationsPage: React.FC = () => {
           console.log('✅ Organisation créée:', createdOrg)
           finalOrgId = createdOrg.id
           
-          // Afficher le modal de confirmation de création d'organisation
-          showOrganizationCreated(
-            createdOrg.name,
-            createdOrg.slug,
-            () => window.location.href = '/organizations'
-          )
+          // Sauvegarder les infos pour les afficher avec l'invitation
+          createdOrgName = createdOrg.name
+          createdOrgSlug = createdOrg.slug
+          
+          // NE PAS afficher de modal séparée pour l'organisation
+          // Elle sera affichée avec la modal d'invitation envoyée
         } catch (orgError: any) {
           console.error('Erreur lors de la création de l\'organisation:', orgError)
           
@@ -165,8 +167,14 @@ export const InvitationsPage: React.FC = () => {
         orgId: finalOrgId
       }).unwrap()
       
-      // Modal de succès
-      showInvitationSent(formData.email)
+      // Modal de succès combinée (avec info organisation si créée)
+      if (createdOrgName && createdOrgSlug) {
+        // Cas : Organisation créée + Invitation envoyée
+        showInvitationSentWithOrg(formData.email, createdOrgName, createdOrgSlug)
+      } else {
+        // Cas : Seulement invitation envoyée
+        showInvitationSent(formData.email)
+      }
 
       // Reset form
       setFormData({

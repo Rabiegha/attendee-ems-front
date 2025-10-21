@@ -148,9 +148,17 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
               </div>
             )}
             {config.details.organization && (
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between text-sm mb-3">
                 <span className="font-medium text-gray-400">Organisation :</span>
                 <span className="text-gray-300 font-semibold">{config.details.organization}</span>
+              </div>
+            )}
+            {config.details.organizationSlug && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-gray-400">URL :</span>
+                <span className="font-mono text-gray-300 bg-gray-900/50 px-3 py-1 rounded-lg border border-gray-700/50">
+                  {config.details.organizationSlug}
+                </span>
               </div>
             )}
           </div>

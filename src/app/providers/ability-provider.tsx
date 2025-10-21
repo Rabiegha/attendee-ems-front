@@ -24,11 +24,13 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
   const isSuperAdmin = user?.roles?.[0] === 'SUPER_ADMIN' || user?.roles?.includes('SUPER_ADMIN')
 
   // Charger automatiquement les règles de politique si l'utilisateur est connecté (sauf SUPER_ADMIN)
+  // TODO: Activer quand endpoint /auth/policy sera implémenté dans le backend
   const shouldSkipPolicy = Boolean(
     !user ||           // Pas d'utilisateur connecté
     !orgId ||          // Pas d'organisation
     rules.length > 0 || // Règles déjà chargées
-    isSuperAdmin       // Super admin n'a pas besoin de règles de politique
+    isSuperAdmin ||    // Super admin n'a pas besoin de règles de politique
+    true               // TEMPORAIRE: Endpoint /auth/policy pas encore implémenté
   )
   
   const { data: policyData } = useGetPolicyQuery(orgId || '', {

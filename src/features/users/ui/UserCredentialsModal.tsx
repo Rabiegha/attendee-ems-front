@@ -11,6 +11,8 @@ interface UserCredentialsModalProps {
   temporaryPassword: string;
   firstName: string;
   lastName: string;
+  organizationName?: string;  // Nouveau : nom de l'organisation créée
+  organizationSlug?: string;   // Nouveau : slug de l'organisation créée
 }
 
 export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
@@ -20,6 +22,8 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
   temporaryPassword,
   firstName,
   lastName,
+  organizationName,
+  organizationSlug,
 }) => {
   const [copied, setCopied] = useState<'email' | 'password' | null>(null);
 
@@ -52,11 +56,39 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Utilisateur créé</h2>
-          <p className="text-gray-400">L'utilisateur {firstName} {lastName} a été créé avec succès</p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {organizationName ? 'Organisation et utilisateur créés' : 'Utilisateur créé'}
+          </h2>
+          <p className="text-gray-400">
+            {organizationName 
+              ? `L'organisation "${organizationName}" et l'utilisateur ${firstName} ${lastName} ont été créés avec succès`
+              : `L'utilisateur ${firstName} ${lastName} a été créé avec succès`
+            }
+          </p>
         </div>
 
         <div className="space-y-6">
+        {/* Info organisation si créée */}
+        {organizationName && organizationSlug && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6">
+            <div className="flex items-start space-x-3">
+              <div className="w-6 h-6 text-blue-400 mt-0.5">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <div className="text-sm text-gray-300">
+                <p className="font-medium mb-2 text-blue-400">Organisation créée :</p>
+                <ul className="text-xs space-y-1 opacity-90">
+                  <li><strong>Nom :</strong> {organizationName}</li>
+                  <li><strong>Slug :</strong> <span className="font-mono">{organizationSlug}</span></li>
+                  <li className="text-gray-400 mt-2">L'utilisateur a été automatiquement assigné à cette organisation</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Informations d'identification */}
         <div className="space-y-4">
           <div>

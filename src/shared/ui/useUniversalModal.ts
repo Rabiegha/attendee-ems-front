@@ -159,6 +159,36 @@ export const useUniversalModal = () => {
     });
   };
 
+  const showInvitationSentWithOrg = (
+    email: string,
+    organizationName: string,
+    organizationSlug: string,
+    onSendAnother?: () => void
+  ) => {
+    showModal({
+      type: 'invitation-sent',
+      title: 'Organisation et invitation créées !',
+      message: `L'organisation "${organizationName}" a été créée et l'invitation a été envoyée à ${email}.`,
+      details: { 
+        email, 
+        organization: organizationName,
+        organizationSlug,
+      },
+      actions: {
+        primary: {
+          label: 'Parfait !',
+          action: () => {},
+        },
+        ...(onSendAnother && {
+          secondary: {
+            label: 'Envoyer une autre invitation',
+            action: onSendAnother,
+          },
+        }),
+      },
+    });
+  };
+
   return {
     modalState,
     showModal,
@@ -171,5 +201,6 @@ export const useUniversalModal = () => {
     showOrganizationCreated,
     showUserCreated,
     showInvitationSent,
+    showInvitationSentWithOrg,
   };
 };

@@ -49,7 +49,6 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
   const {
     modalState,
     hideModal,
-    showOrganizationCreated,
     showError
   } = useUniversalModal()
 
@@ -76,6 +75,8 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
     temporaryPassword: string;
     firstName: string;
     lastName: string;
+    organizationName?: string;  // Nouvelle prop pour afficher l'org créée
+    organizationSlug?: string;
   } | null>(null);
 
   const selectedRoleId = watch('roleId');
@@ -98,6 +99,8 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
     try {
       const { dto, temporaryPassword, newOrgData } = mapCreateUserWithGeneratedPasswordFormToDto(data);
       let finalDto = dto;
+      let createdOrgName: string | undefined;
+      let createdOrgSlug: string | undefined;
       
       // Si on doit créer une nouvelle organisation
       if (newOrgData) {
@@ -121,8 +124,9 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
           
           console.log('✅ Organisation créée:', createdOrg);
           
-          // Afficher le modal de confirmation de création d'organisation
-          showOrganizationCreated(createdOrg.name, createdOrg.slug);
+          // Sauvegarder les infos de l'organisation pour les afficher dans la modal des identifiants
+          createdOrgName = createdOrg.name;
+          createdOrgSlug = createdOrg.slug;
           
           // Mettre à jour le DTO utilisateur avec l'ID de la nouvelle organisation
           finalDto = {
@@ -148,22 +152,25 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
       console.log('👤 Création de l\'utilisateur dans l\'organisation:', finalDto.org_id);
       await createUser(finalDto).unwrap();
       
-      // Préparer les données pour la modal des identifiants
+      // Préparer les données pour la modal des identifiants (incluant l'org si créée)
       setUserCredentials({
         email: data.email,
         temporaryPassword,
         firstName: data.firstName,
         lastName: data.lastName,
+        ...(createdOrgName && { organizationName: createdOrgName }),  // Inclure seulement si défini
+        ...(createdOrgSlug && { organizationSlug: createdOrgSlug }),
       });
       
       setShowCredentials(true);
       reset();
       onClose();
       
+      // Toast simple pour confirmer
       success(
-        newOrgData ? 'Organisation et utilisateur créés' : 'Utilisateur créé',
-        newOrgData 
-          ? `L'organisation "${newOrgData.name}" et l'utilisateur ${data.firstName} ${data.lastName} ont été créés avec succès.`
+        createdOrgName ? 'Organisation et utilisateur créés' : 'Utilisateur créé',
+        createdOrgName 
+          ? `L'organisation "${createdOrgName}" et l'utilisateur ont été créés avec succès.`
           : `L'utilisateur ${data.firstName} ${data.lastName} a été créé avec succès.`
       );
     } catch (error: any) {
@@ -449,6 +456,8 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
         temporaryPassword={userCredentials.temporaryPassword}
         firstName={userCredentials.firstName}
         lastName={userCredentials.lastName}
+        {...(userCredentials.organizationName && { organizationName: userCredentials.organizationName })}
+        {...(userCredentials.organizationSlug && { organizationSlug: userCredentials.organizationSlug })}
       />
     )}
 

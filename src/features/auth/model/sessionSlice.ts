@@ -11,6 +11,8 @@ export interface SessionState {
   organization: Organization | null
   rules: AppRule[]
   isAuthenticated: boolean
+  isBootstrapping: boolean // true pendant le bootstrap initial
+  expiresAt?: number | null // timestamp ms
 }
 
 // État initial : pas de persistance, token uniquement en mémoire
@@ -20,6 +22,8 @@ const initialState: SessionState = {
   organization: null,
   rules: [],
   isAuthenticated: false,
+  isBootstrapping: true, // true au démarrage
+  expiresAt: null,
 }
 
 export const sessionSlice = createSlice({
@@ -31,6 +35,7 @@ export const sessionSlice = createSlice({
       token?: string
       user?: User
       organization?: Organization
+      expiresInSec?: number // NEW
     }>) => {
       // Support both access_token and token fields for compatibility
       state.token = action.payload.access_token || action.payload.token || null
@@ -70,6 +75,10 @@ export const sessionSlice = createSlice({
       }
       
       state.isAuthenticated = true
+      state.isBootstrapping = false // Bootstrap terminé avec succès
+      state.expiresAt = action.payload.expiresInSec
+        ? Date.now() + action.payload.expiresInSec * 1000
+        : state.expiresAt ?? null
     },
     
     setRules: (state, action: PayloadAction<AppRule[]>) => {
@@ -82,6 +91,11 @@ export const sessionSlice = createSlice({
       }
     },
     
+    setBootstrapCompleted: (state) => {
+      // Marquer le bootstrap comme terminé (même si pas authentifié)
+      state.isBootstrapping = false
+    },
+    
     clearSession: (state) => {
       // Clear all session data (token reste uniquement en mémoire)
       state.token = null
@@ -89,17 +103,20 @@ export const sessionSlice = createSlice({
       state.organization = null
       state.rules = []
       state.isAuthenticated = false
+      state.isBootstrapping = false // Bootstrap terminé
+      state.expiresAt = null
     },
   },
 })
 
-export const { setSession, setRules, updateUser, clearSession } = sessionSlice.actions
+export const { setSession, setRules, updateUser, clearSession, setBootstrapCompleted } = sessionSlice.actions
 
 // Selectors
 export const selectSession = (state: RootState) => state.session
 export const selectUser = (state: RootState) => state.session.user
 export const selectOrganization = (state: RootState) => state.session.organization
 export const selectIsAuthenticated = (state: RootState) => state.session.isAuthenticated
+export const selectIsBootstrapping = (state: RootState) => state.session.isBootstrapping
 export const selectAbilityRules = (state: RootState) => state.session.rules
 export const selectOrgId = (state: RootState) => state.session.organization?.id
 export const selectUserId = (state: RootState) => state.session.user?.id

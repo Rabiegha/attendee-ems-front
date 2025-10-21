@@ -3,10 +3,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useTranslation } from 'react-i18next'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { useLoginMutation, useLazyMeQuery } from '@/features/auth/api/authApi'
-import { setSession, updateUser } from '@/features/auth/model/sessionSlice'
+import { useLoginMutation } from '@/features/auth/api/authApi'
+import { setSession, selectIsAuthenticated } from '@/features/auth/model/sessionSlice'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { FormField } from '@/shared/ui/FormField'
@@ -39,12 +39,13 @@ export const LoginPage: React.FC = () => {
   const { t } = useTranslation('auth')
   const dispatch = useDispatch()
   const navigate = useNavigate()
+  const isAuthenticated = useSelector(selectIsAuthenticated)
   const [login, { isLoading }] = useLoginMutation()
-  const [getProfile] = useLazyMeQuery()
-  
+
   const [loginAttempts, setLoginAttempts] = useState(0)
   const [lastError, setLastError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [shouldRedirect, setShouldRedirect] = useState(false)
 
   const {
     register,
@@ -57,13 +58,22 @@ export const LoginPage: React.FC = () => {
     reValidateMode: 'onBlur', // Re-validation aussi au blur
   })
 
-  const watchedFields = watch()
+  const [emailValue, passwordValue] = watch(['email', 'password'])
   const prevFieldsRef = useRef({ email: '', password: '' })
+
+  // Rediriger automatiquement quand l'utilisateur devient authentifié
+  useEffect(() => {
+    console.log('Auth effect triggered:', { isAuthenticated, shouldRedirect })
+    if (isAuthenticated && shouldRedirect) {
+      console.log('User is now authenticated, redirecting to dashboard...')
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, shouldRedirect, navigate])
 
   // Effacer les erreurs seulement quand l'utilisateur modifie réellement les champs
   useEffect(() => {
-    const currentEmail = watchedFields.email || ''
-    const currentPassword = watchedFields.password || ''
+    const currentEmail = emailValue || ''
+    const currentPassword = passwordValue || ''
     
     // Vérifier si les valeurs ont réellement changé (pas juste initialisées)
     const emailChanged = currentEmail !== prevFieldsRef.current.email
@@ -76,7 +86,7 @@ export const LoginPage: React.FC = () => {
     
     // Mettre à jour les valeurs de référence
     prevFieldsRef.current = { email: currentEmail, password: currentPassword }
-  }, [watchedFields.email, watchedFields.password, lastError])
+  }, [emailValue, passwordValue, lastError])
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -85,42 +95,49 @@ export const LoginPage: React.FC = () => {
       // 1. Se connecter et obtenir le token
       const loginResult = await login(data).unwrap()
       
+      console.log('[LOGIN] Login successful, received:', {
+        hasAccessToken: !!loginResult.access_token,
+        tokenLength: loginResult.access_token?.length,
+        expiresIn: loginResult.expires_in,
+        hasUser: !!loginResult.user,
+        hasOrganization: !!loginResult.organization
+      })
+      
       // Animation de succès
       setShowSuccess(true)
       
       dispatch(setSession({
-        access_token: loginResult.access_token,
+        token: loginResult.access_token,
+        expiresInSec: loginResult.expires_in,
         ...(loginResult.user && { user: loginResult.user }),
         ...(loginResult.organization && { organization: loginResult.organization })
       }))
       
-      // 2. Récupérer les données complètes de l'utilisateur
-      try {
-        const profileResult = await getProfile()
-        console.log('Profile result:', profileResult)
-        if (profileResult.data) {
-          const profile = profileResult.data
-          console.log('Profile data:', profile)
-          const userUpdate = {
-            ...(profile.first_name && { firstName: profile.first_name }),
-            ...(profile.last_name && { lastName: profile.last_name }),
-            email: profile.email,
-            // Correctement extraire le rôle selon la nouvelle structure
-            roles: [typeof profile.role === 'string' ? profile.role : profile.role.code],
-            orgId: profile.org_id,
-          }
-          console.log('Updating user with:', userUpdate)
-          dispatch(updateUser(userUpdate))
-        }
-      } catch (profileError) {
-        console.error('Failed to fetch user profile:', profileError)
-        // On continue même si on ne peut pas récupérer le profil
+      // Diffuser aux autres onglets
+      if (window?.BroadcastChannel) {
+        new BroadcastChannel('auth').postMessage({
+          type: 'ACCESS_UPDATED', 
+          token: loginResult.access_token, 
+          expiresInSec: loginResult.expires_in
+        })
       }
       
-      // Attendre un peu pour l'animation puis rediriger
+      // 2. Les données utilisateur sont déjà dans loginResult, pas besoin d'appeler /users/me
+      // qui cause des problèmes de timing avec le token
+      
+      console.log('About to redirect to dashboard...')
+      
+      // Attendre un peu pour que les cookies soient configurés
       setTimeout(() => {
+        console.log('Triggering redirect after delay...')
+        setShouldRedirect(true)
+      }, 500)
+      
+      // Fallback au cas où le useEffect ne se déclenche pas
+      setTimeout(() => {
+        console.log('Fallback redirect to dashboard')
         navigate('/dashboard', { replace: true })
-      }, 1000)
+      }, 2000)
       
     } catch (err: any) {
       setLoginAttempts(prev => prev + 1)
@@ -235,7 +252,7 @@ export const LoginPage: React.FC = () => {
                   leftIcon={<LockIcon />}
                   showPasswordToggle
                   error={!!errors.password && !!touchedFields.password}
-                  success={!errors.password && !!touchedFields.password && watchedFields.password?.length >= 6}
+                  success={!errors.password && !!touchedFields.password && passwordValue?.length >= 6}
                   disabled={isLoading}
                 />
               </FormField>

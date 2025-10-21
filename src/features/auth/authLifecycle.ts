@@ -62,23 +62,9 @@ function scheduleProactiveRefresh() {
   }, when)
 }
 
-function hasRefreshTokenCookie(): boolean {
-  // Vérifier si le cookie de refresh token existe
-  const cookieName = '__Host-refresh_token'
-  return document.cookie.split(';').some(cookie => 
-    cookie.trim().startsWith(`${cookieName}=`)
-  )
-}
-
 export async function bootstrapAuth() {
-  // Ne tenter un refresh que s'il y a un refresh token cookie
-  if (!hasRefreshTokenCookie()) {
-    console.log('[AUTH] No refresh token cookie found, skipping bootstrap refresh')
-    // Marquer le bootstrap comme terminé même sans cookie
-    store.dispatch(setBootstrapCompleted())
-    return
-  }
-  
+  // Toujours tenter le refresh - le cookie HttpOnly n'est pas accessible via document.cookie
+  // Le backend répondra 401 si le cookie n'existe pas ou est invalide
   try {
     console.log('[AUTH] Attempting to restore session from refresh token...')
     const res: any = await store.dispatch((rootApi as any).endpoints.refresh.initiate()).unwrap()
@@ -92,7 +78,7 @@ export async function bootstrapAuth() {
       store.dispatch(setBootstrapCompleted())
     }
   } catch (error) {
-    console.log('[AUTH] Bootstrap refresh failed (normal if refresh token expired):', error)
+    console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):', error)
     // Marquer le bootstrap comme terminé même en cas d'échec
     store.dispatch(setBootstrapCompleted())
   }

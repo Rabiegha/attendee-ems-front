@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { useLoginMutation } from '@/features/auth/api/authApi'
 import { setSession, selectIsAuthenticated } from '@/features/auth/model/sessionSlice'
+import { normalizeUserData, normalizeOrganizationData } from '@/shared/lib/user-utils'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { FormField } from '@/shared/ui/FormField'
@@ -106,11 +107,15 @@ export const LoginPage: React.FC = () => {
       // Animation de succès
       setShowSuccess(true)
       
+      // Normaliser les données backend (snake_case → camelCase)
+      const normalizedUser = loginResult.user ? normalizeUserData(loginResult.user) : undefined
+      const normalizedOrg = loginResult.organization ? normalizeOrganizationData(loginResult.organization) : undefined
+      
       dispatch(setSession({
         token: loginResult.access_token,
         expiresInSec: loginResult.expires_in,
-        ...(loginResult.user && { user: loginResult.user }),
-        ...(loginResult.organization && { organization: loginResult.organization })
+        ...(normalizedUser && { user: normalizedUser }),
+        ...(normalizedOrg && { organization: normalizedOrg })
       }))
       
       // Diffuser aux autres onglets

@@ -295,11 +295,11 @@ CREATE TABLE registrations (
 ### API Endpoints :
 ```typescript
 // ===== API ADMIN (Clients) =====
-POST   /v1/events                        // Créer événement
-GET    /v1/events/:id/embed-code         // Générer code HTML embed
-GET    /v1/events/:id/registrations      // Liste participants  
-GET    /v1/attendees                     // CRM global organisation
-GET    /v1/attendees/:id                 // Profil + historique complet
+POST   /events                        // Créer événement
+GET    /events/:id/embed-code         // Générer code HTML embed
+GET    /events/:id/registrations      // Liste participants  
+GET    /attendees                     // CRM global organisation
+GET    /attendees/:id                 // Profil + historique complet
 
 // ===== API PUBLIQUE (Formulaires) =====  
 GET    /public/events/:token             // Info événement pour formulaire

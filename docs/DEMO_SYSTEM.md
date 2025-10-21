@@ -61,7 +61,7 @@ Système de démo complet pour tester l'authentification multi-tenant et les per
 BASE_URL=http://localhost:3000
 
 # Connexion
-POST /v1/auth/login
+POST /auth/login
 Content-Type: application/json
 {
   "email": "john.doe@system.com",
@@ -69,15 +69,15 @@ Content-Type: application/json
 }
 
 # Profil utilisateur actuel
-GET /v1/auth/me
+GET /auth/me
 Authorization: Bearer <access_token>
 
 # Refresh token
-POST /v1/auth/refresh
+POST /auth/refresh
 # (utilise le cookie HttpOnly automatiquement)
 
 # Déconnexion
-POST /v1/auth/logout
+POST /auth/logout
 ```
 
 ### Réponse Login

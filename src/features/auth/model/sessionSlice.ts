@@ -2,8 +2,6 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { RootState } from '@/app/store'
 import type { User, Organization } from '../api/authApi'
 import type { AppRule } from '@/shared/acl/app-ability'
-import { extractUserFromToken } from '@/shared/lib/jwt-utils'
-// Plus d'imports d'auth-storage car on ne persiste plus le token
 
 export interface SessionState {
   token: string | null
@@ -35,47 +33,23 @@ export const sessionSlice = createSlice({
       token?: string
       user?: User
       organization?: Organization
-      expiresInSec?: number // NEW
+      expiresInSec?: number
     }>) => {
-      // Support both access_token and token fields for compatibility
+      // Sauvegarder le token
       state.token = action.payload.access_token || action.payload.token || null
       
-      // Extract user info from JWT token if available
-      const token = action.payload.access_token || action.payload.token
-      const tokenData = token ? extractUserFromToken(token) : null
-      if (tokenData) {
-        // Create user object from token data
-        state.user = {
-          id: tokenData.id,
-          email: '', // We don't have email in token, will be empty for now
-          firstName: '', // Will be extracted from backend later
-          lastName: '', // Will be extracted from backend later
-          roles: [tokenData.role],
-          orgId: tokenData.orgId,
-        }
-        
-        // Create organization object (SUPER_ADMIN n'a pas d'org)
-        if (tokenData.orgId && tokenData.role !== 'SUPER_ADMIN') {
-          state.organization = {
-            id: tokenData.orgId,
-            name: 'ACME Corporation', // Default name, should come from API later
-            slug: 'acme',
-          }
-        } else {
-          state.organization = null // SUPER_ADMIN n'appartient à aucune org
-        }
-      }
-      
-      // Override with provided user/org if available
+      // TOUJOURS utiliser les données du payload si présentes
       if (action.payload.user) {
         state.user = action.payload.user
       }
-      if (action.payload.organization) {
+      
+      if (action.payload.organization !== undefined) {
+        // Accepter null explicitement (SUPER_ADMIN peut avoir organization = null ou un objet)
         state.organization = action.payload.organization
       }
       
       state.isAuthenticated = true
-      state.isBootstrapping = false // Bootstrap terminé avec succès
+      state.isBootstrapping = false
       state.expiresAt = action.payload.expiresInSec
         ? Date.now() + action.payload.expiresInSec * 1000
         : state.expiresAt ?? null

@@ -15,10 +15,8 @@ import { Attendees } from '@/pages/Attendees'
 import { UsersPage } from '@/pages/Users'
 import { RolePermissionsAdmin } from '@/pages/RolePermissionsAdmin'
 import { ChangePasswordPage } from '@/pages/ChangePassword'
-import { UserCreationTestPage } from '@/pages/UserCreationTest'
 import { LoginPage } from '@/pages/Login'
 import { SignupPage } from '@/pages/Signup'
-import { SignupTestPage } from '@/pages/SignupTest'
 import { InvitationsPage } from '@/pages/Invitations'
 import { CompleteInvitationPage } from '@/pages/CompleteInvitation'
 import { OrganizationsPage } from '@/features/organizations/pages'
@@ -83,7 +81,7 @@ export const router = createBrowserRouter([
       {
         path: 'users',
         element: (
-          <GuardedRoute action="manage" subject="User">
+          <GuardedRoute action="read" subject="User">
             <UsersPage />
           </GuardedRoute>
         ),
@@ -99,7 +97,7 @@ export const router = createBrowserRouter([
       {
         path: 'invitations',
         element: (
-          <GuardedRoute action="manage" subject="User">
+          <GuardedRoute action="create" subject="Invitation">
             <InvitationsPage />
           </GuardedRoute>
         ),
@@ -113,14 +111,6 @@ export const router = createBrowserRouter([
         ),
       },
     ],
-  },
-  {
-    path: '/signup-test',
-    element: <SignupTestPage />,
-  },
-  {
-    path: '/user-creation-test',
-    element: <UserCreationTestPage />,
   },
   {
     path: '/auth',

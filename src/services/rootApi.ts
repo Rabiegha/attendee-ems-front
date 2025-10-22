@@ -83,6 +83,7 @@ export const rootApi = createApi({
     'Events', 'Event',
     'Users', 'User', 
     'Roles', 'Role',
+    'Permissions', 'Permission',
     'Invitations', 'Invitation',
     'Auth', 'Policy', 'Signup',
     'Organizations'

@@ -86,13 +86,6 @@ export const CompleteInvitationPage: React.FC = () => {
       const errorStatus = (tokenError as any)?.status
       const errorMessage = (tokenError as any)?.data?.message || (tokenError as any)?.message || ''
       
-      console.log('🔍 Debug erreur token:', { 
-        errorStatus, 
-        errorMessage, 
-        tokenErrorData: (tokenError as any)?.data,
-        fullError: tokenError 
-      })
-      
       // Essayer plusieurs endroits pour trouver le message
       const allPossibleMessages = [
         errorMessage,
@@ -173,7 +166,6 @@ export const CompleteInvitationPage: React.FC = () => {
       // Déterminer le type d'erreur et rester sur la page d'erreur
       if (error.status === 400) {
         const errorMessage = error.data?.message || ''
-        console.log('🔍 Debug erreur complétion:', { errorMessage, fullError: error })
         
         if (errorMessage.includes('Le token d\'invitation a expiré') || errorMessage.includes('expiré')) {
           setErrorType('expired')

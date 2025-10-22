@@ -103,8 +103,8 @@ export const authApi = rootApi.injectEndpoints({
       providesTags: ['Auth'],
     }),
     
-    getPolicy: builder.query<PolicyResponse, string>({
-      query: (orgId) => `${API_ENDPOINTS.AUTH.POLICY}?orgId=${orgId}`,
+    getPolicy: builder.query<PolicyResponse, void>({
+      query: () => API_ENDPOINTS.AUTH.POLICY,
       providesTags: ['Policy'],
     }),
     

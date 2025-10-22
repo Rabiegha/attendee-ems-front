@@ -45,6 +45,9 @@ export interface Role {
   code: string;
   name: string;
   description?: string;
+  level: number;  // Hiérarchie du rôle (0=SUPER_ADMIN, 1=ADMIN, 2=MANAGER, etc.)
+  org_id?: string | null;
+  is_system_role?: boolean;
 }
 
 // 🆕 Interface pour les organisations

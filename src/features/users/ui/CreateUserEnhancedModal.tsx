@@ -37,13 +37,32 @@ export const CreateUserEnhancedModal: React.FC<CreateUserEnhancedModalProps> = (
   const { success } = useToast();
   const [createUser, { isLoading: isCreating }] = useCreateUserWithGeneratedPasswordMutation();
   const [createOrganization, { isLoading: isCreatingOrg }] = useCreateOrganizationMutation();
-  const { data: rolesData, isLoading: isLoadingRoles } = useGetRolesQuery();
+  const { data: rolesDataRaw, isLoading: isLoadingRoles } = useGetRolesQuery();
   
   // 🔒 Récupérer les organisations seulement si SUPER_ADMIN
   const isSuperAdmin = useCan('manage', 'all');
   const { data: organizationsData, isLoading: isLoadingOrgs } = useGetOrganizationsQuery(undefined, {
     skip: !isSuperAdmin // Ne charger que si c'est un SUPER_ADMIN
   });
+
+  // 🎯 Filtrer les rôles selon la hiérarchie
+  // Un utilisateur peut créer des utilisateurs avec un rôle de niveau INFÉRIEUR OU ÉGAL au sien
+  // Niveau plus bas = plus de pouvoir (SUPER_ADMIN = 0, ADMIN = 1, MANAGER = 2, etc.)
+  // Si l'utilisateur a le code SUPER_ADMIN dans ses roles, il peut tout faire
+  const currentUserRole = currentUser?.roles?.[0]; // Premier rôle (généralement unique)
+  const isSuperAdminByRole = currentUserRole === 'SUPER_ADMIN';
+  
+  // Trouver le niveau du rôle actuel de l'utilisateur
+  const currentUserRoleData = rolesDataRaw?.find((r: Role) => r.code === currentUserRole);
+  const currentUserRoleLevel = currentUserRoleData?.level ?? 99; // Si pas trouvé, niveau très élevé = peu de permissions
+  
+  // Filtrer : un MANAGER (level 2) peut créer MANAGER (2), PARTNER (3), VIEWER (4), HOSTESS (5)
+  // Mais pas SUPER_ADMIN (0) ou ADMIN (1)
+  const rolesData = isSuperAdminByRole 
+    ? rolesDataRaw // SUPER_ADMIN voit tous les rôles
+    : rolesDataRaw?.filter((role: Role) => 
+        role.level >= currentUserRoleLevel // Niveau >= (plus élevé ou égal)
+      ) || [];
 
   // Modal universel
   const {

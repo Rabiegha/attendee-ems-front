@@ -5,6 +5,7 @@ import { Card } from '@/shared/ui/Card'
 import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
 import { UniversalModal } from '@/shared/ui/UniversalModal'
 import { useUniversalModal } from '@/shared/ui/useUniversalModal'
+import { AccessDenied } from '@/pages/AccessDenied'
 
 import { useGetOrganizationsQuery, useGetMyOrganizationQuery, useGetOrganizationUsersQuery } from '../api/organizationsApi'
 import { selectUserRoles } from '@/features/auth/model/sessionSlice'
@@ -159,30 +160,6 @@ export const OrganizationsPage: React.FC = () => {
     skip: isSuperAdmin
   })
 
-
-
-  // Debug - affichons les données récupérées
-  console.log('🔍 Debug Organizations data:', {
-    isSuperAdmin,
-    organizationsData,
-    'organizationsData?.organizations': organizationsData?.organizations,
-    myOrgData,
-    isLoadingOrgs,
-    isLoadingMyOrg,
-    orgsError: orgsError ? {
-      status: (orgsError as any)?.status,
-      data: (orgsError as any)?.data,
-      message: (orgsError as any)?.message,
-      originalError: orgsError
-    } : null,
-    myOrgError: myOrgError ? {
-      status: (myOrgError as any)?.status,
-      data: (myOrgData as any)?.data,
-      message: (myOrgError as any)?.message,
-      originalError: myOrgError
-    } : null,
-  })
-
   const handleToggleOrg = (orgId: string) => {
     if (isSuperAdmin) {
       // Super Admin : peut ouvrir plusieurs dropdowns
@@ -231,11 +208,29 @@ export const OrganizationsPage: React.FC = () => {
   }
 
   if (error) {
+    // Vérifier si c'est une erreur de permissions (403)
+    const isPermissionError = (error as any)?.status === 403 || 
+                              (error as any)?.data?.statusCode === 403 ||
+                              (error as any)?.originalStatus === 403
+
+    if (isPermissionError) {
+      return (
+        <AccessDenied
+          title="Accès aux organisations refusé"
+          message="Vous n'avez pas les permissions nécessaires pour consulter les informations d'organisation."
+        />
+      )
+    }
+
+    // Autre type d'erreur
     return (
       <div className="p-6">
         <div className="text-center">
           <p className="text-red-600 dark:text-red-400">
             Erreur lors du chargement des organisations
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            {(error as any)?.data?.message || (error as any)?.message || 'Une erreur inconnue est survenue'}
           </p>
         </div>
       </div>

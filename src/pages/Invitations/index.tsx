@@ -69,10 +69,22 @@ export const InvitationsPage: React.FC = () => {
 
   const [sendInvitation, { isLoading: isSending }] = useSendInvitationMutation()
   const [createOrganization, { isLoading: isCreatingOrg }] = useCreateOrganizationMutation()
-  const { data: roles, isLoading: isLoadingRoles, error: rolesError } = useGetRolesQuery()
+  const { data: rolesDataRaw, isLoading: isLoadingRoles, error: rolesError } = useGetRolesQuery()
   const { data: organizations, isLoading: isLoadingOrganizations } = useGetOrganizationsQuery(undefined, {
     skip: !isSuperAdmin // Ne charger que si l'utilisateur est SUPER_ADMIN
   })
+
+  // 🎯 Filtrer les rôles selon la hiérarchie
+  // Un utilisateur peut inviter uniquement des utilisateurs avec un rôle de niveau INFÉRIEUR OU ÉGAL au sien
+  const currentUserRole = currentUser?.roles?.[0]; // Premier rôle
+  const currentUserRoleData = rolesDataRaw?.find((r: any) => r.code === currentUserRole);
+  const currentUserRoleLevel = currentUserRoleData?.level ?? 99;
+  
+  const roles = isSuperAdmin 
+    ? rolesDataRaw // SUPER_ADMIN voit tous les rôles
+    : rolesDataRaw?.filter((role: any) => 
+        role.level >= currentUserRoleLevel // Niveau >= (plus élevé ou égal)
+      ) || [];
 
   // Les données sont chargées via RTK Query
 

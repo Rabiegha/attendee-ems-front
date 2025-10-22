@@ -23,18 +23,34 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
   // Vérifier si l'utilisateur est SUPER_ADMIN
   const isSuperAdmin = user?.roles?.[0] === 'SUPER_ADMIN' || user?.roles?.includes('SUPER_ADMIN')
 
+  console.log('[AbilityProvider] State:', { 
+    hasUser: !!user, 
+    orgId, 
+    isSuperAdmin, 
+    rulesCount: rules.length,
+    userRoles: user?.roles 
+  })
+
   // Charger automatiquement les règles de politique si l'utilisateur est connecté (sauf SUPER_ADMIN)
-  // TODO: Activer quand endpoint /auth/policy sera implémenté dans le backend
+  // Polling automatique toutes les 5 secondes pour rafraîchir les permissions en quasi temps réel
   const shouldSkipPolicy = Boolean(
     !user ||           // Pas d'utilisateur connecté
     !orgId ||          // Pas d'organisation
-    rules.length > 0 || // Règles déjà chargées
-    isSuperAdmin ||    // Super admin n'a pas besoin de règles de politique
-    true               // TEMPORAIRE: Endpoint /auth/policy pas encore implémenté
+    isSuperAdmin       // Super admin n'a pas besoin de règles de politique
   )
   
-  const { data: policyData } = useGetPolicyQuery(orgId || '', {
-    skip: shouldSkipPolicy
+  console.log('[AbilityProvider] Should skip policy?', shouldSkipPolicy)
+  
+  const { data: policyData, isLoading: isPolicyLoading, error: policyError } = useGetPolicyQuery(undefined, {
+    skip: shouldSkipPolicy,
+    pollingInterval: 5000, // Rafraîchir toutes les 5 secondes pour quasi temps réel
+  })
+
+  console.log('[AbilityProvider] Policy data:', { 
+    hasData: !!policyData, 
+    isLoading: isPolicyLoading, 
+    error: policyError,
+    rulesFromApi: policyData?.rules?.length 
   })
 
   // Mettre à jour les règles dans le store quand elles sont chargées

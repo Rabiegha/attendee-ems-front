@@ -39,6 +39,9 @@ export const API_ENDPOINTS = {
     LIST: '/roles',
     BY_ID: (id: string) => `/roles/${id}`,
   },
+  PERMISSIONS: {
+    LIST: '/permissions',
+  },
 } as const
 
 export const ROUTES = {

@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux'
 import { selectIsAuthenticated, selectIsBootstrapping } from '@/features/auth/model/sessionSlice'
 import { Header } from '@/widgets/Header'
 import { Sidebar } from '@/widgets/Sidebar'
+import { PermissionsDebug } from '@/shared/acl/components/PermissionsDebug'
 
 export const RootLayout: React.FC = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated)
@@ -42,6 +43,8 @@ export const RootLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+      {/* Debug des permissions en développement */}
+      <PermissionsDebug />
     </div>
   )
 }

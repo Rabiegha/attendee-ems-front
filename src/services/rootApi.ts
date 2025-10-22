@@ -28,23 +28,17 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
     const url = typeof args === 'string' ? args : args.url
     console.log('[AUTH] 401 error on:', url)
     
+    // Si le refresh lui-même échoue, c'est terminé
     if (url === '/auth/refresh') {
       console.log('[AUTH] Refresh failed, clearing session')
       api.dispatch(clearSession())
       return result
     }
 
-    // Ne pas essayer de refresh si on n'a pas de token du tout
-    const currentToken = (api.getState() as RootState).session.token
-    const isAuthenticated = (api.getState() as RootState).session.isAuthenticated
-    
-    console.log('[AUTH] Current state:', { hasToken: !!currentToken, isAuthenticated })
-    
-    if (!currentToken || !isAuthenticated) {
-      console.log('[AUTH] No token or not authenticated, clearing session')
-      api.dispatch(clearSession())
-      return result
-    }
+    // ✅ TOUJOURS tenter le refresh sur un 401
+    // Le refresh token est dans le cookie HttpOnly, pas dans Redux
+    // Donc même sans access token, on peut tenter le refresh
+    console.log('[AUTH] Attempting token refresh...')
 
     if (!refreshPromise) {
       refreshPromise = (async () => {
@@ -52,6 +46,7 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
         if (!res.error && res.data) {
           const { access_token, expires_in } = res.data as any
           const state = api.getState() as RootState
+          console.log('[AUTH] Token refreshed successfully')
           api.dispatch(setSession({
             token: access_token,
             ...(state.session.user && { user: state.session.user }),
@@ -59,6 +54,7 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
             ...(typeof expires_in === 'number' && { expiresInSec: expires_in }),
           }))
         } else {
+          console.log('[AUTH] Refresh failed, clearing session')
           api.dispatch(clearSession())
         }
         return res
@@ -67,6 +63,7 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
 
     const refreshRes = await refreshPromise
     if (!refreshRes?.error) {
+      // Retry la requête originale avec le nouveau token
       result = await rawBaseQuery(args, api, extra)
     }
   }

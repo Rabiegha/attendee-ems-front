@@ -64,11 +64,12 @@ export const LoginPage: React.FC = () => {
   // Rediriger automatiquement quand l'utilisateur devient authentifié
   useEffect(() => {
     console.log('Auth effect triggered:', { isAuthenticated, shouldRedirect })
-    if (isAuthenticated && shouldRedirect) {
+    // Rediriger si authentifié, que ce soit via login manuel OU via bootstrap
+    if (isAuthenticated) {
       console.log('User is now authenticated, redirecting to dashboard...')
       navigate('/dashboard', { replace: true })
     }
-  }, [isAuthenticated, shouldRedirect, navigate])
+  }, [isAuthenticated, navigate])
 
   // Effacer les erreurs seulement quand l'utilisateur modifie réellement les champs
   useEffect(() => {

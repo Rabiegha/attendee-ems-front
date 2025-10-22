@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
@@ -13,6 +13,15 @@ export default defineConfig({
       '@/features': path.resolve(__dirname, './src/features'),
       '@/pages': path.resolve(__dirname, './src/pages'),
       '@/widgets': path.resolve(__dirname, './src/widgets'),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
   },
   test: {

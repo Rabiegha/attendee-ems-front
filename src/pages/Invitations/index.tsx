@@ -7,7 +7,7 @@ import { Card } from '@/shared/ui/Card'
 import { Input } from '@/shared/ui/Input'
 import { UniversalModal, useUniversalModal } from '@/shared/ui'
 import { useSendInvitationMutation } from '@/features/invitations/api/invitationsApi'
-import { useGetRolesQuery } from '@/features/roles/api/rolesApi'
+import { useGetRolesFilteredQuery } from '@/features/roles/api/rolesApi'  // 🔥 NOUVEAU hook
 import { useGetOrganizationsQuery } from '@/features/users/api/usersApi'
 import { useCreateOrganizationMutation } from '@/features/organizations/api/organizationsApi'
 import { useSelector } from 'react-redux'
@@ -39,6 +39,9 @@ export const InvitationsPage: React.FC = () => {
     createNewOrg: false,
     newOrgName: ''
   })
+  
+  // 🎯 NOUVEAU : État pour gérer le chargement dynamique des rôles
+  const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
 
   // Mettre à jour l'orgId selon le type d'utilisateur
   useEffect(() => {
@@ -48,12 +51,14 @@ export const InvitationsPage: React.FC = () => {
         ...prev,
         orgId: currentUser.orgId || ''
       }))
+      setSelectedOrgId(currentUser.orgId || null)
     } else if (isSuperAdmin) {
       // Pour les SUPER_ADMIN, laisser vide pour permettre la sélection
       setFormData(prev => ({
         ...prev,
         orgId: ''
       }))
+      setSelectedOrgId(null)
     }
   }, [isSuperAdmin, currentUser?.orgId])
 
@@ -69,19 +74,59 @@ export const InvitationsPage: React.FC = () => {
 
   const [sendInvitation, { isLoading: isSending }] = useSendInvitationMutation()
   const [createOrganization, { isLoading: isCreatingOrg }] = useCreateOrganizationMutation()
-  const { data: rolesDataRaw, isLoading: isLoadingRoles, error: rolesError } = useGetRolesQuery()
+  
+  // 🎯 NOUVEAU : Chargement dynamique des rôles selon l'organisation sélectionnée
+  const rolesQueryParams = isSuperAdmin && formData.createNewOrg
+    ? { templatesOnly: true } // Nouvelle org → templates système uniquement
+    : isSuperAdmin && selectedOrgId
+    ? { orgId: selectedOrgId } // Org existante sélectionnée → rôles de cette org
+    : !isSuperAdmin && currentUser?.orgId
+    ? { orgId: currentUser.orgId } // Admin normal → rôles de son org
+    : undefined // SUPER_ADMIN sans sélection → query skipped
+  
+  // 🔥 FIX: Skip la query si SUPER_ADMIN n'a pas encore fait de choix
+  const shouldSkipRolesQuery = isSuperAdmin 
+    ? (!formData.createNewOrg && !selectedOrgId) // Skip si pas d'org sélectionnée et pas de nouvelle org
+    : false // Ne jamais skip pour les admins normaux
+  
+  // 🔍 DEBUG: Log pour voir les paramètres de query
+  console.log('🔍 [INVITATIONS] Roles Query Params:', {
+    isSuperAdmin,
+    createNewOrg: formData.createNewOrg,
+    selectedOrgId,
+    userOrgId: currentUser?.orgId,
+    rolesQueryParams,
+    rolesQueryParamsJSON: JSON.stringify(rolesQueryParams), // 🔥 Voir exactement ce qui est passé
+    shouldSkip: shouldSkipRolesQuery
+  })
+    
+  const { data: rolesDataRaw, isLoading: isLoadingRoles, error: rolesError, refetch: refetchRoles } = useGetRolesFilteredQuery(
+    rolesQueryParams ?? { templatesOnly: false }, // 🔥 FIX: Toujours passer un objet, jamais undefined
+    {
+      skip: shouldSkipRolesQuery,
+      refetchOnMountOrArgChange: true // Force le refetch à chaque changement
+    }
+  )
+  
+  // 🔍 DEBUG: Log des rôles chargés
+  console.log('📋 [INVITATIONS] Roles loaded:', {
+    count: rolesDataRaw?.length || 0,
+    roles: rolesDataRaw?.map(r => ({ id: r.id, code: r.code, orgId: r.org_id, isSystem: r.is_system_role })),
+    isLoading: isLoadingRoles,
+    error: rolesError
+  })
+  
   const { data: organizations, isLoading: isLoadingOrganizations } = useGetOrganizationsQuery(undefined, {
     skip: !isSuperAdmin // Ne charger que si l'utilisateur est SUPER_ADMIN
   })
 
-  // 🎯 Filtrer les rôles selon la hiérarchie
-  // Un utilisateur peut inviter uniquement des utilisateurs avec un rôle de niveau INFÉRIEUR OU ÉGAL au sien
+  // 🎯 Filtrer les rôles selon la hiérarchie (pour non-SUPER_ADMIN uniquement)
   const currentUserRole = currentUser?.roles?.[0]; // Premier rôle
   const currentUserRoleData = rolesDataRaw?.find((r: any) => r.code === currentUserRole);
   const currentUserRoleLevel = currentUserRoleData?.level ?? 99;
   
   const roles = isSuperAdmin 
-    ? rolesDataRaw // SUPER_ADMIN voit tous les rôles
+    ? rolesDataRaw // SUPER_ADMIN voit tous les rôles chargés (selon params)
     : rolesDataRaw?.filter((role: any) => 
         role.level >= currentUserRoleLevel // Niveau >= (plus élevé ou égal)
       ) || [];
@@ -228,10 +273,28 @@ export const InvitationsPage: React.FC = () => {
   }
 
   const handleInputChange = (field: keyof InvitationFormData, value: string | boolean) => {
+    console.log(`🔄 [INVITATIONS] Field changed: ${field} =`, value)
+    
     setFormData(prev => ({
       ...prev,
-      [field]: value
+      [field]: value,
+      // Reset roleId quand l'organisation change (pour forcer re-sélection avec nouveaux rôles)
+      ...(field === 'orgId' && { roleId: '' }),
+      ...(field === 'createNewOrg' && { roleId: '' })
     }))
+    
+    // 🎯 Mettre à jour selectedOrgId pour charger les rôles correspondants
+    if (field === 'orgId' && typeof value === 'string') {
+      const newOrgId = value || null
+      console.log(`🏢 [INVITATIONS] Setting selectedOrgId to:`, newOrgId)
+      setSelectedOrgId(newOrgId)
+    } else if (field === 'createNewOrg') {
+      // Si on bascule vers "créer nouvelle org", on reset selectedOrgId
+      if (value === true) {
+        console.log(`➕ [INVITATIONS] Create new org mode - resetting selectedOrgId`)
+        setSelectedOrgId(null)
+      }
+    }
   }
 
   // Fonction pour générer et afficher le slug
@@ -299,42 +362,12 @@ export const InvitationsPage: React.FC = () => {
                 </div>
               </FormField>
 
-              {/* Rôle */}
-              <FormField
-                label="Rôle"
-                required
-                hint="Définit les permissions de l'utilisateur"
-              >
-                <div className="relative">
-                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
-                  <Select
-                    value={formData.roleId}
-                    onChange={(e) => handleInputChange('roleId', e.target.value)}
-                    className="pl-10"
-                    disabled={isLoadingRoles}
-                    required
-                  >
-                    <option value="">
-                      {isLoadingRoles ? 'Chargement...' : rolesError ? 'Erreur de chargement' : 'Sélectionner un rôle'}
-                    </option>
-                    {roles?.map((role) => (
-                      <option key={role.id} value={role.id}>
-                        {role.name} - {role.description}
-                      </option>
-                    ))}
-                    {!isLoadingRoles && !roles?.length && !rolesError && (
-                      <option value="" disabled>Aucun rôle disponible</option>
-                    )}
-                  </Select>
-                </div>
-              </FormField>
-
-              {/* Organisation (pour Super Admin seulement) */}
+              {/* 🎯 Organisation EN PREMIER (pour Super Admin seulement) */}
               {isSuperAdmin && (
                 <FormField
                   label="Organisation"
                   required
-                  hint="Sélectionnez l'organisation pour cet utilisateur"
+                  hint="⚠️ Sélectionnez d'abord l'organisation pour voir les rôles disponibles"
                 >
                   <div className="space-y-4">
                     {/* Option: Organisation existante */}
@@ -391,7 +424,7 @@ export const InvitationsPage: React.FC = () => {
                     </div>
 
                     {formData.createNewOrg && (
-                      <div className="space-y-4 pl-6 border-l-2 border-blue-200">
+                      <div className="space-y-4 pl-6 border-l-2 border-blue-200 dark:border-blue-700">
                         <FormField
                           label="Nom de l'organisation"
                           required
@@ -415,6 +448,7 @@ export const InvitationsPage: React.FC = () => {
                           </h4>
                           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                             <li>• Le slug sera généré automatiquement (ex: acme-corporation)</li>
+                            <li>• Les rôles par défaut seront créés automatiquement</li>
                             <li>• Le fuseau horaire sera défini sur Europe/Paris</li>
                             <li>• L'utilisateur sera automatiquement assigné à cette organisation</li>
                           </ul>
@@ -424,6 +458,51 @@ export const InvitationsPage: React.FC = () => {
                   </div>
                 </FormField>
               )}
+
+              {/* Rôle (APRÈS l'organisation pour SUPER_ADMIN) */}
+              <FormField
+                label="Rôle"
+                required
+                hint={
+                  isSuperAdmin && !formData.createNewOrg && !selectedOrgId
+                    ? "Sélectionnez d'abord une organisation"
+                    : "Définit les permissions de l'utilisateur"
+                }
+              >
+                <div className="relative">
+                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+                  <Select
+                    value={formData.roleId}
+                    onChange={(e) => handleInputChange('roleId', e.target.value)}
+                    className="pl-10"
+                    disabled={isLoadingRoles || (isSuperAdmin && !formData.createNewOrg && !selectedOrgId)}
+                    required
+                  >
+                    <option value="">
+                      {isLoadingRoles 
+                        ? 'Chargement...' 
+                        : (isSuperAdmin && !formData.createNewOrg && !selectedOrgId)
+                        ? 'Sélectionnez d\'abord une organisation'
+                        : rolesError 
+                        ? 'Erreur de chargement' 
+                        : 'Sélectionner un rôle'}
+                    </option>
+                    {roles?.map((role) => (
+                      <option key={role.id} value={role.id}>
+                        {role.name}{role.description ? ` - ${role.description}` : ''}
+                      </option>
+                    ))}
+                    {!isLoadingRoles && !roles?.length && !rolesError && selectedOrgId && (
+                      <option value="" disabled>Aucun rôle disponible pour cette organisation</option>
+                    )}
+                  </Select>
+                </div>
+                {formData.createNewOrg && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    💡 Rôles par défaut (Admin, Manager, Partner, Viewer, Hôtesse) disponibles pour la nouvelle organisation
+                  </p>
+                )}
+              </FormField>
 
               <div className="pt-6">
                 <Button

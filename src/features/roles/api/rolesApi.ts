@@ -23,10 +23,54 @@ export interface Permission {
 
 export const rolesApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    // Récupérer tous les rôles (filtrés par organisation côté backend)
-    getRoles: builder.query<Role[], void>({
-      query: () => API_ENDPOINTS.ROLES.LIST,
-      providesTags: [{ type: 'Role', id: 'LIST' }],
+    // 🔥 NOUVEAU NOM pour forcer le rechargement du cache
+    getRolesFiltered: builder.query<Role[], { orgId?: string; templatesOnly?: boolean }>({
+      query: (params) => {
+        console.log('🔍 [ROLES API] Building query with params:', params)
+        const queryParams = new URLSearchParams()
+        if (params.orgId) queryParams.append('orgId', params.orgId)
+        if (params.templatesOnly) queryParams.append('templatesOnly', 'true')
+        const queryString = queryParams.toString()
+        const finalUrl = queryString ? `${API_ENDPOINTS.ROLES.LIST}?${queryString}` : API_ENDPOINTS.ROLES.LIST
+        console.log('🌐 [ROLES API] Final URL:', finalUrl)
+        return finalUrl
+      },
+      // 🔥 Cache dynamique basé sur les paramètres
+      providesTags: (_result, _error, params) => {
+        if (params.templatesOnly) {
+          return [{ type: 'Role', id: 'TEMPLATES' }]
+        } else if (params.orgId) {
+          return [{ type: 'Role', id: `ORG-${params.orgId}` }]
+        }
+        return [{ type: 'Role', id: 'LIST' }]
+      },
+    }),
+
+    // Récupérer tous les rôles (filtrés par organisation côté backend) - ANCIEN
+    getRoles: builder.query<Role[], { orgId?: string; templatesOnly?: boolean } | void>({
+      query: (params) => {
+        console.log('🔍 [ROLES API] Building query with params:', params)
+        const queryParams = new URLSearchParams()
+        if (params && typeof params === 'object') {
+          if (params.orgId) queryParams.append('orgId', params.orgId)
+          if (params.templatesOnly) queryParams.append('templatesOnly', 'true')
+        }
+        const queryString = queryParams.toString()
+        const finalUrl = queryString ? `${API_ENDPOINTS.ROLES.LIST}?${queryString}` : API_ENDPOINTS.ROLES.LIST
+        console.log('🌐 [ROLES API] Final URL:', finalUrl)
+        return finalUrl
+      },
+      // 🔥 FIX: Cache dynamique basé sur les paramètres pour éviter les collisions
+      providesTags: (result, error, params) => {
+        if (params && typeof params === 'object') {
+          if (params.templatesOnly) {
+            return [{ type: 'Role', id: 'TEMPLATES' }]
+          } else if (params.orgId) {
+            return [{ type: 'Role', id: `ORG-${params.orgId}` }]
+          }
+        }
+        return [{ type: 'Role', id: 'LIST' }]
+      },
     }),
 
     // Récupérer un rôle par ID
@@ -59,6 +103,7 @@ export const rolesApi = rootApi.injectEndpoints({
 })
 
 export const {
+  useGetRolesFilteredQuery,  // 🔥 NOUVEAU hook
   useGetRolesQuery,
   useGetRoleQuery,
   useUpdateRolePermissionsMutation,

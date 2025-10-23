@@ -55,8 +55,8 @@ export const LoginPage: React.FC = () => {
     watch,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: 'onBlur', // Validation au blur (quand on quitte le champ)
-    reValidateMode: 'onBlur', // Re-validation aussi au blur
+    mode: 'onChange', // ✅ Validation en temps réel pendant la saisie
+    reValidateMode: 'onChange', // ✅ Re-validation aussi en temps réel
   })
 
   const [emailValue, passwordValue] = watch(['email', 'password'])
@@ -230,7 +230,7 @@ export const LoginPage: React.FC = () => {
             <AnimatedContainer animation="slide-right" delay={500}>
               <FormField
                 label={t('login.email')}
-                error={touchedFields.email ? errors.email?.message : undefined}
+                error={touchedFields.email && errors.email?.message ? errors.email.message : undefined}
                 required
               >
                 <Input
@@ -239,7 +239,7 @@ export const LoginPage: React.FC = () => {
                   placeholder="nom@exemple.com"
                   leftIcon={<MailIcon />}
                   error={!!errors.email && !!touchedFields.email}
-                  success={!errors.email && !!touchedFields.email}
+                  success={!errors.email && !!emailValue && emailValue.length > 0}
                   disabled={isLoading}
                 />
               </FormField>
@@ -248,7 +248,7 @@ export const LoginPage: React.FC = () => {
             <AnimatedContainer animation="slide-right" delay={600}>
               <FormField
                 label={t('login.password')}
-                error={touchedFields.password ? errors.password?.message : undefined}
+                error={touchedFields.password && errors.password?.message ? errors.password.message : undefined}
                 required
               >
                 <Input
@@ -258,7 +258,7 @@ export const LoginPage: React.FC = () => {
                   leftIcon={<LockIcon />}
                   showPasswordToggle
                   error={!!errors.password && !!touchedFields.password}
-                  success={!errors.password && !!touchedFields.password && passwordValue?.length >= 6}
+                  success={!errors.password && !!passwordValue && passwordValue.length >= 6}
                   disabled={isLoading}
                 />
               </FormField>

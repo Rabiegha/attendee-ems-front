@@ -1,11 +1,11 @@
 import React from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { LogOut, User } from 'lucide-react'
-import { selectUser, selectOrganization, clearSession, selectIsAuthenticated } from '@/features/auth/model/sessionSlice'
-import { rootApi } from '@/services/rootApi'
+import { selectUser, selectOrganization, selectIsAuthenticated } from '@/features/auth/model/sessionSlice'
 import { useMeQuery } from '@/features/auth/api/authApi'
+import { performLogout } from '@/features/auth/authLifecycle'
 import { getRoleLabel } from '@/shared/acl/role-mapping'
 import { Button } from '@/shared/ui/Button'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
@@ -13,7 +13,7 @@ import { ThemeToggle } from '@/shared/ui/ThemeToggle'
 
 export const Header: React.FC = () => {
   const { t } = useTranslation('common')
-  const dispatch = useDispatch()
+  const navigate = useNavigate()
   const user = useSelector(selectUser)
   const organization = useSelector(selectOrganization)
   const isAuthenticated = useSelector(selectIsAuthenticated)
@@ -26,15 +26,19 @@ export const Header: React.FC = () => {
   // Utiliser l'organisation du profil utilisateur si disponible, sinon celle du store
   const displayOrganization = userProfile?.organization || organization
 
-  const handleLogout = () => {
-    // 1. Nettoyer la session utilisateur
-    dispatch(clearSession())
+  const handleLogout = async () => {
+    console.log('[HEADER] Logout initiated')
+    // Utiliser la fonction centralisée de logout qui :
+    // 1. Arrête le timer proactif
+    // 2. Nettoie la session Redux
+    // 3. Diffuse la déconnexion aux autres onglets
+    // 4. Appelle le logout backend (révoque le refresh token)
+    // 5. Vide le cache RTK Query
+    await performLogout()
     
-    // 2. Vider le cache RTK Query (un seul rootApi maintenant)
-    dispatch(rootApi.util.resetApiState())
-    
-    // 3. Optionnel: appeler l'endpoint logout (pour invalider le token côté serveur)
-    // Note: On ne fait pas de mutation ici car ça pourrait créer des erreurs si l'API est down
+    // Rediriger vers la page de login
+    console.log('[HEADER] Logout complete, redirecting to login')
+    navigate('/auth/login', { replace: true })
   }
 
   return (

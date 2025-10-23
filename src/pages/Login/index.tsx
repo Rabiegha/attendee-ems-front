@@ -287,15 +287,27 @@ export const LoginPage: React.FC = () => {
 
             {/* Informations supplémentaires */}
             <AnimatedContainer animation="fade-in" delay={800}>
-              <div className="text-center">
-                <p className="text-sm text-gray-500">
+              <div className="text-center space-y-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {t('login.help', 'Besoin d\'aide ?')}{' '}
                   <button
                     type="button"
-                    className="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                    className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                     onClick={() => {/* TODO: Ouvrir modal d'aide */}}
                   >
                     {t('login.contact_admin', 'Contactez votre administrateur')}
+                  </button>
+                </p>
+                
+                {/* Lien de récupération en cas de problème */}
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Problème de connexion en boucle ?{' '}
+                  <button
+                    type="button"
+                    className="font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 underline transition-colors"
+                    onClick={() => navigate('/auth/recovery')}
+                  >
+                    Récupération d'urgence
                   </button>
                 </p>
               </div>

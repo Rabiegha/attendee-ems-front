@@ -22,6 +22,7 @@ import { CompleteInvitationPage } from '@/pages/CompleteInvitation'
 import { OrganizationsPage } from '@/features/organizations/pages'
 import { ForbiddenPage } from '@/pages/Forbidden'
 import { NotFoundPage } from '@/pages/NotFound'
+import { AuthRecoveryPage } from '@/pages/AuthRecovery'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -119,6 +120,10 @@ export const router = createBrowserRouter([
       {
         path: 'login',
         element: <LoginPage />,
+      },
+      {
+        path: 'recovery',
+        element: <AuthRecoveryPage />,
       },
     ],
   },

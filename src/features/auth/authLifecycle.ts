@@ -86,19 +86,23 @@ export async function bootstrapAuth() {
       const res: any = await store.dispatch(
         authApi.endpoints.refresh.initiate(undefined, { track: false })
       ).unwrap()
+      
       if (res?.access_token) {
         console.log('[AUTH] Session restored successfully')
         store.dispatch(setSession({ token: res.access_token, expiresInSec: res.expires_in }))
         broadcastToken(res.access_token, res.expires_in)
         scheduleProactiveRefresh()
       } else {
-        // Pas de token reçu, marquer le bootstrap comme terminé
-        store.dispatch(setBootstrapCompleted())
+        // Pas de token reçu, s'assurer que la session est vide
+        console.log('[AUTH] No access token received, clearing session')
+        store.dispatch(clearSession())
       }
-    } catch (error) {
-      console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):', error)
-      // Marquer le bootstrap comme terminé même en cas d'échec
-      store.dispatch(setBootstrapCompleted())
+    } catch (error: any) {
+      console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):', error?.status || error?.message)
+      
+      // CRITIQUE : Nettoyer la session en cas d'échec du refresh
+      // Cela garantit que l'utilisateur ne reste pas dans un état "fantôme"
+      store.dispatch(clearSession())
     }
   })()
 

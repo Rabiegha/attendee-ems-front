@@ -25,7 +25,8 @@ export const EventGuard: React.FC<EventGuardProps> = ({
   const organization = useSelector(selectOrganization)
   
   // Pour les admins et super admins, accès direct
-  if (user?.isSuperAdmin || user?.roles?.includes('ORG_ADMIN')) {
+  // ADMIN, MANAGER peuvent voir tous les événements de leur org
+  if (user?.isSuperAdmin || user?.roles?.includes('ADMIN') || user?.roles?.includes('MANAGER')) {
     console.log(`Admin access granted for user ${user?.email} to event ${eventId}`)
     return <>{children}</>
   }

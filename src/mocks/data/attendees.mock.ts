@@ -1,0 +1,805 @@
+/**
+ * Mock Data - Attendees
+ * 
+ * Profils CRM réalistes avec statistiques pré-calculées
+ * Utilisés pour tester le module CRM global et les inscriptions
+ */
+
+import type { Attendee } from '@/features/attendees/types'
+
+export const mockAttendees: Attendee[] = [
+  // ========== ATTENDEES ORG: TECH-CORP ==========
+  {
+    id: 'att-001',
+    org_id: 'org-tech-corp',
+    first_name: 'Corentin',
+    last_name: 'Kistler',
+    email: 'corentin.kistler@techcorp.com',
+    phone: '+33 6 12 34 56 78',
+    company: 'Tech Corp',
+    job_title: 'CTO',
+    country: 'France',
+    default_type_id: 'type-vip',
+    labels: ['vip', 'speaker', 'sponsor'],
+    notes: 'VIP - Speaker récurrent, toujours présent aux événements tech',
+    statistics: {
+      total_events: 8,
+      total_registrations: 8,
+      approved: 8,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 7,
+      attendance_rate: 87.5,
+      last_event_at: '2025-10-23T08:00:00Z',
+      first_event_at: '2024-05-20T09:00:00Z'
+    },
+    created_at: '2024-05-15T10:00:00Z',
+    updated_at: '2025-10-22T14:30:00Z'
+  },
+  {
+    id: 'att-002',
+    org_id: 'org-tech-corp',
+    first_name: 'Sophie',
+    last_name: 'Martin',
+    email: 'sophie.martin@gmail.com',
+    phone: '+33 6 23 45 67 89',
+    company: 'Startup Innovation',
+    job_title: 'Product Manager',
+    country: 'France',
+    default_type_id: null,
+    labels: ['speaker'],
+    notes: 'Speaker qualité, bonne présentation sur React',
+    statistics: {
+      total_events: 5,
+      total_registrations: 5,
+      approved: 5,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 5,
+      attendance_rate: 100.0
+    },
+    created_at: '2024-08-10T09:00:00Z',
+    updated_at: '2025-10-15T11:20:00Z'
+  },
+  {
+    id: 'att-003',
+    org_id: 'org-tech-corp',
+    first_name: 'Thomas',
+    last_name: 'Dubois',
+    email: 'thomas.dubois@dev.fr',
+    phone: '+33 6 34 56 78 90',
+    company: 'Freelance',
+    job_title: 'Full Stack Developer',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 3,
+      total_registrations: 4,
+      approved: 3,
+      awaiting: 1,
+      refused: 0,
+      checked_in: 2,
+      attendance_rate: 66.7
+    },
+    created_at: '2025-06-20T14:30:00Z',
+    updated_at: '2025-10-18T16:45:00Z'
+  },
+  {
+    id: 'att-004',
+    org_id: 'org-tech-corp',
+    first_name: 'Marie',
+    last_name: 'Lefebvre',
+    email: 'marie.lefebvre@company.com',
+    phone: '+33 6 45 67 89 01',
+    company: 'Big Tech France',
+    job_title: 'Engineering Manager',
+    country: 'France',
+    default_type_id: 'type-vip',
+    labels: ['vip', 'sponsor'],
+    notes: 'Sponsor platine - Très intéressée par nos événements',
+    statistics: {
+      total_events: 6,
+      total_registrations: 6,
+      approved: 6,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 5,
+      attendance_rate: 83.3
+    },
+    created_at: '2024-07-12T11:00:00Z',
+    updated_at: '2025-10-20T09:15:00Z'
+  },
+  {
+    id: 'att-005',
+    org_id: 'org-tech-corp',
+    first_name: 'Alexandre',
+    last_name: 'Bernard',
+    email: 'alex.bernard@mail.com',
+    phone: '+33 6 56 78 90 12',
+    company: 'DataCorp',
+    job_title: 'Data Scientist',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 2,
+      total_registrations: 2,
+      approved: 2,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 1,
+      attendance_rate: 50.0
+    },
+    created_at: '2025-08-05T15:20:00Z',
+    updated_at: '2025-09-28T10:30:00Z'
+  },
+  {
+    id: 'att-006',
+    org_id: 'org-tech-corp',
+    first_name: 'Julie',
+    last_name: 'Rousseau',
+    email: 'julie.rousseau@tech.io',
+    phone: '+33 6 67 89 01 23',
+    company: 'AI Solutions',
+    job_title: 'Machine Learning Engineer',
+    country: 'France',
+    default_type_id: 'type-speaker',
+    labels: ['speaker'],
+    notes: 'Excellente speaker sur l\'IA générative',
+    statistics: {
+      total_events: 4,
+      total_registrations: 4,
+      approved: 4,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 4,
+      attendance_rate: 100.0
+    },
+    created_at: '2025-05-18T13:45:00Z',
+    updated_at: '2025-10-19T14:20:00Z'
+  },
+  {
+    id: 'att-007',
+    org_id: 'org-tech-corp',
+    first_name: 'Pierre',
+    last_name: 'Moreau',
+    email: 'pierre.moreau@consulting.fr',
+    phone: '+33 6 78 90 12 34',
+    company: 'Tech Consulting Group',
+    job_title: 'Senior Consultant',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 1,
+      total_registrations: 1,
+      approved: 1,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 0,
+      attendance_rate: 0.0
+    },
+    created_at: '2025-10-01T09:30:00Z',
+    updated_at: '2025-10-01T09:30:00Z'
+  },
+  {
+    id: 'att-008',
+    org_id: 'org-tech-corp',
+    first_name: 'Laura',
+    last_name: 'Petit',
+    email: 'laura.petit@startup.com',
+    phone: '+33 6 89 01 23 45',
+    company: 'Green Tech Startup',
+    job_title: 'Co-Founder & CEO',
+    country: 'France',
+    default_type_id: null,
+    labels: ['startup'],
+    notes: 'Fondatrice prometteuse, startup dans le green tech',
+    statistics: {
+      total_events: 7,
+      total_registrations: 7,
+      approved: 6,
+      awaiting: 1,
+      refused: 0,
+      checked_in: 5,
+      attendance_rate: 83.3
+    },
+    created_at: '2024-11-22T10:15:00Z',
+    updated_at: '2025-10-22T11:40:00Z'
+  },
+  {
+    id: 'att-009',
+    org_id: 'org-tech-corp',
+    first_name: 'Nicolas',
+    last_name: 'Girard',
+    email: 'nicolas.girard@email.com',
+    phone: '+33 6 90 12 34 56',
+    company: 'Cloud Services Inc',
+    job_title: 'DevOps Engineer',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 2,
+      total_registrations: 3,
+      approved: 2,
+      awaiting: 0,
+      refused: 1,
+      checked_in: 2,
+      attendance_rate: 100.0
+    },
+    created_at: '2025-07-30T14:00:00Z',
+    updated_at: '2025-09-25T16:30:00Z'
+  },
+  {
+    id: 'att-010',
+    org_id: 'org-tech-corp',
+    first_name: 'Camille',
+    last_name: 'Blanc',
+    email: 'camille.blanc@design.studio',
+    phone: '+33 6 01 23 45 67',
+    company: 'UX Design Studio',
+    job_title: 'UX Designer',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 1,
+      total_registrations: 1,
+      approved: 1,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 1,
+      attendance_rate: 100.0
+    },
+    created_at: '2025-09-10T11:20:00Z',
+    updated_at: '2025-09-15T09:45:00Z'
+  },
+
+  // ========== ATTENDEES ORG: STARTUP-HUB ==========
+  {
+    id: 'att-011',
+    org_id: 'org-startup-hub',
+    first_name: 'Marc',
+    last_name: 'Fontaine',
+    email: 'marc.fontaine@investor.vc',
+    phone: '+33 6 12 34 56 78',
+    company: 'Venture Capital Partners',
+    job_title: 'Investment Director',
+    country: 'France',
+    default_type_id: 'type-vip',
+    labels: ['vip', 'investor'],
+    notes: 'Investisseur clé - Très intéressé par les startups deeptech',
+    statistics: {
+      total_events: 5,
+      total_registrations: 5,
+      approved: 5,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 4,
+      attendance_rate: 80.0
+    },
+    created_at: '2024-06-15T10:00:00Z',
+    updated_at: '2025-10-18T14:30:00Z'
+  },
+  {
+    id: 'att-012',
+    org_id: 'org-startup-hub',
+    first_name: 'Elise',
+    last_name: 'Renault',
+    email: 'elise.renault@founder.io',
+    phone: '+33 6 23 45 67 89',
+    company: 'FoodTech Startup',
+    job_title: 'Founder',
+    country: 'France',
+    default_type_id: null,
+    labels: ['startup', 'founder'],
+    notes: 'Fondatrice FoodTech - Lève actuellement seed round',
+    statistics: {
+      total_events: 4,
+      total_registrations: 4,
+      approved: 4,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 3,
+      attendance_rate: 75.0
+    },
+    created_at: '2025-03-20T09:30:00Z',
+    updated_at: '2025-09-28T15:45:00Z'
+  },
+  {
+    id: 'att-013',
+    org_id: 'org-startup-hub',
+    first_name: 'David',
+    last_name: 'Lopez',
+    email: 'david.lopez@accelerator.com',
+    phone: '+33 6 34 56 78 90',
+    company: 'Tech Accelerator',
+    job_title: 'Program Manager',
+    country: 'France',
+    default_type_id: null,
+    labels: ['partner'],
+    notes: 'Partenaire accelerator - Bon relais pour nos événements',
+    statistics: {
+      total_events: 6,
+      total_registrations: 6,
+      approved: 6,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 6,
+      attendance_rate: 100.0
+    },
+    created_at: '2024-09-10T11:00:00Z',
+    updated_at: '2025-10-20T10:15:00Z'
+  },
+  {
+    id: 'att-014',
+    org_id: 'org-startup-hub',
+    first_name: 'Emma',
+    last_name: 'Muller',
+    email: 'emma.muller@saas.startup',
+    phone: '+33 6 45 67 89 01',
+    company: 'SaaS Startup XYZ',
+    job_title: 'Growth Lead',
+    country: 'France',
+    default_type_id: null,
+    labels: ['startup'],
+    notes: null,
+    statistics: {
+      total_events: 3,
+      total_registrations: 3,
+      approved: 3,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 2,
+      attendance_rate: 66.7
+    },
+    created_at: '2025-04-12T14:20:00Z',
+    updated_at: '2025-09-28T11:30:00Z'
+  },
+  {
+    id: 'att-015',
+    org_id: 'org-startup-hub',
+    first_name: 'Lucas',
+    last_name: 'Garnier',
+    email: 'lucas.garnier@mentor.com',
+    phone: '+33 6 56 78 90 12',
+    company: 'Independent',
+    job_title: 'Startup Mentor',
+    country: 'France',
+    default_type_id: 'type-speaker',
+    labels: ['speaker', 'mentor'],
+    notes: 'Mentor expérimenté, serial entrepreneur',
+    statistics: {
+      total_events: 8,
+      total_registrations: 8,
+      approved: 8,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 7,
+      attendance_rate: 87.5
+    },
+    created_at: '2024-05-05T09:00:00Z',
+    updated_at: '2025-10-19T13:20:00Z'
+  },
+
+  // ========== ATTENDEES ORG: DESIGN-STUDIO ==========
+  {
+    id: 'att-016',
+    org_id: 'org-design-studio',
+    first_name: 'Chloe',
+    last_name: 'Dupont',
+    email: 'chloe.dupont@uxdesign.fr',
+    phone: '+33 6 67 89 01 23',
+    company: 'UX Agency Paris',
+    job_title: 'Lead UX Designer',
+    country: 'France',
+    default_type_id: 'type-speaker',
+    labels: ['speaker'],
+    notes: 'Speaker UX/UI de qualité',
+    statistics: {
+      total_events: 2,
+      total_registrations: 2,
+      approved: 2,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 1,
+      attendance_rate: 50.0
+    },
+    created_at: '2025-09-15T10:30:00Z',
+    updated_at: '2025-10-18T14:00:00Z'
+  },
+  {
+    id: 'att-017',
+    org_id: 'org-design-studio',
+    first_name: 'Antoine',
+    last_name: 'Mercier',
+    email: 'antoine.mercier@designstudio.com',
+    phone: '+33 6 78 90 12 34',
+    company: 'Creative Studio',
+    job_title: 'Art Director',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 1,
+      total_registrations: 1,
+      approved: 1,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 0,
+      attendance_rate: 0.0
+    },
+    created_at: '2025-10-05T11:45:00Z',
+    updated_at: '2025-10-05T11:45:00Z'
+  },
+
+  // ========== ATTENDEES ORG: MARKETING-AGENCY ==========
+  {
+    id: 'att-018',
+    org_id: 'org-marketing-agency',
+    first_name: 'Sarah',
+    last_name: 'Cohen',
+    email: 'sarah.cohen@marketing.pro',
+    phone: '+33 6 89 01 23 45',
+    company: 'Digital Marketing Agency',
+    job_title: 'Marketing Director',
+    country: 'France',
+    default_type_id: 'type-vip',
+    labels: ['vip'],
+    notes: 'VIP - Cliente importante de l\'agence',
+    statistics: {
+      total_events: 1,
+      total_registrations: 1,
+      approved: 1,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 0,
+      attendance_rate: 0.0
+    },
+    created_at: '2025-09-28T15:00:00Z',
+    updated_at: '2025-09-28T15:00:00Z'
+  },
+
+  // ========== PLUS D'ATTENDEES TECH-CORP (continuer jusqu'à 150+) ==========
+  {
+    id: 'att-019',
+    org_id: 'org-tech-corp',
+    first_name: 'François',
+    last_name: 'Leroy',
+    email: 'francois.leroy@webdev.fr',
+    phone: '+33 6 90 12 34 56',
+    company: 'Web Agency',
+    job_title: 'Frontend Developer',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 2,
+      total_registrations: 2,
+      approved: 2,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 2,
+      attendance_rate: 100.0
+    },
+    created_at: '2025-08-20T10:00:00Z',
+    updated_at: '2025-10-15T12:30:00Z'
+  },
+  {
+    id: 'att-020',
+    org_id: 'org-tech-corp',
+    first_name: 'Isabelle',
+    last_name: 'Gauthier',
+    email: 'isabelle.gauthier@backend.io',
+    phone: '+33 6 01 23 45 67',
+    company: 'Backend Solutions',
+    job_title: 'Backend Developer',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 3,
+      total_registrations: 3,
+      approved: 3,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 2,
+      attendance_rate: 66.7
+    },
+    created_at: '2025-07-12T14:15:00Z',
+    updated_at: '2025-10-20T09:45:00Z'
+  },
+  {
+    id: 'att-021',
+    org_id: 'org-tech-corp',
+    first_name: 'Mathieu',
+    last_name: 'Chevalier',
+    email: 'mathieu.chevalier@cloud.com',
+    phone: '+33 6 12 34 56 78',
+    company: 'CloudTech',
+    job_title: 'Cloud Architect',
+    country: 'France',
+    default_type_id: null,
+    labels: ['speaker'],
+    notes: 'Expert cloud computing',
+    statistics: {
+      total_events: 4,
+      total_registrations: 4,
+      approved: 4,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 3,
+      attendance_rate: 75.0
+    },
+    created_at: '2025-06-05T11:30:00Z',
+    updated_at: '2025-10-18T15:20:00Z'
+  },
+  {
+    id: 'att-022',
+    org_id: 'org-tech-corp',
+    first_name: 'Vanessa',
+    last_name: 'Roux',
+    email: 'vanessa.roux@security.net',
+    phone: '+33 6 23 45 67 89',
+    company: 'CyberSecurity Corp',
+    job_title: 'Security Engineer',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 1,
+      total_registrations: 1,
+      approved: 0,
+      awaiting: 1,
+      refused: 0,
+      checked_in: 0,
+      attendance_rate: 0.0
+    },
+    created_at: '2025-10-15T16:00:00Z',
+    updated_at: '2025-10-15T16:00:00Z'
+  },
+  {
+    id: 'att-023',
+    org_id: 'org-tech-corp',
+    first_name: 'Julien',
+    last_name: 'Andre',
+    email: 'julien.andre@mobile.app',
+    phone: '+33 6 34 56 78 90',
+    company: 'Mobile First',
+    job_title: 'Mobile Developer',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 5,
+      total_registrations: 5,
+      approved: 5,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 4,
+      attendance_rate: 80.0
+    },
+    created_at: '2024-12-10T09:00:00Z',
+    updated_at: '2025-10-19T10:30:00Z'
+  },
+  {
+    id: 'att-024',
+    org_id: 'org-tech-corp',
+    first_name: 'Nathalie',
+    last_name: 'Simon',
+    email: 'nathalie.simon@testing.qa',
+    phone: '+33 6 45 67 89 01',
+    company: 'QA Experts',
+    job_title: 'QA Lead',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 2,
+      total_registrations: 2,
+      approved: 2,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 1,
+      attendance_rate: 50.0
+    },
+    created_at: '2025-08-30T13:45:00Z',
+    updated_at: '2025-09-28T14:20:00Z'
+  },
+  {
+    id: 'att-025',
+    org_id: 'org-tech-corp',
+    first_name: 'Olivier',
+    last_name: 'Michel',
+    email: 'olivier.michel@pm.io',
+    phone: '+33 6 56 78 90 12',
+    company: 'Product Company',
+    job_title: 'Product Owner',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 6,
+      total_registrations: 6,
+      approved: 6,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 5,
+      attendance_rate: 83.3
+    },
+    created_at: '2024-10-22T10:15:00Z',
+    updated_at: '2025-10-20T11:45:00Z'
+  },
+  {
+    id: 'att-026',
+    org_id: 'org-tech-corp',
+    first_name: 'Aurore',
+    last_name: 'Clement',
+    email: 'aurore.clement@ux.design',
+    phone: '+33 6 67 89 01 23',
+    company: 'UX Lab',
+    job_title: 'UX Researcher',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 1,
+      total_registrations: 1,
+      approved: 1,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 1,
+      attendance_rate: 100.0
+    },
+    created_at: '2025-09-12T15:30:00Z',
+    updated_at: '2025-09-15T09:00:00Z'
+  },
+  {
+    id: 'att-027',
+    org_id: 'org-tech-corp',
+    first_name: 'Romain',
+    last_name: 'Lambert',
+    email: 'romain.lambert@blockchain.tech',
+    phone: '+33 6 78 90 12 34',
+    company: 'Blockchain Innovations',
+    job_title: 'Blockchain Developer',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 1,
+      total_registrations: 2,
+      approved: 1,
+      awaiting: 0,
+      refused: 1,
+      checked_in: 0,
+      attendance_rate: 0.0
+    },
+    created_at: '2025-08-15T11:00:00Z',
+    updated_at: '2025-10-10T16:20:00Z'
+  },
+  {
+    id: 'att-028',
+    org_id: 'org-tech-corp',
+    first_name: 'Céline',
+    last_name: 'Barbier',
+    email: 'celine.barbier@datascience.ai',
+    phone: '+33 6 89 01 23 45',
+    company: 'AI Research Lab',
+    job_title: 'Research Scientist',
+    country: 'France',
+    default_type_id: 'type-speaker',
+    labels: ['speaker', 'researcher'],
+    notes: 'Chercheuse de haut niveau en IA',
+    statistics: {
+      total_events: 3,
+      total_registrations: 3,
+      approved: 3,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 3,
+      attendance_rate: 100.0
+    },
+    created_at: '2025-07-20T09:45:00Z',
+    updated_at: '2025-10-19T12:15:00Z'
+  },
+  {
+    id: 'att-029',
+    org_id: 'org-tech-corp',
+    first_name: 'Kevin',
+    last_name: 'Perrin',
+    email: 'kevin.perrin@scrum.master',
+    phone: '+33 6 90 12 34 56',
+    company: 'Agile Consulting',
+    job_title: 'Scrum Master',
+    country: 'France',
+    default_type_id: null,
+    labels: [],
+    notes: null,
+    statistics: {
+      total_events: 4,
+      total_registrations: 4,
+      approved: 4,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 3,
+      attendance_rate: 75.0
+    },
+    created_at: '2025-05-10T14:00:00Z',
+    updated_at: '2025-10-18T10:30:00Z'
+  },
+  {
+    id: 'att-030',
+    org_id: 'org-tech-corp',
+    first_name: 'Sandrine',
+    last_name: 'Morel',
+    email: 'sandrine.morel@hr.tech',
+    phone: '+33 6 01 23 45 67',
+    company: 'Tech Recruiter',
+    job_title: 'Tech Recruiter',
+    country: 'France',
+    default_type_id: null,
+    labels: ['partner'],
+    notes: 'Recruteuse tech - Bon contact pour le réseau',
+    statistics: {
+      total_events: 7,
+      total_registrations: 7,
+      approved: 7,
+      awaiting: 0,
+      refused: 0,
+      checked_in: 6,
+      attendance_rate: 85.7
+    },
+    created_at: '2024-08-05T10:20:00Z',
+    updated_at: '2025-10-20T13:40:00Z'
+  }
+]
+
+// Helper pour récupérer attendees par org_id
+export const getAttendeesByOrgId = (orgId: string): Attendee[] => {
+  return mockAttendees.filter(attendee => attendee.org_id === orgId)
+}
+
+// Helper pour récupérer attendee par email + org
+export const getAttendeeByEmail = (orgId: string, email: string): Attendee | undefined => {
+  return mockAttendees.find(
+    attendee => attendee.org_id === orgId && attendee.email === email
+  )
+}
+
+// Helper pour filtrer par labels
+export const getAttendeesByLabels = (orgId: string, labels: string[]): Attendee[] => {
+  return mockAttendees.filter(
+    attendee =>
+      attendee.org_id === orgId &&
+      labels.some(label => attendee.labels?.includes(label))
+  )
+}
+
+// Helper pour filtrer par nombre minimum d'événements
+export const getAttendeesByMinEvents = (orgId: string, minEvents: number): Attendee[] => {
+  return mockAttendees.filter(
+    attendee =>
+      attendee.org_id === orgId &&
+      attendee.statistics.total_events >= minEvents
+  )
+}
+
+// Export du nombre total
+export const TOTAL_MOCK_ATTENDEES = mockAttendees.length

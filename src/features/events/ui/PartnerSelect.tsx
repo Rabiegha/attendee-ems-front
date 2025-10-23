@@ -21,12 +21,21 @@ export const PartnerSelect: React.FC<PartnerSelectProps> = ({
     error
   } = useGetPartnersForEventsQuery();
 
+  // Debug logs
+  console.log('[PartnerSelect] Partners data:', partners);
+  console.log('[PartnerSelect] isLoading:', isLoading);
+  console.log('[PartnerSelect] error:', error);
+
   // Convertir les partenaires en options pour MultiSelect
-  const partnerOptions: MultiSelectOption[] = partners.map(partner => ({
-    id: partner.id,
-    label: `${partner.first_name} ${partner.last_name}`,
-    subLabel: partner.email
-  }));
+  const partnerOptions: MultiSelectOption[] = Array.isArray(partners) 
+    ? partners.map(partner => ({
+        id: partner.id,
+        label: `${partner.first_name} ${partner.last_name}`,
+        subLabel: partner.email
+      }))
+    : [];
+
+  console.log('[PartnerSelect] partnerOptions:', partnerOptions);
 
   if (isLoading) {
     return (

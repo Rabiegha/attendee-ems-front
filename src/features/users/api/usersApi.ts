@@ -179,6 +179,18 @@ export const usersApi = rootApi.injectEndpoints({
     // 🆕 Récupérer les utilisateurs PARTNER et HOTESSE de l'organisation pour sélection dans les événements
     getPartnersForEvents: builder.query<Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>[], void>({
       query: () => `${API_ENDPOINTS.USERS.LIST}?roles=PARTNER,HOTESSE`,
+      transformResponse: (response: { users: User[] }) => {
+        // Filtrer côté client car le backend ne filtre pas correctement
+        const filtered = response.users.filter(user => 
+          user.role?.code === 'PARTNER' || user.role?.code === 'HOSTESS'
+        );
+        return filtered.map(user => ({
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email
+        }));
+      },
       providesTags: ['Users'],
     }),
   }),

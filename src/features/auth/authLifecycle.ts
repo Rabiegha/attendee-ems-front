@@ -1,6 +1,6 @@
 import { store } from '@/app/store'
 import { authApi } from '@/features/auth/api/authApi'
-import { setSession, clearSession, setBootstrapCompleted } from '@/features/auth/model/sessionSlice'
+import { setSession, clearSession } from '@/features/auth/model/sessionSlice'
 
 let proactiveTimer: ReturnType<typeof setTimeout> | null = null
 let bootstrapPromise: Promise<void> | null = null
@@ -39,7 +39,7 @@ function scheduleProactiveRefresh() {
   // Si le token est déjà expiré ou expire dans moins de 10 secondes, ne pas programmer de refresh
   // Le 401 interceptor s'en chargera
   if (msLeft <= 10000) {
-    console.log('[AUTH] Token expires too soon, skipping proactive refresh')
+    // console.log('[AUTH] Token expires too soon, skipping proactive refresh')
     return
   }
   
@@ -72,7 +72,7 @@ function scheduleProactiveRefresh() {
 export async function bootstrapAuth() {
   // Si un bootstrap est déjà en cours, retourner la même promesse
   if (bootstrapPromise) {
-    console.log('[AUTH] Bootstrap already in progress, waiting...')
+    // console.log('[AUTH] Bootstrap already in progress, waiting...')
     return bootstrapPromise
   }
 
@@ -81,24 +81,24 @@ export async function bootstrapAuth() {
     // Toujours tenter le refresh - le cookie HttpOnly n'est pas accessible via document.cookie
     // Le backend répondra 401 si le cookie n'existe pas ou est invalide
     try {
-      console.log('[AUTH] Attempting to restore session from refresh token...')
+      // console.log('[AUTH] Attempting to restore session from refresh token...')
       // Force le refresh sans utiliser le cache
       const res: any = await store.dispatch(
         authApi.endpoints.refresh.initiate(undefined, { track: false })
       ).unwrap()
       
       if (res?.access_token) {
-        console.log('[AUTH] Session restored successfully')
+        // console.log('[AUTH] Session restored successfully')
         store.dispatch(setSession({ token: res.access_token, expiresInSec: res.expires_in }))
         broadcastToken(res.access_token, res.expires_in)
         scheduleProactiveRefresh()
       } else {
         // Pas de token reçu, s'assurer que la session est vide
-        console.log('[AUTH] No access token received, clearing session')
+        // console.log('[AUTH] No access token received, clearing session')
         store.dispatch(clearSession())
       }
     } catch (error: any) {
-      console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):', error?.status || error?.message)
+      // console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):', error?.status || error?.message)
       
       // CRITIQUE : Nettoyer la session en cas d'échec du refresh
       // Cela garantit que l'utilisateur ne reste pas dans un état "fantôme"

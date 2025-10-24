@@ -20,13 +20,14 @@ export const RootLayout: React.FC = () => {
   const lastRedirectTimeRef = useRef(0)
 
   useEffect(() => {
-    console.log('[ROOTLAYOUT] Auth state:', { 
-      isAuthenticated, 
-      isBootstrapping, 
-      hasUser: !!user, 
-      hasToken: !!token,
-      path: location.pathname
-    })
+    // 🔇 Logs de debug désactivés
+    // console.log('[ROOTLAYOUT] Auth state:', { 
+    //   isAuthenticated, 
+    //   isBootstrapping, 
+    //   hasUser: !!user, 
+    //   hasToken: !!token,
+    //   path: location.pathname
+    // })
     
     // Réinitialiser le compteur si plus de 2 secondes depuis la dernière redirection
     const now = Date.now()
@@ -56,7 +57,7 @@ export const RootLayout: React.FC = () => {
     
     // Ne rediriger que si le bootstrap est terminé ET que l'utilisateur n'est pas authentifié
     if (!isBootstrapping && !isAuthenticated) {
-      console.log('[ROOTLAYOUT] ❌ User not authenticated after bootstrap, redirecting to login')
+      // console.log('[ROOTLAYOUT] ❌ User not authenticated after bootstrap, redirecting to login')
       redirectCountRef.current++
       lastRedirectTimeRef.current = now
       navigate('/auth/login', { replace: true })
@@ -75,7 +76,7 @@ export const RootLayout: React.FC = () => {
     }
     
     if (!isBootstrapping && isAuthenticated && user && token) {
-      console.log('[ROOTLAYOUT] ✅ User authenticated and valid:', user.email)
+      // console.log('[ROOTLAYOUT] ✅ User authenticated and valid:', user.email)
     }
   }, [isAuthenticated, isBootstrapping, user, token, navigate, dispatch, location.pathname])
 

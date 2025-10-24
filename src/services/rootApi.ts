@@ -9,13 +9,9 @@ const rawBaseQuery = fetchBaseQuery({
   credentials: 'include', // Obligatoire pour envoyer les cookies httpOnly
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).session.token
-    const { expiresAt } = (getState() as RootState).session
     if (token) {
-      const timeLeft = expiresAt ? Math.max(0, expiresAt - Date.now()) : 0
-      console.log('[AUTH] Adding token to headers. Time left:', Math.floor(timeLeft / 1000), 'seconds')
+      // 🔇 Log désactivé pour éviter la pollution des logs
       headers.set('authorization', `Bearer ${token}`)
-    } else {
-      console.log('[AUTH] No token available for request')
     }
     return headers
   },
@@ -26,11 +22,11 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
 
   if (result.error && (result.error as any).status === 401) {
     const url = typeof args === 'string' ? args : args.url
-    console.log('[AUTH] 401 error on:', url)
+    // console.log('[AUTH] 401 error on:', url)
     
     // Si le refresh lui-même échoue, c'est terminé
     if (url === '/auth/refresh') {
-      console.log('[AUTH] Refresh failed, clearing session')
+      // console.log('[AUTH] Refresh failed, clearing session')
       api.dispatch(clearSession())
       return result
     }
@@ -38,7 +34,7 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
     // ✅ TOUJOURS tenter le refresh sur un 401
     // Le refresh token est dans le cookie HttpOnly, pas dans Redux
     // Donc même sans access token, on peut tenter le refresh
-    console.log('[AUTH] Attempting token refresh...')
+    // console.log('[AUTH] Attempting token refresh...')
 
     if (!refreshPromise) {
       refreshPromise = (async () => {
@@ -46,7 +42,7 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
         if (!res.error && res.data) {
           const { access_token, expires_in } = res.data as any
           const state = api.getState() as RootState
-          console.log('[AUTH] Token refreshed successfully')
+          // console.log('[AUTH] Token refreshed successfully')
           api.dispatch(setSession({
             token: access_token,
             ...(state.session.user && { user: state.session.user }),
@@ -54,7 +50,7 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
             ...(typeof expires_in === 'number' && { expiresInSec: expires_in }),
           }))
         } else {
-          console.log('[AUTH] Refresh failed, clearing session')
+          // console.log('[AUTH] Refresh failed, clearing session')
           api.dispatch(clearSession())
         }
         return res

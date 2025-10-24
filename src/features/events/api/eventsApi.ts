@@ -100,6 +100,19 @@ export const eventsApi = rootApi.injectEndpoints({
         { type: 'Events', id: 'LIST' },
       ],
     }),
+
+    changeEventStatus: builder.mutation<EventDPO, { id: string; status: string }>({
+      query: ({ id, status }) => ({
+        url: API_ENDPOINTS.EVENTS.CHANGE_STATUS(id),
+        method: 'PUT',
+        body: { status },
+      }),
+      transformResponse: (response: EventDTO) => mapEventDTOtoDPO(response),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Event', id },
+        { type: 'Events', id: 'LIST' },
+      ],
+    }),
   }),
   overrideExisting: false,
 })
@@ -110,4 +123,5 @@ export const {
   useCreateEventMutation,
   useUpdateEventMutation,
   useDeleteEventMutation,
+  useChangeEventStatusMutation,
 } = eventsApi

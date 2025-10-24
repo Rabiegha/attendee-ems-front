@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
     CREATE: '/events',
     UPDATE: (id: string) => `/events/${id}`,
     DELETE: (id: string) => `/events/${id}`,
+    CHANGE_STATUS: (id: string) => `/events/${id}/status`,
   },
   ATTENDEES: {
     LIST: '/attendees',

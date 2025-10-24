@@ -5,7 +5,7 @@ import { setSession, clearSession } from '@/features/auth/model/sessionSlice'
 let refreshPromise: Promise<any> | null = null
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_BASE_URL,
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   credentials: 'include', // Obligatoire pour envoyer les cookies httpOnly
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).session.token

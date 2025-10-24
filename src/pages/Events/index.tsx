@@ -188,9 +188,9 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
           {filteredEvents.map((event) => (
             <div
               key={event.id}
-              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
             >
-              <div className="p-6">
+              <div className="p-6 flex-grow">
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
                     {event.name}
@@ -246,11 +246,11 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 )}
               </div>
               
-              <div className="px-6 py-3 bg-gray-50 border-t flex items-center justify-between">
+              <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between transition-colors duration-200">
                 {/* Lien "Voir détails" toujours visible pour les événements affichés */}
                 <Link
                   to={`/events/${event.id}`}
-                  className="flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium"
+                  className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors"
                 >
                   <Eye className="h-4 w-4 mr-1" />
                   Voir détails

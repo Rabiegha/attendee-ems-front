@@ -46,10 +46,17 @@ export const Header: React.FC = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Link to="/dashboard" className="flex items-center">
+            {/* Logo bleu pour light mode */}
             <img 
               src="/logo.png" 
               alt="EMS Logo" 
-              className="h-8 w-auto hover:opacity-80 transition-opacity cursor-pointer"
+              className="h-8 w-auto hover:opacity-80 transition-opacity cursor-pointer block dark:hidden"
+            />
+            {/* Logo blanc pour dark mode */}
+            <img 
+              src="/logo-blanc.png" 
+              alt="EMS Logo" 
+              className="h-8 w-auto hover:opacity-80 transition-opacity cursor-pointer hidden dark:block"
             />
           </Link>
           {displayOrganization && (

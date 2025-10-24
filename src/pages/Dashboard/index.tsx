@@ -111,7 +111,7 @@ export const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t('events:events.recent')}
+              Événements récents
             </h2>
             <EventList events={events} isLoading={eventsLoading} />
           </div>
@@ -120,7 +120,7 @@ export const Dashboard: React.FC = () => {
             {/* Participants récents */}
             <div className="space-y-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {t('attendees:attendees.recent')}
+                Participants récents
               </h2>
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
                 {attendeesLoading ? (

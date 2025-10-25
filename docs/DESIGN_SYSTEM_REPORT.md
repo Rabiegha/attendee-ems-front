@@ -14,7 +14,7 @@ Ce projet a établi les fondations d'un design system cohérent pour l'applicati
 - ✅ **5 nouveaux composants** de layout réutilisables
 - ✅ **-40% de code** grâce à la réutilisation
 - ✅ **Modal.tsx corrigé** pour supporter light/dark mode
-- ✅ **3 documents** de documentation complète
+- ✅ **4 documents** de documentation complète
 - ✅ **4 fichiers Storybook** avec exemples interactifs
 - ✅ **150+ points** de validation QA
 
@@ -256,7 +256,7 @@ Page 3: Boutons en bas à droite
 2. `src/shared/ui/index.ts` - Export nouveaux composants
 3. `src/styles/tokens.css` - Z-index + typography
 
-### Fichiers Créés (15)
+### Fichiers Créés (14)
 #### Composants (5)
 - `src/shared/ui/PageContainer.tsx`
 - `src/shared/ui/PageHeader.tsx`
@@ -270,10 +270,11 @@ Page 3: Boutons en bas à droite
 - `src/shared/ui/FormSection.stories.tsx`
 - `src/shared/ui/ActionGroup.stories.tsx`
 
-#### Documentation (3)
+#### Documentation (4)
 - `docs/COMPONENT_LIBRARY.md`
 - `docs/BEFORE_AFTER_EXAMPLES.md`
 - `docs/QA_CHECKLIST.md`
+- `docs/DESIGN_SYSTEM_REPORT.md`
 
 #### Exemples (1)
 - `src/pages/Users/index.refactored-example.tsx`

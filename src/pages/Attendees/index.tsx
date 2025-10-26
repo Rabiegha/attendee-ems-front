@@ -6,8 +6,16 @@ import { selectAttendeesFilters } from '@/features/attendees/model/attendeesSlic
 import { AttendeeTable } from '@/features/attendees/ui/AttendeeTable'
 import { AttendeeFilters } from '@/features/attendees/ui/AttendeeFilters'
 import { Can } from '@/shared/acl/guards/Can'
-import { Button } from '@/shared/ui/Button'
-import { Plus, Download } from 'lucide-react'
+import { 
+  Button,
+  PageContainer,
+  PageHeader,
+  PageSection,
+  Card,
+  CardContent,
+  ActionGroup
+} from '@/shared/ui'
+import { Plus, Download, Users } from 'lucide-react'
 
 export const Attendees: React.FC = () => {
   const { t } = useTranslation(['attendees', 'common'])
@@ -16,38 +24,44 @@ export const Attendees: React.FC = () => {
   const { data: attendees = [], isLoading, error } = useGetAttendeesQuery(filters)
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
-          {t('attendees.title')}
-        </h1>
-        <div className="flex items-center space-x-3">
-          <Can do="export" on="Attendee">
-            <Button variant="outline" className="flex items-center space-x-2">
-              <Download className="h-4 w-4" />
-              <span>{t('attendees.export')}</span>
-            </Button>
-          </Can>
-          <Can do="create" on="Attendee">
-            <Button className="flex items-center space-x-2">
-              <Plus className="h-4 w-4" />
-              <span>{t('attendees.create')}</span>
-            </Button>
-          </Can>
-        </div>
-      </div>
+    <PageContainer maxWidth="7xl" padding="lg">
+      <PageHeader 
+        title={t('attendees.title')}
+        description="Gérez les participants inscrits à vos événements"
+        icon={Users}
+        actions={
+          <ActionGroup align="right" spacing="md">
+            <Can do="export" on="Attendee">
+              <Button variant="outline" leftIcon={<Download className="h-4 w-4" />}>
+                {t('attendees.export')}
+              </Button>
+            </Can>
+            <Can do="create" on="Attendee">
+              <Button leftIcon={<Plus className="h-4 w-4" />}>
+                {t('attendees.create')}
+              </Button>
+            </Can>
+          </ActionGroup>
+        }
+      />
 
-      <AttendeeFilters />
+      <PageSection spacing="lg">
+        <AttendeeFilters />
+      </PageSection>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-        {error ? (
-          <div className="p-6 text-center">
-            <p className="text-red-600 dark:text-red-400">Erreur lors du chargement des participants</p>
-          </div>
-        ) : (
-          <AttendeeTable attendees={attendees} isLoading={isLoading} />
-        )}
-      </div>
-    </div>
+      <PageSection spacing="lg">
+        <Card variant="default" padding="none">
+          <CardContent>
+            {error ? (
+              <div className="p-6 text-center">
+                <p className="text-red-600 dark:text-red-400">Erreur lors du chargement des participants</p>
+              </div>
+            ) : (
+              <AttendeeTable attendees={attendees} isLoading={isLoading} />
+            )}
+          </CardContent>
+        </Card>
+      </PageSection>
+    </PageContainer>
   )
 }

@@ -10,10 +10,10 @@ interface PageSectionProps {
 }
 
 const spacingClasses = {
-  sm: 'space-y-3',
-  md: 'space-y-4',
-  lg: 'space-y-6',
-  xl: 'space-y-8'
+  sm: 'space-y-3 mb-6',
+  md: 'space-y-4 mb-8',
+  lg: 'space-y-6 mb-10',
+  xl: 'space-y-8 mb-12'
 }
 
 /**

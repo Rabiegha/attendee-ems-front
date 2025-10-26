@@ -1,14 +1,12 @@
 /**
- * EXEMPLE REFACTORISÉ - UsersPage
+ * UsersPage - Page de gestion des utilisateurs
  * 
- * Ce fichier démontre l'utilisation des nouveaux composants du design system:
+ * Utilise les composants du design system:
  * - PageContainer pour le layout de base
  * - PageHeader pour l'en-tête avec actions
  * - PageSection pour les sections de contenu
  * - Card pour les cartes de statistiques
  * - ActionGroup pour grouper les boutons
- * 
- * Comparez avec src/pages/Users/index.tsx pour voir les améliorations
  */
 
 import { Users, Mail, Calendar, UserCheck, UserX, User as UserIcon, RefreshCw } from 'lucide-react'
@@ -26,7 +24,7 @@ import { useNavigate } from 'react-router-dom'
 import { useGetUsersQuery } from '@/features/users/api/usersApi'
 import { Can } from '@/shared/acl/guards/Can'
 
-export function UsersPageRefactored() {
+export function UsersPage() {
   const navigate = useNavigate()
   const { data: usersData, isLoading, refetch } = useGetUsersQuery({})
 

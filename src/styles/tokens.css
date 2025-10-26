@@ -131,6 +131,15 @@
     
     --animation-easing-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --animation-easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* === Z-INDEX SCALE === */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
   }
 
   /* Dark mode overrides */
@@ -147,14 +156,16 @@
 @layer components {
   /* Base modal styling */
   .modal-base {
-    @apply fixed inset-0 z-50 flex items-center justify-center;
+    @apply fixed inset-0 flex items-center justify-center;
     backdrop-filter: blur(4px);
+    z-index: var(--z-modal);
   }
   
   .modal-backdrop {
     @apply fixed inset-0;
     background-color: var(--modal-backdrop);
     transition: opacity var(--animation-duration-normal) var(--animation-easing-ease-out);
+    z-index: var(--z-modal-backdrop);
   }
   
   .modal-content {
@@ -163,6 +174,7 @@
     border-radius: var(--modal-radius);
     box-shadow: var(--shadow-xl);
     transition: all var(--animation-duration-normal) var(--animation-easing-ease-out);
+    z-index: var(--z-modal);
   }
   
   /* Base card styling */
@@ -180,29 +192,58 @@
     font-size: var(--font-size-2xl);
     font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-tight);
+    @apply text-gray-900 dark:text-white;
   }
   
   .text-heading-md {
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-snug);
+    @apply text-gray-900 dark:text-white;
   }
   
   .text-heading-sm {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-snug);
+    @apply text-gray-900 dark:text-white;
   }
   
   .text-body {
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-normal);
     line-height: var(--line-height-normal);
+    @apply text-gray-700 dark:text-gray-300;
   }
   
   .text-body-sm {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-normal);
     line-height: var(--line-height-normal);
+    @apply text-gray-600 dark:text-gray-400;
+  }
+  
+  .text-caption {
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    @apply text-gray-500 dark:text-gray-500;
+  }
+  
+  /* Page layout utilities */
+  .page-title {
+    @apply text-3xl font-bold text-gray-900 dark:text-white tracking-tight;
+  }
+  
+  .page-subtitle {
+    @apply text-lg text-gray-600 dark:text-gray-300;
+  }
+  
+  .section-title {
+    @apply text-xl font-semibold text-gray-900 dark:text-white;
+  }
+  
+  .section-subtitle {
+    @apply text-sm text-gray-600 dark:text-gray-400;
   }
 }

@@ -1,9 +1,15 @@
 import React, { useState } from 'react'
-import { ChevronDown, ChevronUp, Users, Plus } from 'lucide-react'
-import { Button } from '@/shared/ui/Button'
-import { Card } from '@/shared/ui/Card'
-import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
-import { UniversalModal } from '@/shared/ui/UniversalModal'
+import { ChevronDown, ChevronUp, Users, Plus, Building2 } from 'lucide-react'
+import { 
+  Button,
+  Card,
+  CardContent,
+  LoadingSpinner,
+  UniversalModal,
+  PageContainer,
+  PageHeader,
+  PageSection
+} from '@/shared/ui'
 import { useUniversalModal } from '@/shared/ui/useUniversalModal'
 import { AccessDenied } from '@/pages/AccessDenied'
 
@@ -29,29 +35,28 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
 }) => {
   const { data: usersData, isLoading: isLoadingUsers } = useGetOrganizationUsersQuery(
     organization.id,
-    { skip: !isExpanded && isSuperAdmin } // Pour admin simple, toujours charger les users
+    { skip: !isExpanded && isSuperAdmin }
   )
 
-  // Pour admin simple, toujours afficher les utilisateurs
   const shouldShowUsers = isSuperAdmin ? isExpanded : true
   const shouldShowToggle = isSuperAdmin
 
   return (
-    <Card className="mb-4">
+    <Card variant="default" padding="none" className="mb-4">
       <div 
-        className={`p-4 ${shouldShowToggle ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''} transition-colors`}
+        className={`p-6 ${shouldShowToggle ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''} transition-colors`}
         onClick={shouldShowToggle ? onToggle : undefined}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-heading-sm">
                 {organization.name}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-body-sm text-gray-600 dark:text-gray-400">
                 {organization.slug} • {organization.timezone}
               </p>
             </div>
@@ -74,14 +79,14 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
       </div>
 
       {shouldShowUsers && (
-        <div className={`${shouldShowToggle ? 'border-t border-gray-200 dark:border-gray-700' : ''} p-4`}>
+        <div className={`${shouldShowToggle ? 'border-t border-gray-200 dark:border-gray-700' : ''} p-6 pt-4`}>
           {isLoadingUsers ? (
             <div className="flex items-center justify-center py-8">
               <LoadingSpinner size="sm" />
             </div>
           ) : (
             <div>
-              <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              <h4 className="text-body font-semibold text-gray-900 dark:text-white mb-4">
                 {isSuperAdmin ? `Utilisateurs (${usersData?.users.length || 0})` : 'Équipe'}
               </h4>
               <div className="space-y-2">
@@ -97,10 +102,10 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
                         </span>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="text-body-sm font-medium text-gray-900 dark:text-white">
                           {user.first_name || 'N/A'} {user.last_name || ''}
                         </p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                        <p className="text-caption">
                           {user.email}
                         </p>
                       </div>
@@ -201,14 +206,15 @@ export const OrganizationsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <LoadingSpinner />
-      </div>
+      <PageContainer maxWidth="7xl" padding="lg">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <LoadingSpinner />
+        </div>
+      </PageContainer>
     )
   }
 
   if (error) {
-    // Vérifier si c'est une erreur de permissions (403)
     const isPermissionError = (error as any)?.status === 403 || 
                               (error as any)?.data?.statusCode === 403 ||
                               (error as any)?.originalStatus === 403
@@ -222,76 +228,77 @@ export const OrganizationsPage: React.FC = () => {
       )
     }
 
-    // Autre type d'erreur
     return (
-      <div className="p-6">
-        <div className="text-center">
-          <p className="text-red-600 dark:text-red-400">
-            Erreur lors du chargement des organisations
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            {(error as any)?.data?.message || (error as any)?.message || 'Une erreur inconnue est survenue'}
-          </p>
-        </div>
-      </div>
+      <PageContainer maxWidth="7xl" padding="lg">
+        <Card variant="default" padding="lg" className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
+          <CardContent>
+            <div className="text-center">
+              <p className="text-body font-semibold text-red-600 dark:text-red-400">
+                Erreur lors du chargement des organisations
+              </p>
+              <p className="text-body-sm text-gray-500 dark:text-gray-400 mt-2">
+                {(error as any)?.data?.message || (error as any)?.message || 'Une erreur inconnue est survenue'}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="flex items-center space-x-3 mb-2">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {isSuperAdmin ? 'Gestion des Organisations' : 'Mon Organisation'}
-            </h1>
-            {isSuperAdmin && (
-              <span className="px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded-full">
-                Super Admin
-              </span>
-            )}
-          </div>
-          <p className="text-gray-600 dark:text-gray-400">
-            {isSuperAdmin 
-              ? 'Gérez toutes les organisations et leurs utilisateurs. Cliquez sur une organisation pour voir/masquer ses utilisateurs.'
-              : 'Informations sur votre organisation et votre équipe'
-            }
-          </p>
-        </div>
-        
-{isSuperAdmin && (
-          <Can do="manage" on="Organization">
-            <Button 
-              onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center space-x-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Nouvelle Organisation</span>
-            </Button>
-          </Can>
-        )}
-      </div>
+    <PageContainer maxWidth="7xl" padding="lg">
+      <PageHeader 
+        title={isSuperAdmin ? 'Gestion des Organisations' : 'Mon Organisation'}
+        description={isSuperAdmin 
+          ? 'Gérez toutes les organisations et leurs utilisateurs. Cliquez sur une organisation pour voir/masquer ses utilisateurs.'
+          : 'Informations sur votre organisation et votre équipe'
+        }
+        icon={Building2}
+        badge={isSuperAdmin ? {
+          text: 'Super Admin',
+          variant: 'purple'
+        } : undefined}
+        actions={
+          isSuperAdmin ? (
+            <Can do="manage" on="Organization">
+              <Button 
+                onClick={() => setIsCreateModalOpen(true)}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Nouvelle Organisation
+              </Button>
+            </Can>
+          ) : undefined
+        }
+      />
 
-      {organizationsToDisplay.length === 0 ? (
-        <div className="text-center py-12">
-          <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            {isSuperAdmin ? 'Aucune organisation trouvée' : 'Aucune organisation associée'}
-          </p>
-        </div>
-      ) : (
-        <div>
-          {organizationsToDisplay.map((org) => (
-            <OrganizationCard
-              key={org.id}
-              organization={org}
-              isExpanded={isSuperAdmin ? expandedOrgs.has(org.id) : true}
-              onToggle={() => handleToggleOrg(org.id)}
-              isSuperAdmin={isSuperAdmin}
-            />
-          ))}
-        </div>
-      )}
+      <PageSection spacing="lg">
+        {organizationsToDisplay.length === 0 ? (
+          <Card variant="default" padding="lg">
+            <CardContent>
+              <div className="text-center py-12">
+                <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-body text-gray-600 dark:text-gray-400">
+                  {isSuperAdmin ? 'Aucune organisation trouvée' : 'Aucune organisation associée'}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {organizationsToDisplay.map((org) => (
+              <OrganizationCard
+                key={org.id}
+                organization={org}
+                isExpanded={isSuperAdmin ? expandedOrgs.has(org.id) : true}
+                onToggle={() => handleToggleOrg(org.id)}
+                isSuperAdmin={isSuperAdmin}
+              />
+            ))}
+          </div>
+        )}
+      </PageSection>
 
       <CreateOrganizationModal
         isOpen={isCreateModalOpen}
@@ -300,7 +307,6 @@ export const OrganizationsPage: React.FC = () => {
         onError={handleCreateError}
       />
 
-      {/* Modal universel pour les confirmations */}
       {modalState.config && (
         <UniversalModal
           isOpen={modalState.isOpen}
@@ -308,6 +314,6 @@ export const OrganizationsPage: React.FC = () => {
           config={modalState.config}
         />
       )}
-    </div>
+    </PageContainer>
   )
 }

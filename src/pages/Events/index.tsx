@@ -3,9 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
 import { Can } from '@/shared/acl/guards/Can'
-import { Button } from '@/shared/ui/Button'
-import { Input } from '@/shared/ui/Input'
-import { LoadingState } from '@/shared/ui/LoadingSpinner'
+import { 
+  Button, 
+  Input,
+  PageContainer,
+  PageHeader,
+  PageSection,
+  Card,
+  CardContent,
+  ActionGroup,
+  LoadingSpinner
+} from '@/shared/ui'
 import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
 import { DeleteEventModal } from '@/features/events/ui/DeleteEventModal'
@@ -87,201 +95,220 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   }
 
   if (isLoading) {
-    return <LoadingState message="Chargement des événements..." />
+    return (
+      <PageContainer maxWidth="7xl" padding="lg">
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner size="lg" />
+          <p className="text-body-sm text-gray-500 dark:text-gray-400 ml-4">
+            Chargement des événements...
+          </p>
+        </div>
+      </PageContainer>
+    )
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-600">Erreur lors du chargement des événements</p>
-      </div>
+      <PageContainer maxWidth="7xl" padding="lg">
+        <Card variant="default" padding="lg" className="text-center">
+          <CardContent>
+            <p className="text-red-600 dark:text-red-400">
+              Erreur lors du chargement des événements
+            </p>
+          </CardContent>
+        </Card>
+      </PageContainer>
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* En-tête */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {t('events:page.title')}
-          </h1>
-          <p className="text-gray-600 mt-1">
-            {filteredEvents.length} événement{filteredEvents.length > 1 ? 's' : ''} trouvé{filteredEvents.length > 1 ? 's' : ''}
-          </p>
-        </div>
-        
-        <Can do="create" on="Event">
-          <Button onClick={handleCreateEvent} className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>{t('events:actions.create')}</span>
-          </Button>
-        </Can>
-      </div>
-
-      {/* Filtres et recherche */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4 transition-colors duration-200">
-        <div className="flex items-center space-x-4">
-          <div className="flex-1">
-            <Input
-              type="text"
-              placeholder="Rechercher des événements..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              leftIcon={<Search className="h-4 w-4" />}
-            />
-          </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-          >
-            <option value="all">Tous les statuts</option>
-            <option value="draft">Brouillon</option>
-            <option value="published">Publié</option>
-            <option value="active">Actif</option>
-            <option value="completed">Terminé</option>
-            <option value="cancelled">Annulé</option>
-          </select>
-          
-          <select
-            value={`${sortBy}-${sortOrder}`}
-            onChange={(e) => {
-              const [field, order] = e.target.value.split('-')
-              setSortBy(field as any)
-              setSortOrder(order as any)
-            }}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-          >
-            <option value="startDate-asc">Date (plus ancien)</option>
-            <option value="startDate-desc">Date (plus récent)</option>
-            <option value="name-asc">Nom (A-Z)</option>
-            <option value="name-desc">Nom (Z-A)</option>
-            <option value="createdAt-desc">Créé récemment</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Liste des événements */}
-      {filteredEvents.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-          <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-          <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-            Aucun événement trouvé
-          </h3>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">
-            {searchQuery 
-              ? "Aucun événement ne correspond à votre recherche."
-              : "Commencez par créer votre premier événement."
-            }
-          </p>
+    <PageContainer maxWidth="7xl" padding="lg">
+      <PageHeader 
+        title={t('events:page.title')}
+        description={`${filteredEvents.length} événement${filteredEvents.length > 1 ? 's' : ''} trouvé${filteredEvents.length > 1 ? 's' : ''}`}
+        icon={Calendar}
+        actions={
           <Can do="create" on="Event">
-            <Button onClick={handleCreateEvent} className="mt-4">
-              <Plus className="h-4 w-4 mr-2" />
-              Créer un événement
+            <Button onClick={handleCreateEvent} leftIcon={<Plus className="h-4 w-4" />}>
+              {t('events:actions.create')}
             </Button>
           </Can>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredEvents.map((event) => (
-            <div
-              key={event.id}
-              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col"
-            >
-              <div className="p-6 flex-grow">
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
-                    {event.name}
-                  </h3>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
-                    {event.status}
-                  </span>
-                </div>
-                
-                {event.description && (
-                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-2">
-                    {event.description}
-                  </p>
-                )}
-                
-                <div className="space-y-2 text-sm text-gray-500 dark:text-gray-400">
-                  <div className="flex items-center">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>{formatDateForDisplay(event.startDate)}</span>
-                  </div>
-                  
-                  {event.location && (
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span className="truncate">{event.location}</span>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center">
-                    <Users className="h-4 w-4 mr-2" />
-                    <span>
-                      {formatAttendeesCount(event.currentAttendees, event.maxAttendees)}
-                    </span>
-                  </div>
-                </div>
-                
-                {event.tags && event.tags.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-1">
-                    {event.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {event.tags.length > 3 && (
-                      <span className="text-xs text-gray-500">
-                        +{event.tags.length - 3} autres
-                      </span>
-                    )}
-                  </div>
-                )}
+        }
+      />
+
+      {/* Filtres et recherche */}
+      <PageSection spacing="lg">
+        <Card variant="default" padding="lg">
+          <CardContent>
+            <div className="flex items-center space-x-4">
+              <div className="flex-1">
+                <Input
+                  type="text"
+                  placeholder="Rechercher des événements..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  leftIcon={<Search className="h-4 w-4" />}
+                />
               </div>
               
-              <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 flex items-center justify-between transition-colors duration-200">
-                {/* Lien "Voir détails" toujours visible pour les événements affichés */}
-                <Link
-                  to={`/events/${event.id}`}
-                  className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors"
-                >
-                  <Eye className="h-4 w-4 mr-1" />
-                  Voir détails
-                </Link>
-                
-                <div className="flex items-center space-x-2">
-                  <Can do="update" on="Event" data={event}>
-                    <button 
-                      onClick={() => setEditingEvent(event)}
-                      className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                      title="Modifier l'événement"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                  </Can>
-                  
-                  <Can do="delete" on="Event" data={event}>
-                    <button 
-                      onClick={() => setDeletingEvent(event)}
-                      className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                      title="Supprimer l'événement"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </Can>
-                </div>
-              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              >
+                <option value="all">Tous les statuts</option>
+                <option value="draft">Brouillon</option>
+                <option value="published">Publié</option>
+                <option value="active">Actif</option>
+                <option value="completed">Terminé</option>
+                <option value="cancelled">Annulé</option>
+              </select>
+              
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split('-')
+                  setSortBy(field as any)
+                  setSortOrder(order as any)
+                }}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+              >
+                <option value="startDate-asc">Date (plus ancien)</option>
+                <option value="startDate-desc">Date (plus récent)</option>
+                <option value="name-asc">Nom (A-Z)</option>
+                <option value="name-desc">Nom (Z-A)</option>
+                <option value="createdAt-desc">Créé récemment</option>
+              </select>
             </div>
-          ))}
-        </div>
-      )}
+          </CardContent>
+        </Card>
+      </PageSection>
+
+      {/* Liste des événements */}
+      <PageSection spacing="lg">
+        {filteredEvents.length === 0 ? (
+          <Card variant="default" padding="lg" className="text-center py-12">
+            <CardContent>
+              <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+              <h3 className="text-heading-sm mb-2">
+                Aucun événement trouvé
+              </h3>
+              <p className="text-body text-gray-500 dark:text-gray-400 mb-6">
+                {searchQuery 
+                  ? "Aucun événement ne correspond à votre recherche."
+                  : "Commencez par créer votre premier événement."
+                }
+              </p>
+              <Can do="create" on="Event">
+                <Button onClick={handleCreateEvent} leftIcon={<Plus className="h-4 w-4" />}>
+                  Créer un événement
+                </Button>
+              </Can>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.map((event) => (
+              <Card
+                key={event.id}
+                variant="elevated"
+                padding="none"
+                className="overflow-hidden flex flex-col"
+              >
+                <CardContent className="p-6 flex-grow">
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="text-heading-sm line-clamp-2">
+                      {event.name}
+                    </h3>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
+                      {event.status}
+                    </span>
+                  </div>
+                  
+                  {event.description && (
+                    <p className="text-body-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                      {event.description}
+                    </p>
+                  )}
+                  
+                  <div className="space-y-2 text-body-sm">
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-2" />
+                      <span>{formatDateForDisplay(event.startDate)}</span>
+                    </div>
+                    
+                    {event.location && (
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        <span className="truncate">{event.location}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center">
+                      <Users className="h-4 w-4 mr-2" />
+                      <span>
+                        {formatAttendeesCount(event.currentAttendees, event.maxAttendees)}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {event.tags && event.tags.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      {event.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {event.tags.length > 3 && (
+                        <span className="text-caption">
+                          +{event.tags.length - 3} autres
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+                
+                <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 transition-colors duration-200">
+                  <ActionGroup align="between" spacing="sm">
+                    <Link
+                      to={`/events/${event.id}`}
+                      className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors"
+                    >
+                      <Eye className="h-4 w-4 mr-1" />
+                      Voir détails
+                    </Link>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Can do="update" on="Event" data={event}>
+                        <button 
+                          onClick={() => setEditingEvent(event)}
+                          className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                          title="Modifier l'événement"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                      </Can>
+                      
+                      <Can do="delete" on="Event" data={event}>
+                        <button 
+                          onClick={() => setDeletingEvent(event)}
+                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                          title="Supprimer l'événement"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </Can>
+                    </div>
+                  </ActionGroup>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </PageSection>
 
       {/* Modal de création d'événement */}
       <CreateEventModal
@@ -302,7 +329,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
         isOpen={!!deletingEvent}
         onClose={() => setDeletingEvent(null)}
       />
-    </div>
+    </PageContainer>
   )
 }
 

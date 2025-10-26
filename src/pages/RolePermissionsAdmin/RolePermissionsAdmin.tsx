@@ -3,7 +3,15 @@ import { Shield, Users, AlertCircle, RefreshCw, Lock, AlertTriangle } from 'luci
 import { Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { Can } from '@/shared/acl/guards/Can'
-import { Button } from '@/shared/ui/Button'
+import { 
+  Button,
+  PageContainer,
+  PageHeader,
+  PageSection,
+  Card,
+  CardContent,
+  ActionGroup
+} from '@/shared/ui'
 import { useGetRolesQuery, useGetPermissionsQuery, useUpdateRolePermissionsMutation } from '@/features/roles/api/rolesApi'
 import type { Role, Permission } from '@/features/roles/api/rolesApi'
 import { canModifyUser } from '@/shared/lib/role-hierarchy'
@@ -24,15 +32,12 @@ export const RolePermissionsAdmin: React.FC = () => {
   const isLoading = isLoadingRoles || isLoadingPermissions
   const error = rolesError || permissionsError
 
-  // 1) Filtrer les rôles : enlever les doublons et ne garder que les rôles de l'organisation
-  // Les templates système (is_system_role=true avec org_id=null) ne sont PAS affichés
+  // Filtrer les rôles : enlever les doublons et ne garder que les rôles de l'organisation
   const roles = rolesRaw.filter(role => {
-    // Garder uniquement les rôles qui ont un org_id (rôles de l'organisation)
     return role.org_id !== null
   })
 
-  // 4) Filtrer les permissions : enlever celles qui sont SUPER_ADMIN only
-  // Les permissions cross-tenant comme "organizations.read:any", "organizations.create" sont réservées à SUPER_ADMIN
+  // Filtrer les permissions : enlever celles qui sont SUPER_ADMIN only
   const permissions = permissionsRaw.filter(permission => {
     const superAdminOnlyPermissions = [
       'organizations.read:any',
@@ -46,26 +51,24 @@ export const RolePermissionsAdmin: React.FC = () => {
   const handlePermissionToggle = async (permissionId: string, isChecked: boolean) => {
     if (!selectedRole) return
 
-    // 🔒 Vérification côté client : ne peut pas modifier son propre rôle
+    // Vérification côté client : ne peut pas modifier son propre rôle
     const isOwnRole = currentUser?.role?.id === selectedRole.id
     if (isOwnRole) {
-      console.error('❌ Vous ne pouvez pas modifier les permissions de votre propre rôle')
-      // TODO: Add error toast
+      console.error('Vous ne pouvez pas modifier les permissions de votre propre rôle')
       alert('Vous ne pouvez pas modifier les permissions de votre propre rôle')
       return
     }
 
-    // 🔒 Vérification hiérarchique : peut modifier uniquement les rôles de niveau inférieur
+    // Vérification hiérarchique : peut modifier uniquement les rôles de niveau inférieur
     const hierarchyCheck = canModifyUser(
       currentUserRoleCode,
       selectedRole.code || '',
       currentUserId,
-      selectedRole.id // Utiliser l'ID du rôle comme proxy (pas vraiment un user ID mais suffit pour la vérification)
+      selectedRole.id
     )
 
     if (!hierarchyCheck.canModify) {
-      console.error(`❌ ${hierarchyCheck.reason}`)
-      // TODO: Add error toast
+      console.error(hierarchyCheck.reason)
       alert(hierarchyCheck.reason || 'Vous ne pouvez pas modifier ce rôle')
       return
     }
@@ -81,17 +84,12 @@ export const RolePermissionsAdmin: React.FC = () => {
         permissionIds: newPermissionIds
       }).unwrap()
       
-      // Rafraîchir les rôles pour obtenir les permissions à jour
       refetchRoles()
-      
-      // TODO: Add success toast
       console.log('Permissions mises à jour avec succès')
     } catch (err: any) {
       console.error('Erreur lors de la mise à jour des permissions:', err)
-      // Afficher l'erreur du backend si disponible
       const errorMessage = err?.data?.message || 'Une erreur est survenue lors de la mise à jour des permissions'
       alert(errorMessage)
-      // TODO: Add error toast
     }
   }
 
@@ -123,81 +121,81 @@ export const RolePermissionsAdmin: React.FC = () => {
   // Protection par permissions - Seuls les ADMIN peuvent voir cette page
   return (
     <Can do="manage" on="Role" fallback={<Navigate to="/403" replace />}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* En-tête de la page */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center space-x-3 mb-2">
-                  <Shield className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                    Gestion des Rôles et Permissions
-                  </h1>
-                </div>
-                <p className="text-gray-600 dark:text-gray-300">
-                  Configurez les permissions pour chaque rôle de votre organisation.
-                </p>
-              </div>
-              
-              <Button
-                variant="secondary"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                className="flex items-center space-x-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                <span>Actualiser</span>
-              </Button>
-            </div>
-            
-            {/* Statistiques globales */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+      <PageContainer maxWidth="7xl" padding="lg">
+        <PageHeader 
+          title="Gestion des Rôles et Permissions"
+          description="Configurez les permissions pour chaque rôle de votre organisation."
+          icon={Shield}
+          actions={
+            <Button
+              variant="secondary"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              leftIcon={<RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />}
+            >
+              Actualiser
+            </Button>
+          }
+        />
+        
+        {/* Statistiques globales */}
+        <PageSection spacing="lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card variant="default" padding="lg">
+              <CardContent>
                 <div className="flex items-center space-x-3">
                   <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Rôles configurés</p>
+                    <p className="text-body-sm text-gray-600 dark:text-gray-400">Rôles configurés</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{roles.length}</p>
                   </div>
                 </div>
-              </div>
-              
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              </CardContent>
+            </Card>
+            
+            <Card variant="default" padding="lg">
+              <CardContent>
                 <div className="flex items-center space-x-3">
                   <Shield className="h-6 w-6 text-green-600 dark:text-green-400" />
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Permissions disponibles</p>
+                    <p className="text-body-sm text-gray-600 dark:text-gray-400">Permissions disponibles</p>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">{permissions.length}</p>
                   </div>
                 </div>
-              </div>
-              
-              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              </CardContent>
+            </Card>
+            
+            <Card variant="default" padding="lg">
+              <CardContent>
                 <div className="flex items-center space-x-3">
                   <Lock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Rôle sélectionné</p>
+                    <p className="text-body-sm text-gray-600 dark:text-gray-400">Rôle sélectionné</p>
                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {selectedRole?.name || 'Aucun'}
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
+        </PageSection>
 
-          {/* Gestion des erreurs */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                <p className="text-red-700 dark:text-red-300">
-                  Erreur lors du chargement des données
-                </p>
-              </div>
-            </div>
-          )}
+        {/* Gestion des erreurs */}
+        {error && (
+          <PageSection spacing="lg">
+            <Card variant="default" padding="lg" className="bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700">
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <p className="text-red-700 dark:text-red-300">
+                    Erreur lors du chargement des données
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </PageSection>
+        )}
 
           {/* État de chargement */}
           {isLoading ? (
@@ -371,7 +369,7 @@ export const RolePermissionsAdmin: React.FC = () => {
                                       <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                                         {permission.description}
                                       </p>
-                                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 font-mono">
+                                      <p className="text-caption font-mono mt-1">
                                         {permission.code}
                                       </p>
                                     </div>
@@ -385,36 +383,39 @@ export const RolePermissionsAdmin: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-                    <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      Sélectionnez un rôle
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Choisissez un rôle dans la liste de gauche pour voir et modifier ses permissions.
-                    </p>
-                  </div>
+                  <Card variant="default" padding="lg" className="text-center">
+                    <CardContent>
+                      <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-heading-sm mb-3">
+                        Sélectionnez un rôle
+                      </h3>
+                      <p className="text-body text-gray-600 dark:text-gray-300">
+                        Choisissez un rôle dans la liste de gauche pour voir et modifier ses permissions.
+                      </p>
+                    </CardContent>
+                  </Card>
                 )}
               </div>
             </div>
           )}
 
           {/* Footer avec informations */}
-          <div className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">
-                💡 Informations importantes
-              </h4>
-              <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
-                <li>• Les modifications sont sauvegardées <strong>automatiquement</strong> en temps réel</li>
-                <li>• Les permissions sont appliquées <strong>immédiatement</strong> pour tous les utilisateurs</li>
-                <li>• Seuls les <strong>administrateurs</strong> peuvent modifier les permissions des rôles</li>
-                <li>• Les rôles affichés sont spécifiques à <strong>votre organisation</strong> et peuvent être personnalisés</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+          <PageSection spacing="xl">
+            <Card variant="default" padding="lg" className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
+              <CardContent>
+                <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-3">
+                  Informations importantes
+                </h4>
+                <ul className="text-body-sm text-blue-800 dark:text-blue-300 space-y-1">
+                  <li>• Les modifications sont sauvegardées automatiquement en temps réel</li>
+                  <li>• Les permissions sont appliquées immédiatement pour tous les utilisateurs</li>
+                  <li>• Seuls les administrateurs peuvent modifier les permissions des rôles</li>
+                  <li>• Les rôles affichés sont spécifiques à votre organisation et peuvent être personnalisés</li>
+                </ul>
+              </CardContent>
+            </Card>
+          </PageSection>
+      </PageContainer>
     </Can>
   )
 }

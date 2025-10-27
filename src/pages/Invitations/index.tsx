@@ -5,14 +5,14 @@ import { Button } from '@/shared/ui/Button'
 import { Select } from '@/shared/ui/Select'
 import { Card } from '@/shared/ui/Card'
 import { Input } from '@/shared/ui/Input'
+import { PageContainer, PageHeader, PageSection } from '@/shared/ui'
 import { UniversalModal, useUniversalModal } from '@/shared/ui'
 import { useSendInvitationMutation } from '@/features/invitations/api/invitationsApi'
-import { useGetRolesFilteredQuery } from '@/features/roles/api/rolesApi'  // 🔥 NOUVEAU hook
+import { useGetRolesFilteredQuery } from '@/features/roles/api/rolesApi'
 import { useGetOrganizationsQuery } from '@/features/users/api/usersApi'
 import { useCreateOrganizationMutation } from '@/features/organizations/api/organizationsApi'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
-// Anciens modals remplacés par UniversalModal
 
 interface InvitationFormData {
   email: string
@@ -40,7 +40,7 @@ export const InvitationsPage: React.FC = () => {
     newOrgName: ''
   })
   
-  // 🎯 NOUVEAU : État pour gérer le chargement dynamique des rôles
+  // NOUVEAU : État pour gérer le chargement dynamique des rôles
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
 
   // Mettre à jour l'orgId selon le type d'utilisateur
@@ -75,7 +75,7 @@ export const InvitationsPage: React.FC = () => {
   const [sendInvitation, { isLoading: isSending }] = useSendInvitationMutation()
   const [createOrganization, { isLoading: isCreatingOrg }] = useCreateOrganizationMutation()
   
-  // 🎯 NOUVEAU : Chargement dynamique des rôles selon l'organisation sélectionnée
+  // NOUVEAU : Chargement dynamique des rôles selon l'organisation sélectionnée
   const rolesQueryParams = isSuperAdmin && formData.createNewOrg
     ? { templatesOnly: true } // Nouvelle org → templates système uniquement
     : isSuperAdmin && selectedOrgId
@@ -84,13 +84,13 @@ export const InvitationsPage: React.FC = () => {
     ? { orgId: currentUser.orgId } // Admin normal → rôles de son org
     : undefined // SUPER_ADMIN sans sélection → query skipped
   
-  // 🔥 FIX: Skip la query si SUPER_ADMIN n'a pas encore fait de choix
+  // FIX: Skip la query si SUPER_ADMIN n'a pas encore fait de choix
   const shouldSkipRolesQuery = isSuperAdmin 
     ? (!formData.createNewOrg && !selectedOrgId) // Skip si pas d'org sélectionnée et pas de nouvelle org
     : false // Ne jamais skip pour les admins normaux
   
-  // 🔍 DEBUG: Log pour voir les paramètres de query
-  console.log('🔍 [INVITATIONS] Roles Query Params:', {
+  // DEBUG: Log pour voir les paramètres de query
+  console.log(' [INVITATIONS] Roles Query Params:', {
     isSuperAdmin,
     createNewOrg: formData.createNewOrg,
     selectedOrgId,
@@ -108,7 +108,7 @@ export const InvitationsPage: React.FC = () => {
     }
   )
   
-  // 🔍 DEBUG: Log des rôles chargés
+  // DEBUG: Log des rôles chargés
   console.log('📋 [INVITATIONS] Roles loaded:', {
     count: rolesDataRaw?.length || 0,
     roles: rolesDataRaw?.map(r => ({ id: r.id, code: r.code, orgId: r.org_id, isSystem: r.is_system_role })),
@@ -187,7 +187,7 @@ export const InvitationsPage: React.FC = () => {
             timezone: 'Europe/Paris'
           }).unwrap()
           
-          console.log('✅ Organisation créée:', createdOrg)
+          console.log(' Organisation créée:', createdOrg)
           finalOrgId = createdOrg.id
           
           // Sauvegarder les infos pour les afficher avec l'invitation
@@ -309,34 +309,25 @@ export const InvitationsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-6">
-            <Mail className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Inviter un utilisateur
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Envoyez une invitation par email pour ajouter un nouveau membre à votre équipe.
-            L'utilisateur recevra un lien sécurisé pour créer son compte.
-          </p>
-        </div>
+    <PageContainer maxWidth="7xl" padding="lg">
+      <PageHeader 
+        title="Inviter un utilisateur"
+        description="Envoyez une invitation par email pour ajouter un nouveau membre à votre équipe. L'utilisateur recevra un lien sécurisé pour créer son compte."
+        icon={Mail}
+      />
 
-        {/* Formulaire principal centré */}
+      <PageSection spacing="lg">
         <div className="max-w-2xl mx-auto">
-          <Card className="p-8 shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+          <Card className="p-8 shadow-xl">
             <div className="flex items-center gap-3 mb-8">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
                 <Send className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h2 className="section-title">
                   Nouvelle invitation
                 </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-body-sm text-gray-500 dark:text-gray-400">
                   Remplissez les informations ci-dessous
                 </p>
               </div>
@@ -362,7 +353,7 @@ export const InvitationsPage: React.FC = () => {
                 </div>
               </FormField>
 
-              {/* 🎯 Organisation EN PREMIER (pour Super Admin seulement) */}
+              {/* Organisation EN PREMIER (pour Super Admin seulement) */}
               {isSuperAdmin && (
                 <FormField
                   label="Organisation"
@@ -527,12 +518,12 @@ export const InvitationsPage: React.FC = () => {
           </Card>
 
           {/* Section informative */}
-          <div className="mt-12 max-w-4xl mx-auto">
+          <PageSection spacing="xl">
             <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              <h2 className="section-title mb-6">
                 Comment ça fonctionne
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              </h2>
+              <p className="text-body text-gray-600 dark:text-gray-400">
                 Le processus d'invitation en 3 étapes simples
               </p>
             </div>
@@ -542,10 +533,10 @@ export const InvitationsPage: React.FC = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-4">
                   <Mail className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-heading-sm mb-3">
                   1. Email envoyé
-                </h4>
-                <p className="text-gray-600 dark:text-gray-400">
+                </h3>
+                <p className="text-body-sm text-gray-600 dark:text-gray-400">
                   Un email d'invitation est automatiquement envoyé à l'adresse indiquée
                 </p>
               </div>
@@ -554,10 +545,10 @@ export const InvitationsPage: React.FC = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl mb-4">
                   <CheckCircle className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-heading-sm mb-3">
                   2. Lien sécurisé
-                </h4>
-                <p className="text-gray-600 dark:text-gray-400">
+                </h3>
+                <p className="text-body-sm text-gray-600 dark:text-gray-400">
                   L'utilisateur reçoit un lien sécurisé pour compléter son inscription
                 </p>
               </div>
@@ -566,10 +557,10 @@ export const InvitationsPage: React.FC = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl mb-4">
                   <Users className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-heading-sm mb-3">
                   3. Compte créé
-                </h4>
-                <p className="text-gray-600 dark:text-gray-400">
+                </h3>
+                <p className="text-body-sm text-gray-600 dark:text-gray-400">
                   Il peut créer son mot de passe et accéder immédiatement à la plateforme
                 </p>
               </div>
@@ -596,9 +587,9 @@ export const InvitationsPage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </PageSection>
         </div>
-      </div>
+      </PageSection>
 
       {/* Modal universel */}
       {modalState.config && (
@@ -608,7 +599,7 @@ export const InvitationsPage: React.FC = () => {
           config={modalState.config}
         />
       )}
-    </div>
+    </PageContainer>
   )
 }
 

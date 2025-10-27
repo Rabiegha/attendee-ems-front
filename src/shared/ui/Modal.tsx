@@ -102,11 +102,11 @@ export const Modal: React.FC<ModalProps> = ({
         onClick={handleBackdropClick}
       />
       
-      {/* Modal moderne épurée */}
+      {/* Modal avec support light/dark mode */}
       <div 
         className={cn(
           modalVariants({ size: maxWidth }),
-          "relative bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl transition-all duration-300 ease-out transform max-h-[90vh] overflow-hidden",
+          "relative bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl transition-all duration-300 ease-out transform max-h-[90vh] overflow-hidden",
           isVisible 
             ? "scale-100 translate-y-0 opacity-100" 
             : "scale-95 translate-y-8 opacity-0",
@@ -115,16 +115,17 @@ export const Modal: React.FC<ModalProps> = ({
       >
         {/* Header optionnel simplifié */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             {title && (
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {title}
               </h2>
             )}
             {showCloseButton && (
               <button
                 onClick={handleClose}
-                className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800/50 transition-all duration-200"
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
+                aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -132,7 +133,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        {/* Contenu sans bordures */}
+        {/* Contenu avec scroll */}
         <div className={cn(
           "overflow-y-auto max-h-[calc(90vh-80px)]",
           contentPadding && "p-6"

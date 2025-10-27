@@ -85,12 +85,19 @@ const PublicRegistration: React.FC = () => {
       const registrationData: any = {}
       const answers: any = {}
       
+      // Helper pour convertir camelCase en snake_case
+      const toSnakeCase = (str: string) => {
+        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+      }
+      
       event?.registration_fields?.forEach((field: any) => {
         const value = formData[field.id]
         if (!value) return
         
         if (field.attendeeField) {
-          attendee[field.attendeeField] = value
+          // Convertir de camelCase à snake_case pour le backend
+          const backendFieldName = toSnakeCase(field.attendeeField)
+          attendee[backendFieldName] = value
         } else if (field.registrationField) {
           registrationData[field.registrationField] = value
         } else if (field.storeInAnswers) {
@@ -107,11 +114,15 @@ const PublicRegistration: React.FC = () => {
 
       const payload = {
         attendee,
+        attendance_type: 'onsite', // Valeur par défaut
         ...registrationData,
         answers: Object.keys(answers).length > 0 ? answers : undefined,
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/public/events/${token}/register`, {
+      console.log('📤 Payload envoyé:', payload)
+
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const response = await fetch(`${apiUrl}/public/events/${token}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -120,7 +131,19 @@ const PublicRegistration: React.FC = () => {
       })
 
       if (!response.ok) {
-        throw new Error('Erreur lors de l\'inscription')
+        const errorData = await response.json().catch(() => ({ message: 'Erreur inconnue' }))
+        console.error('❌ Erreur backend:', errorData)
+        
+        // Messages d'erreur personnalisés
+        let userMessage = errorData.detail || errorData.message || 'Erreur lors de l\'inscription'
+        
+        if (errorData.status === 403 || userMessage.includes('not open for registration')) {
+          userMessage = 'Les inscriptions pour cet événement ne sont pas encore ouvertes ou sont clôturées.'
+        } else if (errorData.status === 409 || userMessage.includes('full')) {
+          userMessage = 'L\'événement est complet. Aucune nouvelle inscription n\'est possible.'
+        }
+        
+        throw new Error(userMessage)
       }
 
       setIsSubmitted(true)

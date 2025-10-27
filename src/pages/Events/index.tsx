@@ -11,7 +11,6 @@ import {
   PageSection,
   Card,
   CardContent,
-  ActionGroup,
   LoadingSpinner
 } from '@/shared/ui'
 import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
@@ -25,10 +24,7 @@ import {
   Calendar, 
   MapPin, 
   Users, 
-  Clock,
-  Eye,
-  Edit,
-  Trash2
+  Clock
 } from 'lucide-react'
 
 interface EventsPageProps {}
@@ -209,102 +205,73 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
-              <Card
+              <Link
                 key={event.id}
-                variant="elevated"
-                padding="none"
-                className="overflow-hidden flex flex-col"
+                to={`/events/${event.id}`}
+                className="block group"
               >
-                <CardContent className="p-6 flex-grow">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-heading-sm line-clamp-2">
-                      {event.name}
-                    </h3>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
-                      {event.status}
-                    </span>
-                  </div>
-                  
-                  {event.description && (
-                    <p className="text-body-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                      {event.description}
-                    </p>
-                  )}
-                  
-                  <div className="space-y-2 text-body-sm">
-                    <div className="flex items-center">
-                      <Clock className="h-4 w-4 mr-2" />
-                      <span>{formatDateForDisplay(event.startDate)}</span>
-                    </div>
-                    
-                    {event.location && (
-                      <div className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        <span className="truncate">{event.location}</span>
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center">
-                      <Users className="h-4 w-4 mr-2" />
-                      <span>
-                        {formatAttendeesCount(event.currentAttendees, event.maxAttendees)}
+                <Card
+                  variant="elevated"
+                  padding="none"
+                  className="overflow-hidden flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
+                >
+                  <CardContent className="p-6 flex-grow">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="text-heading-sm line-clamp-2">
+                        {event.name}
+                      </h3>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
+                        {event.status}
                       </span>
                     </div>
-                  </div>
-                  
-                  {event.tags && event.tags.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1">
-                      {event.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {event.tags.length > 3 && (
-                        <span className="text-caption">
-                          +{event.tags.length - 3} autres
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-                
-                <div className="px-6 py-3 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 transition-colors duration-200">
-                  <ActionGroup align="between" spacing="sm">
-                    <Link
-                      to={`/events/${event.id}`}
-                      className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium transition-colors"
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      Voir détails
-                    </Link>
                     
-                    <div className="flex items-center space-x-2">
-                      <Can do="update" on="Event" data={event}>
-                        <button 
-                          onClick={() => setEditingEvent(event)}
-                          className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                          title="Modifier l'événement"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                      </Can>
+                    {event.description && (
+                      <p className="text-body-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                        {event.description}
+                      </p>
+                    )}
+                    
+                    <div className="space-y-2 text-body-sm">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>{formatDateForDisplay(event.startDate)}</span>
+                      </div>
                       
-                      <Can do="delete" on="Event" data={event}>
-                        <button 
-                          onClick={() => setDeletingEvent(event)}
-                          className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                          title="Supprimer l'événement"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </Can>
+                      {event.location && (
+                        <div className="flex items-center">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          <span className="truncate">{event.location}</span>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-2" />
+                        <span>
+                          {formatAttendeesCount(event.currentAttendees, event.maxAttendees)}
+                        </span>
+                      </div>
                     </div>
-                  </ActionGroup>
-                </div>
-              </Card>
+                    
+                    {event.tags && event.tags.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1">
+                        {event.tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {event.tags.length > 3 && (
+                          <span className="text-caption">
+                            +{event.tags.length - 3} autres
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

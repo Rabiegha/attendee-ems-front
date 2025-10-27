@@ -30,7 +30,7 @@ export const registrationsApi = rootApi.injectEndpoints({
     updateRegistrationStatus: builder.mutation<RegistrationDPO, { id: string; status: string }>({
       query: ({ id, status }) => ({
         url: `/registrations/${id}/status`,
-        method: 'PATCH',
+        method: 'PUT',
         body: { status },
       }),
       transformResponse: (response: RegistrationDTO) => mapRegistrationDTOtoDPO(response),

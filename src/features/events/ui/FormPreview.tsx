@@ -49,14 +49,20 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       const registrationData: any = {}
       const answers: any = {}
       
+      // Helper pour convertir camelCase en snake_case
+      const toSnakeCase = (str: string) => {
+        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+      }
+      
       // Group form data by field configuration
       fields.forEach(field => {
         const value = formData[field.id]
         if (!value) return
         
         if (field.attendeeField) {
-          // Map to attendee table column
-          attendee[field.attendeeField] = value
+          // Map to attendee table column (convert camelCase to snake_case)
+          const backendFieldName = toSnakeCase(field.attendeeField)
+          attendee[backendFieldName] = value
         } else if (field.registrationField) {
           // Map to registration table column
           registrationData[field.registrationField] = value

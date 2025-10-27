@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { GripVertical, Trash2, Lock, Plus, X } from 'lucide-react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { GripVertical, Trash2, Lock, Plus, X, Undo2, Redo2, RotateCcw } from 'lucide-react'
 import { PredefinedFieldTemplate, PREDEFINED_FIELDS } from './FormFieldLibrary'
 
 export interface FormField extends Omit<PredefinedFieldTemplate, 'id'> {
@@ -45,6 +45,72 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const [newOptions, setNewOptions] = useState<Record<string, string>>({})
   const [customColor, setCustomColor] = useState<string>(submitButtonColor)
   const [isDragEnabled, setIsDragEnabled] = useState<boolean>(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+
+  // Undo/Redo History
+  const [history, setHistory] = useState<FormField[][]>([fields])
+  const [historyIndex, setHistoryIndex] = useState(0)
+  const [isUpdatingFromHistory, setIsUpdatingFromHistory] = useState(false)
+
+  // Update history when fields change externally (not from undo/redo)
+  useEffect(() => {
+    if (!isUpdatingFromHistory && fields.length > 0) {
+      const lastHistoryEntry = history[historyIndex]
+      const fieldsChanged = JSON.stringify(lastHistoryEntry) !== JSON.stringify(fields)
+      
+      if (fieldsChanged && lastHistoryEntry) {
+        setHistory(prev => {
+          const newHistory = prev.slice(0, historyIndex + 1)
+          newHistory.push(fields)
+          return newHistory.slice(-50) // Keep last 50 entries
+        })
+        setHistoryIndex(prev => Math.min(prev + 1, 49))
+      }
+    }
+    setIsUpdatingFromHistory(false)
+  }, [fields, history, historyIndex, isUpdatingFromHistory])
+
+  // Undo
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1
+      setHistoryIndex(newIndex)
+      setIsUpdatingFromHistory(true)
+      const historyEntry = history[newIndex]
+      if (historyEntry) {
+        onChange(historyEntry)
+      }
+    }
+  }, [historyIndex, history, onChange])
+
+  // Redo
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1
+      setHistoryIndex(newIndex)
+      setIsUpdatingFromHistory(true)
+      const historyEntry = history[newIndex]
+      if (historyEntry) {
+        onChange(historyEntry)
+      }
+    }
+  }, [historyIndex, history, onChange])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault()
+        redo()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [undo, redo])
 
   const handleAddField = (fieldKey: string) => {
     const template = PREDEFINED_FIELDS.find(f => f.key === fieldKey)
@@ -139,6 +205,44 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     setIsDragEnabled(false)
   }
 
+  // Reset to default fields
+  const handleResetToDefault = () => {
+    // Champs par défaut : Prénom, Nom, Email avec tous les champs requis
+    const firstNameTemplate = PREDEFINED_FIELDS.find(f => f.key === 'first_name')
+    const lastNameTemplate = PREDEFINED_FIELDS.find(f => f.key === 'last_name')
+    const emailTemplate = PREDEFINED_FIELDS.find(f => f.key === 'email')
+    
+    if (!firstNameTemplate || !lastNameTemplate || !emailTemplate) {
+      console.error('Templates par défaut introuvables')
+      setShowResetConfirm(false)
+      return
+    }
+    
+    const defaultFields: FormField[] = [
+      {
+        ...firstNameTemplate,
+        id: `field_${Date.now()}_firstname`,
+        order: 0,
+        placeholder: firstNameTemplate.placeholder || '',
+      },
+      {
+        ...lastNameTemplate,
+        id: `field_${Date.now() + 1}_lastname`,
+        order: 1,
+        placeholder: lastNameTemplate.placeholder || '',
+      },
+      {
+        ...emailTemplate,
+        id: `field_${Date.now() + 2}_email`,
+        order: 2,
+        placeholder: emailTemplate.placeholder || '',
+      },
+    ]
+    
+    onChange(defaultFields)
+    setShowResetConfirm(false)
+  }
+
   const getFieldIcon = (field: FormField) => {
     // Si l'icône est un composant, l'utiliser directement
     if (typeof field.icon === 'function') {
@@ -160,13 +264,47 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Champs du formulaire
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          {fields.length} champ{fields.length !== 1 ? 's' : ''}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Champs du formulaire
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {fields.length} champ{fields.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        
+        {/* Undo/Redo/Reset Buttons */}
+        <div className="flex items-center space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg p-1">
+          <button
+            onClick={undo}
+            disabled={historyIndex <= 0}
+            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            title="Annuler (Ctrl+Z)"
+          >
+            <Undo2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          </button>
+          <button
+            onClick={redo}
+            disabled={historyIndex >= history.length - 1}
+            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            title="Rétablir (Ctrl+Y)"
+          >
+            <Redo2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          </button>
+          
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
+          
+          {/* Reset Button */}
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Réinitialiser le formulaire"
+          >
+            <RotateCcw className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          </button>
+        </div>
       </div>
 
       {/* Add Field Dropdown */}
@@ -388,7 +526,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       {/* Submit Button Configuration */}
       <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
         <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-          🎨 Personnalisation du bouton
+          Personnalisation du bouton
         </h4>
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -436,6 +574,46 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                <RotateCcw className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Réinitialiser le formulaire ?
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Cette action supprimera <strong>tous les champs personnalisés</strong> et rétablira le formulaire par défaut (Prénom, Nom, Email).
+                </p>
+                <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
+                  ⚠️ Cette action est irréversible.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleResetToDefault}
+                className="px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600 rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>Réinitialiser</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

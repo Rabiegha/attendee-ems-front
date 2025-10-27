@@ -62,6 +62,11 @@ export const mapCreateEventDPOtoDTO = (dpo: CreateEventDPO): CreateEventDTO => {
   // TODO: Mapper location vers address_formatted quand le formulaire sera mis à jour
   if (dpo.location) dto.address_formatted = dpo.location
   
+  // Map partnerIds to assigned_user_ids for backend
+  if (dpo.partnerIds && dpo.partnerIds.length > 0) {
+    dto.assigned_user_ids = dpo.partnerIds
+  }
+  
   return dto
 }
 
@@ -77,6 +82,11 @@ export const mapUpdateEventDPOtoDTO = (dpo: UpdateEventDPO): UpdateEventDTO => {
   if (dpo.endDate) dto.end_at = dpo.endDate
   if (dpo.maxAttendees !== undefined) dto.capacity = dpo.maxAttendees
   if (dpo.location) dto.address_formatted = dpo.location
+  
+  // Map partnerIds to assigned_user_ids for backend
+  if (dpo.partnerIds !== undefined) {
+    dto.assigned_user_ids = dpo.partnerIds
+  }
   
   // Map status: completed -> archived pour le backend
   if (dpo.status) {

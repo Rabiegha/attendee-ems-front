@@ -43,6 +43,7 @@ export interface CreateEventDTO {
   address_formatted?: string
   org_activity_sector_id?: string
   org_event_type_id?: string
+  assigned_user_ids?: string[]
 }
 
 export interface UpdateEventDTO extends Partial<CreateEventDTO> {

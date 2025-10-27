@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom'
 import { Calendar, MapPin, Users } from 'lucide-react'
 import type { EventDPO } from '../dpo/event.dpo'
 import { formatDate } from '@/shared/lib/utils'
-import { Can } from '@/shared/acl/guards/Can'
-import { Button } from '@/shared/ui/Button'
 
 interface EventListProps {
   events: EventDPO[]
@@ -40,16 +38,15 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
   return (
     <div className="space-y-4">
       {events.map((event) => (
-        <div 
-          key={event.id} 
-          className="border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-colors duration-200"
+        <Link
+          key={event.id}
+          to={`/events/${event.id}`}
+          className="block border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h3 className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                <Link to={`/events/${event.id}`}>
-                  {event.name}
-                </Link>
+                {event.name}
               </h3>
               <div className="mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center">
@@ -66,7 +63,7 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
                 </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center">
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                 event.status === 'active' 
                   ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
@@ -76,16 +73,9 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
               }`}>
                 {event.status}
               </span>
-              <Can do="read" on="Event" data={event}>
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={`/events/${event.id}`}>
-                    Voir
-                  </Link>
-                </Button>
-              </Can>
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   )

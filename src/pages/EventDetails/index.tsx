@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useGetEventByIdQuery, useUpdateRegistrationFieldsMutation } from '@/features/events/api/eventsApi'
+import { useGetEventByIdQuery, useUpdateRegistrationFieldsMutation, useUpdateEventMutation } from '@/features/events/api/eventsApi'
 import { useGetRegistrationsQuery } from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import type { RegistrationDPO } from '@/features/registrations/dpo/registration.dpo'
@@ -17,7 +17,8 @@ import {
   Upload,
   ArrowLeft,
   Settings,
-  FormInput
+  FormInput,
+  ChevronDown
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
@@ -38,6 +39,10 @@ export const EventDetails: React.FC = () => {
   
   const { data: event, isLoading: eventLoading, error } = useGetEventByIdQuery(id!)
   const [updateRegistrationFields] = useUpdateRegistrationFieldsMutation()
+  const [updateEvent] = useUpdateEventMutation()
+  
+  // State pour le menu dropdown de statut
+  const [showStatusMenu, setShowStatusMenu] = useState(false)
   
   // State pour les champs du formulaire - chargé depuis la BDD ou valeurs par défaut
   const [formFields, setFormFields] = useState<FormField[]>([])
@@ -120,6 +125,21 @@ export const EventDetails: React.FC = () => {
       if (error && typeof error === 'object' && 'data' in error) {
         console.error('Détails de l\'erreur:', JSON.stringify(error.data, null, 2))
       }
+    }
+  }
+  
+  // Fonction pour changer le statut de l'événement
+  const handleStatusChange = async (newStatus: string) => {
+    if (!id || !event) return
+    
+    try {
+      await updateEvent({
+        id,
+        data: { status: newStatus as any }
+      }).unwrap()
+      setShowStatusMenu(false)
+    } catch (err) {
+      console.error('Erreur lors du changement de statut:', err)
     }
   }
   
@@ -225,15 +245,45 @@ export const EventDetails: React.FC = () => {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{event.name}</h1>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              event.status === 'active' 
-                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-                : event.status === 'draft'
-                ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
-            }`}>
-              {event.status}
-            </span>
+            
+            {/* Status Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowStatusMenu(!showStatusMenu)}
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
+                  event.status === 'active' 
+                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50'
+                    : event.status === 'draft'
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    : event.status === 'published'
+                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-900/50'
+                }`}
+              >
+                {event.status}
+                <ChevronDown className="ml-1 h-3 w-3" />
+              </button>
+              
+              {showStatusMenu && (
+                <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
+                  <div className="py-1">
+                    {['draft', 'published', 'active', 'completed', 'cancelled'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => handleStatusChange(status)}
+                        className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                          event.status === status
+                            ? 'font-medium text-blue-600 dark:text-blue-400'
+                            : 'text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
             <div className="flex items-center">

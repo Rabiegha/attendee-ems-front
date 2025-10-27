@@ -37,23 +37,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
   // Undo/Redo History
   const [history, setHistory] = React.useState<FormField[][]>([fields])
   const [historyIndex, setHistoryIndex] = React.useState(0)
+  const [isUpdatingFromHistory, setIsUpdatingFromHistory] = React.useState(false)
 
-  // Update history when fields change (debounced to avoid too many entries)
-  const updateHistory = useCallback((newFields: FormField[]) => {
-    setHistory(prev => {
-      const newHistory = prev.slice(0, historyIndex + 1)
-      newHistory.push(newFields)
-      // Limit history to 20 entries
-      return newHistory.slice(-20)
-    })
-    setHistoryIndex(prev => Math.min(prev + 1, 19))
-  }, [historyIndex])
+  // Initialize history when fields prop changes externally (not from undo/redo)
+  useEffect(() => {
+    if (!isUpdatingFromHistory && fields.length > 0) {
+      const lastHistoryEntry = history[historyIndex]
+      const fieldsChanged = JSON.stringify(lastHistoryEntry) !== JSON.stringify(fields)
+      
+      if (fieldsChanged && lastHistoryEntry) {
+        // Only update if fields actually changed
+        setHistory(prev => {
+          const newHistory = prev.slice(0, historyIndex + 1)
+          newHistory.push(fields)
+          return newHistory.slice(-50) // Keep last 50 entries
+        })
+        setHistoryIndex(prev => Math.min(prev + 1, 49))
+      }
+    }
+    setIsUpdatingFromHistory(false)
+  }, [fields])
 
   // Undo
   const undo = useCallback(() => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1
       setHistoryIndex(newIndex)
+      setIsUpdatingFromHistory(true)
       const historyEntry = history[newIndex]
       if (historyEntry) {
         onChange(historyEntry)
@@ -66,6 +76,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1
       setHistoryIndex(newIndex)
+      setIsUpdatingFromHistory(true)
       const historyEntry = history[newIndex]
       if (historyEntry) {
         onChange(historyEntry)
@@ -99,24 +110,24 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
     }
     const newFields = [...fields, newField]
     onChange(newFields)
-    updateHistory(newFields)
+    // History will be updated automatically via useEffect
   }
 
   const removeField = (id: string) => {
     const newFields = fields.filter(f => f.id !== id)
     onChange(newFields)
-    updateHistory(newFields)
+    // History will be updated automatically via useEffect
   }
 
   const updateField = (id: string, updates: Partial<FormField>) => {
     const newFields = fields.map(f => f.id === id ? { ...f, ...updates } : f)
     onChange(newFields)
-    updateHistory(newFields)
+    // History will be updated automatically via useEffect
   }
 
   const resetToDefaults = () => {
     onChange(DEFAULT_FIELDS)
-    updateHistory(DEFAULT_FIELDS)
+    // History will be updated automatically via useEffect
   }
 
   // Drag & Drop handlers
@@ -158,10 +169,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
 
   const handleDragEnd = () => {
     setDraggedIndex(null)
-    // Save to history after drag & drop
-    if (draggedIndex !== null) {
-      updateHistory(fields)
-    }
+    // History will be updated automatically via useEffect
   }
 
   return (

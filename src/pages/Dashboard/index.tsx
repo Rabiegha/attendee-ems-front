@@ -15,8 +15,7 @@ import {
   PageHeader, 
   PageSection,
   Card,
-  CardContent,
-  ActionGroup
+  CardContent
 } from '@/shared/ui'
 import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
 import { Plus, Users, Calendar, Building2, Mail, Shield, LayoutDashboard } from 'lucide-react'

@@ -23,6 +23,7 @@ import { OrganizationsPage } from '@/features/organizations/pages'
 import { ForbiddenPage } from '@/pages/Forbidden'
 import { NotFoundPage } from '@/pages/NotFound'
 import { AuthRecoveryPage } from '@/pages/AuthRecovery'
+import PublicRegistration from '@/pages/PublicRegistration'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -142,6 +143,10 @@ export const router = createBrowserRouter([
   {
     path: '/complete-invitation/:token',
     element: <CompleteInvitationPage />,
+  },
+  {
+    path: '/register/:token',
+    element: <PublicRegistration />,
   },
   {
     path: '/403',

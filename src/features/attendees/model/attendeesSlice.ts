@@ -24,9 +24,9 @@ export interface AttendeesUIState {
 const initialState: AttendeesUIState = {
   filters: {
     page: 1,
-    limit: 50,
-    sortBy: 'registrationDate',
-    sortOrder: 'desc',
+    pageSize: 50,
+    sortBy: 'last_name',
+    sortDir: 'asc',
   },
   searchQuery: '',
   selectedTags: [],

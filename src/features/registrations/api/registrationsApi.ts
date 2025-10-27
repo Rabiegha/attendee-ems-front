@@ -2,12 +2,22 @@ import { rootApi } from '@/services/rootApi'
 import type { RegistrationDTO, RegistrationDPO } from '../dpo'
 import { mapRegistrationDTOtoDPO } from '../dpo'
 
+interface RegistrationsListResponse {
+  data: RegistrationDTO[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
 export const registrationsApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     getRegistrations: builder.query<RegistrationDPO[], { eventId: string }>({
       query: ({ eventId }) => `/events/${eventId}/registrations`,
-      transformResponse: (response: RegistrationDTO[]) => 
-        response.map(mapRegistrationDTOtoDPO),
+      transformResponse: (response: RegistrationsListResponse) => 
+        response.data.map(mapRegistrationDTOtoDPO),
       providesTags: (result, _error, { eventId }) => 
         result
           ? [
@@ -39,6 +49,51 @@ export const registrationsApi = rootApi.injectEndpoints({
       ],
     }),
     
+    // Import Excel avec upload de fichier
+    importExcelRegistrations: builder.mutation<
+      {
+        success: boolean
+        summary: {
+          total_rows: number
+          created: number
+          updated: number
+          skipped: number
+          errors: any[]
+        }
+        details: Array<{
+          row: number
+          email: string
+          status: 'created' | 'updated' | 'skipped' | 'error'
+          attendee_id?: string
+          registration_id?: string
+          error?: string
+        }>
+      }, 
+      { 
+        eventId: string
+        file: File
+        autoApprove?: boolean
+      }
+    >({
+      query: ({ eventId, file, autoApprove }) => {
+        const formData = new FormData()
+        formData.append('file', file)
+        if (autoApprove !== undefined) {
+          formData.append('autoApprove', autoApprove.toString())
+        }
+        
+        return {
+          url: `/events/${eventId}/registrations/bulk-import`,
+          method: 'POST',
+          body: formData,
+        }
+      },
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'Event', id: eventId },
+      ],
+    }),
+    
     exportRegistrations: builder.mutation<Blob, { eventId: string; format: 'csv' | 'excel' }>({
       query: ({ eventId, format }) => ({
         url: `/events/${eventId}/registrations/export`,
@@ -46,6 +101,81 @@ export const registrationsApi = rootApi.injectEndpoints({
         params: { format },
         responseHandler: (response) => response.blob(),
       }),
+    }),
+    
+    createRegistration: builder.mutation<
+      RegistrationDPO, 
+      { 
+        eventId: string
+        data: {
+          attendee: {
+            email: string
+            first_name?: string
+            last_name?: string
+            phone?: string
+            company?: string
+            job_title?: string
+            country?: string
+          }
+          attendance_type: 'onsite' | 'online' | 'hybrid'
+          event_attendee_type_id?: string
+          answers?: Record<string, any>
+        }
+      }
+    >({
+      query: ({ eventId, data }) => ({
+        url: `/events/${eventId}/registrations`,
+        method: 'POST',
+        body: data,
+      }),
+      transformResponse: (response: RegistrationDTO) => mapRegistrationDTOtoDPO(response),
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'Event', id: eventId },
+      ],
+    }),
+    
+    updateRegistration: builder.mutation<
+      RegistrationDPO,
+      {
+        id: string
+        eventId: string
+        data: {
+          attendee?: {
+            email?: string
+            first_name?: string
+            last_name?: string
+            phone?: string
+            company?: string
+            job_title?: string
+            country?: string
+          }
+          answers?: Record<string, any>
+        }
+      }
+    >({
+      query: ({ id, data }) => ({
+        url: `/registrations/${id}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      transformResponse: (response: RegistrationDTO) => mapRegistrationDTOtoDPO(response),
+      invalidatesTags: (_result, _error, { id, eventId }) => [
+        { type: 'Attendee', id },
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+      ],
+    }),
+    
+    deleteRegistration: builder.mutation<void, { id: string; eventId: string }>({
+      query: ({ id }) => ({
+        url: `/registrations/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { id, eventId }) => [
+        { type: 'Attendee', id },
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'Event', id: eventId },
+      ],
     }),
   }),
   overrideExisting: false,
@@ -55,5 +185,9 @@ export const {
   useGetRegistrationsQuery,
   useUpdateRegistrationStatusMutation,
   useImportRegistrationsMutation,
+  useImportExcelRegistrationsMutation,
   useExportRegistrationsMutation,
+  useCreateRegistrationMutation,
+  useUpdateRegistrationMutation,
+  useDeleteRegistrationMutation,
 } = registrationsApi

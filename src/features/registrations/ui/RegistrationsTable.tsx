@@ -1,14 +1,17 @@
 import React, { useState } from 'react'
-import { Search, Filter, Download, CheckCircle, XCircle, Clock, Ban, Mail, Phone, Building2 } from 'lucide-react'
+import { Search, Filter, Download, CheckCircle, XCircle, Clock, Ban, Mail, Phone, Building2, Edit2, Trash2 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button } from '@/shared/ui/Button'
 import { formatDateTime } from '@/shared/lib/utils'
-import { useUpdateRegistrationStatusMutation } from '../api/registrationsApi'
+import { useUpdateRegistrationStatusMutation, useUpdateRegistrationMutation, useDeleteRegistrationMutation } from '../api/registrationsApi'
 import { useToast } from '@/shared/hooks/useToast'
+import { EditRegistrationModal } from './EditRegistrationModal'
+import { DeleteConfirmModal } from './DeleteConfirmModal'
 
 interface RegistrationsTableProps {
   registrations: RegistrationDPO[]
   isLoading: boolean
+  eventId: string
   onExport?: () => void
 }
 
@@ -22,13 +25,18 @@ const STATUS_CONFIG = {
 export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({ 
   registrations, 
   isLoading,
+  eventId,
   onExport 
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [editingRegistration, setEditingRegistration] = useState<RegistrationDPO | null>(null)
+  const [deletingRegistration, setDeletingRegistration] = useState<RegistrationDPO | null>(null)
   const toast = useToast()
   
-  const [updateStatus, { isLoading: isUpdating }] = useUpdateRegistrationStatusMutation()
+  const [updateStatus] = useUpdateRegistrationStatusMutation()
+  const [updateRegistration, { isLoading: isUpdating }] = useUpdateRegistrationMutation()
+  const [deleteRegistration] = useDeleteRegistrationMutation()
 
   const handleStatusChange = async (registrationId: string, newStatus: string) => {
     try {
@@ -37,6 +45,39 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     } catch (error) {
       console.error('Error updating status:', error)
       toast.error('Erreur', 'Impossible de mettre à jour le statut')
+    }
+  }
+
+  const handleUpdate = async (data: any) => {
+    if (!editingRegistration) return
+    
+    try {
+      await updateRegistration({ 
+        id: editingRegistration.id, 
+        eventId,
+        data 
+      }).unwrap()
+      toast.success('Inscription mise à jour', 'Les informations ont été modifiées avec succès')
+      setEditingRegistration(null)
+    } catch (error) {
+      console.error('Error updating registration:', error)
+      toast.error('Erreur', 'Impossible de mettre à jour l\'inscription')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deletingRegistration) return
+    
+    try {
+      await deleteRegistration({ 
+        id: deletingRegistration.id,
+        eventId 
+      }).unwrap()
+      toast.success('Inscription supprimée', 'L\'inscription a été supprimée avec succès')
+      setDeletingRegistration(null)
+    } catch (error) {
+      console.error('Error deleting registration:', error)
+      toast.error('Erreur', 'Impossible de supprimer l\'inscription')
     }
   }
 
@@ -201,29 +242,47 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {formatDateTime(registration.registeredAt)}
+                        {formatDateTime(registration.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {registration.status === 'awaiting' && (
-                          <div className="flex items-center justify-end space-x-2">
-                            <button
-                              onClick={() => handleStatusChange(registration.id, 'approved')}
-                              disabled={isUpdating}
-                              className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200 disabled:opacity-50 transition-colors"
-                              title="Approuver"
-                            >
-                              <CheckCircle className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={() => handleStatusChange(registration.id, 'refused')}
-                              disabled={isUpdating}
-                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 transition-colors"
-                              title="Refuser"
-                            >
-                              <XCircle className="h-5 w-5" />
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex items-center justify-end space-x-2">
+                          {registration.status === 'awaiting' && (
+                            <>
+                              <button
+                                onClick={() => handleStatusChange(registration.id, 'approved')}
+                                disabled={isUpdating}
+                                className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200 disabled:opacity-50 transition-colors"
+                                title="Approuver"
+                              >
+                                <CheckCircle className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => handleStatusChange(registration.id, 'refused')}
+                                disabled={isUpdating}
+                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 transition-colors"
+                                title="Refuser"
+                              >
+                                <XCircle className="h-5 w-5" />
+                              </button>
+                            </>
+                          )}
+                          <button
+                            onClick={() => setEditingRegistration(registration)}
+                            disabled={isUpdating}
+                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200 disabled:opacity-50 transition-colors"
+                            title="Modifier"
+                          >
+                            <Edit2 className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => setDeletingRegistration(registration)}
+                            disabled={isUpdating}
+                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 transition-colors"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -239,6 +298,27 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         <div className="text-sm text-gray-500 dark:text-gray-400 text-center">
           {filteredRegistrations.length} résultat{filteredRegistrations.length > 1 ? 's' : ''} sur {registrations.length} inscription{registrations.length > 1 ? 's' : ''}
         </div>
+      )}
+
+      {/* Modals */}
+      {editingRegistration && (
+        <EditRegistrationModal
+          isOpen={!!editingRegistration}
+          onClose={() => setEditingRegistration(null)}
+          registration={editingRegistration}
+          onSave={handleUpdate}
+          isLoading={isUpdating}
+        />
+      )}
+
+      {deletingRegistration && (
+        <DeleteConfirmModal
+          isOpen={!!deletingRegistration}
+          onClose={() => setDeletingRegistration(null)}
+          onConfirm={handleDelete}
+          isLoading={isUpdating}
+          attendeeName={`${deletingRegistration.attendee?.firstName} ${deletingRegistration.attendee?.lastName}`}
+        />
       )}
     </div>
   )

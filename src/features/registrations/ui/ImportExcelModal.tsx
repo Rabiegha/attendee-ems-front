@@ -4,12 +4,13 @@ import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import * as XLSX from 'xlsx'
 import { useToast } from '@/shared/hooks/useToast'
+import { useImportExcelRegistrationsMutation } from '../api/registrationsApi'
 
 interface ImportExcelModalProps {
   isOpen: boolean
   onClose: () => void
   eventId: string
-  onImportSuccess?: (data: ParsedRow[]) => void // Callback pour mode local
+  onImportSuccess?: (data: any) => void // ← Callback optionnel pour rafraîchir la liste
 }
 
 interface ParsedRow {
@@ -47,22 +48,27 @@ function detectColumnMapping(headers: string[]): Record<string, string> {
   return mapping
 }
 
-export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onClose, onImportSuccess }) => {
+export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onClose, eventId, onImportSuccess }) => {
   const [preview, setPreview] = useState<ParsedRow[]>([])
   const [allData, setAllData] = useState<ParsedRow[]>([]) // Toutes les données du fichier
   const [headers, setHeaders] = useState<string[]>([])
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
   const [step, setStep] = useState<'upload' | 'preview' | 'success'>('upload')
-  const [importResult, setImportResult] = useState<{ count: number; errors: string[] } | null>(null)
+  const [importResult, setImportResult] = useState<any | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null) // ← Stocker le fichier
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
+  
+  // Mutation API pour l'import Excel
+  const [importExcelRegistrations, { isLoading: isImporting }] = useImportExcelRegistrationsMutation()
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
-    if (!selectedFile) return
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    parseExcelFile(selectedFile)
+    setSelectedFile(file)
+    parseExcelFile(file)
   }
 
   const parseExcelFile = async (file: File) => {
@@ -117,46 +123,47 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   }
 
   const handleImport = async () => {
-    if (allData.length === 0) return
+    if (!selectedFile) {
+      toast.error('Erreur', 'Aucun fichier sélectionné')
+      return
+    }
 
     setIsProcessing(true)
 
     try {
-      // MODE LOCAL : Pas d'appel API, juste transformation et callback
-      const transformedData = allData.map(row => {
-        const transformed: any = {}
-        
-        Object.entries(columnMapping).forEach(([originalCol, targetField]) => {
-          transformed[targetField] = row[originalCol]
-        })
-        
-        // Colonnes non mappées sont dans formData
-        const unmappedData: Record<string, any> = {}
-        headers.forEach(header => {
-          if (!columnMapping[header]) {
-            unmappedData[header] = row[header]
-          }
-        })
-        
-        if (Object.keys(unmappedData).length > 0) {
-          transformed.formData = unmappedData
-        }
-        
-        return transformed
-      })
+      // Appel API avec le fichier Excel
+      const result = await importExcelRegistrations({
+        eventId,
+        file: selectedFile,
+        autoApprove: true // Vous pouvez ajouter une option dans l'UI pour cela
+      }).unwrap()
 
-      // Mode local : on appelle le callback au lieu de l'API
-      if (onImportSuccess) {
-        onImportSuccess(transformedData)
-      }
-
-      setImportResult({ count: allData.length, errors: [] })
+      setImportResult(result)
       setStep('success')
       
-      toast.success('Import réussi !', `${allData.length} inscriptions ont été importées localement`)
-    } catch (error) {
+      // Callback pour rafraîchir la liste (invalidation RTK Query automatique)
+      if (onImportSuccess) {
+        onImportSuccess(result)
+      }
+
+      toast.success(
+        'Import réussi !', 
+        `${result.summary.created} créées, ${result.summary.updated} mises à jour, ${result.summary.skipped} ignorées`
+      )
+      
+    } catch (error: any) {
       console.error('Import error:', error)
-      toast.error('Erreur', 'Échec de l\'import des inscriptions')
+      
+      // Erreur 404 = endpoint non implémenté
+      if (error?.status === 404) {
+        toast.error(
+          'Fonctionnalité en cours de développement', 
+          'L\'endpoint d\'import Excel backend n\'est pas encore activé. Contactez l\'administrateur.'
+        )
+      } else {
+        const errorMessage = error?.data?.message || error?.message || 'Échec de l\'import des inscriptions'
+        toast.error('Erreur', errorMessage)
+      }
     } finally {
       setIsProcessing(false)
     }
@@ -167,6 +174,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
     setAllData([])
     setHeaders([])
     setColumnMapping({})
+    setSelectedFile(null)
     setStep('upload')
     setImportResult(null)
     onClose()
@@ -338,9 +346,9 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
               </Button>
               <Button
                 onClick={handleImport}
-                disabled={isProcessing}
+                disabled={isProcessing || isImporting}
               >
-                {isProcessing ? 'Import en cours...' : `Importer ${allData.length} inscriptions`}
+                {isProcessing || isImporting ? 'Import en cours...' : `Importer ${allData.length} inscriptions`}
               </Button>
             </div>
           </>
@@ -356,18 +364,18 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                 Import terminé !
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                {importResult.count} inscriptions ont été importées avec succès
+                {importResult.summary.created} créées • {importResult.summary.updated} mises à jour • {importResult.summary.skipped} ignorées
               </p>
             </div>
 
-            {importResult.errors.length > 0 && (
+            {importResult.summary.errors && importResult.summary.errors.length > 0 && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-2">
-                  Erreurs rencontrées ({importResult.errors.length}) :
+                  Erreurs rencontrées ({importResult.summary.errors.length}) :
                 </h4>
                 <ul className="text-sm text-red-800 dark:text-red-300 space-y-1 max-h-48 overflow-y-auto">
-                  {importResult.errors.map((error, index) => (
-                    <li key={index}>• {error}</li>
+                  {importResult.summary.errors.map((error: any, index: number) => (
+                    <li key={index}>• Ligne {error.row}: {error.error}</li>
                   ))}
                 </ul>
               </div>

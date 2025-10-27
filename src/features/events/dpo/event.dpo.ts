@@ -6,6 +6,7 @@ export interface EventDPO {
   startDate: string // ISO string for Redux serialization
   endDate: string   // ISO string for Redux serialization
   location: string
+  locationType: 'physical' | 'online' | 'hybrid'
   maxAttendees: number
   currentAttendees: number
   status: EventStatus
@@ -16,6 +17,10 @@ export interface EventDPO {
   tags: string[]
   partnerIds: string[]
   metadata: Record<string, any>
+  settings?: {
+    registration_fields?: any[]
+    [key: string]: any
+  }
   // Computed properties
   isActive: boolean
   isDraft: boolean

@@ -177,7 +177,7 @@ export const users: User[] = [
     isSuperAdmin: true
   },
 
-  // 🎨 CHOYOU
+  // CHOYOU
   {
     id: 'user-choyou-admin',
     orgId: 'org-choyou',

@@ -4,15 +4,18 @@ import type { RegistrationDPO } from './registration.dpo'
 export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
   const result: RegistrationDPO = {
     id: dto.id,
+    orgId: dto.org_id,
     eventId: dto.event_id,
     attendeeId: dto.attendee_id,
     status: dto.status,
-    formData: dto.form_data,
-    registeredAt: dto.registered_at,
-  }
-  
-  if (dto.updated_at !== undefined) {
-    result.updatedAt = dto.updated_at
+    attendanceType: dto.attendance_type,
+    answers: dto.answers,
+    eventAttendeeTypeId: dto.event_attendee_type_id || null,
+    badgeTemplateId: dto.badge_template_id || null,
+    invitedAt: dto.invited_at || null,
+    confirmedAt: dto.confirmed_at || null,
+    createdAt: dto.created_at, // Date d'inscription réelle
+    updatedAt: dto.updated_at,
   }
   
   if (dto.attendee) {
@@ -24,6 +27,8 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     }
     if (dto.attendee.phone !== undefined) result.attendee.phone = dto.attendee.phone
     if (dto.attendee.company !== undefined) result.attendee.company = dto.attendee.company
+    if (dto.attendee.job_title !== undefined) result.attendee.jobTitle = dto.attendee.job_title
+    if (dto.attendee.country !== undefined) result.attendee.country = dto.attendee.country
   }
   
   return result
@@ -32,15 +37,18 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
 export function mapRegistrationDPOtoDTO(dpo: RegistrationDPO): RegistrationDTO {
   const result: RegistrationDTO = {
     id: dpo.id,
+    org_id: dpo.orgId,
     event_id: dpo.eventId,
     attendee_id: dpo.attendeeId,
     status: dpo.status,
-    form_data: dpo.formData,
-    registered_at: dpo.registeredAt,
-  }
-  
-  if (dpo.updatedAt !== undefined) {
-    result.updated_at = dpo.updatedAt
+    attendance_type: dpo.attendanceType,
+    answers: dpo.answers,
+    event_attendee_type_id: dpo.eventAttendeeTypeId || null,
+    badge_template_id: dpo.badgeTemplateId || null,
+    invited_at: dpo.invitedAt || null,
+    confirmed_at: dpo.confirmedAt || null,
+    created_at: dpo.createdAt,
+    updated_at: dpo.updatedAt,
   }
   
   if (dpo.attendee) {
@@ -52,6 +60,8 @@ export function mapRegistrationDPOtoDTO(dpo: RegistrationDPO): RegistrationDTO {
     }
     if (dpo.attendee.phone !== undefined) result.attendee.phone = dpo.attendee.phone
     if (dpo.attendee.company !== undefined) result.attendee.company = dpo.attendee.company
+    if (dpo.attendee.jobTitle !== undefined) result.attendee.job_title = dpo.attendee.jobTitle
+    if (dpo.attendee.country !== undefined) result.attendee.country = dpo.attendee.country
   }
   
   return result

@@ -2,7 +2,6 @@ import { rootApi } from '@/services/rootApi'
 import { API_ENDPOINTS } from '@/app/config/constants'
 import type {
   AttendeeDTO,
-  AttendeesListResponse,
   ExportAttendeesResponse,
 } from '../dpo/attendee.dto'
 import type { 
@@ -22,10 +21,13 @@ export interface AttendeesListParams {
   eventId?: string
   page?: number
   limit?: number
+  pageSize?: number
   status?: string
   search?: string
+  q?: string
   tags?: string[]
-  sortBy?: 'firstName' | 'lastName' | 'email' | 'registrationDate' | 'status'
+  sortBy?: 'created_at' | 'updated_at' | 'email' | 'last_name'
+  sortDir?: 'asc' | 'desc'
   sortOrder?: 'asc' | 'desc'
 }
 
@@ -45,8 +47,8 @@ export const attendeesApi = rootApi.injectEndpoints({
         })
         return `${API_ENDPOINTS.ATTENDEES.LIST}?${searchParams.toString()}`
       },
-      transformResponse: (response: AttendeesListResponse) => 
-        response.attendees.map(mapAttendeeDTOtoDPO),
+      transformResponse: (response: { data: AttendeeDTO[] }) => 
+        response.data.map(mapAttendeeDTOtoDPO),
       providesTags: (result) =>
         result
           ? [

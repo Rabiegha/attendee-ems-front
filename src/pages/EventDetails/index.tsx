@@ -1,6 +1,6 @@
-﻿import React, { useState } from 'react'
+﻿import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useGetEventByIdQuery } from '@/features/events/api/eventsApi'
+import { useGetEventByIdQuery, useUpdateRegistrationFieldsMutation } from '@/features/events/api/eventsApi'
 import { useGetRegistrationsQuery } from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import type { RegistrationDPO } from '@/features/registrations/dpo/registration.dpo'
@@ -23,14 +23,11 @@ import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
-import { FormBuilder, type FormField } from '@/features/events/ui/FormBuilder'
+import { FormBuilder, type FormField, getFieldById } from '@/features/events/components/FormBuilder'
 import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 
 type TabType = 'details' | 'registrations' | 'form' | 'settings'
-
-// Helper pour générer des IDs uniques
-const generateId = () => `local-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -39,47 +36,143 @@ export const EventDetails: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   
-  // State local pour les inscriptions importées (disparaissent au reload)
-  const [localRegistrations, setLocalRegistrations] = useState<RegistrationDPO[]>([])
+  const { data: event, isLoading: eventLoading, error } = useGetEventByIdQuery(id!)
+  const [updateRegistrationFields] = useUpdateRegistrationFieldsMutation()
   
-  // State pour les champs du formulaire
-  const [formFields, setFormFields] = useState<FormField[]>([
-    { id: 'firstName', name: 'firstName', label: 'Prénom', type: 'text', required: true },
-    { id: 'lastName', name: 'lastName', label: 'Nom', type: 'text', required: true },
-    { id: 'email', name: 'email', label: 'Email', type: 'email', required: true },
-  ])
+  // State pour les champs du formulaire - chargé depuis la BDD ou valeurs par défaut
+  const [formFields, setFormFields] = useState<FormField[]>([])
+  
+  // State pour la configuration du bouton submit
+  const [submitButtonText, setSubmitButtonText] = useState<string>("S'inscrire")
+  const [submitButtonColor, setSubmitButtonColor] = useState<string>('#4F46E5')
+  const [showTitle, setShowTitle] = useState<boolean>(true)
+  const [showDescription, setShowDescription] = useState<boolean>(true)
+  
+  // Charger les champs depuis event.settings.registration_fields quand l'événement est chargé
+  useEffect(() => {
+    if (event?.settings?.registration_fields && Array.isArray(event.settings.registration_fields)) {
+      // Reconstituer les champs avec leurs icônes depuis PREDEFINED_FIELDS
+      const fieldsWithIcons = event.settings.registration_fields.map((savedField: any) => {
+        const predefinedField = getFieldById(savedField.key)
+        if (predefinedField) {
+          // Fusionner le champ sauvegardé avec l'icône du champ prédéfini
+          return {
+            ...savedField,
+            icon: predefinedField.icon
+          }
+        }
+        return savedField
+      })
+      setFormFields(fieldsWithIcons)
+    } else {
+      // Valeurs par défaut si aucun champ n'est configuré
+      const firstName = getFieldById('first_name')
+      const lastName = getFieldById('last_name')
+      const email = getFieldById('email')
+      
+      if (firstName && lastName && email) {
+        setFormFields([
+          { ...firstName, id: `field_${Date.now()}_1`, order: 0 },
+          { ...lastName, id: `field_${Date.now()}_2`, order: 1 },
+          { ...email, id: `field_${Date.now()}_3`, order: 2 },
+        ])
+      }
+    }
+    
+    // Charger la configuration du bouton submit
+    if (event?.settings?.submitButtonText) {
+      setSubmitButtonText(event.settings.submitButtonText)
+    }
+    if (event?.settings?.submitButtonColor) {
+      setSubmitButtonColor(event.settings.submitButtonColor)
+    }
+    if (event?.settings?.showTitle !== undefined) {
+      setShowTitle(event.settings.showTitle)
+    }
+    if (event?.settings?.showDescription !== undefined) {
+      setShowDescription(event.settings.showDescription)
+    }
+  }, [event])
+  
+  // Fonction pour sauvegarder les champs
+  const handleSaveFormFields = async (fields: FormField[]) => {
+    if (!id) return
+    
+    try {
+      // Nettoyer les champs en retirant les icônes (composants React non sérialisables)
+      const cleanedFields = fields.map(field => {
+        const { icon, ...rest } = field as any
+        return rest
+      })
+      
+      await updateRegistrationFields({ 
+        id, 
+        fields: cleanedFields,
+        submitButtonText,
+        submitButtonColor,
+        showTitle,
+        showDescription,
+      }).unwrap()
+      console.log('Champs sauvegardés avec succès')
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des champs:', error)
+      // Log plus de détails
+      if (error && typeof error === 'object' && 'data' in error) {
+        console.error('Détails de l\'erreur:', JSON.stringify(error.data, null, 2))
+      }
+    }
+  }
+  
+  // Fonction pour sauvegarder la configuration du bouton
+  const handleConfigChange = (config: { 
+    submitButtonText?: string
+    submitButtonColor?: string
+    showTitle?: boolean
+    showDescription?: boolean
+  }) => {
+    if (config.submitButtonText !== undefined) {
+      setSubmitButtonText(config.submitButtonText)
+    }
+    if (config.submitButtonColor !== undefined) {
+      setSubmitButtonColor(config.submitButtonColor)
+    }
+    if (config.showTitle !== undefined) {
+      setShowTitle(config.showTitle)
+    }
+    if (config.showDescription !== undefined) {
+      setShowDescription(config.showDescription)
+    }
+    
+    // Sauvegarder immédiatement
+    if (!id) return
+    
+    updateRegistrationFields({
+      id,
+      fields: formFields.map(field => {
+        const { icon, ...rest } = field as any
+        return rest
+      }),
+      submitButtonText: config.submitButtonText ?? submitButtonText,
+      submitButtonColor: config.submitButtonColor ?? submitButtonColor,
+      showTitle: config.showTitle ?? showTitle,
+      showDescription: config.showDescription ?? showDescription,
+    })
+  }
   
   // Mode test pour le formulaire (permet de tester les inscriptions)
   const [isFormTestMode, setIsFormTestMode] = useState(false)
   
-  const { data: event, isLoading: eventLoading, error } = useGetEventByIdQuery(id!)
   const { data: apiRegistrations = [], isLoading: registrationsLoading } = useGetRegistrationsQuery(
     id ? { eventId: id } : skipToken
   )
 
-  // Combiner les inscriptions API + locales
-  const allRegistrations = [...apiRegistrations, ...localRegistrations]
+  // Les inscriptions sont récupérées via l'API RTK Query
+  const allRegistrations = apiRegistrations
 
-  // Callback pour l'import Excel local
-  const handleImportSuccess = (importedData: any[]) => {
-    const newRegistrations: RegistrationDPO[] = importedData.map(data => ({
-      id: generateId(),
-      eventId: id!,
-      attendeeId: generateId(),
-      status: 'awaiting' as const,
-      formData: data.formData || {},
-      registeredAt: new Date().toISOString(),
-      attendee: {
-        id: generateId(),
-        firstName: data.firstName || 'N/A',
-        lastName: data.lastName || 'N/A',
-        email: data.email || 'no-email@local.dev',
-        phone: data.phone,
-        company: data.company,
-      }
-    }))
-    
-    setLocalRegistrations(prev => [...prev, ...newRegistrations])
+  // Callback pour l'import Excel - plus besoin du mode local
+  const handleImportSuccess = (result: any) => {
+    console.log('Import terminé:', result)
+    // La liste sera automatiquement rafraîchie par RTK Query invalidation
   }
 
   if (eventLoading) {
@@ -322,13 +415,10 @@ export const EventDetails: React.FC = () => {
         {activeTab === 'registrations' && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
-                {localRegistrations.length > 0 && (
-                  <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
-                    <span className="mr-2">💾</span>
-                    {localRegistrations.length} inscription{localRegistrations.length > 1 ? 's' : ''} locale{localRegistrations.length > 1 ? 's' : ''} (disparaîtront au reload)
-                  </div>
-                )}
+              <div className="flex items-center space-x-3">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Inscriptions ({allRegistrations.length})
+                </h2>
               </div>
               <div className="flex items-center space-x-3">
                 <Button
@@ -355,6 +445,7 @@ export const EventDetails: React.FC = () => {
             <RegistrationsTable
               registrations={allRegistrations}
               isLoading={registrationsLoading}
+              eventId={id!}
             />
           </div>
         )}
@@ -365,12 +456,20 @@ export const EventDetails: React.FC = () => {
             <div className="space-y-6">
               <FormBuilder
                 fields={formFields}
-                onChange={setFormFields}
+                onChange={(fields: FormField[]) => {
+                  setFormFields(fields)
+                  handleSaveFormFields(fields)
+                }}
+                submitButtonText={submitButtonText}
+                submitButtonColor={submitButtonColor}
+                showTitle={showTitle}
+                showDescription={showDescription}
+                onConfigChange={handleConfigChange}
               />
               
               <EmbedCodeGenerator
                 eventId={event.id}
-                publicToken={event.publicToken || ''}
+                publicToken={event.id}
               />
             </div>
 
@@ -395,6 +494,10 @@ export const EventDetails: React.FC = () => {
                   event={event}
                   fields={formFields}
                   testMode={isFormTestMode}
+                  submitButtonText={submitButtonText}
+                  submitButtonColor={submitButtonColor}
+                  showTitle={showTitle}
+                  showDescription={showDescription}
                 />
               </div>
             </div>

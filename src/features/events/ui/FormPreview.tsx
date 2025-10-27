@@ -1,22 +1,36 @@
 import React, { useState } from 'react'
 import { Calendar, MapPin, Users, CheckCircle } from 'lucide-react'
-import type { FormField } from './FormBuilder'
+import type { FormField } from '../components/FormBuilder'
 import type { EventDPO } from '../dpo/event.dpo'
 import { formatDate } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/hooks/useToast'
+import { useCreateRegistrationMutation } from '@/features/registrations/api/registrationsApi'
 
 interface FormPreviewProps {
   event: EventDPO
   fields: FormField[]
   testMode?: boolean // Si true, le formulaire est fonctionnel
+  submitButtonText?: string
+  submitButtonColor?: string
+  showTitle?: boolean
+  showDescription?: boolean
 }
 
-export const FormPreview: React.FC<FormPreviewProps> = ({ event, fields, testMode = false }) => {
+export const FormPreview: React.FC<FormPreviewProps> = ({ 
+  event, 
+  fields, 
+  testMode = false,
+  submitButtonText = "S'inscrire",
+  submitButtonColor = '#4F46E5',
+  showTitle = true,
+  showDescription = true
+}) => {
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const toast = useToast()
+  const [createRegistration] = useCreateRegistrationMutation()
 
   const handleInputChange = (fieldId: string, value: string) => {
     setFormData(prev => ({ ...prev, [fieldId]: value }))
@@ -29,12 +43,83 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ event, fields, testMod
 
     setIsSubmitting(true)
 
-    // Simule un appel API
-    setTimeout(() => {
+    try {
+      // Extract fields based on their database mapping
+      const attendee: any = {}
+      const registrationData: any = {}
+      const answers: any = {}
+      
+      // Group form data by field configuration
+      fields.forEach(field => {
+        const value = formData[field.id]
+        if (!value) return
+        
+        if (field.attendeeField) {
+          // Map to attendee table column
+          attendee[field.attendeeField] = value
+        } else if (field.registrationField) {
+          // Map to registration table column
+          registrationData[field.registrationField] = value
+        } else if (field.storeInAnswers) {
+          // Store in answers JSON
+          answers[field.key] = value
+        }
+      })
+      
+      // Email is required
+      if (!attendee.email) {
+        toast.error('Email requis', 'L\'adresse email est obligatoire')
+        return
+      }
+
+      // Determine attendance type
+      let attendanceType: 'onsite' | 'online' | 'hybrid' = 'onsite'
+      if (registrationData.attendance_type) {
+        attendanceType = registrationData.attendance_type
+      } else if (event.locationType === 'online') {
+        attendanceType = 'online'
+      } else if (event.locationType === 'hybrid') {
+        attendanceType = 'hybrid'
+      }
+
+      const requestData: any = {
+        attendee,
+        attendance_type: attendanceType,
+      }
+      
+      // Add registration-specific data
+      if (registrationData.attendee_type) {
+        requestData.attendee_type = registrationData.attendee_type
+      }
+      
+      // Add custom answers
+      if (Object.keys(answers).length > 0) {
+        requestData.answers = answers
+      }
+
+      await createRegistration({
+        eventId: event.id,
+        data: requestData,
+      }).unwrap()
+
       setIsSubmitted(true)
+      toast.success('Inscription réussie !', 'Votre inscription a été enregistrée')
+    } catch (error: any) {
+      console.error('Erreur lors de l\'inscription:', error)
+      
+      // Handle specific error cases
+      let errorMessage = 'Une erreur est survenue lors de l\'inscription'
+      
+      if (error?.status === 409) {
+        errorMessage = 'Cet email est déjà inscrit à cet événement'
+      } else if (error?.data?.message) {
+        errorMessage = error.data.message
+      }
+      
+      toast.error('Erreur d\'inscription', errorMessage)
+    } finally {
       setIsSubmitting(false)
-      toast.success('Inscription réussie !', 'Votre inscription a été enregistrée (mode test)')
-    }, 1000)
+    }
   }
 
   const resetForm = () => {
@@ -70,9 +155,9 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ event, fields, testMod
             disabled={disabled}
           >
             <option value="">Sélectionnez une option</option>
-            {field.options?.map((option, idx) => (
-              <option key={idx} value={option}>
-                {option}
+            {field.options?.map((option: { value: string; label: string }, idx: number) => (
+              <option key={idx} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
@@ -95,30 +180,32 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ event, fields, testMod
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg transition-colors duration-200">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          {event.name}
-        </h2>
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
-          <div className="flex items-center">
-            <Calendar className="h-4 w-4 mr-2" />
-            {formatDate(event.startDate)}
-          </div>
-          <div className="flex items-center">
-            <MapPin className="h-4 w-4 mr-2" />
-            {event.location}
-          </div>
-          {event.maxAttendees && event.maxAttendees < 100000 && (
+      {showTitle && (
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            {event.name}
+          </h2>
+          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
             <div className="flex items-center">
-              <Users className="h-4 w-4 mr-2" />
-              {event.maxAttendees} places
+              <Calendar className="h-4 w-4 mr-2" />
+              {formatDate(event.startDate)}
             </div>
-          )}
+            <div className="flex items-center">
+              <MapPin className="h-4 w-4 mr-2" />
+              {event.location}
+            </div>
+            {event.maxAttendees && event.maxAttendees < 100000 && (
+              <div className="flex items-center">
+                <Users className="h-4 w-4 mr-2" />
+                {event.maxAttendees} places
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Description */}
-      {event.description && (
+      {showDescription && event.description && (
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
             {event.description}
@@ -179,13 +266,14 @@ export const FormPreview: React.FC<FormPreviewProps> = ({ event, fields, testMod
                 ))}
 
                 <div className="pt-4">
-                  <Button 
-                    className="w-full" 
+                  <button
                     type="submit"
                     disabled={!testMode || isSubmitting}
+                    className="w-full px-4 py-2 rounded-md text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
+                    style={{ backgroundColor: submitButtonColor }}
                   >
-                    {isSubmitting ? 'Inscription en cours...' : 'S\'inscrire'}
-                  </Button>
+                    {isSubmitting ? 'Inscription en cours...' : submitButtonText}
+                  </button>
                 </div>
 
                 {testMode && (

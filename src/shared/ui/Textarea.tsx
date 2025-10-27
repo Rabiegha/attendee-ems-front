@@ -1,5 +1,5 @@
 /**
- * 🎨 COMPOSANT TEXTAREA AVEC DARK MODE
+ * COMPOSANT TEXTAREA AVEC DARK MODE
  * 
  * Textarea réutilisable avec support complet du thème sombre
  */

@@ -34,8 +34,8 @@ export const Dashboard: React.FC = () => {
   
   const { data: attendees = [], isLoading: attendeesLoading } = useGetAttendeesQuery({
     limit: 10,
-    sortBy: 'registrationDate',
-    sortOrder: 'desc',
+    sortBy: 'email',
+    sortDir: 'desc',
   })
 
   const handleCreateEvent = () => {

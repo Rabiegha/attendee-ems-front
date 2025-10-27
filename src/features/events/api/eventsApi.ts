@@ -15,10 +15,13 @@ export interface EventsListParams {
 }
 
 export interface EventsListResponse {
-  events: EventDTO[]
-  total: number
-  page: number
-  limit: number
+  data: EventDTO[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }
 
 export const eventsApi = rootApi.injectEndpoints({
@@ -38,7 +41,7 @@ export const eventsApi = rootApi.injectEndpoints({
         return `${API_ENDPOINTS.EVENTS.LIST}?${searchParams.toString()}`
       },
       transformResponse: (response: EventsListResponse) => 
-        response.events.map(mapEventDTOtoDPO),
+        response.data.map(mapEventDTOtoDPO),
       providesTags: (result) =>
         result
           ? [
@@ -90,6 +93,31 @@ export const eventsApi = rootApi.injectEndpoints({
       },
     }),
 
+    updateRegistrationFields: builder.mutation<EventDPO, { 
+      id: string
+      fields: any[]
+      submitButtonText?: string
+      submitButtonColor?: string
+      showTitle?: boolean
+      showDescription?: boolean
+    }>({
+      query: ({ id, fields, submitButtonText, submitButtonColor, showTitle, showDescription }) => ({
+        url: API_ENDPOINTS.EVENTS.UPDATE(id),
+        method: 'PUT',
+        body: { 
+          registration_fields: fields,
+          ...(submitButtonText !== undefined && { submit_button_text: submitButtonText }),
+          ...(submitButtonColor !== undefined && { submit_button_color: submitButtonColor }),
+          ...(showTitle !== undefined && { show_title: showTitle }),
+          ...(showDescription !== undefined && { show_description: showDescription }),
+        },
+      }),
+      transformResponse: (response: EventDTO) => mapEventDTOtoDPO(response),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Event', id },
+      ],
+    }),
+
     deleteEvent: builder.mutation<void, string>({
       query: (id) => ({
         url: API_ENDPOINTS.EVENTS.DELETE(id),
@@ -122,6 +150,7 @@ export const {
   useGetEventByIdQuery,
   useCreateEventMutation,
   useUpdateEventMutation,
+  useUpdateRegistrationFieldsMutation,
   useDeleteEventMutation,
   useChangeEventStatusMutation,
 } = eventsApi

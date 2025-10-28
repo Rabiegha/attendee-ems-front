@@ -48,7 +48,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 mb-6 border-b border-gray-200 dark:border-gray-700',
+        'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700',
         className
       )}
     >
@@ -60,9 +60,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
         )}
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-              {title}
-            </h1>
+            <h1 className="page-title mb-0">{title}</h1>
             {badge && (
               <span
                 className={cn(
@@ -75,9 +73,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             )}
           </div>
           {description && (
-            <p className="text-gray-600 dark:text-gray-300 mt-1.5">
-              {description}
-            </p>
+            <p className="page-subtitle mb-0 mt-1.5">{description}</p>
           )}
         </div>
       </div>

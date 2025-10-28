@@ -10,9 +10,9 @@ interface PageSectionProps {
 }
 
 const spacingClasses = {
-  sm: 'space-y-3 mb-6',
-  md: 'space-y-4 mb-8',
-  lg: 'space-y-6 mb-10',
+  sm: 'space-compact mb-6',
+  md: 'space-form mb-8',
+  lg: 'space-section mb-10',
   xl: 'space-y-8 mb-12',
 }
 
@@ -37,16 +37,8 @@ export const PageSection: React.FC<PageSectionProps> = ({
     <section className={cn(spacingClasses[spacing], className)}>
       {(title || description) && (
         <div className="mb-4">
-          {title && (
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {title}
-            </h2>
-          )}
-          {description && (
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              {description}
-            </p>
-          )}
+          {title && <h2 className="section-title">{title}</h2>}
+          {description && <p className="section-subtitle">{description}</p>}
         </div>
       )}
       {children}

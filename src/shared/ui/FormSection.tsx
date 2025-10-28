@@ -28,11 +28,11 @@ export const FormSection: React.FC<FormSectionProps> = ({
   required = false,
 }) => {
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-form', className)}>
       {(title || description) && (
         <div className="pb-3 border-b border-gray-200 dark:border-gray-700">
           {title && (
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-heading-sm flex items-center gap-2">
               {title}
               {required && (
                 <span
@@ -45,13 +45,11 @@ export const FormSection: React.FC<FormSectionProps> = ({
             </h3>
           )}
           {description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {description}
-            </p>
+            <p className="section-subtitle mt-1">{description}</p>
           )}
         </div>
       )}
-      <div className="space-y-4">{children}</div>
+      <div className="space-form">{children}</div>
     </div>
   )
 }

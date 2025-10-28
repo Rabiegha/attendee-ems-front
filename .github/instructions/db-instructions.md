@@ -372,12 +372,12 @@ FK composites :
 
 RELATIONSHIPS (cardinalités)
 organizations 1—_ users, roles, org_activity_sectors, attendee_types, org_event_types, events
-users _—1 roles (via (role_id, org_id))
+users _—1 roles (via (role*id, org_id))
 roles — permissions (via role_permissions)
 org_activity_sectors (adjacency via parent_id, même org)
 events 1—1 event_settings ; events 1—1 email_settings ; events 1—1 event_qr_settings
-events 1—_ subevents ; events 1—_ registrations ; events 1—_ badges ; events 1—_ partner_scans ; events 1—_ presence_visits ; events 1—_ event_access
-attendee_types 1—_ event_attendee_types ; event_attendee_types 1—_ registrations (optionnel)
+events 1—* subevents ; events 1—_ registrations ; events 1—_ badges ; events 1—_ partner_scans ; events 1—_ presence*visits ; events 1—* event*access
+attendee_types 1—* event*attendee_types ; event_attendee_types 1—* registrations (optionnel)
 attendees 1—_ registrations
-registrations 1—1 badges ; 1—_ presence_visits ; 1—_ partner_scans
-users 1—_ partner_scans (scanners) ; users 1—\* event_access
+registrations 1—1 badges ; 1—_ presence*visits ; 1—* partner*scans
+users 1—* partner_scans (scanners) ; users 1—\* event_access

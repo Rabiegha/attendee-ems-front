@@ -54,7 +54,7 @@ export const AuthRecoveryPage: React.FC = () => {
 
         <div className="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
           <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-500 mb-2">
-            ⚠️ Que fait cette action ?
+            Que fait cette action ?
           </h3>
           <ul className="text-sm text-yellow-700 dark:text-yellow-400 space-y-1 list-disc list-inside">
             <li>Supprime toutes les données de session</li>
@@ -99,9 +99,8 @@ export const AuthRecoveryPage: React.FC = () => {
 
         <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
           <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-            💡 Cette page ne devrait être utilisée qu'en cas de problème
-            technique. Si le problème persiste, contactez votre administrateur
-            système.
+            Cette page ne devrait être utilisée qu'en cas de problème technique.
+            Si le problème persiste, contactez votre administrateur système.
           </p>
         </div>
       </div>

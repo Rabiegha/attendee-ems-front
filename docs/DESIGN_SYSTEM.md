@@ -96,7 +96,6 @@ import { Button } from '@/shared/ui'
 
 ```tsx
 import { Input } from '@/shared/ui'
-
 ;<Input
   placeholder="Saisissez votre texte"
   error={!!errors.field}
@@ -108,7 +107,6 @@ import { Input } from '@/shared/ui'
 
 ```tsx
 import { Select, SelectOption } from '@/shared/ui'
-
 ;<Select placeholder="Choisissez une option">
   <SelectOption value="1">Option 1</SelectOption>
   <SelectOption value="2">Option 2</SelectOption>
@@ -119,7 +117,6 @@ import { Select, SelectOption } from '@/shared/ui'
 
 ```tsx
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui'
-
 ;<Card variant="elevated" padding="lg">
   <CardHeader>
     <CardTitle>Titre</CardTitle>
@@ -134,7 +131,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui'
 
 ```tsx
 import { Modal } from '@/shared/ui'
-
 ;<Modal
   isOpen={isOpen}
   onClose={onClose}

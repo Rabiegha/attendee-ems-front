@@ -411,6 +411,6 @@ Si score < 95%, lister les actions prioritaires:
 
 ---
 
-**Date de validation:** ****\_\_****  
-**Validé par:** ****\_\_****  
-**Prochaine revue:** ****\_\_****
+**Date de validation:** \***\*\_\_\*\***  
+**Validé par:** \***\*\_\_\*\***  
+**Prochaine revue:** \***\*\_\_\*\***

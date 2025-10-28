@@ -157,7 +157,7 @@ export const InvitationsPage: React.FC = () => {
     // Validation des champs
     if (!formData.email || !formData.roleId) {
       showWarning(
-        '⚠️ Champs requis',
+        'Champs requis',
         "Veuillez remplir tous les champs requis avant d'envoyer l'invitation."
       )
       return
@@ -167,13 +167,13 @@ export const InvitationsPage: React.FC = () => {
     if (isSuperAdmin) {
       if (formData.createNewOrg && !formData.newOrgName) {
         showWarning(
-          "⚠️ Nom d'organisation requis",
+          "Nom d'organisation requis",
           'Veuillez saisir le nom de la nouvelle organisation.'
         )
         return
       } else if (!formData.createNewOrg && !formData.orgId) {
         showWarning(
-          '⚠️ Organisation requise',
+          'Organisation requise',
           'Veuillez sélectionner une organisation ou créer une nouvelle.'
         )
         return
@@ -188,7 +188,7 @@ export const InvitationsPage: React.FC = () => {
       // Si on doit créer une nouvelle organisation
       if (isSuperAdmin && formData.createNewOrg && formData.newOrgName) {
         console.log(
-          '🏢 Création de la nouvelle organisation:',
+          'Création de la nouvelle organisation:',
           formData.newOrgName
         )
 
@@ -235,11 +235,11 @@ export const InvitationsPage: React.FC = () => {
             orgErrorMessage.includes('unique constraint')
           ) {
             showWarning(
-              '🏢 Organisation existante',
+              'Organisation existante',
               `Une organisation avec le nom "${formData.newOrgName}" existe déjà. Veuillez choisir un nom différent ou sélectionner l'organisation existante.`
             )
           } else {
-            showError("🏢 Erreur de création d'organisation", orgErrorMessage)
+            showError("Erreur de création d'organisation", orgErrorMessage)
           }
           return // Arrêter ici si la création d'organisation échoue
         }
@@ -287,7 +287,7 @@ export const InvitationsPage: React.FC = () => {
         errorMessage.includes('déjà')
       ) {
         showWarning(
-          '👤 Utilisateur existant',
+          'Utilisateur existant',
           `Un utilisateur avec l'email ${formData.email} existe déjà.`
         )
       } else if (
@@ -295,7 +295,7 @@ export const InvitationsPage: React.FC = () => {
         errorMessage.includes('email invalide')
       ) {
         showError(
-          '📧 Email invalide',
+          'Email invalide',
           "L'adresse email fournie n'est pas valide. Veuillez vérifier le format."
         )
       } else if (
@@ -303,7 +303,7 @@ export const InvitationsPage: React.FC = () => {
         errorMessage.includes('non autorisé')
       ) {
         showError(
-          '🔒 Accès refusé',
+          'Accès refusé',
           "Vous n'avez pas les permissions nécessaires pour envoyer cette invitation."
         )
       } else {
@@ -329,7 +329,7 @@ export const InvitationsPage: React.FC = () => {
     // 🎯 Mettre à jour selectedOrgId pour charger les rôles correspondants
     if (field === 'orgId' && typeof value === 'string') {
       const newOrgId = value || null
-      console.log(`🏢 [INVITATIONS] Setting selectedOrgId to:`, newOrgId)
+      console.log(`[INVITATIONS] Setting selectedOrgId to:`, newOrgId)
       setSelectedOrgId(newOrgId)
     } else if (field === 'createNewOrg') {
       // Si on bascule vers "créer nouvelle org", on reset selectedOrgId
@@ -405,7 +405,7 @@ export const InvitationsPage: React.FC = () => {
                 <FormField
                   label="Organisation"
                   required
-                  hint="⚠️ Sélectionnez d'abord l'organisation pour voir les rôles disponibles"
+                  hint="Sélectionnez d'abord l'organisation pour voir les rôles disponibles"
                 >
                   <div className="space-y-4">
                     {/* Option: Organisation existante */}
@@ -575,8 +575,8 @@ export const InvitationsPage: React.FC = () => {
                 </div>
                 {formData.createNewOrg && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    💡 Rôles par défaut (Admin, Manager, Partner, Viewer,
-                    Hôtesse) disponibles pour la nouvelle organisation
+                    Rôles par défaut (Admin, Manager, Partner, Viewer, Hôtesse)
+                    disponibles pour la nouvelle organisation
                   </p>
                 )}
               </FormField>

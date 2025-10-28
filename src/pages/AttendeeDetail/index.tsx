@@ -83,7 +83,7 @@ export const AttendeeDetail: React.FC = () => {
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
             <div className="text-red-600 dark:text-red-400 mb-2">
-              ❌ Erreur lors du chargement
+              Erreur lors du chargement
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               Impossible de charger les détails du participant.

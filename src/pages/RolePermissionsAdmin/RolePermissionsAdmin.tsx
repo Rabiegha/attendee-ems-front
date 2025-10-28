@@ -276,7 +276,7 @@ export const RolePermissionsAdmin: React.FC = () => {
                 ) : (
                   <div className="space-y-2">
                     {roles.map((role) => {
-                      // 🔒 Vérifier si le rôle peut être modifié
+                      // Vérifier si le rôle peut être modifié
                       const isOwnRole = currentUser?.role?.id === role.id
                       const hierarchyCheck = canModifyUser(
                         currentUserRoleCode,
@@ -335,7 +335,7 @@ export const RolePermissionsAdmin: React.FC = () => {
             <div className="lg:col-span-2">
               {selectedRole ? (
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-                  {/* 🔒 Message d'avertissement si rôle protégé */}
+                  {/* Message d'avertissement si rôle protégé */}
                   {(() => {
                     const isOwnRole = currentUser?.role?.id === selectedRole.id
                     const hierarchyCheck = canModifyUser(
@@ -384,7 +384,7 @@ export const RolePermissionsAdmin: React.FC = () => {
                   <div className="space-y-6">
                     {Object.entries(groupedPermissions).map(
                       ([category, categoryPermissions]) => {
-                        // 🔒 Vérifier si on peut modifier ce rôle
+                        // Vérifier si on peut modifier ce rôle
                         const isOwnRole =
                           currentUser?.role?.id === selectedRole.id
                         const hierarchyCheck = canModifyUser(

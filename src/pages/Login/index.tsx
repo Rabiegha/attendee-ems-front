@@ -81,8 +81,8 @@ export const LoginPage: React.FC = () => {
     watch,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    mode: 'onChange', // ✅ Validation en temps réel pendant la saisie
-    reValidateMode: 'onChange', // ✅ Re-validation aussi en temps réel
+    mode: 'onChange', // Validation en temps réel pendant la saisie
+    reValidateMode: 'onChange', // Re-validation aussi en temps réel
   })
 
   const [emailValue, passwordValue] = watch(['email', 'password'])

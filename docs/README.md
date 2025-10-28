@@ -6,25 +6,26 @@ Ce dossier contient toute la documentation technique et utilisateur du système 
 
 ### 🔧 Documentation technique
 
-| Document | Description | Mise à jour |
-|----------|-------------|-------------|
-| [`TEST_ACCOUNTS.md`](./TEST_ACCOUNTS.md) | **Comptes de test multi-organisations** - Liste complète des comptes disponibles pour tester les permissions RBAC | 24/09/2025 |
-| [`ATTENDEES_ARCHITECTURE.md`](./ATTENDEES_ARCHITECTURE.md) | Architecture du système Attendees/Registrations avec CRM intégré | - |
-| [`USER_CREATION_WORKFLOW.md`](./USER_CREATION_WORKFLOW.md) | Workflow sécurisé de création d'utilisateur par invitation | - |
-| [`LOGOUT_CACHE_FIX.md`](./LOGOUT_CACHE_FIX.md) | Fix critique - Nettoyage cache RTK Query à la déconnexion | - |
+| Document                                                   | Description                                                                                                       | Mise à jour |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------- |
+| [`TEST_ACCOUNTS.md`](./TEST_ACCOUNTS.md)                   | **Comptes de test multi-organisations** - Liste complète des comptes disponibles pour tester les permissions RBAC | 24/09/2025  |
+| [`ATTENDEES_ARCHITECTURE.md`](./ATTENDEES_ARCHITECTURE.md) | Architecture du système Attendees/Registrations avec CRM intégré                                                  | -           |
+| [`USER_CREATION_WORKFLOW.md`](./USER_CREATION_WORKFLOW.md) | Workflow sécurisé de création d'utilisateur par invitation                                                        | -           |
+| [`LOGOUT_CACHE_FIX.md`](./LOGOUT_CACHE_FIX.md)             | Fix critique - Nettoyage cache RTK Query à la déconnexion                                                         | -           |
 
 ### 🐛 Documentation des corrections
 
-| Document | Description | Statut |
-|----------|-------------|---------|
-| [`DASHBOARD_ACCESS_FIX.md`](./DASHBOARD_ACCESS_FIX.md) | Correction accès dashboard après login | ✅ Résolu |
-| [`EVENT_ACCESS_SOLUTION.md`](./EVENT_ACCESS_SOLUTION.md) | Solution d'accès aux événements | ✅ Résolu |
-| [`EVENT_LIST_ACCESS_FIX.md`](./EVENT_LIST_ACCESS_FIX.md) | Fix liste des événements | ✅ Résolu |
-| [`SUPER_ADMIN_EVENT_ACCESS_FIX.md`](./SUPER_ADMIN_EVENT_ACCESS_FIX.md) | Correction accès super admin | ✅ Résolu |
+| Document                                                               | Description                            | Statut    |
+| ---------------------------------------------------------------------- | -------------------------------------- | --------- |
+| [`DASHBOARD_ACCESS_FIX.md`](./DASHBOARD_ACCESS_FIX.md)                 | Correction accès dashboard après login | ✅ Résolu |
+| [`EVENT_ACCESS_SOLUTION.md`](./EVENT_ACCESS_SOLUTION.md)               | Solution d'accès aux événements        | ✅ Résolu |
+| [`EVENT_LIST_ACCESS_FIX.md`](./EVENT_LIST_ACCESS_FIX.md)               | Fix liste des événements               | ✅ Résolu |
+| [`SUPER_ADMIN_EVENT_ACCESS_FIX.md`](./SUPER_ADMIN_EVENT_ACCESS_FIX.md) | Correction accès super admin           | ✅ Résolu |
 
-##  Environnement de test
+## Environnement de test
 
 ### Accès aux comptes de test
+
 ```bash
 # Via l'interface (développement uniquement)
 # Bouton " Comptes test" en bas à droite de l'écran de login
@@ -34,6 +35,7 @@ Ce dossier contient toute la documentation technique et utilisateur du système 
 ```
 
 ### Base de données de test
+
 ```bash
 # Connexion TablePlus
 Host: localhost
@@ -44,6 +46,7 @@ Database: ems
 ```
 
 ### Reset environnement de test
+
 ```bash
 # Backend - Reset complet des données de test
 cd attendee-ems-back
@@ -73,11 +76,13 @@ docs/
 ## 🔄 Processus de mise à jour
 
 ### Ajout de nouveaux comptes de test
+
 1. **Backend** : Modifier `migrations/20240201000003-create-demo-users.js`
 2. **Frontend** : Mettre à jour `src/shared/ui/TestAccountsModal.tsx`
 3. **Documentation** : Mettre à jour `TEST_ACCOUNTS.md`
 
 ### Ajout de nouvelles organisations
+
 1. **Backend** : Modifier `migrations/20240201000001-create-demo-organizations.js`
 2. **Backend** : Modifier `migrations/20240201000002-create-demo-roles.js`
 3. **Frontend** : Mettre à jour le composant `TestAccountsModal`
@@ -86,11 +91,13 @@ docs/
 ## 🏷️ Conventions de nommage
 
 ### Comptes de test
+
 - **Email** : `[role]@[org-short].test`
 - **Mot de passe** : `[Context][Role]#2024`
 - **Exemple** : `admin@techstart.test` / `TechAdmin#2024`
 
 ### Documents
+
 - **Fixes** : `[COMPONENT]_[ISSUE]_FIX.md`
 - **Architecture** : `[COMPONENT]_ARCHITECTURE.md`
 - **Workflows** : `[PROCESS]_WORKFLOW.md`

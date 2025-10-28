@@ -1,5 +1,13 @@
-import type { AttendeeDTO, CreateAttendeeDTO, UpdateAttendeeDTO } from './attendee.dto'
-import type { AttendeeDPO, CreateAttendeeDPO, UpdateAttendeeDPO } from './attendee.dpo'
+import type {
+  AttendeeDTO,
+  CreateAttendeeDTO,
+  UpdateAttendeeDTO,
+} from './attendee.dto'
+import type {
+  AttendeeDPO,
+  CreateAttendeeDPO,
+  UpdateAttendeeDPO,
+} from './attendee.dpo'
 
 /**
  * Maps AttendeeDTO from API to AttendeeDPO for client use
@@ -15,46 +23,50 @@ export const mapAttendeeDTOtoDPO = (dto: AttendeeDTO): AttendeeDPO => {
     isActive: dto.is_active,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
-    
+
     // Computed properties
     displayName: `${dto.first_name} ${dto.last_name}`.trim() || dto.email,
     canCheckIn: dto.is_active, // Active users can check in
   }
-  
+
   if (dto.phone) dpo.phone = dto.phone
   if (dto.company) dpo.company = dto.company
   if (dto.job_title) dpo.jobTitle = dto.job_title
   if (dto.country) dpo.country = dto.country
   if (dto.metadata) dpo.metadata = dto.metadata
   if (dto.labels) dpo.labels = dto.labels
-  
+
   return dpo
 }
 
 /**
  * Maps CreateAttendeeDPO to CreateAttendeeDTO for API
  */
-export const mapCreateAttendeeDPOtoDTO = (dpo: CreateAttendeeDPO): CreateAttendeeDTO => {
+export const mapCreateAttendeeDPOtoDTO = (
+  dpo: CreateAttendeeDPO
+): CreateAttendeeDTO => {
   const dto: CreateAttendeeDTO = {
     first_name: dpo.firstName,
     last_name: dpo.lastName,
     email: dpo.email,
   }
-  
+
   if (dpo.phone) dto.phone = dpo.phone
   if (dpo.company) dto.company = dpo.company
   if (dpo.jobTitle) dto.job_title = dpo.jobTitle
   if (dpo.country) dto.country = dpo.country
   if (dpo.metadata) dto.metadata = dpo.metadata
   if (dpo.labels) dto.labels = dpo.labels
-  
+
   return dto
 }
 
 /**
  * Maps UpdateAttendeeDPO to UpdateAttendeeDTO for API
  */
-export const mapUpdateAttendeeDPOtoDTO = (dpo: UpdateAttendeeDPO): UpdateAttendeeDTO => ({
+export const mapUpdateAttendeeDPOtoDTO = (
+  dpo: UpdateAttendeeDPO
+): UpdateAttendeeDTO => ({
   ...(dpo.firstName && { first_name: dpo.firstName }),
   ...(dpo.lastName && { last_name: dpo.lastName }),
   ...(dpo.email && { email: dpo.email }),

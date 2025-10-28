@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { GripVertical, Trash2, Lock, Plus, X, Undo2, Redo2, RotateCcw } from 'lucide-react'
+import {
+  GripVertical,
+  Trash2,
+  Lock,
+  Plus,
+  X,
+  Undo2,
+  Redo2,
+  RotateCcw,
+} from 'lucide-react'
 import { PredefinedFieldTemplate, PREDEFINED_FIELDS } from './FormFieldLibrary'
 
 export interface FormField extends Omit<PredefinedFieldTemplate, 'id'> {
@@ -22,7 +31,7 @@ interface FormBuilderProps {
   submitButtonColor?: string
   showTitle?: boolean
   showDescription?: boolean
-  onConfigChange?: (config: { 
+  onConfigChange?: (config: {
     submitButtonText?: string
     submitButtonColor?: string
     showTitle?: boolean
@@ -34,7 +43,7 @@ interface FormBuilderProps {
 export const FormBuilder: React.FC<FormBuilderProps> = ({
   fields,
   onChange,
-  submitButtonText = 'S\'inscrire',
+  submitButtonText = "S'inscrire",
   submitButtonColor = '#4F46E5',
   showTitle = true,
   showDescription = true,
@@ -56,15 +65,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   useEffect(() => {
     if (!isUpdatingFromHistory && fields.length > 0) {
       const lastHistoryEntry = history[historyIndex]
-      const fieldsChanged = JSON.stringify(lastHistoryEntry) !== JSON.stringify(fields)
-      
+      const fieldsChanged =
+        JSON.stringify(lastHistoryEntry) !== JSON.stringify(fields)
+
       if (fieldsChanged && lastHistoryEntry) {
-        setHistory(prev => {
+        setHistory((prev) => {
           const newHistory = prev.slice(0, historyIndex + 1)
           newHistory.push(fields)
           return newHistory.slice(-50) // Keep last 50 entries
         })
-        setHistoryIndex(prev => Math.min(prev + 1, 49))
+        setHistoryIndex((prev) => Math.min(prev + 1, 49))
       }
     }
     setIsUpdatingFromHistory(false)
@@ -102,7 +112,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
         undo()
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+      } else if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === 'y' || (e.key === 'z' && e.shiftKey))
+      ) {
         e.preventDefault()
         redo()
       }
@@ -113,7 +126,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }, [undo, redo])
 
   const handleAddField = (fieldKey: string) => {
-    const template = PREDEFINED_FIELDS.find(f => f.key === fieldKey)
+    const template = PREDEFINED_FIELDS.find((f) => f.key === fieldKey)
     if (!template) return
 
     const newField: FormField = {
@@ -127,20 +140,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   const handleRemoveField = (fieldId: string) => {
     const updatedFields = fields
-      .filter(f => f.id !== fieldId)
+      .filter((f) => f.id !== fieldId)
       .map((f, index) => ({ ...f, order: index }))
     onChange(updatedFields)
   }
 
   const handleToggleRequired = (fieldId: string) => {
-    const updatedFields = fields.map(f =>
+    const updatedFields = fields.map((f) =>
       f.id === fieldId ? { ...f, required: !f.required } : f
     )
     onChange(updatedFields)
   }
 
   const handleUpdateField = (fieldId: string, updates: Partial<FormField>) => {
-    const updatedFields = fields.map(f =>
+    const updatedFields = fields.map((f) =>
       f.id === fieldId ? { ...f, ...updates } : f
     )
     onChange(updatedFields)
@@ -149,32 +162,36 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const handleAddOption = (fieldId: string) => {
     const optionValue = newOptions[fieldId]?.trim()
     if (!optionValue) return
-    
-    const field = fields.find(f => f.id === fieldId)
+
+    const field = fields.find((f) => f.id === fieldId)
     if (!field || field.type !== 'select') return
-    
+
     const currentOptions = field.options || []
     const newOption = { value: optionValue, label: optionValue }
-    
+
     handleUpdateField(fieldId, {
-      options: [...currentOptions, newOption]
+      options: [...currentOptions, newOption],
     })
-    
-    setNewOptions(prev => ({ ...prev, [fieldId]: '' }))
+
+    setNewOptions((prev) => ({ ...prev, [fieldId]: '' }))
   }
 
   const handleRemoveOption = (fieldId: string, optionIndex: number) => {
-    const field = fields.find(f => f.id === fieldId)
+    const field = fields.find((f) => f.id === fieldId)
     if (!field || field.type !== 'select' || !field.options) return
-    
+
     const newOptions = field.options.filter((_, idx) => idx !== optionIndex)
     handleUpdateField(fieldId, { options: newOptions })
   }
 
-  const handleUpdateOption = (fieldId: string, optionIndex: number, newLabel: string) => {
-    const field = fields.find(f => f.id === fieldId)
+  const handleUpdateOption = (
+    fieldId: string,
+    optionIndex: number,
+    newLabel: string
+  ) => {
+    const field = fields.find((f) => f.id === fieldId)
     if (!field || field.type !== 'select' || !field.options) return
-    
+
     const updatedOptions = field.options.map((opt, idx) =>
       idx === optionIndex ? { value: newLabel, label: newLabel } : opt
     )
@@ -188,14 +205,17 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
     if (draggedIndex === null || draggedIndex === index) return
-    
+
     const updatedFields = [...fields]
     const [draggedItem] = updatedFields.splice(draggedIndex, 1)
     if (!draggedItem) return
-    
+
     updatedFields.splice(index, 0, draggedItem)
-    
-    const reorderedFields = updatedFields.map((f, idx) => ({ ...f, order: idx }))
+
+    const reorderedFields = updatedFields.map((f, idx) => ({
+      ...f,
+      order: idx,
+    }))
     onChange(reorderedFields)
     setDraggedIndex(index)
   }
@@ -208,16 +228,20 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   // Reset to default fields
   const handleResetToDefault = () => {
     // Champs par défaut : Prénom, Nom, Email avec tous les champs requis
-    const firstNameTemplate = PREDEFINED_FIELDS.find(f => f.key === 'first_name')
-    const lastNameTemplate = PREDEFINED_FIELDS.find(f => f.key === 'last_name')
-    const emailTemplate = PREDEFINED_FIELDS.find(f => f.key === 'email')
-    
+    const firstNameTemplate = PREDEFINED_FIELDS.find(
+      (f) => f.key === 'first_name'
+    )
+    const lastNameTemplate = PREDEFINED_FIELDS.find(
+      (f) => f.key === 'last_name'
+    )
+    const emailTemplate = PREDEFINED_FIELDS.find((f) => f.key === 'email')
+
     if (!firstNameTemplate || !lastNameTemplate || !emailTemplate) {
       console.error('Templates par défaut introuvables')
       setShowResetConfirm(false)
       return
     }
-    
+
     const defaultFields: FormField[] = [
       {
         ...firstNameTemplate,
@@ -238,7 +262,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         placeholder: emailTemplate.placeholder || '',
       },
     ]
-    
+
     onChange(defaultFields)
     setShowResetConfirm(false)
   }
@@ -249,14 +273,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       const Icon = field.icon
       return <Icon className="w-4 h-4" />
     }
-    
+
     // Sinon, chercher le champ dans PREDEFINED_FIELDS par sa clé
-    const predefinedField = PREDEFINED_FIELDS.find(f => f.key === field.key)
+    const predefinedField = PREDEFINED_FIELDS.find((f) => f.key === field.key)
     if (predefinedField?.icon) {
       const Icon = predefinedField.icon
       return <Icon className="w-4 h-4" />
     }
-    
+
     // Fallback: pas d'icône
     return null
   }
@@ -273,7 +297,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             {fields.length} champ{fields.length !== 1 ? 's' : ''}
           </p>
         </div>
-        
+
         {/* Undo/Redo/Reset Buttons */}
         <div className="flex items-center space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg p-1">
           <button
@@ -292,10 +316,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           >
             <Redo2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           </button>
-          
+
           {/* Separator */}
           <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
-          
+
           {/* Reset Button */}
           <button
             onClick={() => setShowResetConfirm(true)}
@@ -322,20 +346,22 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           className="w-full px-3 py-2 border border-indigo-300 dark:border-indigo-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
         >
           <option value="">-- Choisir un type de champ --</option>
-          {PREDEFINED_FIELDS
-            .filter(field => field.key !== 'attendee_type')
-            .map((field) => (
-              <option key={field.key} value={field.key}>
-                {field.label} ({field.type})
-              </option>
-            ))}
+          {PREDEFINED_FIELDS.filter(
+            (field) => field.key !== 'attendee_type'
+          ).map((field) => (
+            <option key={field.key} value={field.key}>
+              {field.label} ({field.type})
+            </option>
+          ))}
         </select>
       </div>
 
       {/* Field List */}
       {fields.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700">
-          <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">Aucun champ</p>
+          <p className="text-gray-600 dark:text-gray-400 font-medium mb-1">
+            Aucun champ
+          </p>
           <p className="text-sm text-gray-500 dark:text-gray-500">
             Ajoutez des champs ci-dessus
           </p>
@@ -381,7 +407,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       <input
                         type="text"
                         value={field.label}
-                        onChange={(e) => handleUpdateField(field.id, { label: e.target.value })}
+                        onChange={(e) =>
+                          handleUpdateField(field.id, { label: e.target.value })
+                        }
                         placeholder="Laisser vide si non utilisé"
                         className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
@@ -393,7 +421,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       <input
                         type="text"
                         value={field.placeholder || ''}
-                        onChange={(e) => handleUpdateField(field.id, { placeholder: e.target.value })}
+                        onChange={(e) =>
+                          handleUpdateField(field.id, {
+                            placeholder: e.target.value,
+                          })
+                        }
                         placeholder="Ex: Votre nom"
                         className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
@@ -408,7 +440,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     {field.required && (
                       <>
                         <span>•</span>
-                        <span className="text-red-600 dark:text-red-400 font-medium">Obligatoire</span>
+                        <span className="text-red-600 dark:text-red-400 font-medium">
+                          Obligatoire
+                        </span>
                       </>
                     )}
                   </div>
@@ -422,16 +456,29 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       {field.options && field.options.length > 0 && (
                         <div className="space-y-1.5">
                           {field.options.map((option, optIdx) => (
-                            <div key={optIdx} className="flex items-center gap-2">
-                              <span className="text-xs text-gray-400">{optIdx + 1}.</span>
+                            <div
+                              key={optIdx}
+                              className="flex items-center gap-2"
+                            >
+                              <span className="text-xs text-gray-400">
+                                {optIdx + 1}.
+                              </span>
                               <input
                                 type="text"
                                 value={option.label}
-                                onChange={(e) => handleUpdateOption(field.id, optIdx, e.target.value)}
+                                onChange={(e) =>
+                                  handleUpdateOption(
+                                    field.id,
+                                    optIdx,
+                                    e.target.value
+                                  )
+                                }
                                 className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                               />
                               <button
-                                onClick={() => handleRemoveOption(field.id, optIdx)}
+                                onClick={() =>
+                                  handleRemoveOption(field.id, optIdx)
+                                }
                                 className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                                 title="Supprimer"
                               >
@@ -445,8 +492,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         <input
                           type="text"
                           value={newOptions[field.id] || ''}
-                          onChange={(e) => setNewOptions(prev => ({ ...prev, [field.id]: e.target.value }))}
-                          onKeyPress={(e) => e.key === 'Enter' && handleAddOption(field.id)}
+                          onChange={(e) =>
+                            setNewOptions((prev) => ({
+                              ...prev,
+                              [field.id]: e.target.value,
+                            }))
+                          }
+                          onKeyPress={(e) =>
+                            e.key === 'Enter' && handleAddOption(field.id)
+                          }
                           placeholder="Ajouter une option..."
                           className="flex-1 px-3 py-1.5 text-sm border border-dashed border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
                         />
@@ -468,12 +522,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     onClick={() => handleToggleRequired(field.id)}
                     className={`
                       p-2 rounded-lg transition-all
-                      ${field.required
-                        ? 'text-white bg-red-500 hover:bg-red-600 shadow-sm'
-                        : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      ${
+                        field.required
+                          ? 'text-white bg-red-500 hover:bg-red-600 shadow-sm'
+                          : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
                       }
                     `}
-                    title={field.required ? 'Rendre optionnel' : 'Rendre obligatoire'}
+                    title={
+                      field.required ? 'Rendre optionnel' : 'Rendre obligatoire'
+                    }
                   >
                     <Lock className="w-4 h-4" />
                   </button>
@@ -502,7 +559,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <input
               type="checkbox"
               checked={showTitle}
-              onChange={(e) => onConfigChange?.({ submitButtonText, submitButtonColor, showTitle: e.target.checked, showDescription })}
+              onChange={(e) =>
+                onConfigChange?.({
+                  submitButtonText,
+                  submitButtonColor,
+                  showTitle: e.target.checked,
+                  showDescription,
+                })
+              }
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
@@ -513,7 +577,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <input
               type="checkbox"
               checked={showDescription}
-              onChange={(e) => onConfigChange?.({ submitButtonText, submitButtonColor, showTitle, showDescription: e.target.checked })}
+              onChange={(e) =>
+                onConfigChange?.({
+                  submitButtonText,
+                  submitButtonColor,
+                  showTitle,
+                  showDescription: e.target.checked,
+                })
+              }
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
@@ -536,7 +607,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             <input
               type="text"
               value={submitButtonText}
-              onChange={(e) => onConfigChange?.({ submitButtonText: e.target.value, submitButtonColor })}
+              onChange={(e) =>
+                onConfigChange?.({
+                  submitButtonText: e.target.value,
+                  submitButtonColor,
+                })
+              }
               placeholder="Ex: S'inscrire maintenant"
               className="w-full px-3 py-2 text-sm border border-purple-300 dark:border-purple-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
             />
@@ -551,7 +627,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 value={customColor}
                 onChange={(e) => {
                   setCustomColor(e.target.value)
-                  onConfigChange?.({ submitButtonText, submitButtonColor: e.target.value })
+                  onConfigChange?.({
+                    submitButtonText,
+                    submitButtonColor: e.target.value,
+                  })
                 }}
                 className="w-12 h-9 rounded-lg border border-purple-300 dark:border-purple-600 cursor-pointer"
                 title="Choisir une couleur"
@@ -564,7 +643,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   setCustomColor(value)
                   // Valider que c'est un code hexa valide avant de sauvegarder
                   if (/^#[0-9A-F]{6}$/i.test(value)) {
-                    onConfigChange?.({ submitButtonText, submitButtonColor: value })
+                    onConfigChange?.({
+                      submitButtonText,
+                      submitButtonColor: value,
+                    })
                   }
                 }}
                 placeholder="#4F46E5"
@@ -588,14 +670,16 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   Réinitialiser le formulaire ?
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Cette action supprimera <strong>tous les champs personnalisés</strong> et rétablira le formulaire par défaut (Prénom, Nom, Email).
+                  Cette action supprimera{' '}
+                  <strong>tous les champs personnalisés</strong> et rétablira le
+                  formulaire par défaut (Prénom, Nom, Email).
                 </p>
                 <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
                   ⚠️ Cette action est irréversible.
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-end space-x-3 mt-6">
               <button
                 onClick={() => setShowResetConfirm(false)}

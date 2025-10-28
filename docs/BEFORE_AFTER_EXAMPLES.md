@@ -73,6 +73,7 @@ export function UsersPage() {
 ```
 
 **Problèmes identifiés:**
+
 - ❌ Duplication du code HTML pour le header
 - ❌ Classes Tailwind en dur partout (text-2xl, text-gray-900, etc.)
 - ❌ Pas de réutilisabilité - chaque page réinvente le header
@@ -92,14 +93,14 @@ export function UsersPageRefactored() {
   return (
     <PageContainer maxWidth="7xl" padding="lg">
       {/* Header standardisé avec PageHeader */}
-      <PageHeader 
+      <PageHeader
         title="Gestion des utilisateurs"
         description="Créez et gérez les comptes utilisateur de votre organisation"
         icon={Users}
         actions={
           <ActionGroup align="right" spacing="md">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleRefresh}
               loading={isLoading}
               leftIcon={<RefreshCw className="h-4 w-4" />}
@@ -107,7 +108,10 @@ export function UsersPageRefactored() {
               Actualiser
             </Button>
             <Can do="create" on="User">
-              <Button onClick={handleInviteUser} leftIcon={<Mail className="h-4 w-4" />}>
+              <Button
+                onClick={handleInviteUser}
+                leftIcon={<Mail className="h-4 w-4" />}
+              >
                 Inviter utilisateur
               </Button>
             </Can>
@@ -149,6 +153,7 @@ export function UsersPageRefactored() {
 ```
 
 **Améliorations:**
+
 - ✅ **Composants réutilisables:** PageContainer, PageHeader, PageSection
 - ✅ **Code réduit:** -30% de lignes de code
 - ✅ **Consistance:** Toutes les pages avec header suivent le même pattern
@@ -197,6 +202,7 @@ export function UsersPageRefactored() {
 ```
 
 **Problèmes:**
+
 - ❌ Labels manuels partout
 - ❌ Gestion d'erreur répétée
 - ❌ Boutons non groupés proprement
@@ -232,6 +238,7 @@ export function UsersPageRefactored() {
 ```
 
 **Améliorations:**
+
 - ✅ **FormField:** Gère label + erreur automatiquement
 - ✅ **FormSection:** Groupement sémantique des champs
 - ✅ **ActionGroup:** Boutons toujours au même endroit avec même spacing
@@ -265,6 +272,7 @@ export function UsersPageRefactored() {
 ```
 
 **Problèmes:**
+
 - ❌ Tailles différentes (text-2xl, text-3xl, text-xl)
 - ❌ Poids différents (font-bold vs font-semibold)
 - ❌ Structure variable (avec/sans icône)
@@ -276,21 +284,21 @@ export function UsersPageRefactored() {
 
 ```tsx
 // Toutes les pages
-<PageHeader 
+<PageHeader
   title="Dashboard"
   description="Vue d'ensemble de votre organisation"
   icon={LayoutDashboard}
   actions={<Button>Action</Button>}
 />
 
-<PageHeader 
+<PageHeader
   title="Événements"
   description="Gérez vos événements"
   icon={Calendar}
   actions={<Button>Créer</Button>}
 />
 
-<PageHeader 
+<PageHeader
   title="Liste des événements"
   icon={Calendar}
 />
@@ -307,6 +315,7 @@ export function UsersPageRefactored() {
 ```
 
 **Améliorations:**
+
 - ✅ **Taille unique:** Toujours text-3xl pour les titres principaux
 - ✅ **Poids unique:** Toujours font-bold
 - ✅ **Structure uniforme:** Icône + titre + description + actions
@@ -326,9 +335,7 @@ export function UsersPageRefactored() {
       <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
         Total événements
       </p>
-      <p className="text-3xl font-bold text-gray-900 dark:text-white">
-        42
-      </p>
+      <p className="text-3xl font-bold text-gray-900 dark:text-white">42</p>
     </div>
     <Calendar className="h-8 w-8 text-blue-600 dark:text-blue-400" />
   </div>
@@ -336,6 +343,7 @@ export function UsersPageRefactored() {
 ```
 
 **Problèmes:**
+
 - ❌ Classes Tailwind répétées partout
 - ❌ 8 lignes pour une simple carte
 - ❌ Pas de variant (elevated, outlined, etc.)
@@ -371,6 +379,7 @@ export function UsersPageRefactored() {
 ```
 
 **Améliorations:**
+
 - ✅ **Moins de code:** 4 lignes au lieu de 8
 - ✅ **Variants disponibles:** default, elevated, outlined, ghost
 - ✅ **Padding configurable:** none, sm, md, lg, xl
@@ -382,27 +391,28 @@ export function UsersPageRefactored() {
 
 ### Code
 
-| Métrique | Avant | Après | Amélioration |
-|----------|-------|-------|--------------|
-| Lignes de code (header) | ~20 | ~8 | -60% |
-| Lignes de code (form) | ~30 | ~18 | -40% |
-| Classes Tailwind dupliquées | ~50 | ~10 | -80% |
-| Temps de développement | 100% | 60% | -40% |
+| Métrique                    | Avant | Après | Amélioration |
+| --------------------------- | ----- | ----- | ------------ |
+| Lignes de code (header)     | ~20   | ~8    | -60%         |
+| Lignes de code (form)       | ~30   | ~18   | -40%         |
+| Classes Tailwind dupliquées | ~50   | ~10   | -80%         |
+| Temps de développement      | 100%  | 60%   | -40%         |
 
 ### Consistance
 
-| Aspect | Avant | Après |
-|--------|-------|-------|
-| Tailles de titres | 4 variantes | 1 standard |
-| Espacements | 6 valeurs | 3 standards |
-| Structure header | 5 variantes | 1 composant |
-| Boutons d'action | Position variable | Toujours à droite |
+| Aspect            | Avant             | Après             |
+| ----------------- | ----------------- | ----------------- |
+| Tailles de titres | 4 variantes       | 1 standard        |
+| Espacements       | 6 valeurs         | 3 standards       |
+| Structure header  | 5 variantes       | 1 composant       |
+| Boutons d'action  | Position variable | Toujours à droite |
 
 ### Maintenabilité
 
 **Scénario:** Changer la taille des titres de page
 
 **Avant:**
+
 ```bash
 # Modifier manuellement 15 fichiers
 # ~30 minutes de travail
@@ -410,6 +420,7 @@ export function UsersPageRefactored() {
 ```
 
 **Après:**
+
 ```bash
 # Modifier PageHeader.tsx OU .page-title
 # ~2 minutes de travail
@@ -430,6 +441,7 @@ Les nouveaux composants apportent:
 6. ✅ **Code plus lisible** - intention claire avec composants sémantiques
 
 **Prochaines étapes:**
+
 - Migrer progressivement les pages existantes
 - Créer des stories Storybook pour chaque composant
 - Ajouter des tests visuels
@@ -438,5 +450,6 @@ Les nouveaux composants apportent:
 ---
 
 **Voir aussi:**
+
 - [COMPONENT_LIBRARY.md](./COMPONENT_LIBRARY.md) - Documentation complète
 - [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md) - Guide du design system

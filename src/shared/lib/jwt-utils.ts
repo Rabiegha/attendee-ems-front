@@ -28,9 +28,9 @@ export function decodeJWT(token: string): JWTPayload | null {
     if (!payload) {
       return null
     }
-    
+
     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
-    
+
     return JSON.parse(decoded) as JWTPayload
   } catch (error) {
     console.error('Error decoding JWT:', error)
@@ -44,7 +44,7 @@ export function decodeJWT(token: string): JWTPayload | null {
 export function isTokenExpired(token: string): boolean {
   const payload = decodeJWT(token)
   if (!payload) return true
-  
+
   const currentTime = Math.floor(Date.now() / 1000)
   return payload.exp < currentTime
 }

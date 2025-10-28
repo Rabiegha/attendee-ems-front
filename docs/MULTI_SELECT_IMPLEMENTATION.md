@@ -11,6 +11,7 @@ Cette documentation décrit l'implémentation de la fonctionnalité de sélectio
 **Fichier**: `src/shared/hooks/useMultiSelect.ts`
 
 Fonctionnalités :
+
 - Gestion d'état de sélection (individuelle et globale)
 - Toggle items et select all/none
 - Calculs dérivés (count, selectedItems)
@@ -19,7 +20,7 @@ Fonctionnalités :
 ```typescript
 const multiSelect = useMultiSelect({
   items: data,
-  getItemId: (item) => item.id
+  getItemId: (item) => item.id,
 })
 ```
 
@@ -28,6 +29,7 @@ const multiSelect = useMultiSelect({
 **Fichier**: `src/shared/ui/BulkActions.tsx`
 
 Fonctionnalités :
+
 - Interface utilisateur pour actions en lot
 - Gestion des confirmations et loading states
 - Actions prédéfinies (delete, export, edit)
@@ -48,16 +50,19 @@ Fonctionnalités :
 ### ✅ Attendees (Complété)
 
 **Frontend**:
+
 - `AttendeeTable.tsx` : Intégration complète avec checkboxes et actions
 - `attendeesApi.ts` : Endpoints `bulkDeleteAttendees` et `bulkExportAttendees`
 
 **Backend**:
+
 - `users.controller.ts` : Routes `/bulk-delete` et `/bulk-export`
 - `users.service.ts` : Méthodes `bulkDelete()` et `bulkExport()`
 
 ### 🔄 Events (À implémenter)
 
 **À faire**:
+
 - [ ] Modifier `EventTable.tsx` pour ajouter multi-select
 - [ ] Ajouter endpoints bulk dans `eventsApi.ts`
 - [ ] Créer routes backend pour actions en lot sur events
@@ -65,6 +70,7 @@ Fonctionnalités :
 ### 🔄 Registrations (À implémenter)
 
 **À faire**:
+
 - [ ] Modifier `RegistrationTable.tsx` pour ajouter multi-select
 - [ ] Ajouter endpoints bulk dans `registrationsApi.ts`
 - [ ] Créer routes backend pour actions en lot sur registrations
@@ -178,7 +184,7 @@ async bulkDelete(@Body('ids') ids: string[], @Request() req) {
   const { user } = req;
   const allowAny = user.permissions?.some(p => p.permission.endsWith(':any'));
   const orgId = allowAny ? null : user.org_id;
-  
+
   const deletedCount = await this.itemsService.bulkDelete(ids, orgId);
   return { deletedCount };
 }
@@ -194,15 +200,15 @@ async bulkExport(
   const { user } = req;
   const allowAny = user.permissions?.some(p => p.permission.endsWith(':any'));
   const orgId = allowAny ? null : user.org_id;
-  
+
   const { buffer, filename, mimeType } = await this.itemsService.bulkExport(ids, format, orgId);
-  
+
   res.set({
     'Content-Type': mimeType,
     'Content-Disposition': `attachment; filename="${filename}"`,
     'Content-Length': buffer.length,
   });
-  
+
   res.send(buffer);
 }
 ```
@@ -242,7 +248,7 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 
   if (format === 'csv') {
     const csvHeader = 'ID,Name,Status,Created\n';
-    const csvRows = items.map(item => 
+    const csvRows = items.map(item =>
       [item.id, item.name, item.status, item.created_at.toISOString()]
         .map(field => `"${field}"`)
         .join(',')
@@ -265,6 +271,7 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 ## Fonctionnalités supportées
 
 ### Sélection
+
 - [x] Sélection individuelle par checkbox
 - [x] Sélection globale (select all/none)
 - [x] État indéterminé pour sélection partielle
@@ -272,6 +279,7 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 - [x] Compteur d'éléments sélectionnés
 
 ### Actions en lot
+
 - [x] Suppression en lot avec confirmation
 - [x] Export CSV en lot
 - [x] Interface unifiée pour toutes les actions
@@ -279,6 +287,7 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 - [x] Gestion d'erreurs avec retry
 
 ### Sécurité
+
 - [x] Respect des permissions RBAC
 - [x] Filtrage par organisation
 - [x] Support SUPER_ADMIN cross-organisation
@@ -286,6 +295,7 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 ## Tests
 
 ### Tests manuels effectués
+
 - [x] Sélection individuelle d'attendees
 - [x] Sélection globale (select all)
 - [x] Actions de suppression en lot
@@ -293,6 +303,7 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 - [x] Permissions SUPER_ADMIN vs utilisateurs normaux
 
 ### Tests à effectuer
+
 - [ ] Tests Events multi-select
 - [ ] Tests Registrations multi-select
 - [ ] Tests de performance avec grandes listes
@@ -301,11 +312,13 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 ## Performance
 
 ### Optimisations implémentées
+
 - `useMemo` pour les actions calculées
 - Callbacks stables pour éviter re-renders
 - Invalidation cache RTK Query ciblée
 
 ### Considérations futures
+
 - Pagination intelligente avec sélection
 - Virtualisation pour très grandes listes
 - WebWorkers pour export de gros volumes
@@ -313,6 +326,7 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 ## Accessibilité
 
 ### Fonctionnalités d'accessibilité
+
 - Labels appropriés pour screen readers
 - Support navigation clavier
 - États ARIA pour checkboxes indéterminées
@@ -329,12 +343,14 @@ async bulkExport(ids: string[], format: 'csv' | 'xlsx', orgId?: string) {
 ## Maintenance
 
 ### Points d'attention
+
 - Cohérence des permissions entre modules
 - Performance avec grandes datasets
 - UX cohérente entre tous les tableaux
 - Maintenir la compatibilité des APIs
 
 ### Documentation associée
+
 - [API Field Mapping Guide](./API_FIELD_MAPPING_GUIDE.md)
 - [RBAC Architecture](./RBAC_ARCHITECTURE.md)
 - [Permissions Structure Guide](./PERMISSIONS_STRUCTURE_GUIDE.md)

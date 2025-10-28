@@ -1,6 +1,6 @@
 /**
  * MSW Handlers - Users API (Mock partiel)
- * 
+ *
  * Mock temporaire pour les endpoints users nécessaires au développement
  * Laisse passer les autres requêtes vers le vrai backend
  */
@@ -14,7 +14,7 @@ export const usersHandlers = [
   http.get(`${API_BASE}/users`, ({ request }) => {
     const url = new URL(request.url)
     const roles = url.searchParams.get('roles')
-    
+
     // Si c'est la requête pour les partners/hotesses
     if (roles && (roles.includes('PARTNER') || roles.includes('HOTESSE'))) {
       return HttpResponse.json([
@@ -25,8 +25,8 @@ export const usersHandlers = [
           email: 'sophie.martin@partner.com',
           role: {
             code: 'PARTNER',
-            name: 'Partenaire'
-          }
+            name: 'Partenaire',
+          },
         },
         {
           id: 'user-partner-002',
@@ -35,8 +35,8 @@ export const usersHandlers = [
           email: 'pierre.durand@partner.com',
           role: {
             code: 'PARTNER',
-            name: 'Partenaire'
-          }
+            name: 'Partenaire',
+          },
         },
         {
           id: 'user-hostess-001',
@@ -45,8 +45,8 @@ export const usersHandlers = [
           email: 'marie.lambert@events.com',
           role: {
             code: 'HOSTESS',
-            name: 'Hôtesse'
-          }
+            name: 'Hôtesse',
+          },
         },
         {
           id: 'user-hostess-002',
@@ -55,13 +55,13 @@ export const usersHandlers = [
           email: 'julie.rousseau@events.com',
           role: {
             code: 'HOSTESS',
-            name: 'Hôtesse'
-          }
-        }
+            name: 'Hôtesse',
+          },
+        },
       ])
     }
-    
+
     // Sinon, laisser passer au vrai backend
     return undefined as any
-  })
+  }),
 ]

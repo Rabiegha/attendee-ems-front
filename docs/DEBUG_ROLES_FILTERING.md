@@ -8,6 +8,7 @@
 ## 🎯 PROBLÈME IDENTIFIÉ
 
 ### Symptômes
+
 - SUPER_ADMIN sélectionne "Acme Corp"
 - Le dropdown rôles affiche **15 rôles** au lieu de **5**
 - Chaque rôle apparaît **3 fois** :
@@ -16,7 +17,9 @@
   - 1x pour les templates (`org_id = null`)
 
 ### Cause Racine
+
 **Cache RTK Query non-différencié** : Toutes les queries `getRoles()` utilisaient le même tag `['Role', 'LIST']`, donc :
+
 - `getRoles({ orgId: 'org-A' })` → Cachée avec tag `['Role', 'LIST']`
 - `getRoles({ orgId: 'org-B' })` → RTK Query retourne le **même cache** !
 
@@ -45,7 +48,7 @@ async findAll(@Request() req) {
   });
 
   let rolesWithPermissions;
-  
+
   if (userRole === 'SUPER_ADMIN') {
     if (templatesOnly) {
       console.log('📋 [ROLES API] Fetching SYSTEM TEMPLATES');
@@ -61,7 +64,7 @@ async findAll(@Request() req) {
     console.log(`🔒 [ROLES API] Fetching roles for user's org: ${userOrgId}`);
     rolesWithPermissions = await this.rolesService.findByOrganizationWithPermissions(userOrgId);
   }
-  
+
   console.log(`✅ [ROLES API] Returning ${rolesWithPermissions.length} roles`);
   // ...
 }
@@ -76,6 +79,7 @@ async findAll(@Request() req) {
 **Fichier** : `attendee-EMS/src/features/roles/api/rolesApi.ts`
 
 **AVANT (incorrect)** :
+
 ```typescript
 getRoles: builder.query<Role[], { orgId?: string; templatesOnly?: boolean } | void>({
   query: (params) => {
@@ -86,6 +90,7 @@ getRoles: builder.query<Role[], { orgId?: string; templatesOnly?: boolean } | vo
 ```
 
 **APRÈS (correct)** :
+
 ```typescript
 getRoles: builder.query<Role[], { orgId?: string; templatesOnly?: boolean } | void>({
   query: (params) => {
@@ -106,6 +111,7 @@ getRoles: builder.query<Role[], { orgId?: string; templatesOnly?: boolean } | vo
 ```
 
 **Résultat** :
+
 - `getRoles({ orgId: 'org-A' })` → Tag `['Role', 'ORG-org-A']`
 - `getRoles({ orgId: 'org-B' })` → Tag `['Role', 'ORG-org-B']`
 - `getRoles({ templatesOnly: true })` → Tag `['Role', 'TEMPLATES']`
@@ -126,7 +132,7 @@ console.log('🔍 [INVITATIONS] Roles Query Params:', {
   createNewOrg: formData.createNewOrg,
   selectedOrgId,
   rolesQueryParams,
-  shouldSkip: shouldSkipRolesQuery
+  shouldSkip: shouldSkipRolesQuery,
 })
 ```
 
@@ -135,11 +141,14 @@ console.log('🔍 [INVITATIONS] Roles Query Params:', {
 #### Log 2 : Changement de Champs
 
 ```typescript
-const handleInputChange = (field: keyof InvitationFormData, value: string | boolean) => {
+const handleInputChange = (
+  field: keyof InvitationFormData,
+  value: string | boolean
+) => {
   console.log(`🔄 [INVITATIONS] Field changed: ${field} =`, value)
-  
+
   // ...
-  
+
   if (field === 'orgId' && typeof value === 'string') {
     const newOrgId = value || null
     console.log(`🏢 [INVITATIONS] Setting selectedOrgId to:`, newOrgId)
@@ -156,9 +165,14 @@ const handleInputChange = (field: keyof InvitationFormData, value: string | bool
 // 🔍 DEBUG: Log des rôles chargés
 console.log('📋 [INVITATIONS] Roles loaded:', {
   count: rolesDataRaw?.length || 0,
-  roles: rolesDataRaw?.map(r => ({ id: r.id, code: r.code, orgId: r.org_id, isSystem: r.is_system_role })),
+  roles: rolesDataRaw?.map((r) => ({
+    id: r.id,
+    code: r.code,
+    orgId: r.org_id,
+    isSystem: r.is_system_role,
+  })),
   isLoading: isLoadingRoles,
-  error: rolesError
+  error: rolesError,
 })
 ```
 
@@ -169,6 +183,7 @@ console.log('📋 [INVITATIONS] Roles loaded:', {
 ## 🧪 PROCÉDURE DE TEST
 
 ### Pré-requis
+
 - Backend démarré : `docker logs ems_api --tail 50 -f`
 - Frontend démarré : `http://localhost:5174`
 - Console navigateur ouverte (F12)
@@ -179,15 +194,16 @@ console.log('📋 [INVITATIONS] Roles loaded:', {
 
 ```bash
 docker exec ems_db psql -U postgres -d ems -c "
-  SELECT code, name, org_id, is_system_role 
-  FROM roles 
+  SELECT code, name, org_id, is_system_role
+  FROM roles
   ORDER BY org_id, code;
 "
 ```
 
 **Résultat attendu** :
+
 ```
-    code     |        name         |                org_id                | is_system_role 
+    code     |        name         |                org_id                | is_system_role
 -------------+---------------------+--------------------------------------+----------------
  ADMIN       | Administrator       | 1c510d95-0056-4c33-9c2b-c9a36f3c629e | f
  HOSTESS     | Hostess             | 1c510d95-0056-4c33-9c2b-c9a36f3c629e | f
@@ -227,10 +243,11 @@ docker exec ems_db psql -U postgres -d ems -c "
 
 1. Sélectionner "Acme Corp" dans le dropdown organisation
 2. **Vérifier console frontend** :
+
    ```
    🔄 [INVITATIONS] Field changed: orgId = 1c510d95-0056-4c33-9c2b-c9a36f3c629e
    🏢 [INVITATIONS] Setting selectedOrgId to: 1c510d95-0056-4c33-9c2b-c9a36f3c629e
-   
+
    🔍 [INVITATIONS] Roles Query Params: {
      isSuperAdmin: true,
      createNewOrg: false,
@@ -238,7 +255,7 @@ docker exec ems_db psql -U postgres -d ems -c "
      rolesQueryParams: { orgId: "1c510d95-0056-4c33-9c2b-c9a36f3c629e" },
      shouldSkip: false
    }
-   
+
    📋 [INVITATIONS] Roles loaded: {
      count: 5,  // ✅ Uniquement les 5 rôles de Acme Corp
      roles: [
@@ -252,6 +269,7 @@ docker exec ems_db psql -U postgres -d ems -c "
    ```
 
 3. **Vérifier logs backend** :
+
    ```
    🔍 [ROLES API] Request params: {
      userRole: 'SUPER_ADMIN',
@@ -269,10 +287,11 @@ docker exec ems_db psql -U postgres -d ems -c "
 
 1. Changer la sélection pour "System"
 2. **Vérifier console frontend** :
+
    ```
    🔄 [INVITATIONS] Field changed: orgId = 26b9f88d-b693-42d2-a3cc-776549584600
    🏢 [INVITATIONS] Setting selectedOrgId to: 26b9f88d-b693-42d2-a3cc-776549584600
-   
+
    📋 [INVITATIONS] Roles loaded: {
      count: 5,  // ✅ Uniquement les 5 rôles de System
      roles: [
@@ -284,6 +303,7 @@ docker exec ems_db psql -U postgres -d ems -c "
    ```
 
 3. **Vérifier logs backend** :
+
    ```
    🏢 [ROLES API] Fetching roles for org: 26b9f88d-b693-42d2-a3cc-776549584600
    ✅ [ROLES API] Returning 5 roles
@@ -295,10 +315,11 @@ docker exec ems_db psql -U postgres -d ems -c "
 
 1. Cocher "Créer une nouvelle organisation"
 2. **Vérifier console frontend** :
+
    ```
    🔄 [INVITATIONS] Field changed: createNewOrg = true
    ➕ [INVITATIONS] Create new org mode - resetting selectedOrgId
-   
+
    🔍 [INVITATIONS] Roles Query Params: {
      isSuperAdmin: true,
      createNewOrg: true,
@@ -306,7 +327,7 @@ docker exec ems_db psql -U postgres -d ems -c "
      rolesQueryParams: { templatesOnly: true },
      shouldSkip: false
    }
-   
+
    📋 [INVITATIONS] Roles loaded: {
      count: 6,  // ✅ Les 6 templates système (inclus SUPER_ADMIN)
      roles: [
@@ -321,6 +342,7 @@ docker exec ems_db psql -U postgres -d ems -c "
    ```
 
 3. **Vérifier logs backend** :
+
    ```
    📋 [ROLES API] Fetching SYSTEM TEMPLATES
    ✅ [ROLES API] Returning 6 roles
@@ -333,12 +355,14 @@ docker exec ems_db psql -U postgres -d ems -c "
 ## ✅ CRITÈRES DE VALIDATION
 
 ### Backend ✓
+
 - [x] Logs affichent les bons query params
 - [x] `findByOrganizationWithPermissions()` filtre correctement par `org_id`
 - [x] `findSystemTemplates()` retourne uniquement `is_system_role = true`
 - [x] Nombre de rôles retournés = 5 (org) ou 6 (templates)
 
 ### Frontend ✓
+
 - [x] `selectedOrgId` se met à jour lors du changement d'org
 - [x] `rolesQueryParams` change dynamiquement
 - [x] RTK Query fait une **nouvelle requête** à chaque changement d'org
@@ -346,6 +370,7 @@ docker exec ems_db psql -U postgres -d ems -c "
 - [x] Dropdown affiche le bon nombre de rôles (pas de doublons)
 
 ### UX ✓
+
 - [x] Select rôle désactivé tant qu'org non sélectionnée
 - [x] Changement d'org → `roleId` reseté automatiquement
 - [x] Messages d'aide clairs pour guider l'utilisateur
@@ -359,6 +384,7 @@ docker exec ems_db psql -U postgres -d ems -c "
 **Cause** : Cache RTK Query non-différencié
 
 **Diagnostic** :
+
 ```javascript
 // Console frontend
 📋 [INVITATIONS] Roles loaded: {
@@ -380,46 +406,49 @@ docker exec ems_db psql -U postgres -d ems -c "
 
 ### Base de Données (`roles` table)
 
-| code        | org_id (Acme)              | org_id (System)            | org_id (Templates) | is_system_role |
-|-------------|----------------------------|----------------------------|--------------------|----------------|
-| ADMIN       | 1c510d95-...-c9a36f3c629e  | 26b9f88d-...-776549584600  | NULL               | t (template)   |
-| HOSTESS     | 1c510d95-...-c9a36f3c629e  | 26b9f88d-...-776549584600  | NULL               | t (template)   |
-| MANAGER     | 1c510d95-...-c9a36f3c629e  | 26b9f88d-...-776549584600  | NULL               | t (template)   |
-| PARTNER     | 1c510d95-...-c9a36f3c629e  | 26b9f88d-...-776549584600  | NULL               | t (template)   |
-| VIEWER      | 1c510d95-...-c9a36f3c629e  | 26b9f88d-...-776549584600  | NULL               | t (template)   |
-| SUPER_ADMIN | -                          | -                          | NULL               | t (template)   |
+| code        | org_id (Acme)             | org_id (System)           | org_id (Templates) | is_system_role |
+| ----------- | ------------------------- | ------------------------- | ------------------ | -------------- |
+| ADMIN       | 1c510d95-...-c9a36f3c629e | 26b9f88d-...-776549584600 | NULL               | t (template)   |
+| HOSTESS     | 1c510d95-...-c9a36f3c629e | 26b9f88d-...-776549584600 | NULL               | t (template)   |
+| MANAGER     | 1c510d95-...-c9a36f3c629e | 26b9f88d-...-776549584600 | NULL               | t (template)   |
+| PARTNER     | 1c510d95-...-c9a36f3c629e | 26b9f88d-...-776549584600 | NULL               | t (template)   |
+| VIEWER      | 1c510d95-...-c9a36f3c629e | 26b9f88d-...-776549584600 | NULL               | t (template)   |
+| SUPER_ADMIN | -                         | -                         | NULL               | t (template)   |
 
 **Total** : 16 rôles (5 Acme + 5 System + 6 templates)
 
 ### Requêtes API Attendues
 
-| Contexte                      | URL                               | Résultat                    |
-|-------------------------------|-----------------------------------|-----------------------------|
-| Admin normal (Acme)           | `GET /roles`                      | 5 rôles (Acme)              |
-| SUPER_ADMIN sélectionne Acme  | `GET /roles?orgId=1c510d95...`    | 5 rôles (Acme)              |
-| SUPER_ADMIN sélectionne System| `GET /roles?orgId=26b9f88d...`    | 5 rôles (System)            |
-| SUPER_ADMIN nouvelle org      | `GET /roles?templatesOnly=true`   | 6 templates                 |
-| SUPER_ADMIN sans sélection    | (query skipped)                   | Aucune requête              |
+| Contexte                       | URL                             | Résultat         |
+| ------------------------------ | ------------------------------- | ---------------- |
+| Admin normal (Acme)            | `GET /roles`                    | 5 rôles (Acme)   |
+| SUPER_ADMIN sélectionne Acme   | `GET /roles?orgId=1c510d95...`  | 5 rôles (Acme)   |
+| SUPER_ADMIN sélectionne System | `GET /roles?orgId=26b9f88d...`  | 5 rôles (System) |
+| SUPER_ADMIN nouvelle org       | `GET /roles?templatesOnly=true` | 6 templates      |
+| SUPER_ADMIN sans sélection     | (query skipped)                 | Aucune requête   |
 
 ---
 
 ## 🔧 COMMANDES UTILES
 
 ### Restart Backend avec Logs
+
 ```bash
 docker restart ems_api && docker logs ems_api --tail 50 -f
 ```
 
 ### Vérifier les Rôles en DB
+
 ```bash
 docker exec ems_db psql -U postgres -d ems -c "
-  SELECT code, LEFT(org_id::text, 8) as org, is_system_role 
-  FROM roles 
+  SELECT code, LEFT(org_id::text, 8) as org, is_system_role
+  FROM roles
   ORDER BY org_id NULLS LAST, code;
 "
 ```
 
 ### Tester l'API Directement
+
 ```bash
 # Login SUPER_ADMIN
 curl -X POST http://localhost:3000/api/auth/login \

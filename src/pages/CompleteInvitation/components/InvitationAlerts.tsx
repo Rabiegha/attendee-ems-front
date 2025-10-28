@@ -12,7 +12,13 @@ interface InvitationAlertProps {
   actions?: Array<{
     label: string
     onClick: () => void
-    variant?: 'default' | 'secondary' | 'ghost' | 'outline' | 'destructive' | 'link'
+    variant?:
+      | 'default'
+      | 'secondary'
+      | 'ghost'
+      | 'outline'
+      | 'destructive'
+      | 'link'
   }>
 }
 
@@ -22,7 +28,7 @@ export const InvitationAlert: React.FC<InvitationAlertProps> = ({
   message,
   onClose,
   showCloseButton = true,
-  actions = []
+  actions = [],
 }) => {
   const getIcon = () => {
     switch (type) {
@@ -55,12 +61,12 @@ export const InvitationAlert: React.FC<InvitationAlertProps> = ({
   }
 
   return (
-    <Card className={`p-6 border-l-4 ${getBorderColor()} shadow-lg animate-in fade-in-0 slide-in-from-top-2 duration-300`}>
+    <Card
+      className={`p-6 border-l-4 ${getBorderColor()} shadow-lg animate-in fade-in-0 slide-in-from-top-2 duration-300`}
+    >
       <div className="flex items-start gap-4">
-        <div className="flex-shrink-0 mt-0.5">
-          {getIcon()}
-        </div>
-        
+        <div className="flex-shrink-0 mt-0.5">{getIcon()}</div>
+
         <div className="flex-1 min-w-0">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             {title}
@@ -68,7 +74,7 @@ export const InvitationAlert: React.FC<InvitationAlertProps> = ({
           <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
             {message}
           </p>
-          
+
           {actions.length > 0 && (
             <div className="flex gap-3 flex-wrap">
               {actions.map((action, index) => (
@@ -107,23 +113,27 @@ export const TokenErrorAlert: React.FC<{
     switch (errorType) {
       case 'expired':
         return {
-          title: 'Lien d\'invitation expiré',
-          message: 'Ce lien d\'invitation a expiré. Les liens d\'invitation sont valables 48 heures. Contactez l\'administrateur pour recevoir une nouvelle invitation.',
+          title: "Lien d'invitation expiré",
+          message:
+            "Ce lien d'invitation a expiré. Les liens d'invitation sont valables 48 heures. Contactez l'administrateur pour recevoir une nouvelle invitation.",
         }
       case 'already_used':
         return {
           title: 'Compte déjà créé',
-          message: 'Ce lien a déjà été utilisé pour créer un compte. Si vous avez oublié votre mot de passe, utilisez la fonction "Mot de passe oublié" sur la page de connexion.',
+          message:
+            'Ce lien a déjà été utilisé pour créer un compte. Si vous avez oublié votre mot de passe, utilisez la fonction "Mot de passe oublié" sur la page de connexion.',
         }
       case 'network_error':
         return {
           title: 'Problème de connexion',
-          message: 'Impossible de vérifier le lien d\'invitation. Vérifiez votre connexion internet et réessayez.',
+          message:
+            "Impossible de vérifier le lien d'invitation. Vérifiez votre connexion internet et réessayez.",
         }
       default:
         return {
-          title: 'Lien d\'invitation invalide',
-          message: 'Ce lien d\'invitation n\'est pas valide ou a été corrompu. Vérifiez que vous avez copié l\'URL complète depuis l\'email d\'invitation.',
+          title: "Lien d'invitation invalide",
+          message:
+            "Ce lien d'invitation n'est pas valide ou a été corrompu. Vérifiez que vous avez copié l'URL complète depuis l'email d'invitation.",
         }
     }
   }
@@ -140,8 +150,8 @@ export const TokenErrorAlert: React.FC<{
         {
           label: 'Retour à la connexion',
           onClick: onReturnToLogin,
-          variant: 'default'
-        }
+          variant: 'default',
+        },
       ]}
     />
   )
@@ -162,8 +172,8 @@ export const AccountCreatedAlert: React.FC<{
         {
           label: 'Se connecter',
           onClick: onGoToLogin,
-          variant: 'default'
-        }
+          variant: 'default',
+        },
       ]}
     />
   )

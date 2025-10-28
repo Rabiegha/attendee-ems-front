@@ -20,7 +20,10 @@ export const formatDateToISO = (date: Date): string => {
 /**
  * Formate une date ISO string pour affichage
  */
-export const formatDateForDisplay = (dateString: string, options?: Intl.DateTimeFormatOptions): string => {
+export const formatDateForDisplay = (
+  dateString: string,
+  options?: Intl.DateTimeFormatOptions
+): string => {
   const date = new Date(dateString)
   const defaultOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
@@ -43,7 +46,7 @@ export const formatDateForInput = (dateString: string): string => {
   const day = String(date.getDate()).padStart(2, '0')
   const hours = String(date.getHours()).padStart(2, '0')
   const minutes = String(date.getMinutes()).padStart(2, '0')
-  
+
   return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
@@ -53,13 +56,18 @@ export const formatDateForInput = (dateString: string): string => {
 export const getDaysUntil = (dateString: string): number => {
   const targetDate = new Date(dateString)
   const now = new Date()
-  return Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  return Math.ceil(
+    (targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+  )
 }
 
 /**
  * Calcule la durée entre deux dates en heures
  */
-export const getDurationInHours = (startDateString: string, endDateString: string): number => {
+export const getDurationInHours = (
+  startDateString: string,
+  endDateString: string
+): number => {
   const start = new Date(startDateString)
   const end = new Date(endDateString)
   return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60))

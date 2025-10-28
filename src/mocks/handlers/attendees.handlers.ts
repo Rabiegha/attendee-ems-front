@@ -1,6 +1,6 @@
 /**
  * MSW Handlers - Attendees API (CRM)
- * 
+ *
  * - GET /api/attendees (CRM global avec filtres)
  * - GET /api/attendees/:id (profil + historique)
  * - PUT /api/attendees/:id (mise à jour CRM)
@@ -9,10 +9,19 @@
  */
 
 import { http, HttpResponse } from 'msw'
-import { mockAttendees, getAttendeesByOrgId, getAttendeesByLabels, getAttendeesByMinEvents } from '../data/attendees.mock'
+import {
+  mockAttendees,
+  getAttendeesByOrgId,
+  getAttendeesByLabels,
+  getAttendeesByMinEvents,
+} from '../data/attendees.mock'
 import { mockRegistrations } from './public.handlers'
 import { mockEvents } from '../data/events.mock'
-import type { Attendee, UpdateAttendeeDTO, AttendeeProfile } from '@/features/attendees/types'
+import type {
+  Attendee,
+  UpdateAttendeeDTO,
+  AttendeeProfile,
+} from '@/features/attendees/types'
 
 const API_BASE = 'http://localhost:3000'
 
@@ -26,36 +35,38 @@ const filterAttendees = (
   }
 ) => {
   let filtered = [...attendees]
-  
+
   // Recherche texte (nom, email, téléphone)
   if (filters.search && filters.search.length > 0) {
     const searchLower = filters.search.toLowerCase()
     filtered = filtered.filter(
-      a =>
+      (a) =>
         a.first_name?.toLowerCase().includes(searchLower) ||
         a.last_name?.toLowerCase().includes(searchLower) ||
         a.email?.toLowerCase().includes(searchLower) ||
         a.phone?.toLowerCase().includes(searchLower)
     )
   }
-  
+
   // Filtrer par labels
   if (filters.labels && filters.labels.length > 0) {
-    filtered = filtered.filter(
-      a => filters.labels!.some(label => a.labels?.includes(label))
+    filtered = filtered.filter((a) =>
+      filters.labels!.some((label) => a.labels?.includes(label))
     )
   }
-  
+
   // Filtrer par nombre minimum d'événements
   if (filters.minEvents) {
-    filtered = filtered.filter(a => a.statistics.total_events >= filters.minEvents!)
+    filtered = filtered.filter(
+      (a) => a.statistics.total_events >= filters.minEvents!
+    )
   }
-  
+
   return filtered
 }
 
 // Helper pagination
-const paginate = <T,>(items: T[], page: number, limit: number) => {
+const paginate = <T>(items: T[], page: number, limit: number) => {
   const start = (page - 1) * limit
   const end = start + limit
   return {
@@ -63,7 +74,7 @@ const paginate = <T,>(items: T[], page: number, limit: number) => {
     total: items.length,
     page,
     limit,
-    total_pages: Math.ceil(items.length / limit)
+    total_pages: Math.ceil(items.length / limit),
   }
 }
 
@@ -80,222 +91,226 @@ export const attendeesHandlers = [
       : undefined
     const sortBy = url.searchParams.get('sortBy') || 'last_name'
     const sortOrder = url.searchParams.get('sortOrder') || 'asc'
-    
+
     const labels = labelsParam ? labelsParam.split(',') : undefined
-    
+
     // TODO: Récupérer user org_id depuis JWT
     const userOrgId = 'org-tech-corp' // Mock
-    
+
     // Filtrer par org
     let attendees = getAttendeesByOrgId(userOrgId)
-    
+
     // Appliquer filtres
     attendees = filterAttendees(attendees, {
       search,
       labels,
-      minEvents
+      minEvents,
     })
-    
+
     // Tri
     attendees.sort((a, b) => {
       let aVal: any = (a as any)[sortBy]
       let bVal: any = (b as any)[sortBy]
-      
+
       if (typeof aVal === 'string') {
         aVal = aVal?.toLowerCase() || ''
         bVal = bVal?.toLowerCase() || ''
       }
-      
+
       if (sortOrder === 'asc') {
         return aVal < bVal ? -1 : aVal > bVal ? 1 : 0
       } else {
         return aVal > bVal ? -1 : aVal < bVal ? 1 : 0
       }
     })
-    
+
     // Paginer
     const paginated = paginate(attendees, page, limit)
-    
+
     return HttpResponse.json({
       attendees: paginated.items,
       pagination: {
         total: paginated.total,
         page: paginated.page,
         limit: paginated.limit,
-        total_pages: paginated.total_pages
-      }
+        total_pages: paginated.total_pages,
+      },
     })
   }),
 
   // GET /api/attendees/:id
   http.get(`${API_BASE}/attendees/:id`, ({ params }) => {
     const { id } = params as { id: string }
-    
-    const attendee = mockAttendees.find(a => a.id === id)
-    
+
+    const attendee = mockAttendees.find((a) => a.id === id)
+
     if (!attendee) {
-      return HttpResponse.json(
-        { error: 'Attendee not found' },
-        { status: 404 }
-      )
+      return HttpResponse.json({ error: 'Attendee not found' }, { status: 404 })
     }
-    
+
     // TODO: Vérifier permissions (même org)
-    
+
     // Récupérer historique des registrations
-    const attendeeRegistrations = mockRegistrations.filter(r => r.attendee_id === attendee.id)
-    
-    const registrations_history = attendeeRegistrations.map(reg => {
-      const event = mockEvents.find(e => e.id === reg.event_id)
-      
+    const attendeeRegistrations = mockRegistrations.filter(
+      (r) => r.attendee_id === attendee.id
+    )
+
+    const registrations_history = attendeeRegistrations.map((reg) => {
+      const event = mockEvents.find((e) => e.id === reg.event_id)
+
       return {
         id: reg.id,
         event: {
           id: event?.id || '',
           code: event?.code || '',
           name: event?.name || '',
-          start_at: event?.start_at || ''
+          start_at: event?.start_at || '',
         },
         status: reg.status,
         attendance_type: reg.attendance_type,
         registered_at: reg.created_at,
         checked_in: false, // Mock
-        checked_in_at: undefined
+        checked_in_at: undefined,
       }
     })
-    
+
     const profile: AttendeeProfile = {
       ...attendee,
-      registrations_history
+      registrations_history,
     }
-    
+
     return HttpResponse.json(profile)
   }),
 
   // PUT /api/attendees/:id
   http.put(`${API_BASE}/attendees/:id`, async ({ params, request }) => {
     const { id } = params as { id: string }
-    const body = await request.json() as UpdateAttendeeDTO
-    
-    const attendee = mockAttendees.find(a => a.id === id)
-    
+    const body = (await request.json()) as UpdateAttendeeDTO
+
+    const attendee = mockAttendees.find((a) => a.id === id)
+
     if (!attendee) {
-      return HttpResponse.json(
-        { error: 'Attendee not found' },
-        { status: 404 }
-      )
+      return HttpResponse.json({ error: 'Attendee not found' }, { status: 404 })
     }
-    
+
     // TODO: Vérifier permissions (SUPER_ADMIN, ADMIN, MANAGER)
-    
+
     // Mettre à jour
-    attendee.first_name = body.first_name !== undefined ? body.first_name : attendee.first_name
-    attendee.last_name = body.last_name !== undefined ? body.last_name : attendee.last_name
+    attendee.first_name =
+      body.first_name !== undefined ? body.first_name : attendee.first_name
+    attendee.last_name =
+      body.last_name !== undefined ? body.last_name : attendee.last_name
     attendee.phone = body.phone !== undefined ? body.phone : attendee.phone
-    attendee.company = body.company !== undefined ? body.company : attendee.company
-    attendee.job_title = body.job_title !== undefined ? body.job_title : attendee.job_title
-    attendee.country = body.country !== undefined ? body.country : attendee.country
-    attendee.default_type_id = body.default_type_id !== undefined ? body.default_type_id : attendee.default_type_id
+    attendee.company =
+      body.company !== undefined ? body.company : attendee.company
+    attendee.job_title =
+      body.job_title !== undefined ? body.job_title : attendee.job_title
+    attendee.country =
+      body.country !== undefined ? body.country : attendee.country
+    attendee.default_type_id =
+      body.default_type_id !== undefined
+        ? body.default_type_id
+        : attendee.default_type_id
     attendee.labels = body.labels !== undefined ? body.labels : attendee.labels
     attendee.notes = body.notes !== undefined ? body.notes : attendee.notes
     attendee.updated_at = new Date().toISOString()
-    
+
     // Récupérer historique pour response
-    const attendeeRegistrations = mockRegistrations.filter(r => r.attendee_id === attendee.id)
-    
-    const registrations_history = attendeeRegistrations.map(reg => {
-      const event = mockEvents.find(e => e.id === reg.event_id)
-      
+    const attendeeRegistrations = mockRegistrations.filter(
+      (r) => r.attendee_id === attendee.id
+    )
+
+    const registrations_history = attendeeRegistrations.map((reg) => {
+      const event = mockEvents.find((e) => e.id === reg.event_id)
+
       return {
         id: reg.id,
         event: {
           id: event?.id || '',
           code: event?.code || '',
           name: event?.name || '',
-          start_at: event?.start_at || ''
+          start_at: event?.start_at || '',
         },
         status: reg.status,
         attendance_type: reg.attendance_type,
         registered_at: reg.created_at,
         checked_in: false,
-        checked_in_at: undefined
+        checked_in_at: undefined,
       }
     })
-    
+
     const profile: AttendeeProfile = {
       ...attendee,
-      registrations_history
+      registrations_history,
     }
-    
+
     return HttpResponse.json(profile)
   }),
 
   // DELETE /api/attendees/:id
   http.delete(`${API_BASE}/attendees/:id`, ({ params }) => {
     const { id } = params as { id: string }
-    
-    const attendeeIndex = mockAttendees.findIndex(a => a.id === id)
-    
+
+    const attendeeIndex = mockAttendees.findIndex((a) => a.id === id)
+
     if (attendeeIndex === -1) {
-      return HttpResponse.json(
-        { error: 'Attendee not found' },
-        { status: 404 }
-      )
+      return HttpResponse.json({ error: 'Attendee not found' }, { status: 404 })
     }
-    
+
     // TODO: Vérifier permissions (SUPER_ADMIN, ADMIN)
-    
+
     // Supprimer attendee
     mockAttendees.splice(attendeeIndex, 1)
-    
+
     // Supprimer toutes les registrations associées (cascade)
-    const registrationsToDelete = mockRegistrations.filter(r => r.attendee_id === id)
-    registrationsToDelete.forEach(reg => {
+    const registrationsToDelete = mockRegistrations.filter(
+      (r) => r.attendee_id === id
+    )
+    registrationsToDelete.forEach((reg) => {
       const regIndex = mockRegistrations.indexOf(reg)
       if (regIndex > -1) {
         mockRegistrations.splice(regIndex, 1)
       }
     })
-    
+
     return new HttpResponse(null, { status: 204 })
   }),
 
   // GET /api/attendees/:id/export
   http.get(`${API_BASE}/attendees/:id/export`, ({ params }) => {
     const { id } = params as { id: string }
-    
-    const attendee = mockAttendees.find(a => a.id === id)
-    
+
+    const attendee = mockAttendees.find((a) => a.id === id)
+
     if (!attendee) {
-      return HttpResponse.json(
-        { error: 'Attendee not found' },
-        { status: 404 }
-      )
+      return HttpResponse.json({ error: 'Attendee not found' }, { status: 404 })
     }
-    
+
     // TODO: Vérifier permissions (SUPER_ADMIN, ADMIN, MANAGER)
-    
+
     // Récupérer toutes les données (GDPR compliance)
-    const attendeeRegistrations = mockRegistrations.filter(r => r.attendee_id === attendee.id)
-    
-    const registrations = attendeeRegistrations.map(reg => {
-      const event = mockEvents.find(e => e.id === reg.event_id)
-      
+    const attendeeRegistrations = mockRegistrations.filter(
+      (r) => r.attendee_id === attendee.id
+    )
+
+    const registrations = attendeeRegistrations.map((reg) => {
+      const event = mockEvents.find((e) => e.id === reg.event_id)
+
       return {
         id: reg.id,
         event: {
           id: event?.id,
           code: event?.code,
           name: event?.name,
-          start_at: event?.start_at
+          start_at: event?.start_at,
         },
         status: reg.status,
         attendance_type: reg.attendance_type,
         answers: reg.answers,
-        registered_at: reg.created_at
+        registered_at: reg.created_at,
       }
     })
-    
+
     return HttpResponse.json({
       attendee: {
         id: attendee.id,
@@ -309,11 +324,11 @@ export const attendeesHandlers = [
         labels: attendee.labels,
         notes: attendee.notes,
         created_at: attendee.created_at,
-        updated_at: attendee.updated_at
+        updated_at: attendee.updated_at,
       },
       registrations,
       badges: [], // Mock
-      presence_visits: [] // Mock
+      presence_visits: [], // Mock
     })
-  })
+  }),
 ]

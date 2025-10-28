@@ -3,6 +3,7 @@
 ## 🎯 Vision : RBAC Scalable avec Rôles Personnalisables
 
 ### Objectifs
+
 - **Permissions granulaires** : Contrôle fin des actions utilisateur
 - **Rôles personnalisables** : Admins peuvent créer/modifier des rôles
 - **Scalabilité** : Architecture prête pour nouvelles fonctionnalités
@@ -11,9 +12,10 @@
 ## ✅ État Actuel du Système RBAC
 
 ### Fonctionnalités RBAC Déjà Implémentées
+
 ```tsx
 // ✅ CORRECT - Vérifications par permissions
-<Can do="create" on="Event">
+;<Can do="create" on="Event">
   <Button>Créer un événement</Button>
 </Can>
 
@@ -22,6 +24,7 @@ const canExportData = useCan('export', 'Attendee')
 ```
 
 ### Architecture Technique Existante
+
 - **CASL Integration** : `@casl/ability` pour permissions dynamiques
 - **Guards** : Composant `<Can>` et hook `useCan`
 - **Types** : Actions et Subjects définis
@@ -32,13 +35,14 @@ const canExportData = useCan('export', 'Attendee')
 ### 1. Vérifications de Rôles Hardcodées
 
 #### ❌ Problématique Actuelle
+
 ```tsx
 // Dans mocks/handlers.ts
 if (currentUser.role.code !== 'ORG_ADMIN') {
   // Logique basée sur le rôle
 }
 
-// Dans sessionSlice.ts  
+// Dans sessionSlice.ts
 if (tokenData.role !== 'SUPER_ADMIN') {
   // Logique spécifique au rôle
 }
@@ -48,31 +52,40 @@ if (role === 'SUPER_ADMIN') return false
 ```
 
 #### ✅ Migration vers RBAC
+
 ```tsx
 // Remplacer par des permissions granulaires
 const canViewAllEvents = useCan('read', 'Event') // Sans conditions = tous
-const canManageOrganization = useCan('manage', 'Organization') 
+const canManageOrganization = useCan('manage', 'Organization')
 const canInviteUsers = useCan('invite', 'User')
 ```
 
 ### 2. Affichage d'Informations Basé sur les Rôles
 
 #### ❌ Problématique Actuelle
+
 ```tsx
 // Dans Header/index.tsx
-{user.roles?.[0] ? getRoleLabel(user.roles[0]) : 'Utilisateur'}
+{
+  user.roles?.[0] ? getRoleLabel(user.roles[0]) : 'Utilisateur'
+}
 
 // Dans Users/index.tsx
-{user.role?.name || 'Non défini'}
+{
+  user.role?.name || 'Non défini'
+}
 ```
 
 #### ✅ Migration vers RBAC
+
 ```tsx
 // Garder l'affichage du rôle pour UX, mais utiliser permissions pour la logique
-{user.roles?.[0] ? getRoleLabel(user.roles[0]) : 'Utilisateur'}
+{
+  user.roles?.[0] ? getRoleLabel(user.roles[0]) : 'Utilisateur'
+}
 
 // Mais contrôler l'accès par permissions
-<Can do="read" on="User" data={user}>
+;<Can do="read" on="User" data={user}>
   <UserDetails user={user} />
 </Can>
 ```
@@ -80,51 +93,53 @@ const canInviteUsers = useCan('invite', 'User')
 ## 🔧 Permissions Granulaires à Définir
 
 ### Permissions Système Global
+
 ```typescript
-// Organisation Management  
-'create:organization'     // Créer des organisations (SUPER_ADMIN)
-'manage:organization'     // Gérer sa propre org (ADMIN)
-'read:organization'       // Lire infos org (tous sauf SUPER_ADMIN sans org)
+// Organisation Management
+'create:organization' // Créer des organisations (SUPER_ADMIN)
+'manage:organization' // Gérer sa propre org (ADMIN)
+'read:organization' // Lire infos org (tous sauf SUPER_ADMIN sans org)
 
 // Role Management (Future)
-'create:role'            // Créer des rôles personnalisés (ADMIN)
-'assign:role'            // Assigner des rôles (ADMIN)  
-'manage:permissions'     // Gérer permissions des rôles (ADMIN)
+'create:role' // Créer des rôles personnalisés (ADMIN)
+'assign:role' // Assigner des rôles (ADMIN)
+'manage:permissions' // Gérer permissions des rôles (ADMIN)
 
 // User Management
-'create:user'            // Créer utilisateurs (ADMIN)
-'invite:user'            // Inviter utilisateurs (ADMIN)
-'manage:user'            // Gérer utilisateurs org (ADMIN)
-'read:user'              // Voir utilisateurs (MANAGER+)
+'create:user' // Créer utilisateurs (ADMIN)
+'invite:user' // Inviter utilisateurs (ADMIN)
+'manage:user' // Gérer utilisateurs org (ADMIN)
+'read:user' // Voir utilisateurs (MANAGER+)
 
-// Event Management  
-'create:event'           // Créer événements (ADMIN, MANAGER)
-'manage:event'           // Gérer tous événements org (ADMIN, MANAGER)
-'read:event'             // Lire événements (tous selon scope)
-'assign:partners'        // Assigner partenaires aux événements (ADMIN, MANAGER)
+// Event Management
+'create:event' // Créer événements (ADMIN, MANAGER)
+'manage:event' // Gérer tous événements org (ADMIN, MANAGER)
+'read:event' // Lire événements (tous selon scope)
+'assign:partners' // Assigner partenaires aux événements (ADMIN, MANAGER)
 
 // Attendee Management
-'create:attendee'        // Créer participants (ADMIN, MANAGER)
-'manage:attendee'        // Gérer participants (ADMIN, MANAGER) 
-'checkin:attendee'       // Check-in participants (ADMIN, MANAGER, HOTESSE)
-'export:attendee'        // Exporter données (ADMIN, MANAGER)
+'create:attendee' // Créer participants (ADMIN, MANAGER)
+'manage:attendee' // Gérer participants (ADMIN, MANAGER)
+'checkin:attendee' // Check-in participants (ADMIN, MANAGER, HOTESSE)
+'export:attendee' // Exporter données (ADMIN, MANAGER)
 
 // QR Code & Scanning
-'scan:qrcode'           // Scanner QR codes (HOTESSE)
-'generate:qrcode'       // Générer QR codes (ADMIN, MANAGER)
+'scan:qrcode' // Scanner QR codes (HOTESSE)
+'generate:qrcode' // Générer QR codes (ADMIN, MANAGER)
 
 // Reports & Analytics
-'read:reports'          // Voir rapports (ADMIN, MANAGER, VIEWER)
-'export:reports'        // Exporter rapports (ADMIN, MANAGER)
-'read:analytics'        // Analytics avancées (ADMIN)
+'read:reports' // Voir rapports (ADMIN, MANAGER, VIEWER)
+'export:reports' // Exporter rapports (ADMIN, MANAGER)
+'read:analytics' // Analytics avancées (ADMIN)
 ```
 
 ### Permissions avec Contexte
+
 ```typescript
 // Événements assignés (PARTNER, HOTESSE)
 { action: 'read', subject: 'Event', conditions: { id: { $in: eventIds } } }
 
-// Utilisateurs de la même org  
+// Utilisateurs de la même org
 { action: 'manage', subject: 'User', conditions: { orgId } }
 
 // Participants d'événements spécifiques
@@ -134,6 +149,7 @@ const canInviteUsers = useCan('invite', 'User')
 ## 🏗️ Architecture Future : Rôles Personnalisables
 
 ### Base de Données Étendue
+
 ```typescript
 interface Role {
   id: string
@@ -165,6 +181,7 @@ interface CustomRole extends Role {
 ```
 
 ### Interface de Gestion des Rôles (Future)
+
 ```tsx
 // Page: /roles
 const RolesManagementPage = () => {
@@ -182,10 +199,10 @@ const RolesManagementPage = () => {
 // Composant de création de rôles personnalisés
 const CreateCustomRoleModal = () => {
   const permissions = usePermissionsMatrix()
-  
+
   return (
     <Modal>
-      <PermissionSelector 
+      <PermissionSelector
         availablePermissions={permissions}
         onPermissionToggle={handlePermissionChange}
       />
@@ -197,27 +214,32 @@ const CreateCustomRoleModal = () => {
 ## 📋 Plan de Migration Phase par Phase
 
 ### Phase 1: Audit et Nettoyage (Actuel)
+
 - [x] Identifier toutes les vérifications de rôles hardcodées
 - [ ] Remplacer par des vérifications de permissions existantes
 - [ ] Nettoyer les imports et dépendances inutilisées
 
-### Phase 2: Permissions Granulaires  
+### Phase 2: Permissions Granulaires
+
 - [ ] Étendre les Actions et Subjects CASL
 - [ ] Créer des permissions plus spécifiques
 - [ ] Mettre à jour les règles RBAC avec les nouvelles permissions
 
 ### Phase 3: Backend Role Management
+
 - [ ] API endpoints pour gestion des rôles
 - [ ] Validation des permissions côté serveur
 - [ ] Migration des données existantes
 
 ### Phase 4: Interface Rôles Personnalisés
-- [ ] Page de gestion des rôles  
+
+- [ ] Page de gestion des rôles
 - [ ] Interface de création de rôles
 - [ ] Matrice de permissions
 - [ ] Assignment de rôles aux utilisateurs
 
 ### Phase 5: Advanced Features
+
 - [ ] Rôles temporaires/avec expiration
 - [ ] Héritage de permissions entre rôles
 - [ ] Audit trail des changements de permissions
@@ -226,13 +248,14 @@ const CreateCustomRoleModal = () => {
 ## 💡 Bonnes Pratiques RBAC
 
 ### ✅ À Faire
+
 ```tsx
 // Vérifications granulaires
 <Can do="create" on="User">
 <Can do="export" on="Attendee" data={{ eventId }}>
 <Can do="manage" on="Event" data={event}>
 
-// Hooks pour logique conditionnelle  
+// Hooks pour logique conditionnelle
 const canCreateEvents = useCan('create', 'Event')
 const canManageThisEvent = useCan('manage', 'Event', event)
 
@@ -241,19 +264,26 @@ const canAccessEvent = useCan('read', 'Event', { id: eventId })
 ```
 
 ### ❌ À Éviter
+
 ```tsx
 // Vérifications de rôles hardcodées
-if (user.role === 'ADMIN') { /* ... */ }
-if (user.roles.includes('SUPER_ADMIN')) { /* ... */ }
+if (user.role === 'ADMIN') {
+  /* ... */
+}
+if (user.roles.includes('SUPER_ADMIN')) {
+  /* ... */
+}
 
 // Logique métier basée sur les rôles
-switch(user.role.code) {
+switch (user.role.code) {
   case 'ADMIN': // ...
   case 'MANAGER': // ...
 }
 
 // Vérifications directes dans le JSX
-{user.role?.code === 'ADMIN' && <AdminPanel />}
+{
+  user.role?.code === 'ADMIN' && <AdminPanel />
+}
 ```
 
 ### 🎯 Principes Directeurs
@@ -267,12 +297,14 @@ switch(user.role.code) {
 ## 🚀 Résultats Attendus
 
 ### Bénéfices Techniques
+
 - **Flexibilité** : Ajout facile de nouvelles permissions sans modifier le code
 - **Sécurité** : Contrôle d'accès fin et vérifiable
 - **Maintenance** : Logique centralisée et réutilisable
 - **Tests** : Permissions faciles à mocker et tester
 
 ### Bénéfices Business
+
 - **Personnalisation** : Organisations peuvent créer leurs propres rôles
 - **Conformité** : Audit trail des permissions et accès
 - **Évolutivité** : Croissance sans refonte du système de permissions

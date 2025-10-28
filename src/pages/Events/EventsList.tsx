@@ -1,6 +1,6 @@
 /**
  * Page Events List - Liste de tous les événements
- * 
+ *
  * Features:
  * - Table complète avec filtres (search, status, dates)
  * - Pagination
@@ -11,13 +11,28 @@
 
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, Filter, Calendar, MapPin, Users, Edit, Trash2, Eye } from 'lucide-react'
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  MapPin,
+  Users,
+  Edit,
+  Trash2,
+  Eye,
+} from 'lucide-react'
 import { useToast } from '@/shared/hooks/useToast'
 import { useSelector } from 'react-redux'
 import { selectUser, selectOrgId } from '@/features/auth/model/sessionSlice'
 
 // Real API calls
-import { useGetEventsQuery, useDeleteEventMutation, useBulkDeleteEventsMutation, useBulkExportEventsMutation } from '@/features/events/api/eventsApi'
+import {
+  useGetEventsQuery,
+  useDeleteEventMutation,
+  useBulkDeleteEventsMutation,
+  useBulkExportEventsMutation,
+} from '@/features/events/api/eventsApi'
 import type { EventStatus } from '@/features/events/types'
 
 // Multi-select components
@@ -26,11 +41,11 @@ import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
 
 const EventsList = () => {
   const toast = useToast()
-  
+
   // Get user from Redux
   const user = useSelector(selectUser)
   const orgId = useSelector(selectOrgId)
-  
+
   // Filters state
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'all'>('all')
@@ -38,13 +53,17 @@ const EventsList = () => {
   const itemsPerPage = 10
 
   // API calls - Real data instead of mocks
-  const { data: events = [], isLoading, error } = useGetEventsQuery({
+  const {
+    data: events = [],
+    isLoading,
+    error,
+  } = useGetEventsQuery({
     page: currentPage,
     limit: itemsPerPage,
     ...(search && { search }),
     ...(statusFilter !== 'all' && { status: statusFilter }),
   })
-  
+
   const [deleteEvent] = useDeleteEventMutation()
   const [bulkDeleteEvents] = useBulkDeleteEventsMutation()
   const [bulkExportEvents] = useBulkExportEventsMutation()
@@ -54,7 +73,7 @@ const EventsList = () => {
   const isSuperAdmin = userRole === 'SUPER_ADMIN'
 
   // Filter events based on user role (additional client-side filtering if needed)
-  const filteredEvents = events.filter(event => {
+  const filteredEvents = events.filter((event) => {
     // RBAC: SUPER_ADMIN sees all events, others see only their org events
     if (!isSuperAdmin && event.orgId !== orgId) {
       return false
@@ -76,53 +95,60 @@ const EventsList = () => {
     toggleAll,
     unselectAll,
     selectedCount,
-    selectedItems
+    selectedItems,
   } = useMultiSelect({
     items: paginatedEvents,
-    getItemId: (event) => event.id
+    getItemId: (event) => event.id,
   })
 
   // Bulk actions configuration
   const bulkActions = useMemo(() => {
     const actions = []
-    
+
     // Default export action using API mutation
-    actions.push(createBulkActions.export(async (selectedIds) => {
-      try {
-        const response = await bulkExportEvents({ 
-          ids: Array.from(selectedIds),
-          format: 'csv' 
-        }).unwrap()
-        
-        // Download the file using the URL provided by the API
-        const a = document.createElement('a')
-        a.style.display = 'none'
-        a.href = response.downloadUrl
-        a.download = response.filename || 'events.csv'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        
-        unselectAll()
-      } catch (error) {
-        console.error('Erreur lors de l\'export:', error)
-        throw error
-      }
-    }))
-    
+    actions.push(
+      createBulkActions.export(async (selectedIds) => {
+        try {
+          const response = await bulkExportEvents({
+            ids: Array.from(selectedIds),
+            format: 'csv',
+          }).unwrap()
+
+          // Download the file using the URL provided by the API
+          const a = document.createElement('a')
+          a.style.display = 'none'
+          a.href = response.downloadUrl
+          a.download = response.filename || 'events.csv'
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+
+          unselectAll()
+        } catch (error) {
+          console.error("Erreur lors de l'export:", error)
+          throw error
+        }
+      })
+    )
+
     // Default delete action using API mutation
-    actions.push(createBulkActions.delete(async (selectedIds) => {
-      try {
-        await bulkDeleteEvents(Array.from(selectedIds)).unwrap()
-        toast.success('Événements supprimés', `${selectedIds.size} événement(s) supprimé(s) avec succès`)
-        unselectAll()
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error)
-        toast.error('Erreur', 'Impossible de supprimer les événements')
-        throw error
-      }
-    }))
-    
+    actions.push(
+      createBulkActions.delete(async (selectedIds) => {
+        try {
+          await bulkDeleteEvents(Array.from(selectedIds)).unwrap()
+          toast.success(
+            'Événements supprimés',
+            `${selectedIds.size} événement(s) supprimé(s) avec succès`
+          )
+          unselectAll()
+        } catch (error) {
+          console.error('Erreur lors de la suppression:', error)
+          toast.error('Erreur', 'Impossible de supprimer les événements')
+          throw error
+        }
+      })
+    )
+
     return actions
   }, [bulkDeleteEvents, bulkExportEvents, unselectAll, toast])
 
@@ -130,17 +156,22 @@ const EventsList = () => {
   const handleDelete = async (eventId: string) => {
     try {
       await deleteEvent(eventId).unwrap()
-      toast.success('Événement supprimé', 'L\'événement a été supprimé avec succès')
+      toast.success(
+        'Événement supprimé',
+        "L'événement a été supprimé avec succès"
+      )
     } catch (err) {
-      toast.error('Erreur', 'Impossible de supprimer l\'événement')
+      toast.error('Erreur', "Impossible de supprimer l'événement")
     }
   }
 
   const handleRowClick = (eventId: string, e: React.MouseEvent) => {
     // Don't navigate if clicking on checkbox or action buttons
-    if ((e.target as HTMLElement).closest('input[type="checkbox"]') || 
-        (e.target as HTMLElement).closest('button') ||
-        (e.target as HTMLElement).closest('a')) {
+    if (
+      (e.target as HTMLElement).closest('input[type="checkbox"]') ||
+      (e.target as HTMLElement).closest('button') ||
+      (e.target as HTMLElement).closest('a')
+    ) {
       return
     }
     // Toggle selection on row click
@@ -151,10 +182,13 @@ const EventsList = () => {
   const getStatusBadge = (status: EventStatus) => {
     const styles = {
       draft: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-      published: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-      active: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-      completed: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
-      cancelled: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+      published:
+        'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+      active:
+        'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+      completed:
+        'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+      cancelled: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
     }
 
     const labels = {
@@ -162,11 +196,13 @@ const EventsList = () => {
       published: 'Publié',
       active: 'En cours',
       completed: 'Terminé',
-      cancelled: 'Annulé'
+      cancelled: 'Annulé',
     }
 
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}
+      >
         {labels[status]}
       </span>
     )
@@ -179,7 +215,9 @@ const EventsList = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Événements</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Événements
+              </h1>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                 Gérez tous vos événements en un seul endroit
               </p>
@@ -216,7 +254,9 @@ const EventsList = () => {
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as EventStatus | 'all')}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as EventStatus | 'all')
+                }
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 appearance-none"
               >
                 <option value="all">Tous les statuts</option>
@@ -231,7 +271,10 @@ const EventsList = () => {
             {/* Results count */}
             <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
               <span className="font-medium">{filteredEvents.length}</span>
-              <span className="ml-1">événement{filteredEvents.length > 1 ? 's' : ''} trouvé{filteredEvents.length > 1 ? 's' : ''}</span>
+              <span className="ml-1">
+                événement{filteredEvents.length > 1 ? 's' : ''} trouvé
+                {filteredEvents.length > 1 ? 's' : ''}
+              </span>
             </div>
           </div>
         </div>
@@ -251,7 +294,9 @@ const EventsList = () => {
           {isLoading && (
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-300">Chargement des événements...</span>
+              <span className="ml-3 text-gray-600 dark:text-gray-300">
+                Chargement des événements...
+              </span>
             </div>
           )}
 
@@ -259,7 +304,9 @@ const EventsList = () => {
           {error && (
             <div className="flex justify-center items-center py-12">
               <div className="text-center">
-                <div className="text-red-600 dark:text-red-400 mb-2">❌ Erreur lors du chargement</div>
+                <div className="text-red-600 dark:text-red-400 mb-2">
+                  ❌ Erreur lors du chargement
+                </div>
                 <div className="text-sm text-gray-600 dark:text-gray-300">
                   Impossible de charger les événements. Veuillez réessayer.
                 </div>
@@ -271,152 +318,167 @@ const EventsList = () => {
           {!isLoading && !error && (
             <div className="overflow-x-auto">
               <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                <tr>
-                  <th className="px-6 py-3 w-12">
-                    <label className="flex items-center justify-center cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        ref={(el) => {
-                          if (el) el.indeterminate = isIndeterminate
-                        }}
-                        onChange={toggleAll}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                    </label>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Événement
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Dates
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Lieu
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Inscrits
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Statut
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {paginatedEvents.length === 0 ? (
+                <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center">
-                      <div className="flex flex-col items-center">
-                        <Calendar className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" />
-                        <p className="text-gray-600 dark:text-gray-300 font-medium">Aucun événement trouvé</p>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                          Essayez de modifier vos filtres ou créez un nouvel événement
-                        </p>
-                      </div>
-                    </td>
+                    <th className="px-6 py-3 w-12">
+                      <label className="flex items-center justify-center cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = isIndeterminate
+                          }}
+                          onChange={toggleAll}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                      </label>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Événement
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Dates
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Lieu
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Inscrits
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Statut
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ) : (
-                  paginatedEvents.map((event) => (
-                    <tr
-                      key={event.id}
-                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer ${
-                        isSelected(event.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                      }`}
-                      onClick={(e) => handleRowClick(event.id, e)}
-                    >
-                      <td 
-                        className="px-6 py-4" 
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <label className="flex items-center justify-center w-full h-full cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={isSelected(event.id)}
-                            onChange={() => toggleItem(event.id)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                        </label>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-white">{event.name}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{event.id}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm">
-                          <div className="text-gray-900 dark:text-white">
-                            {new Date(event.startDate).toLocaleDateString('fr-FR', {
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
-                          </div>
-                          <div className="text-gray-500 dark:text-gray-400">
-                            {new Date(event.startDate).toLocaleTimeString('fr-FR', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-                          <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                          {event.location || 'En ligne'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center text-sm">
-                          <Users className="w-4 h-4 mr-1 text-gray-400" />
-                          <span className="text-gray-900 dark:text-white font-medium">
-                            {event.currentAttendees || 0}
-                          </span>
-                          {event.maxAttendees && (
-                            <span className="text-gray-500 dark:text-gray-400 ml-1">
-                              / {event.maxAttendees}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {getStatusBadge(event.status)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            to={`/events/${event.id}`}
-                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150"
-                            title="Voir les détails"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                          <Link
-                            to={`/events/${event.id}/edit`}
-                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150"
-                            title="Modifier"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(event.id)}
-                            className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {paginatedEvents.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center">
+                          <Calendar className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" />
+                          <p className="text-gray-600 dark:text-gray-300 font-medium">
+                            Aucun événement trouvé
+                          </p>
+                          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                            Essayez de modifier vos filtres ou créez un nouvel
+                            événement
+                          </p>
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    paginatedEvents.map((event) => (
+                      <tr
+                        key={event.id}
+                        className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer ${
+                          isSelected(event.id)
+                            ? 'bg-blue-50 dark:bg-blue-900/20'
+                            : ''
+                        }`}
+                        onClick={(e) => handleRowClick(event.id, e)}
+                      >
+                        <td
+                          className="px-6 py-4"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <label className="flex items-center justify-center w-full h-full cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={isSelected(event.id)}
+                              onChange={() => toggleItem(event.id)}
+                              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                          </label>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div>
+                            <div className="font-medium text-gray-900 dark:text-white">
+                              {event.name}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {event.id}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <div className="text-gray-900 dark:text-white">
+                              {new Date(event.startDate).toLocaleDateString(
+                                'fr-FR',
+                                {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  year: 'numeric',
+                                }
+                              )}
+                            </div>
+                            <div className="text-gray-500 dark:text-gray-400">
+                              {new Date(event.startDate).toLocaleTimeString(
+                                'fr-FR',
+                                {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                }
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                            <MapPin className="w-4 h-4 mr-1 text-gray-400" />
+                            {event.location || 'En ligne'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center text-sm">
+                            <Users className="w-4 h-4 mr-1 text-gray-400" />
+                            <span className="text-gray-900 dark:text-white font-medium">
+                              {event.currentAttendees || 0}
+                            </span>
+                            {event.maxAttendees && (
+                              <span className="text-gray-500 dark:text-gray-400 ml-1">
+                                / {event.maxAttendees}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {getStatusBadge(event.status)}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              to={`/events/${event.id}`}
+                              className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150"
+                              title="Voir les détails"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Link>
+                            <Link
+                              to={`/events/${event.id}/edit`}
+                              className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150"
+                              title="Modifier"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Link>
+                            <button
+                              onClick={() => handleDelete(event.id)}
+                              className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
 
           {/* Pagination */}
@@ -436,7 +498,9 @@ const EventsList = () => {
                     Précédent
                   </button>
                   <button
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    onClick={() =>
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
                     disabled={currentPage === totalPages}
                     className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                   >

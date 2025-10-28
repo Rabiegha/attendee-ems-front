@@ -165,11 +165,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
       style={{ zIndex: 9999 }}
     >
       {toasts.map((toast) => (
-        <ToastComponent
-          key={toast.id}
-          toast={toast}
-          onRemove={onRemove}
-        />
+        <ToastComponent key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
     </div>,
     document.body

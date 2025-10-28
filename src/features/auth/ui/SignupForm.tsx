@@ -1,6 +1,6 @@
 /**
  * 🔐 FORMULAIRE DE COMPLÉTION D'INSCRIPTION
- * 
+ *
  * Workflow sécurisé : Token validé → Complétion profil → Activation compte
  */
 
@@ -15,34 +15,52 @@ import { FormField } from '@/shared/ui/FormField'
 import type { SignupFormData, InvitationTokenInfo } from '../types/signup.types'
 
 // Schéma de validation strict
-const signupSchema = z.object({
-  firstName: z.string()
-    .min(2, 'Le prénom doit contenir au moins 2 caractères')
-    .max(50, 'Le prénom ne peut pas dépasser 50 caractères')
-    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Le prénom ne peut contenir que des lettres'),
-  lastName: z.string()
-    .min(2, 'Le nom doit contenir au moins 2 caractères')
-    .max(50, 'Le nom ne peut pas dépasser 50 caractères')
-    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Le nom ne peut contenir que des lettres'),
-  password: z.string()
-    .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
-    .regex(/(?=.*[a-z])/, 'Le mot de passe doit contenir au moins une minuscule')
-    .regex(/(?=.*[A-Z])/, 'Le mot de passe doit contenir au moins une majuscule')
-    .regex(/(?=.*\d)/, 'Le mot de passe doit contenir au moins un chiffre')
-    .regex(/(?=.*[@$!%*?&])/, 'Le mot de passe doit contenir au moins un caractère spécial'),
-  confirmPassword: z.string(),
-  phone: z.string()
-    .optional()
-    .refine((val) => !val || /^(\+33|0)[1-9](?:[0-9]{8})$/.test(val), {
-      message: 'Numéro de téléphone français invalide'
+const signupSchema = z
+  .object({
+    firstName: z
+      .string()
+      .min(2, 'Le prénom doit contenir au moins 2 caractères')
+      .max(50, 'Le prénom ne peut pas dépasser 50 caractères')
+      .regex(
+        /^[a-zA-ZÀ-ÿ\s'-]+$/,
+        'Le prénom ne peut contenir que des lettres'
+      ),
+    lastName: z
+      .string()
+      .min(2, 'Le nom doit contenir au moins 2 caractères')
+      .max(50, 'Le nom ne peut pas dépasser 50 caractères')
+      .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, 'Le nom ne peut contenir que des lettres'),
+    password: z
+      .string()
+      .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+      .regex(
+        /(?=.*[a-z])/,
+        'Le mot de passe doit contenir au moins une minuscule'
+      )
+      .regex(
+        /(?=.*[A-Z])/,
+        'Le mot de passe doit contenir au moins une majuscule'
+      )
+      .regex(/(?=.*\d)/, 'Le mot de passe doit contenir au moins un chiffre')
+      .regex(
+        /(?=.*[@$!%*?&])/,
+        'Le mot de passe doit contenir au moins un caractère spécial'
+      ),
+    confirmPassword: z.string(),
+    phone: z
+      .string()
+      .optional()
+      .refine((val) => !val || /^(\+33|0)[1-9](?:[0-9]{8})$/.test(val), {
+        message: 'Numéro de téléphone français invalide',
+      }),
+    acceptTerms: z.boolean().refine((val) => val === true, {
+      message: "Vous devez accepter les conditions d'utilisation",
     }),
-  acceptTerms: z.boolean().refine(val => val === true, {
-    message: 'Vous devez accepter les conditions d\'utilisation'
   })
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Les mots de passe ne correspondent pas',
-  path: ['confirmPassword']
-})
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Les mots de passe ne correspondent pas',
+    path: ['confirmPassword'],
+  })
 
 interface SignupFormProps {
   invitation: InvitationTokenInfo
@@ -53,7 +71,7 @@ interface SignupFormProps {
 export const SignupForm: React.FC<SignupFormProps> = ({
   invitation,
   onSubmit,
-  isLoading
+  isLoading,
 }) => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -62,10 +80,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({
     register,
     handleSubmit,
     watch,
-    formState: { errors, isValid }
+    formState: { errors, isValid },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-    mode: 'onChange'
+    mode: 'onChange',
   })
 
   const password = watch('password')
@@ -73,7 +91,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   // Calcul de la force du mot de passe
   const getPasswordStrength = (password: string) => {
     if (!password) return { score: 0, label: '', color: '' }
-    
+
     let score = 0
     if (password.length >= 8) score++
     if (/[a-z]/.test(password)) score++
@@ -87,7 +105,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       { score: 2, label: 'Faible', color: 'bg-orange-500' },
       { score: 3, label: 'Moyen', color: 'bg-yellow-500' },
       { score: 4, label: 'Fort', color: 'bg-blue-500' },
-      { score: 5, label: 'Très fort', color: 'bg-green-500' }
+      { score: 5, label: 'Très fort', color: 'bg-green-500' },
     ]
 
     return levels[score] || levels[0]
@@ -111,11 +129,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       </FormField>
 
       {/* Prénom */}
-      <FormField
-        label="Prénom"
-        error={errors.firstName?.message}
-        required
-      >
+      <FormField label="Prénom" error={errors.firstName?.message} required>
         <Input
           {...register('firstName')}
           placeholder="Jean"
@@ -139,11 +153,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       </FormField>
 
       {/* Mot de passe */}
-      <FormField
-        label="Mot de passe"
-        error={errors.password?.message}
-        required
-      >
+      <FormField label="Mot de passe" error={errors.password?.message} required>
         <Input
           {...register('password')}
           type={showPassword ? 'text' : 'password'}
@@ -155,26 +165,33 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               onClick={() => setShowPassword(!showPassword)}
               className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
             >
-              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </button>
           }
           autoComplete="new-password"
         />
-        
+
         {/* Indicateur de force du mot de passe */}
         {password && passwordStrength && (
           <div className="mt-2">
             <div className="flex items-center gap-2 mb-1">
               <div className="flex-1 bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className={`h-2 rounded-full transition-all duration-300 ${passwordStrength.color}`}
                   style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
                 />
               </div>
-              <span className="text-xs text-gray-600">{passwordStrength.label}</span>
+              <span className="text-xs text-gray-600">
+                {passwordStrength.label}
+              </span>
             </div>
             <div className="text-xs text-gray-500">
-              Le mot de passe doit contenir au moins 8 caractères avec majuscules, minuscules, chiffres et caractères spéciaux.
+              Le mot de passe doit contenir au moins 8 caractères avec
+              majuscules, minuscules, chiffres et caractères spéciaux.
             </div>
           </div>
         )}
@@ -197,7 +214,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400"
             >
-              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showConfirmPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </button>
           }
           autoComplete="new-password"
@@ -229,11 +250,19 @@ export const SignupForm: React.FC<SignupFormProps> = ({
           />
           <label className="text-sm text-gray-700 dark:text-gray-300">
             J'accepte les{' '}
-            <a href="/conditions" target="_blank" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">
+            <a
+              href="/conditions"
+              target="_blank"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+            >
               conditions d'utilisation
-            </a>
-            {' '}et la{' '}
-            <a href="/confidentialite" target="_blank" className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline">
+            </a>{' '}
+            et la{' '}
+            <a
+              href="/confidentialite"
+              target="_blank"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline"
+            >
               politique de confidentialité
             </a>
           </label>
@@ -241,11 +270,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       </FormField>
 
       {/* Bouton de validation */}
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={!isValid || isLoading}
-      >
+      <Button type="submit" className="w-full" disabled={!isValid || isLoading}>
         {isLoading ? (
           'Création du compte...'
         ) : (

@@ -3,7 +3,7 @@ import { useGetOrganizationsQuery } from '@/features/users/api/usersApi'
 
 export const OrganizationsTest: React.FC = () => {
   const { data: organizations, isLoading, error } = useGetOrganizationsQuery()
-  
+
   console.log('Organizations test - data:', organizations)
   console.log('Organizations test - loading:', isLoading)
   console.log('Organizations test - error:', error)
@@ -13,7 +13,10 @@ export const OrganizationsTest: React.FC = () => {
       <h3>Test API Organisations</h3>
       <p>Loading: {isLoading ? 'Oui' : 'Non'}</p>
       <p>Error: {error ? JSON.stringify(error) : 'Aucune'}</p>
-      <p>Data: {organizations ? JSON.stringify(organizations, null, 2) : 'Aucune'}</p>
+      <p>
+        Data:{' '}
+        {organizations ? JSON.stringify(organizations, null, 2) : 'Aucune'}
+      </p>
     </div>
   )
 }

@@ -1,6 +1,6 @@
 /**
  * 🔐 PAGE DE SIGNUP SÉCURISÉE
- * 
+ *
  * Workflow: Validation token → Affichage infos invitation → Complétion profil → Activation
  */
 
@@ -8,7 +8,10 @@ import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AlertTriangle, XCircle, CheckCircle } from 'lucide-react'
 import { useDispatch } from 'react-redux'
-import { useValidateTokenQuery, useCompleteSignupMutation } from '@/features/auth/api/signupApi'
+import {
+  useValidateTokenQuery,
+  useCompleteSignupMutation,
+} from '@/features/auth/api/signupApi'
 import { setSession } from '@/features/auth/model/sessionSlice'
 import { TokenInfo } from '@/features/auth/ui/TokenInfo'
 import { SignupForm } from '@/features/auth/ui/SignupForm'
@@ -21,16 +24,17 @@ export const SignupPage: React.FC = () => {
   const dispatch = useDispatch()
 
   // Validation du token
-  const { 
-    data: validation, 
-    isLoading: isValidating, 
-    error: validationError 
+  const {
+    data: validation,
+    isLoading: isValidating,
+    error: validationError,
   } = useValidateTokenQuery(token || '', {
-    skip: !token
+    skip: !token,
   })
 
   // Mutation de complétion
-  const [completeSignup, { isLoading: isCompleting }] = useCompleteSignupMutation()
+  const [completeSignup, { isLoading: isCompleting }] =
+    useCompleteSignupMutation()
 
   // Gestion de la soumission du formulaire
   const handleSignupSubmit = async (data: SignupFormData) => {
@@ -46,22 +50,23 @@ export const SignupPage: React.FC = () => {
       }).unwrap()
 
       // Connecter automatiquement l'utilisateur
-      dispatch(setSession({
-        token: result.token,
-        user: {
-          ...result.user,
-          roles: [result.user.role]
-        },
-        organization: {
-          id: result.user.orgId,
-          name: validation?.invitation?.orgName || '',
-          slug: ''
-        }
-      }))
+      dispatch(
+        setSession({
+          token: result.token,
+          user: {
+            ...result.user,
+            roles: [result.user.role],
+          },
+          organization: {
+            id: result.user.orgId,
+            name: validation?.invitation?.orgName || '',
+            slug: '',
+          },
+        })
+      )
 
       // Redirection avec message de succès
       navigate('/dashboard?welcome=true', { replace: true })
-
     } catch (error: any) {
       console.error('Erreur lors de la création du compte:', error)
       // TODO: Afficher un toast d'erreur
@@ -70,12 +75,14 @@ export const SignupPage: React.FC = () => {
 
   // Token manquant
   if (!token) {
-    return <ErrorState
-      type="INVALID_TOKEN"
-      title="Lien d'invitation invalide"
-      message="Le lien d'invitation est malformé ou incomplet."
-      redirectTo="/login"
-    />
+    return (
+      <ErrorState
+        type="INVALID_TOKEN"
+        title="Lien d'invitation invalide"
+        message="Le lien d'invitation est malformé ou incomplet."
+        redirectTo="/login"
+      />
+    )
   }
 
   // Chargement de la validation
@@ -89,34 +96,41 @@ export const SignupPage: React.FC = () => {
     const errorMessages = {
       INVALID_TOKEN: {
         title: 'Invitation invalide',
-        message: 'Ce lien d\'invitation n\'est pas valide ou a été corrompu.'
+        message: "Ce lien d'invitation n'est pas valide ou a été corrompu.",
       },
       TOKEN_EXPIRED: {
         title: 'Invitation expirée',
-        message: 'Cette invitation a expiré. Demandez une nouvelle invitation à votre administrateur.'
+        message:
+          'Cette invitation a expiré. Demandez une nouvelle invitation à votre administrateur.',
       },
       EMAIL_MISMATCH: {
         title: 'Erreur de sécurité',
-        message: 'Une incohérence a été détectée. Veuillez contacter votre administrateur.'
+        message:
+          'Une incohérence a été détectée. Veuillez contacter votre administrateur.',
       },
       USER_ALREADY_ACTIVE: {
         title: 'Compte déjà activé',
-        message: 'Ce compte a déjà été créé. Vous pouvez vous connecter directement.'
+        message:
+          'Ce compte a déjà été créé. Vous pouvez vous connecter directement.',
       },
       INVITATION_USED: {
         title: 'Invitation déjà utilisée',
-        message: 'Cette invitation a déjà été utilisée pour créer un compte.'
-      }
+        message: 'Cette invitation a déjà été utilisée pour créer un compte.',
+      },
     }
 
-    const errorInfo = errorMessages[errorType as keyof typeof errorMessages] || errorMessages.INVALID_TOKEN
+    const errorInfo =
+      errorMessages[errorType as keyof typeof errorMessages] ||
+      errorMessages.INVALID_TOKEN
 
-    return <ErrorState
-      type={errorType}
-      title={errorInfo.title}
-      message={errorInfo.message}
-      redirectTo={errorType === 'USER_ALREADY_ACTIVE' ? '/login' : '/'}
-    />
+    return (
+      <ErrorState
+        type={errorType}
+        title={errorInfo.title}
+        message={errorInfo.message}
+        redirectTo={errorType === 'USER_ALREADY_ACTIVE' ? '/login' : '/'}
+      />
+    )
   }
 
   // Invitation valide - Afficher le formulaire
@@ -136,11 +150,8 @@ export const SignupPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow rounded-lg transition-colors duration-200">
-          <TokenInfo 
-            invitation={validation.invitation!} 
-            isLoading={false}
-          />
-          
+          <TokenInfo invitation={validation.invitation!} isLoading={false} />
+
           <SignupForm
             invitation={validation.invitation!}
             onSubmit={handleSignupSubmit}
@@ -159,7 +170,9 @@ const LoadingState: React.FC<{ message: string }> = ({ message }) => (
       <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow rounded-lg transition-colors duration-200">
         <div className="flex flex-col items-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">{message}</p>
+          <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+            {message}
+          </p>
         </div>
       </div>
     </div>
@@ -174,7 +187,12 @@ interface ErrorStateProps {
   redirectTo: string
 }
 
-const ErrorState: React.FC<ErrorStateProps> = ({ type, title, message, redirectTo }) => {
+const ErrorState: React.FC<ErrorStateProps> = ({
+  type,
+  title,
+  message,
+  redirectTo,
+}) => {
   const navigate = useNavigate()
 
   const getIcon = () => {
@@ -195,16 +213,14 @@ const ErrorState: React.FC<ErrorStateProps> = ({ type, title, message, redirectT
       case 'TOKEN_EXPIRED':
         return 'Demander une nouvelle invitation'
       default:
-        return 'Retour à l\'accueil'
+        return "Retour à l'accueil"
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 transition-colors duration-300">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          {getIcon()}
-        </div>
+        <div className="flex justify-center">{getIcon()}</div>
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
           {title}
         </h2>
@@ -215,17 +231,14 @@ const ErrorState: React.FC<ErrorStateProps> = ({ type, title, message, redirectT
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow rounded-lg transition-colors duration-200">
-          <Button
-            onClick={() => navigate(redirectTo)}
-            className="w-full"
-          >
+          <Button onClick={() => navigate(redirectTo)} className="w-full">
             {getButtonText()}
           </Button>
-          
+
           {type !== 'USER_ALREADY_ACTIVE' && (
             <div className="mt-4 text-center">
-              <a 
-                href="mailto:support@attendee-ems.com" 
+              <a
+                href="mailto:support@attendee-ems.com"
                 className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 Contacter le support

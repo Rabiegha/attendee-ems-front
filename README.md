@@ -1,16 +1,12 @@
 # 🎯 EMS Frontend - Event Management System# Event Management System (EMS)
 
+**Version**: 1.0.0-dev Un système de gestion d'événements B2B moderne et complet, construit avec React 18, TypeScript, et une architecture feature-sliced robuste.
 
-
-**Version**: 1.0.0-dev  Un système de gestion d'événements B2B moderne et complet, construit avec React 18, TypeScript, et une architecture feature-sliced robuste.
-
-**Date**: 21 octobre 2025  
+**Date**: 21 octobre 2025
 
 **Statut**: 🟢 Production Ready (90%)**🎯 Status : Version 1.0.0-dev - Système d'invitation fonctionnel !**
 
-
-
----> **Dernière mise à jour** : 13 octobre 2025  
+---> **Dernière mise à jour** : 13 octobre 2025
 
 > **Fonctionnalités principales** : ✅ Auth, ✅ RBAC, ✅ Events, ✅ Users, ✅ **Invitations complètes**
 
@@ -62,8 +58,6 @@ Application React moderne de gestion d'événements B2B multi-tenant avec authen
 
 ### Installation- Support français et anglais
 
-
-
 ```bash### Tests & Qualité
 
 # 1. Installer les dépendances- **Vitest** + **React Testing Library** pour les tests unitaires
@@ -104,25 +98,23 @@ Le système utilise une **architecture à deux niveaux** pour la gestion des par
 
 ---- **CRM intégré** avec suivi des interactions
 
-
-
 ## 📚 Documentation```typescript
 
 interface Attendee {
 
-Toute la documentation est disponible dans le dossier `/docs` :  id: string
+Toute la documentation est disponible dans le dossier `/docs` : id: string
 
-  orgId: string
+orgId: string
 
-- 📖 [Guide de Développement](./docs/DEVELOPMENT_GUIDE.md) - Standards et architecture  personId: string  // Lien vers persons (table globale)
+- 📖 [Guide de Développement](./docs/DEVELOPMENT_GUIDE.md) - Standards et architecture personId: string // Lien vers persons (table globale)
 
-- 🎪 [Système de Démo](./docs/DEMO_SYSTEM.md) - Comptes de test  defaultTypeId?: string
+- 🎪 [Système de Démo](./docs/DEMO_SYSTEM.md) - Comptes de test defaultTypeId?: string
 
-- 🛡️ [Guide RBAC](./docs/RBAC_GUIDE.md) - Système de permissions  labels: string[]
+- 🛡️ [Guide RBAC](./docs/RBAC_GUIDE.md) - Système de permissions labels: string[]
 
-- 🎨 [Design System](./docs/DESIGN_SYSTEM.md) - Composants UI  notes?: string
+- 🎨 [Design System](./docs/DESIGN_SYSTEM.md) - Composants UI notes?: string
 
-- 🎨 [Système de Couleurs](./docs/COLOR_SYSTEM.md) - Palette et tokens  // Historique calculé des événements
+- 🎨 [Système de Couleurs](./docs/COLOR_SYSTEM.md) - Palette et tokens // Historique calculé des événements
 
 - 📊 [Architecture Attendees](./docs/ATTENDEES_ARCHITECTURE.md) - Structure participants}
 
@@ -142,7 +134,7 @@ Toute la documentation est disponible dans le dossier `/docs` :  id: string
 
 ### Feature-Sliced Design
 
-```typescript
+````typescript
 
 ```interface Registration {
 
@@ -298,7 +290,7 @@ if (can('update', event)) {3. **Invité** → Clic lien email → Complétion pr
 
 </ProtectedRoute>## 🔐 Système RBAC (CASL)
 
-```
+````
 
 ### Rôles Disponibles
 
@@ -314,15 +306,11 @@ if (can('update', event)) {3. **Invité** → Clic lien email → Complétion pr
 
 ---- **HOSTESS** : Personnel d'accueil événements
 
-
-
 ## 🎨 Design System### Actions Supportées
 
 - `manage`, `create`, `read`, `update`, `delete`
 
 ### Composants UI Principaux- `checkin`, `export`, `invite`, `approve`, `refuse`, `print`
-
-
 
 #### Buttons### Sujets (Resources)
 
@@ -336,7 +324,7 @@ if (can('update', event)) {3. **Invité** → Clic lien email → Complétion pr
 
 <Button variant="ghost">Discret</Button>
 
-``````bash
+````bash
 
 # Développement
 
@@ -809,5 +797,6 @@ Pour tout problème ou question :
 
 ---
 
-**Dernière mise à jour** : 21 octobre 2025  
+**Dernière mise à jour** : 21 octobre 2025
 **Maintenu par** : Corentin
+````

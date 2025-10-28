@@ -23,18 +23,20 @@ export const EventForm: React.FC<EventFormProps> = ({
   onSubmit,
   onCancel,
   isLoading = false,
-  mode = 'create'
+  mode = 'create',
 }) => {
   const [tags, setTags] = useState<string[]>(initialData?.tags || [])
   const [newTag, setNewTag] = useState('')
-  const [partnerIds, setPartnerIds] = useState<string[]>(initialData?.partnerIds || [])
+  const [partnerIds, setPartnerIds] = useState<string[]>(
+    initialData?.partnerIds || []
+  )
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     watch,
-    setValue
+    setValue,
   } = useForm<CreateEventFormData>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
@@ -45,8 +47,8 @@ export const EventForm: React.FC<EventFormProps> = ({
       location: initialData?.location || '',
       maxAttendees: initialData?.maxAttendees || undefined, // Sans limite par défaut
       tags: initialData?.tags || [],
-      partnerIds: initialData?.partnerIds || []
-    }
+      partnerIds: initialData?.partnerIds || [],
+    },
   })
 
   const watchStartDate = watch('startDate')
@@ -62,7 +64,7 @@ export const EventForm: React.FC<EventFormProps> = ({
   }
 
   const removeTag = (tagToRemove: string) => {
-    const updatedTags = tags.filter(tag => tag !== tagToRemove)
+    const updatedTags = tags.filter((tag) => tag !== tagToRemove)
     setTags(updatedTags)
     setValue('tags', updatedTags)
   }
@@ -134,10 +136,7 @@ export const EventForm: React.FC<EventFormProps> = ({
       </div>
 
       {/* Lieu */}
-      <FormField
-        label="Lieu (optionnel)"
-        error={errors.location?.message}
-      >
+      <FormField label="Lieu (optionnel)" error={errors.location?.message}>
         <Input
           {...register('location')}
           placeholder="Centre de Conférences Paris"
@@ -157,12 +156,12 @@ export const EventForm: React.FC<EventFormProps> = ({
           min="1"
           max="10000"
           placeholder="Sans limite"
-          {...register('maxAttendees', { 
+          {...register('maxAttendees', {
             setValueAs: (value: string) => {
               // Si vide ou non numérique, retourner undefined pour "sans limite"
               const num = parseInt(value, 10)
               return isNaN(num) || value === '' ? undefined : num
-            }
+            },
           })}
           leftIcon={<Users className="h-4 w-4" />}
           disabled={isLoading}
@@ -259,7 +258,9 @@ export const EventForm: React.FC<EventFormProps> = ({
           className="flex items-center space-x-2"
         >
           {isLoading && <LoadingSpinner size="sm" />}
-          <span>{mode === 'create' ? 'Créer l\'événement' : 'Mettre à jour'}</span>
+          <span>
+            {mode === 'create' ? "Créer l'événement" : 'Mettre à jour'}
+          </span>
         </Button>
       </div>
     </form>

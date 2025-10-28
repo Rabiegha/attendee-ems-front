@@ -7,50 +7,63 @@ import { PERMISSION_CATEGORIES } from '../types'
 interface RoleCardProps {
   role: Role
   permissions: Permission[]
-  onPermissionChange: (roleId: string, permissionId: string, granted: boolean) => Promise<void>
+  onPermissionChange: (
+    roleId: string,
+    permissionId: string,
+    granted: boolean
+  ) => Promise<void>
   isUpdating?: boolean
 }
 
 // Grouper les permissions par catégorie
 const groupPermissionsByCategory = (permissions: Permission[]) => {
-  return permissions.reduce((acc, permission) => {
-    const category = permission.category
-    if (!acc[category]) {
-      acc[category] = []
-    }
-    acc[category].push(permission)
-    return acc
-  }, {} as Record<string, Permission[]>)
+  return permissions.reduce(
+    (acc, permission) => {
+      const category = permission.category
+      if (!acc[category]) {
+        acc[category] = []
+      }
+      acc[category].push(permission)
+      return acc
+    },
+    {} as Record<string, Permission[]>
+  )
 }
 
 export const RoleCard: React.FC<RoleCardProps> = ({
   role,
   permissions,
   onPermissionChange,
-  isUpdating = false
+  isUpdating = false,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true)
-  const [loadingPermissions, setLoadingPermissions] = useState<Set<string>>(new Set())
-  
+  const [loadingPermissions, setLoadingPermissions] = useState<Set<string>>(
+    new Set()
+  )
+
   // Grouper toutes les permissions par catégorie
   const groupedPermissions = groupPermissionsByCategory(permissions)
   const categoryNames = Object.keys(groupedPermissions)
-  
+
   // Statistiques
   const grantedCount = role.permissions.length
   const totalCount = permissions.length
-  const progressPercentage = totalCount > 0 ? (grantedCount / totalCount) * 100 : 0
+  const progressPercentage =
+    totalCount > 0 ? (grantedCount / totalCount) * 100 : 0
 
-  const handlePermissionChange = async (permissionId: string, granted: boolean) => {
-    setLoadingPermissions(prev => new Set(prev).add(permissionId))
-    
+  const handlePermissionChange = async (
+    permissionId: string,
+    granted: boolean
+  ) => {
+    setLoadingPermissions((prev) => new Set(prev).add(permissionId))
+
     try {
       await onPermissionChange(role.id, permissionId, granted)
     } catch (error) {
       console.error('Failed to update permission:', error)
       // TODO: Add toast notification
     } finally {
-      setLoadingPermissions(prev => {
+      setLoadingPermissions((prev) => {
         const newSet = new Set(prev)
         newSet.delete(permissionId)
         return newSet
@@ -70,16 +83,18 @@ export const RoleCard: React.FC<RoleCardProps> = ({
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {role.name}
                 </h3>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${role.color}`}>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${role.color}`}
+                >
                   {role.code}
                 </span>
               </div>
             </div>
-            
+
             <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               {role.description}
             </p>
-            
+
             {/* Barre de progression des permissions */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
@@ -91,7 +106,7 @@ export const RoleCard: React.FC<RoleCardProps> = ({
                 </span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div 
+                <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${progressPercentage}%` }}
                 />
@@ -101,7 +116,7 @@ export const RoleCard: React.FC<RoleCardProps> = ({
               </div>
             </div>
           </div>
-          
+
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="ml-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -120,33 +135,37 @@ export const RoleCard: React.FC<RoleCardProps> = ({
       {isExpanded && (
         <div className="p-6">
           <div className="space-y-6">
-            {categoryNames.map(categoryKey => {
+            {categoryNames.map((categoryKey) => {
               const categoryPermissions = groupedPermissions[categoryKey]
-              
+
               if (!categoryPermissions) {
                 return null
               }
-              
-              const categoryGrantedCount = categoryPermissions.filter(p => 
+
+              const categoryGrantedCount = categoryPermissions.filter((p) =>
                 role.permissions.includes(p.id)
               ).length
-              
+
               return (
                 <div key={categoryKey} className="space-y-3">
                   {/* En-tête de catégorie */}
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                       <Users className="h-4 w-4" />
-                      <span>{PERMISSION_CATEGORIES[categoryKey as keyof typeof PERMISSION_CATEGORIES] || categoryKey}</span>
+                      <span>
+                        {PERMISSION_CATEGORIES[
+                          categoryKey as keyof typeof PERMISSION_CATEGORIES
+                        ] || categoryKey}
+                      </span>
                     </h4>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {categoryGrantedCount} / {categoryPermissions.length}
                     </span>
                   </div>
-                  
+
                   {/* Liste des permissions de cette catégorie */}
                   <div className="grid gap-2">
-                    {categoryPermissions.map(permission => (
+                    {categoryPermissions.map((permission) => (
                       <PermissionCheckbox
                         key={permission.id}
                         permission={permission}
@@ -162,13 +181,14 @@ export const RoleCard: React.FC<RoleCardProps> = ({
               )
             })}
           </div>
-          
+
           {/* Footer avec informations */}
           <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
               <Info className="h-4 w-4" />
               <span>
-                Les modifications sont sauvegardées automatiquement en temps réel
+                Les modifications sont sauvegardées automatiquement en temps
+                réel
               </span>
             </div>
           </div>

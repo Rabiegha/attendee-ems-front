@@ -1,6 +1,6 @@
 /**
  * MSW Handlers - Auth API (Mock temporaire)
- * 
+ *
  * Handlers pour les appels d'authentification pendant le développement
  */
 
@@ -21,8 +21,8 @@ export const authHandlers = [
       org_id: '1c510d95-0056-4c33-9c2b-c9a36f3c629e',
       organization: {
         id: '1c510d95-0056-4c33-9c2b-c9a36f3c629e',
-        name: 'ACME Corp'
-      }
+        name: 'ACME Corp',
+      },
     })
   }),
 
@@ -33,8 +33,8 @@ export const authHandlers = [
         { action: 'manage', subject: 'Event' },
         { action: 'manage', subject: 'Attendee' },
         { action: 'read', subject: 'User' },
-        { action: 'manage', subject: 'Registration' }
-      ]
+        { action: 'manage', subject: 'Registration' },
+      ],
     })
   }),
 
@@ -42,7 +42,7 @@ export const authHandlers = [
   http.post(`${API_BASE}/auth/refresh`, () => {
     return HttpResponse.json({
       access_token: 'mock-refreshed-token',
-      expires_in: 3600
+      expires_in: 3600,
     })
-  })
+  }),
 ]

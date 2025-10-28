@@ -82,9 +82,7 @@ export const WithDivider: Story = {
         <Button variant="outline" leftIcon={<X className="h-4 w-4" />}>
           Annuler
         </Button>
-        <Button leftIcon={<Save className="h-4 w-4" />}>
-          Enregistrer
-        </Button>
+        <Button leftIcon={<Save className="h-4 w-4" />}>Enregistrer</Button>
       </>
     ),
   },
@@ -96,7 +94,9 @@ export const SmallSpacing: Story = {
     spacing: 'sm',
     children: (
       <>
-        <Button size="sm" variant="outline">Annuler</Button>
+        <Button size="sm" variant="outline">
+          Annuler
+        </Button>
         <Button size="sm">OK</Button>
       </>
     ),
@@ -123,8 +123,12 @@ export const Vertical: Story = {
     children: (
       <>
         <Button className="w-full">Action principale</Button>
-        <Button variant="outline" className="w-full">Action secondaire</Button>
-        <Button variant="ghost" className="w-full">Annuler</Button>
+        <Button variant="outline" className="w-full">
+          Action secondaire
+        </Button>
+        <Button variant="ghost" className="w-full">
+          Annuler
+        </Button>
       </>
     ),
   },
@@ -143,9 +147,7 @@ export const MultipleActions: Story = {
           Modifier
         </Button>
         <Button variant="outline">Annuler</Button>
-        <Button leftIcon={<Save className="h-4 w-4" />}>
-          Enregistrer
-        </Button>
+        <Button leftIcon={<Save className="h-4 w-4" />}>Enregistrer</Button>
       </>
     ),
   },
@@ -156,11 +158,14 @@ export const InFormExample: Story = {
   render: () => (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
       <h2 className="text-heading-md mb-4">Créer un événement</h2>
-      
+
       <div className="space-y-4 mb-6">
         <div>
           <label className="block text-sm font-medium mb-1">Nom</label>
-          <input className="w-full p-2 border rounded" placeholder="Nom de l'événement" />
+          <input
+            className="w-full p-2 border rounded"
+            placeholder="Nom de l'événement"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Description</label>

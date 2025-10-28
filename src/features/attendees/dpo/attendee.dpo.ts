@@ -13,9 +13,9 @@ export interface AttendeeDPO {
   metadata?: Record<string, any>
   labels?: string[]
   isActive: boolean
-  createdAt: string        // ISO string for Redux serialization
-  updatedAt: string        // ISO string for Redux serialization
-  
+  createdAt: string // ISO string for Redux serialization
+  updatedAt: string // ISO string for Redux serialization
+
   // Computed properties
   displayName: string
   canCheckIn: boolean

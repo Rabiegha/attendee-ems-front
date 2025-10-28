@@ -29,20 +29,20 @@ function clearProactiveTimer() {
 function scheduleProactiveRefresh() {
   clearProactiveTimer()
   const { expiresAt, token, isAuthenticated } = store.getState().session
-  
+
   // Ne pas programmer de refresh si l'utilisateur n'est pas authentifié ou n'a pas de token
   if (!isAuthenticated || !token || !expiresAt) return
-  
+
   const now = Date.now()
   const msLeft = expiresAt - now
-  
+
   // Si le token est déjà expiré ou expire dans moins de 10 secondes, ne pas programmer de refresh
   // Le 401 interceptor s'en chargera
   if (msLeft <= 10000) {
     // console.log('[AUTH] Token expires too soon, skipping proactive refresh')
     return
   }
-  
+
   const jitter = Math.floor(Math.random() * 15000) // 0–15s
   const when = Math.max(5000, msLeft - 60000 - jitter) // ~1min avant
 
@@ -52,14 +52,18 @@ function scheduleProactiveRefresh() {
     if (!currentState.isAuthenticated || !currentState.token) {
       return
     }
-    
+
     // utilise l'endpoint refresh depuis authApi
     try {
-      const res: any = await store.dispatch(
-        authApi.endpoints.refresh.initiate(undefined, { track: false })
-      ).unwrap()
+      const res: any = await store
+        .dispatch(
+          authApi.endpoints.refresh.initiate(undefined, { track: false })
+        )
+        .unwrap()
       if (res?.access_token) {
-        store.dispatch(setSession({ token: res.access_token, expiresInSec: res.expires_in }))
+        store.dispatch(
+          setSession({ token: res.access_token, expiresInSec: res.expires_in })
+        )
         broadcastToken(res.access_token, res.expires_in)
         scheduleProactiveRefresh() // reprogrammer avec le nouveau expires_in
       }
@@ -83,13 +87,17 @@ export async function bootstrapAuth() {
     try {
       // console.log('[AUTH] Attempting to restore session from refresh token...')
       // Force le refresh sans utiliser le cache
-      const res: any = await store.dispatch(
-        authApi.endpoints.refresh.initiate(undefined, { track: false })
-      ).unwrap()
-      
+      const res: any = await store
+        .dispatch(
+          authApi.endpoints.refresh.initiate(undefined, { track: false })
+        )
+        .unwrap()
+
       if (res?.access_token) {
         // console.log('[AUTH] Session restored successfully')
-        store.dispatch(setSession({ token: res.access_token, expiresInSec: res.expires_in }))
+        store.dispatch(
+          setSession({ token: res.access_token, expiresInSec: res.expires_in })
+        )
         broadcastToken(res.access_token, res.expires_in)
         scheduleProactiveRefresh()
       } else {
@@ -99,7 +107,7 @@ export async function bootstrapAuth() {
       }
     } catch (error: any) {
       // console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):', error?.status || error?.message)
-      
+
       // CRITIQUE : Nettoyer la session en cas d'échec du refresh
       // Cela garantit que l'utilisateur ne reste pas dans un état "fantôme"
       store.dispatch(clearSession())
@@ -122,20 +130,23 @@ export function onAuthStateMaybeChanged() {
 export async function performLogout() {
   // Arrêter le timer proactif IMMÉDIATEMENT
   clearProactiveTimer()
-  
+
   // Nettoyer la session AVANT d'appeler logout
   store.dispatch(clearSession())
-  
+
   // Diffuser la déconnexion aux autres onglets
   broadcastToken(null)
-  
+
   // Appeler le logout backend (révoque le refresh token)
   try {
-    await store.dispatch(authApi.endpoints.logout.initiate()).unwrap().catch(()=>{})
+    await store
+      .dispatch(authApi.endpoints.logout.initiate())
+      .unwrap()
+      .catch(() => {})
   } catch {
     // Ignorer les erreurs de logout
   }
-  
+
   // Invalider tous les caches RTK Query
   store.dispatch(authApi.util.resetApiState())
 }

@@ -4,13 +4,13 @@ import { User, Lock, Mail, CheckCircle, AlertCircle } from 'lucide-react'
 import { FormField } from '@/shared/ui/FormField'
 import { Button } from '@/shared/ui/Button'
 import { Card } from '@/shared/ui/Card'
-import { 
-  useCompleteInvitationMutation, 
-  useValidateInvitationTokenQuery 
+import {
+  useCompleteInvitationMutation,
+  useValidateInvitationTokenQuery,
 } from '@/features/invitations/api/invitationsApi'
-import { 
-  TokenErrorAlert, 
-  AccountCreatedAlert 
+import {
+  TokenErrorAlert,
+  AccountCreatedAlert,
 } from './components/InvitationAlerts'
 
 interface CompleteInvitationFormData {
@@ -25,10 +25,12 @@ type PageState = 'loading' | 'form' | 'success' | 'error'
 export const CompleteInvitationPage: React.FC = () => {
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
-  
+
   const [pageState, setPageState] = useState<PageState>('loading')
-  const [errorType, setErrorType] = useState<'invalid' | 'expired' | 'already_used' | 'network_error'>('invalid')
-  
+  const [errorType, setErrorType] = useState<
+    'invalid' | 'expired' | 'already_used' | 'network_error'
+  >('invalid')
+
   const [formData, setFormData] = useState<CompleteInvitationFormData>({
     firstName: '',
     lastName: '',
@@ -37,9 +39,11 @@ export const CompleteInvitationPage: React.FC = () => {
   })
 
   const [errors, setErrors] = useState<Partial<CompleteInvitationFormData>>({})
-  
+
   // Fonction pour calculer la force du mot de passe
-  const getPasswordStrength = (password: string): { strength: number; label: string; color: string } => {
+  const getPasswordStrength = (
+    password: string
+  ): { strength: number; label: string; color: string } => {
     let strength = 0
     if (password.length >= 8) strength++
     if (/[a-z]/.test(password)) strength++
@@ -48,24 +52,26 @@ export const CompleteInvitationPage: React.FC = () => {
     if (/[^a-zA-Z\d]/.test(password)) strength++
 
     if (strength <= 2) return { strength, label: 'Faible', color: 'bg-red-500' }
-    if (strength <= 3) return { strength, label: 'Moyen', color: 'bg-yellow-500' }
+    if (strength <= 3)
+      return { strength, label: 'Moyen', color: 'bg-yellow-500' }
     if (strength <= 4) return { strength, label: 'Fort', color: 'bg-green-500' }
     return { strength, label: 'Très fort', color: 'bg-green-600' }
   }
 
   const passwordStrength = getPasswordStrength(formData.password)
-  
+
   // Validation du token (avec skip si pas de token)
-  const { 
-    data: tokenValidation, 
-    isLoading: isValidatingToken, 
+  const {
+    data: tokenValidation,
+    isLoading: isValidatingToken,
     error: tokenError,
-    isError: hasTokenError 
+    isError: hasTokenError,
   } = useValidateInvitationTokenQuery(token || '', {
-    skip: !token
+    skip: !token,
   })
-  
-  const [completeInvitation, { isLoading: isCompleting }] = useCompleteInvitationMutation()
+
+  const [completeInvitation, { isLoading: isCompleting }] =
+    useCompleteInvitationMutation()
 
   // Redirection immédiate si pas de token dans l'URL
   useEffect(() => {
@@ -84,26 +90,32 @@ export const CompleteInvitationPage: React.FC = () => {
     } else if (hasTokenError) {
       // Déterminer le type d'erreur en fonction de la réponse
       const errorStatus = (tokenError as any)?.status
-      const errorMessage = (tokenError as any)?.data?.message || (tokenError as any)?.message || ''
-      
+      const errorMessage =
+        (tokenError as any)?.data?.message || (tokenError as any)?.message || ''
+
       // Essayer plusieurs endroits pour trouver le message
       const allPossibleMessages = [
         errorMessage,
         (tokenError as any)?.data?.message,
         (tokenError as any)?.error,
-        JSON.stringify(tokenError)
-      ].join(' ').toLowerCase()
-      
+        JSON.stringify(tokenError),
+      ]
+        .join(' ')
+        .toLowerCase()
+
       if (allPossibleMessages.includes('expiré')) {
         setErrorType('expired')
-      } else if (allPossibleMessages.includes('déjà été utilisé') || allPossibleMessages.includes('déjà utilisé')) {
+      } else if (
+        allPossibleMessages.includes('déjà été utilisé') ||
+        allPossibleMessages.includes('déjà utilisé')
+      ) {
         setErrorType('already_used')
       } else if (errorStatus >= 500) {
         setErrorType('network_error')
       } else {
         setErrorType('invalid')
       }
-      
+
       setPageState('error')
     } else if (tokenValidation?.valid) {
       setPageState('form')
@@ -130,7 +142,8 @@ export const CompleteInvitationPage: React.FC = () => {
     } else if (formData.password.length < 8) {
       newErrors.password = 'Le mot de passe doit contenir au moins 8 caractères'
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = 'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre'
+      newErrors.password =
+        'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre'
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -155,21 +168,26 @@ export const CompleteInvitationPage: React.FC = () => {
           firstName: formData.firstName.trim(),
           lastName: formData.lastName.trim(),
           password: formData.password,
-        }
+        },
       }).unwrap()
 
       setPageState('success')
-
     } catch (error: any) {
       console.error('Erreur lors de la complétion:', error)
-      
+
       // Déterminer le type d'erreur et rester sur la page d'erreur
       if (error.status === 400) {
         const errorMessage = error.data?.message || ''
-        
-        if (errorMessage.includes('Le token d\'invitation a expiré') || errorMessage.includes('expiré')) {
+
+        if (
+          errorMessage.includes("Le token d'invitation a expiré") ||
+          errorMessage.includes('expiré')
+        ) {
           setErrorType('expired')
-        } else if (errorMessage.includes('Ce lien d\'invitation a déjà été utilisé') || errorMessage.includes('déjà été utilisé')) {
+        } else if (
+          errorMessage.includes("Ce lien d'invitation a déjà été utilisé") ||
+          errorMessage.includes('déjà été utilisé')
+        ) {
           setErrorType('already_used')
         } else {
           setErrorType('invalid')
@@ -177,7 +195,7 @@ export const CompleteInvitationPage: React.FC = () => {
       } else {
         setErrorType('network_error')
       }
-      
+
       setPageState('error')
     }
   }
@@ -186,17 +204,20 @@ export const CompleteInvitationPage: React.FC = () => {
     navigate('/login')
   }
 
-  const handleInputChange = (field: keyof CompleteInvitationFormData, value: string) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    field: keyof CompleteInvitationFormData,
+    value: string
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
 
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [field]: undefined
+        [field]: undefined,
       }))
     }
   }
@@ -207,7 +228,9 @@ export const CompleteInvitationPage: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
         <Card className="p-8 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Vérification de votre invitation...</p>
+          <p className="text-gray-600 dark:text-gray-300">
+            Vérification de votre invitation...
+          </p>
         </Card>
       </div>
     )
@@ -217,7 +240,7 @@ export const CompleteInvitationPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <TokenErrorAlert 
+          <TokenErrorAlert
             errorType={errorType}
             onReturnToLogin={handleReturnToLogin}
           />
@@ -230,7 +253,7 @@ export const CompleteInvitationPage: React.FC = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <AccountCreatedAlert 
+          <AccountCreatedAlert
             email={tokenValidation?.email || ''}
             onGoToLogin={handleGoToLogin}
           />
@@ -254,12 +277,13 @@ export const CompleteInvitationPage: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-300">
             Créez votre mot de passe pour finaliser votre compte
           </p>
-          
+
           {/* Information sur l'organisation et le rôle */}
           {tokenValidation && (
             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>{tokenValidation.organization}</strong> · {tokenValidation.role}
+                <strong>{tokenValidation.organization}</strong> ·{' '}
+                {tokenValidation.role}
               </p>
             </div>
           )}
@@ -284,17 +308,15 @@ export const CompleteInvitationPage: React.FC = () => {
               </div>
             </FormField>
 
-            <FormField
-              label="Prénom"
-              required
-              error={errors.firstName}
-            >
+            <FormField label="Prénom" required error={errors.firstName}>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 z-10" />
                 <input
                   type="text"
                   value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange('firstName', e.target.value)
+                  }
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Entrez votre prénom"
                   required
@@ -302,17 +324,15 @@ export const CompleteInvitationPage: React.FC = () => {
               </div>
             </FormField>
 
-            <FormField
-              label="Nom"
-              required
-              error={errors.lastName}
-            >
+            <FormField label="Nom" required error={errors.lastName}>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 z-10" />
                 <input
                   type="text"
                   value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange('lastName', e.target.value)
+                  }
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Entrez votre nom"
                   required
@@ -331,21 +351,25 @@ export const CompleteInvitationPage: React.FC = () => {
                 <input
                   type="password"
                   value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange('password', e.target.value)
+                  }
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Créez un mot de passe sécurisé"
                   required
                 />
               </div>
-              
+
               {/* Indicateur de force du mot de passe */}
               {formData.password && (
                 <div className="mt-2">
                   <div className="flex items-center gap-2 mb-1">
                     <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className={`h-full transition-all duration-300 ${passwordStrength.color}`}
-                        style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
+                        style={{
+                          width: `${(passwordStrength.strength / 5) * 100}%`,
+                        }}
                       />
                     </div>
                     <span className="text-xs text-gray-600 dark:text-gray-400">
@@ -366,7 +390,9 @@ export const CompleteInvitationPage: React.FC = () => {
                 <input
                   type="password"
                   value={formData.confirmPassword}
-                  onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange('confirmPassword', e.target.value)
+                  }
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Confirmez votre mot de passe"
                   required
@@ -396,7 +422,8 @@ export const CompleteInvitationPage: React.FC = () => {
               <p className="text-sm text-gray-500 flex items-center justify-center">
                 <AlertCircle className="w-4 h-4" />
                 <span className="ml-2">
-                  En créant votre compte, vous acceptez nos conditions d'utilisation
+                  En créant votre compte, vous acceptez nos conditions
+                  d'utilisation
                 </span>
               </p>
             </div>

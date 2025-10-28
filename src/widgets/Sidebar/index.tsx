@@ -1,7 +1,17 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { LayoutDashboard, Calendar, Users, UserCog, Shield, BarChart3, Settings, Mail, Building2 } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  UserCog,
+  Shield,
+  BarChart3,
+  Settings,
+  Mail,
+  Building2,
+} from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
 import { cn } from '@/shared/lib/utils'
@@ -100,7 +110,7 @@ export const Sidebar: React.FC = () => {
                 </li>
               )
             }
-            
+
             // Autres items avec guard CASL
             return (
               <Can key={item.href} do={item.action} on={item.subject}>

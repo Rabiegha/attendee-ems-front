@@ -4,7 +4,7 @@ export interface EventDPO {
   name: string
   description: string
   startDate: string // ISO string for Redux serialization
-  endDate: string   // ISO string for Redux serialization
+  endDate: string // ISO string for Redux serialization
   location: string
   locationType: 'physical' | 'online' | 'hybrid'
   maxAttendees: number
@@ -30,13 +30,18 @@ export interface EventDPO {
   duration: number // in hours
 }
 
-export type EventStatus = 'draft' | 'published' | 'active' | 'completed' | 'cancelled'
+export type EventStatus =
+  | 'draft'
+  | 'published'
+  | 'active'
+  | 'completed'
+  | 'cancelled'
 
 export interface CreateEventDPO {
   name: string
   description?: string // Optionnel
   startDate: string // ISO string from form
-  endDate: string   // ISO string from form
+  endDate: string // ISO string from form
   location?: string // Optionnel
   maxAttendees?: number // Optionnel (sans limite par défaut)
   status?: EventStatus // Optionnel (sera 'published' par défaut)

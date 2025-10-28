@@ -1,7 +1,11 @@
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { selectIsAuthenticated, selectIsBootstrapping, clearSession } from '@/features/auth/model/sessionSlice'
+import {
+  selectIsAuthenticated,
+  selectIsBootstrapping,
+  clearSession,
+} from '@/features/auth/model/sessionSlice'
 import { Header } from '@/widgets/Header'
 import { Sidebar } from '@/widgets/Sidebar'
 import { PermissionsDebug } from '@/shared/acl/components/PermissionsDebug'
@@ -14,30 +18,32 @@ export const RootLayout: React.FC = () => {
   const isBootstrapping = useSelector(selectIsBootstrapping)
   const user = useSelector((state: any) => state.session.user)
   const token = useSelector((state: any) => state.session.token)
-  
+
   // Protection anti-boucle : compter les redirections
   const redirectCountRef = useRef(0)
   const lastRedirectTimeRef = useRef(0)
 
   useEffect(() => {
     // 🔇 Logs de debug désactivés
-    // console.log('[ROOTLAYOUT] Auth state:', { 
-    //   isAuthenticated, 
-    //   isBootstrapping, 
-    //   hasUser: !!user, 
+    // console.log('[ROOTLAYOUT] Auth state:', {
+    //   isAuthenticated,
+    //   isBootstrapping,
+    //   hasUser: !!user,
     //   hasToken: !!token,
     //   path: location.pathname
     // })
-    
+
     // Réinitialiser le compteur si plus de 2 secondes depuis la dernière redirection
     const now = Date.now()
     if (now - lastRedirectTimeRef.current > 2000) {
       redirectCountRef.current = 0
     }
-    
+
     // PROTECTION ANTI-BOUCLE : Si plus de 5 redirections en 2 secondes
     if (redirectCountRef.current > 5) {
-      console.error('[ROOTLAYOUT] 🚨 REDIRECT LOOP DETECTED! Force clearing session...')
+      console.error(
+        '[ROOTLAYOUT] 🚨 REDIRECT LOOP DETECTED! Force clearing session...'
+      )
       // Forcer le nettoyage complet de la session
       dispatch(clearSession())
       // Nettoyer le localStorage au cas où il y aurait des données corrompues
@@ -54,7 +60,7 @@ export const RootLayout: React.FC = () => {
       lastRedirectTimeRef.current = now + 3000
       return
     }
-    
+
     // Ne rediriger que si le bootstrap est terminé ET que l'utilisateur n'est pas authentifié
     if (!isBootstrapping && !isAuthenticated) {
       // console.log('[ROOTLAYOUT] ❌ User not authenticated after bootstrap, redirecting to login')
@@ -63,22 +69,32 @@ export const RootLayout: React.FC = () => {
       navigate('/auth/login', { replace: true })
       return
     }
-    
+
     // Vérification de sécurité : Si marqué comme authentifié mais pas de user/token
     // Cela ne devrait jamais arriver, mais protège contre un état incohérent
     if (!isBootstrapping && isAuthenticated && (!user || !token)) {
-      console.error('[ROOTLAYOUT] ⚠️ CRITICAL: Authenticated but no user/token! Forcing logout...')
+      console.error(
+        '[ROOTLAYOUT] ⚠️ CRITICAL: Authenticated but no user/token! Forcing logout...'
+      )
       redirectCountRef.current++
       lastRedirectTimeRef.current = now
       dispatch(clearSession())
       navigate('/auth/login', { replace: true })
       return
     }
-    
+
     if (!isBootstrapping && isAuthenticated && user && token) {
       // console.log('[ROOTLAYOUT] ✅ User authenticated and valid:', user.email)
     }
-  }, [isAuthenticated, isBootstrapping, user, token, navigate, dispatch, location.pathname])
+  }, [
+    isAuthenticated,
+    isBootstrapping,
+    user,
+    token,
+    navigate,
+    dispatch,
+    location.pathname,
+  ])
 
   // Show loading while bootstrapping
   if (isBootstrapping) {
@@ -86,12 +102,14 @@ export const RootLayout: React.FC = () => {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300">Vérification de la session...</p>
+          <p className="text-gray-600 dark:text-gray-300">
+            Vérification de la session...
+          </p>
         </div>
       </div>
     )
   }
-  
+
   // Show loading while redirecting (not authenticated)
   if (!isAuthenticated) {
     return (

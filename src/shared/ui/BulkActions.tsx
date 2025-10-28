@@ -11,7 +11,10 @@ export interface BulkAction {
   requiresConfirmation?: boolean
   confirmationMessage?: string
   actionType?: 'delete' | 'export' | 'edit'
-  onClick: (selectedIds: Set<string>, selectedItems: any[]) => void | Promise<void>
+  onClick: (
+    selectedIds: Set<string>,
+    selectedItems: any[]
+  ) => void | Promise<void>
 }
 
 interface BulkActionsProps {
@@ -31,7 +34,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
   actions,
   onClearSelection,
   isLoading = false,
-  itemType = 'éléments'
+  itemType = 'éléments',
 }) => {
   const [loadingAction, setLoadingAction] = React.useState<string | null>(null)
   const [confirmModal, setConfirmModal] = React.useState<{
@@ -62,7 +65,10 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
       setLoadingAction(confirmModal.action.id)
       await confirmModal.action.onClick(selectedIds, selectedItems)
     } catch (error) {
-      console.error(`Error executing bulk action ${confirmModal.action.id}:`, error)
+      console.error(
+        `Error executing bulk action ${confirmModal.action.id}:`,
+        error
+      )
     } finally {
       setLoadingAction(null)
       setConfirmModal({ isOpen: false, action: null })
@@ -133,29 +139,45 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
 
 // Actions prédéfinies courantes
 export const createBulkActions = {
-  delete: (onDelete: (selectedIds: Set<string>, selectedItems: any[]) => void | Promise<void>): BulkAction => ({
+  delete: (
+    onDelete: (
+      selectedIds: Set<string>,
+      selectedItems: any[]
+    ) => void | Promise<void>
+  ): BulkAction => ({
     id: 'delete',
     label: 'Supprimer',
     icon: <Trash2 className="h-4 w-4" />,
     variant: 'destructive' as const,
     requiresConfirmation: true,
-    confirmationMessage: 'Êtes-vous sûr de vouloir supprimer les éléments sélectionnés ? Cette action est irréversible.',
-    onClick: onDelete
+    confirmationMessage:
+      'Êtes-vous sûr de vouloir supprimer les éléments sélectionnés ? Cette action est irréversible.',
+    onClick: onDelete,
   }),
 
-  export: (onExport: (selectedIds: Set<string>, selectedItems: any[]) => void | Promise<void>): BulkAction => ({
+  export: (
+    onExport: (
+      selectedIds: Set<string>,
+      selectedItems: any[]
+    ) => void | Promise<void>
+  ): BulkAction => ({
     id: 'export',
     label: 'Exporter',
     icon: <Download className="h-4 w-4" />,
     variant: 'outline' as const,
-    onClick: onExport
+    onClick: onExport,
   }),
 
-  edit: (onEdit: (selectedIds: Set<string>, selectedItems: any[]) => void | Promise<void>): BulkAction => ({
+  edit: (
+    onEdit: (
+      selectedIds: Set<string>,
+      selectedItems: any[]
+    ) => void | Promise<void>
+  ): BulkAction => ({
     id: 'edit',
     label: 'Modifier',
     icon: <Edit className="h-4 w-4" />,
     variant: 'outline' as const,
-    onClick: onEdit
-  })
+    onClick: onEdit,
+  }),
 }

@@ -16,22 +16,26 @@
 ## 🔍 CAUSES IDENTIFIÉES
 
 ### 1. **État Redux Corrompu**
+
 - Le Redux store n'est pas persisté (pas de Redux Persist)
 - MAIS : Peut rester en mémoire si la page n'est pas complètement rechargée
 - Symptôme : `isAuthenticated: true` MAIS `user: null` ou `token: null`
 
 ### 2. **Cookie de Refresh Token Invalide**
+
 - Le refresh token HttpOnly existe dans les cookies
 - MAIS : Il est invalide, révoqué, ou expiré
 - Le `bootstrapAuth()` tente de l'utiliser → 401 → marque non authentifié
 - Puis un autre mécanisme détecte un état "authentifié" → re-bootstrap → 401 → boucle
 
 ### 3. **localStorage/sessionStorage Corrompus**
+
 - Anciennes données de sessions précédentes
 - Peuvent contenir des tokens expirés ou des états incohérents
 - Même si le code ne les utilise plus, ils peuvent causer des conflits
 
 ### 4. **Multiples Redirections Concurrentes**
+
 - `RootLayout` détecte non-authentifié → redirige vers `/auth/login`
 - `SmartRedirect` détecte non-authentifié → redirige vers `/auth/login`
 - `AuthLayout` détecte authentifié → redirige vers `/dashboard`
@@ -70,6 +74,7 @@ if (redirectCountRef.current > 5) {
 ```
 
 **Avantages** :
+
 - ✅ Détecte automatiquement les boucles (> 5 redirections en 2s)
 - ✅ Force le nettoyage complet (Redux + localStorage + sessionStorage)
 - ✅ Empêche les nouvelles redirections pendant 3 secondes
@@ -92,6 +97,7 @@ if (redirectCountRef.current > 3) {
 ```
 
 **Pourquoi seuil différent ?**
+
 - SmartRedirect est sur la route `/` (root)
 - Devrait rediriger une seule fois
 - Seuil plus bas = détection plus rapide
@@ -104,13 +110,16 @@ if (redirectCountRef.current > 3) {
 useEffect(() => {
   // Si déjà authentifié, ne pas rester sur /auth/login
   if (isAuthenticated && !isBootstrapping) {
-    console.log('[AUTHLAYOUT] User already authenticated, redirecting to dashboard')
+    console.log(
+      '[AUTHLAYOUT] User already authenticated, redirecting to dashboard'
+    )
     navigate('/dashboard', { replace: true })
   }
 }, [isAuthenticated, isBootstrapping, navigate])
 ```
 
 **Évite** :
+
 - ❌ Utilisateur authentifié bloqué sur page de login
 - ❌ Flash de la page de login avant redirection dashboard
 - ✅ Redirection immédiate si déjà connecté
@@ -123,17 +132,20 @@ useEffect(() => {
 Une page accessible manuellement pour forcer le nettoyage complet.
 
 **Fonctionnalités** :
+
 - 🧹 Nettoie localStorage, sessionStorage, cookies côté client
 - 🔄 Recharge complètement la page après nettoyage
 - ⏱️ Compte à rebours de 3 secondes (annulable)
 - 📱 Interface claire avec explications
 
 **Quand l'utiliser ?**
+
 - Si la boucle automatique ne se résout pas
 - Si l'utilisateur est complètement bloqué
 - Pour tester le nettoyage complet manuellement
 
 **Comment y accéder ?**
+
 ```
 http://localhost:5173/auth/recovery
 ```
@@ -160,6 +172,7 @@ clearRedirectLog()
 ### Option 1 : Via la Page de Récupération (Recommandé)
 
 1. **Ouvre cette URL dans ton navigateur** :
+
    ```
    http://localhost:5173/auth/recovery
    ```
@@ -175,18 +188,19 @@ clearRedirectLog()
 1. **Ouvre la console DevTools** (F12)
 
 2. **Copie-colle ce code** :
+
    ```javascript
    // Nettoyer tout
    localStorage.clear()
    sessionStorage.clear()
-   
+
    // Nettoyer les cookies côté client
-   document.cookie.split(";").forEach(c => {
+   document.cookie.split(';').forEach((c) => {
      document.cookie = c
-       .replace(/^ +/, "")
-       .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/")
+       .replace(/^ +/, '')
+       .replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')
    })
-   
+
    // Recharger
    window.location.href = '/auth/login'
    ```
@@ -216,6 +230,7 @@ clearRedirectLog()
 ## 🔍 DIAGNOSTIC DES LOGS
 
 ### Logs Normaux (Aucun Problème)
+
 ```
 [AUTH] Attempting to restore session from refresh token...
 [AUTH] Session restored successfully
@@ -224,6 +239,7 @@ clearRedirectLog()
 ```
 
 ### Logs de Boucle Détectée (Automatique)
+
 ```
 [ROOTLAYOUT] Auth state: { isAuthenticated: false, ... }
 [ROOTLAYOUT] ❌ User not authenticated after bootstrap, redirecting to login
@@ -235,6 +251,7 @@ clearRedirectLog()
 ```
 
 ### Logs Après Nettoyage Automatique
+
 ```
 [AUTH RECOVERY] 🧹 Force cleaning all auth state...
 [AUTH RECOVERY] Removing localStorage key: theme
@@ -266,12 +283,14 @@ clearRedirectLog()
 ## 📊 MÉTRIQUES DE SUCCÈS
 
 ### Avant le Fix
+
 - ❌ Boucle infinie après logout + refresh
 - ❌ Dashboard vide visible
 - ❌ Pas de détection automatique
 - ❌ Nécessite nettoyage manuel complexe
 
 ### Après le Fix
+
 - ✅ Détection automatique de boucle (> 5 redirections)
 - ✅ Nettoyage automatique forcé
 - ✅ Page de récupération accessible

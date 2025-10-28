@@ -11,7 +11,10 @@ export const createAbilityFromRules = (rules: AppRule[]): AppAbility => {
 /**
  * Update an existing ability with new rules
  */
-export const updateAbility = (_ability: AppAbility, rules: AppRule[]): AppAbility => {
+export const updateAbility = (
+  _ability: AppAbility,
+  rules: AppRule[]
+): AppAbility => {
   return createAppAbility(rules)
 }
 

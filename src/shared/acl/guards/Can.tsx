@@ -14,14 +14,14 @@ interface CanProps {
  * Conditional rendering component based on user permissions
  * Only renders children if the user has the required permission
  */
-export const Can: React.FC<CanProps> = ({ 
-  do: action, 
-  on: subject, 
-  data, 
-  children, 
-  fallback = null 
+export const Can: React.FC<CanProps> = ({
+  do: action,
+  on: subject,
+  data,
+  children,
+  fallback = null,
 }) => {
   const canPerformAction = useCan(action, subject, data)
-  
+
   return canPerformAction ? <>{children}</> : <>{fallback}</>
 }

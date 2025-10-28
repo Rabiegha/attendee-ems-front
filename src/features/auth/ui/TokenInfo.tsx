@@ -1,6 +1,6 @@
 /**
  * 🔐 COMPOSANT DE VALIDATION DE TOKEN
- * 
+ *
  * Valide le token d'invitation et affiche les informations de sécurité
  */
 
@@ -13,9 +13,9 @@ interface TokenInfoProps {
   isLoading?: boolean
 }
 
-export const TokenInfo: React.FC<TokenInfoProps> = ({ 
-  invitation, 
-  isLoading = false 
+export const TokenInfo: React.FC<TokenInfoProps> = ({
+  invitation,
+  isLoading = false,
 }) => {
   if (isLoading) {
     return (
@@ -26,7 +26,8 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({
     )
   }
 
-  const isExpiringSoon = new Date(invitation.expiresAt).getTime() - Date.now() < 24 * 60 * 60 * 1000 // 24h
+  const isExpiringSoon =
+    new Date(invitation.expiresAt).getTime() - Date.now() < 24 * 60 * 60 * 1000 // 24h
 
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -36,7 +37,7 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({
           <h3 className="text-sm font-medium text-blue-900 mb-2">
             Invitation valide
           </h3>
-          
+
           <div className="space-y-2 text-sm text-blue-800">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
@@ -44,29 +45,32 @@ export const TokenInfo: React.FC<TokenInfoProps> = ({
                 Invité par <strong>{invitation.invitedByName}</strong>
               </span>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Building className="h-4 w-4" />
               <span>
                 Organisation : <strong>{invitation.orgName}</strong>
               </span>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 {invitation.role}
               </span>
             </div>
-            
-            <div className={`flex items-center gap-2 ${isExpiringSoon ? 'text-orange-600' : ''}`}>
+
+            <div
+              className={`flex items-center gap-2 ${isExpiringSoon ? 'text-orange-600' : ''}`}
+            >
               <Clock className="h-4 w-4" />
               <span>
-                Expire le {new Date(invitation.expiresAt).toLocaleDateString('fr-FR', {
+                Expire le{' '}
+                {new Date(invitation.expiresAt).toLocaleDateString('fr-FR', {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',
                   hour: '2-digit',
-                  minute: '2-digit'
+                  minute: '2-digit',
                 })}
               </span>
               {isExpiringSoon && (

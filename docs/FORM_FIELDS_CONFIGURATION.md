@@ -3,6 +3,7 @@
 ## Vue d'ensemble
 
 Ce système unifie la gestion des champs entre :
+
 - ✅ Formulaires d'inscription publics
 - ✅ Formulaires d'administration
 - ✅ Import/Export Excel
@@ -11,35 +12,38 @@ Ce système unifie la gestion des champs entre :
 ## 🗂️ Structure des données
 
 ### Table `attendees` (Fiche personne - réutilisable)
+
 Informations permanentes de la personne, partagées entre événements :
 
-| Champ | Type | Description | Visible Public | Visible Admin | Dans Table | Export Excel |
-|-------|------|-------------|---------------|---------------|------------|-------------|
-| `email` | Email | Adresse email | ✅ | ✅ | ✅ | ✅ |
-| `first_name` | Texte | Prénom | ✅ | ✅ | ✅ | ✅ |
-| `last_name` | Texte | Nom | ✅ | ✅ | ✅ | ✅ |
-| `phone` | Téléphone | Numéro de téléphone | ✅ | ✅ | ✅ | ✅ |
-| `company` | Texte | Organisation/Entreprise | ✅ | ✅ | ✅ | ✅ |
-| `job_title` | Texte | Désignation/Poste | ✅ | ✅ | ✅ | ✅ |
-| `country` | Pays | Pays de résidence | ✅ | ✅ | ✅ | ✅ |
+| Champ        | Type      | Description             | Visible Public | Visible Admin | Dans Table | Export Excel |
+| ------------ | --------- | ----------------------- | -------------- | ------------- | ---------- | ------------ |
+| `email`      | Email     | Adresse email           | ✅             | ✅            | ✅         | ✅           |
+| `first_name` | Texte     | Prénom                  | ✅             | ✅            | ✅         | ✅           |
+| `last_name`  | Texte     | Nom                     | ✅             | ✅            | ✅         | ✅           |
+| `phone`      | Téléphone | Numéro de téléphone     | ✅             | ✅            | ✅         | ✅           |
+| `company`    | Texte     | Organisation/Entreprise | ✅             | ✅            | ✅         | ✅           |
+| `job_title`  | Texte     | Désignation/Poste       | ✅             | ✅            | ✅         | ✅           |
+| `country`    | Pays      | Pays de résidence       | ✅             | ✅            | ✅         | ✅           |
 
 ### Table `registrations` (Inscription à un événement)
+
 Informations spécifiques à chaque événement :
 
-| Champ | Type | Description | Visible Public | Visible Admin | Dans Table | Export Excel |
-|-------|------|-------------|---------------|---------------|------------|-------------|
-| `status` | Enum | Statut (awaiting/approved/refused) | ❌ Auto | ✅ | ✅ | ✅ |
-| `attendance_type` | Select | Mode (Présentiel/En ligne/Hybride) | ✅ | ✅ | ❌ | ✅ |
-| `event_attendee_type_id` | Type | Type de participant (Staff/Partenaire/Invité) | ❌ | ✅ Admin only | ✅ | ✅ |
-| `answers` (JSON) | JSON | Champs personnalisés | - | - | - | - |
+| Champ                    | Type   | Description                                   | Visible Public | Visible Admin | Dans Table | Export Excel |
+| ------------------------ | ------ | --------------------------------------------- | -------------- | ------------- | ---------- | ------------ |
+| `status`                 | Enum   | Statut (awaiting/approved/refused)            | ❌ Auto        | ✅            | ✅         | ✅           |
+| `attendance_type`        | Select | Mode (Présentiel/En ligne/Hybride)            | ✅             | ✅            | ❌         | ✅           |
+| `event_attendee_type_id` | Type   | Type de participant (Staff/Partenaire/Invité) | ❌             | ✅ Admin only | ✅         | ✅           |
+| `answers` (JSON)         | JSON   | Champs personnalisés                          | -              | -             | -          | -            |
 
 ### Champs personnalisés dans `answers` (JSON)
+
 Stockés dynamiquement :
 
-| Champ | Type | Description | Visible Public | Visible Admin | Dans Table | Export Excel |
-|-------|------|-------------|---------------|---------------|------------|-------------|
-| `comment` | Textarea | Commentaire libre | ✅ | ✅ | ❌ | ✅ |
-| Listes personnalisées | Select | Configurables par événement | ✅ | ✅ | ❌ | ✅ |
+| Champ                 | Type     | Description                 | Visible Public | Visible Admin | Dans Table | Export Excel |
+| --------------------- | -------- | --------------------------- | -------------- | ------------- | ---------- | ------------ |
+| `comment`             | Textarea | Commentaire libre           | ✅             | ✅            | ❌         | ✅           |
+| Listes personnalisées | Select   | Configurables par événement | ✅             | ✅            | ❌         | ✅           |
 
 ## 📊 Alias de colonnes Excel supportés
 
@@ -63,6 +67,7 @@ Commentaire    → comment, Comment, Commentaire, commentaire, comments, Comment
 ### Configuration (déjà existante dans la BDD)
 
 Le système utilise deux tables :
+
 - `AttendeeType` : Types globaux de l'organisation (Staff, Partenaire, Invité, VIP, etc.)
 - `EventAttendeeType` : Association type ↔ événement avec capacité optionnelle
 
@@ -70,18 +75,19 @@ Le système utilise deux tables :
 
 ```typescript
 // Ces types peuvent être créés par chaque organisation
-Staff         // Équipe organisatrice
-Partenaire    // Entreprises partenaires
-Invité        // Invités spéciaux
-Participant   // Participants réguliers (valeur par défaut)
-VIP           // Personnalités
-Presse        // Journalistes
-Exposant      // Stand d'exposition
+Staff // Équipe organisatrice
+Partenaire // Entreprises partenaires
+Invité // Invités spéciaux
+Participant // Participants réguliers (valeur par défaut)
+VIP // Personnalités
+Presse // Journalistes
+Exposant // Stand d'exposition
 ```
 
 ### Gestion des types
 
 #### Créer un type personnalisé (API)
+
 ```bash
 POST /attendee-types
 {
@@ -94,6 +100,7 @@ POST /attendee-types
 ```
 
 #### Assigner un type à un événement
+
 ```bash
 POST /events/:eventId/attendee-types
 {
@@ -107,10 +114,10 @@ POST /events/:eventId/attendee-types
 ### Frontend - Obtenir les champs pour un formulaire
 
 ```typescript
-import { 
-  getPublicFormFields, 
+import {
+  getPublicFormFields,
   getAdminFormFields,
-  createCustomSelectField 
+  createCustomSelectField,
 } from '@/features/registrations/config/formFields.config'
 
 // Formulaire public
@@ -122,7 +129,7 @@ const adminFields = getAdminFormFields()
 // Ajouter une liste personnalisée
 const customField = createCustomSelectField(
   'secteur_activite',
-  'Secteur d\'activité',
+  "Secteur d'activité",
   [
     { value: 'tech', label: 'Technologie' },
     { value: 'sante', label: 'Santé' },
@@ -184,7 +191,7 @@ function RegistrationForm() {
       {STANDARD_FORM_FIELDS
         .filter(field => field.visibleInPublicForm)
         .map(field => (
-          <FormField 
+          <FormField
             key={field.key}
             type={field.type}
             label={field.label}
@@ -205,23 +212,26 @@ Les en-têtes de colonnes utilisent les labels configurés :
 ```typescript
 import { getExportFields } from '@/features/registrations/config/formFields.config'
 
-const headers = getExportFields().map(field => field.label)
+const headers = getExportFields().map((field) => field.label)
 // → ["Email", "Prénom", "Nom", "Téléphone", "Organisation", ...]
 ```
 
 ## ⚠️ Important
 
 ### Champs réservés aux admins
+
 - **Type de participant** : Ne doit PAS être visible dans le formulaire public
 - Les participants s'inscrivent avec le type par défaut "Participant"
 - Les admins peuvent changer le type via Excel ou interface admin
 
 ### Stockage des données
+
 - **Champs standard** → Colonnes dédiées dans `attendees` et `registrations`
 - **Champs personnalisés** → JSON `answers` dans `registrations`
 - **Avantage** : Flexibilité totale sans migration de schéma
 
 ### Validation
+
 - Email : Format valide + unique par organisation
 - Téléphone : Format international recommandé
 - Champs requis : Configurables par champ

@@ -4,11 +4,28 @@ export { Input } from './Input'
 export { Textarea } from './Textarea'
 export { Select, SelectOption } from './Select'
 export { MultiSelect, type MultiSelectOption } from './MultiSelect'
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from './Card'
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from './Card'
 export { Modal } from './Modal'
 export { FormField } from './FormField'
 export { CloseButton } from './CloseButton'
 export { Tabs, type TabItem } from './Tabs'
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableEmptyState,
+  TableLoadingState,
+} from './Table'
 
 // Layout Components
 export { PageContainer } from './PageContainer'

@@ -3,7 +3,11 @@ import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
 import { LogOut, User } from 'lucide-react'
-import { selectUser, selectOrganization, selectIsAuthenticated } from '@/features/auth/model/sessionSlice'
+import {
+  selectUser,
+  selectOrganization,
+  selectIsAuthenticated,
+} from '@/features/auth/model/sessionSlice'
 import { useMeQuery } from '@/features/auth/api/authApi'
 import { performLogout } from '@/features/auth/authLifecycle'
 import { getRoleLabel } from '@/shared/acl/role-mapping'
@@ -17,12 +21,12 @@ export const Header: React.FC = () => {
   const user = useSelector(selectUser)
   const organization = useSelector(selectOrganization)
   const isAuthenticated = useSelector(selectIsAuthenticated)
-  
+
   // Récupérer les informations utilisateur complètes avec l'organisation
   const { data: userProfile } = useMeQuery(undefined, {
-    skip: !isAuthenticated || !user // Skip si pas authentifié OU pas d'utilisateur
+    skip: !isAuthenticated || !user, // Skip si pas authentifié OU pas d'utilisateur
   })
-  
+
   // Utiliser l'organisation du profil utilisateur si disponible, sinon celle du store
   const displayOrganization = userProfile?.organization || organization
 
@@ -35,7 +39,7 @@ export const Header: React.FC = () => {
     // 4. Appelle le logout backend (révoque le refresh token)
     // 5. Vide le cache RTK Query
     await performLogout()
-    
+
     // Rediriger vers la page de login
     console.log('[HEADER] Logout complete, redirecting to login')
     navigate('/auth/login', { replace: true })
@@ -47,15 +51,15 @@ export const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           <Link to="/dashboard" className="flex items-center">
             {/* Logo bleu pour light mode */}
-            <img 
-              src="/logo.png" 
-              alt="EMS Logo" 
+            <img
+              src="/logo.png"
+              alt="EMS Logo"
               className="h-8 w-auto hover:opacity-80 transition-opacity cursor-pointer block dark:hidden"
             />
             {/* Logo blanc pour dark mode */}
-            <img 
-              src="/logo-blanc.png" 
-              alt="EMS Logo" 
+            <img
+              src="/logo-blanc.png"
+              alt="EMS Logo"
               className="h-8 w-auto hover:opacity-80 transition-opacity cursor-pointer hidden dark:block"
             />
           </Link>
@@ -65,7 +69,7 @@ export const Header: React.FC = () => {
             </span>
           )}
         </div>
-        
+
         <div className="flex items-center space-x-4">
           {user && (
             <div className="flex items-center space-x-2">
@@ -84,14 +88,16 @@ export const Header: React.FC = () => {
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
                   {/* Display the proper role label */}
-                  {user.roles?.[0] ? getRoleLabel(user.roles[0]) : 'Utilisateur'}
+                  {user.roles?.[0]
+                    ? getRoleLabel(user.roles[0])
+                    : 'Utilisateur'}
                 </div>
               </div>
             </div>
           )}
-          
+
           <ThemeToggle size="sm" />
-          
+
           <Button
             variant="ghost"
             size="sm"

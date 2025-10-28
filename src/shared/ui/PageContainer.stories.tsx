@@ -22,8 +22,8 @@ export const Default: Story = {
   args: {
     children: (
       <>
-        <PageHeader 
-          title="Ma Page" 
+        <PageHeader
+          title="Ma Page"
           description="Description de la page"
           icon={Calendar}
         />
@@ -104,12 +104,12 @@ export const FullPageExample: Story = {
     padding: 'lg',
     children: (
       <>
-        <PageHeader 
+        <PageHeader
           title="Dashboard"
           description="Vue d'ensemble de votre organisation"
           icon={Calendar}
         />
-        
+
         <PageSection spacing="lg">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>

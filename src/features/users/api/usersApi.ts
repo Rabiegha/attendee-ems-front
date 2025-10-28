@@ -1,60 +1,60 @@
-import { rootApi } from '@/services/rootApi';
-import { API_ENDPOINTS } from '@/app/config/constants';
+import { rootApi } from '@/services/rootApi'
+import { API_ENDPOINTS } from '@/app/config/constants'
 
 export interface CreateUserRequest {
-  email: string;
-  password: string;
-  role_id: string;
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  company?: string;
-  job_title?: string;
-  country?: string;
-  metadata?: any;
-  is_active?: boolean;
+  email: string
+  password: string
+  role_id: string
+  first_name?: string
+  last_name?: string
+  phone?: string
+  company?: string
+  job_title?: string
+  country?: string
+  metadata?: any
+  is_active?: boolean
 }
 
 export interface User {
-  id: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  phone?: string;
-  company?: string;
-  job_title?: string;
-  country?: string;
-  metadata?: any;
-  is_active: boolean;
-  must_change_password?: boolean;
-  reset_token?: string;
-  reset_token_expires_at?: string;
-  org_id: string;
+  id: string
+  email: string
+  first_name?: string
+  last_name?: string
+  phone?: string
+  company?: string
+  job_title?: string
+  country?: string
+  metadata?: any
+  is_active: boolean
+  must_change_password?: boolean
+  reset_token?: string
+  reset_token_expires_at?: string
+  org_id: string
   role: {
-    id: string;
-    code: string;
-    name: string;
-    description?: string;
-  };
-  created_at: string;
-  updated_at: string;
+    id: string
+    code: string
+    name: string
+    description?: string
+  }
+  created_at: string
+  updated_at: string
 }
 
 export interface Role {
-  id: string;
-  code: string;
-  name: string;
-  description?: string;
-  level: number;  // Hiérarchie du rôle (0=SUPER_ADMIN, 1=ADMIN, 2=MANAGER, etc.)
-  org_id?: string | null;
-  is_system_role?: boolean;
+  id: string
+  code: string
+  name: string
+  description?: string
+  level: number // Hiérarchie du rôle (0=SUPER_ADMIN, 1=ADMIN, 2=MANAGER, etc.)
+  org_id?: string | null
+  is_system_role?: boolean
 }
 
 // 🆕 Interface pour les organisations
 export interface Organization {
-  id: string;
-  name: string;
-  slug: string;
+  id: string
+  name: string
+  slug: string
 }
 
 // RTK Query API definition
@@ -71,16 +71,19 @@ export const usersApi = rootApi.injectEndpoints({
     }),
 
     // Récupérer la liste des utilisateurs
-    getUsers: builder.query<{
-      users: User[];
-      total: number;
-      page: number;
-      limit: number;
-    }, {
-      page?: number;
-      limit?: number;
-      search?: string;
-    }>({
+    getUsers: builder.query<
+      {
+        users: User[]
+        total: number
+        page: number
+        limit: number
+      },
+      {
+        page?: number
+        limit?: number
+        search?: string
+      }
+    >({
       query: ({ page = 1, limit = 10, search }) => ({
         url: API_ENDPOINTS.USERS.LIST,
         params: {
@@ -99,7 +102,10 @@ export const usersApi = rootApi.injectEndpoints({
     }),
 
     // Mettre à jour un utilisateur
-    updateUser: builder.mutation<User, { id: string; data: Partial<CreateUserRequest> }>({
+    updateUser: builder.mutation<
+      User,
+      { id: string; data: Partial<CreateUserRequest> }
+    >({
       query: ({ id, data }) => ({
         url: `/users/${id}`,
         method: 'PATCH',
@@ -107,7 +113,7 @@ export const usersApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Users', id },
-        { type: 'Users', id: 'LIST' } // Invalider aussi la liste pour rafraîchir immédiatement
+        { type: 'Users', id: 'LIST' }, // Invalider aussi la liste pour rafraîchir immédiatement
       ],
     }),
 
@@ -141,15 +147,15 @@ export const usersApi = rootApi.injectEndpoints({
     // 🆕 Créer un utilisateur avec mot de passe généré automatiquement
     createUserWithGeneratedPassword: builder.mutation<
       {
-        user: User & { mustChangePassword: boolean };
-        emailSent: boolean;
-        tempPasswordSent: boolean;
+        user: User & { mustChangePassword: boolean }
+        emailSent: boolean
+        tempPasswordSent: boolean
       },
       {
-        email: string;
-        password: string;
-        role_id?: string;
-        is_active?: boolean;
+        email: string
+        password: string
+        role_id?: string
+        is_active?: boolean
       }
     >({
       query: (userData) => ({
@@ -163,13 +169,13 @@ export const usersApi = rootApi.injectEndpoints({
     // 🆕 Changer le mot de passe (première connexion obligatoire)
     changePassword: builder.mutation<
       {
-        success: boolean;
-        message: string;
-        mustChangePassword: boolean;
+        success: boolean
+        message: string
+        mustChangePassword: boolean
       },
       {
-        currentPassword: string;
-        newPassword: string;
+        currentPassword: string
+        newPassword: string
       }
     >({
       query: (passwordData) => ({
@@ -180,25 +186,29 @@ export const usersApi = rootApi.injectEndpoints({
     }),
 
     // 🆕 Récupérer les utilisateurs PARTNER et HOTESSE de l'organisation pour sélection dans les événements
-    getPartnersForEvents: builder.query<Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>[], void>({
+    getPartnersForEvents: builder.query<
+      Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>[],
+      void
+    >({
       query: () => `${API_ENDPOINTS.USERS.LIST}?roles=PARTNER,HOTESSE`,
       transformResponse: (response: { users: User[] }) => {
         // Filtrer côté client car le backend ne filtre pas correctement
-        const filtered = response.users.filter(user => 
-          user.role?.code === 'PARTNER' || user.role?.code === 'HOSTESS'
-        );
-        return filtered.map(user => ({
+        const filtered = response.users.filter(
+          (user) =>
+            user.role?.code === 'PARTNER' || user.role?.code === 'HOSTESS'
+        )
+        return filtered.map((user) => ({
           id: user.id,
           first_name: user.first_name,
           last_name: user.last_name,
-          email: user.email
-        }));
+          email: user.email,
+        }))
       },
       providesTags: ['Users'],
     }),
   }),
   overrideExisting: false,
-});
+})
 
 export const {
   useCreateUserMutation,
@@ -213,4 +223,4 @@ export const {
   // 🆕 Nouveaux hooks pour le workflow avec mdp généré
   useCreateUserWithGeneratedPasswordMutation,
   useChangePasswordMutation,
-} = usersApi;
+} = usersApi

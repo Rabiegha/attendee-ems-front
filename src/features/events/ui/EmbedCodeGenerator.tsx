@@ -8,19 +8,19 @@ interface EmbedCodeGeneratorProps {
   publicToken: string
 }
 
-export const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({ 
-  eventId, 
-  publicToken 
+export const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
+  eventId,
+  publicToken,
 }) => {
   const [copied, setCopied] = useState(false)
   const toast = useToast()
 
   // Générer le token public si non existant
   const token = publicToken || `event-${eventId}-${Date.now()}`
-  
+
   // URL du formulaire public
   const formUrl = `${window.location.origin}/register/${token}`
-  
+
   // Code embed HTML
   const embedCode = `<!-- Formulaire d'inscription Attendee EMS -->
 <div id="attendee-ems-form"></div>
@@ -47,7 +47,10 @@ export const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
     try {
       await navigator.clipboard.writeText(embedCode)
       setCopied(true)
-      toast.success('Code copié !', 'Le code embed a été copié dans le presse-papier')
+      toast.success(
+        'Code copié !',
+        'Le code embed a été copié dans le presse-papier'
+      )
       setTimeout(() => setCopied(false), 3000)
     } catch (error) {
       toast.error('Erreur', 'Impossible de copier le code')
@@ -99,8 +102,12 @@ export const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
         <ol className="text-sm text-blue-800 dark:text-blue-300 space-y-1 list-decimal list-inside">
           <li>Copiez le code ci-dessus</li>
           <li>Collez-le dans le code HTML de votre page web</li>
-          <li>Le formulaire s'affichera automatiquement à l'emplacement du div</li>
-          <li>Les inscriptions arriveront directement dans votre back-office</li>
+          <li>
+            Le formulaire s'affichera automatiquement à l'emplacement du div
+          </li>
+          <li>
+            Les inscriptions arriveront directement dans votre back-office
+          </li>
         </ol>
       </div>
 
@@ -121,14 +128,18 @@ export const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
             size="sm"
             onClick={() => {
               navigator.clipboard.writeText(formUrl)
-              toast.success('Lien copié !', 'Le lien a été copié dans le presse-papier')
+              toast.success(
+                'Lien copié !',
+                'Le lien a été copié dans le presse-papier'
+              )
             }}
           >
             <Copy className="h-4 w-4" />
           </Button>
         </div>
         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Vous pouvez également partager ce lien directement sans l'intégrer sur votre site
+          Vous pouvez également partager ce lien directement sans l'intégrer sur
+          votre site
         </p>
       </div>
 
@@ -136,8 +147,9 @@ export const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
       {!publicToken && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            <strong>⚠️ Token public temporaire :</strong> Le token affiché est temporaire. 
-            Enregistrez les modifications de l'événement pour générer un token permanent.
+            <strong>⚠️ Token public temporaire :</strong> Le token affiché est
+            temporaire. Enregistrez les modifications de l'événement pour
+            générer un token permanent.
           </p>
         </div>
       )}

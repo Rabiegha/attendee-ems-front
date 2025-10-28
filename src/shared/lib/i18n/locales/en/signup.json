@@ -6,7 +6,7 @@
       "email": "Email address",
       "emailHint": "This email address cannot be modified",
       "firstName": "First name",
-      "lastName": "Last name", 
+      "lastName": "Last name",
       "password": "Password",
       "confirmPassword": "Confirm password",
       "phone": "Phone",
@@ -18,7 +18,7 @@
     "password": {
       "strength": {
         "veryWeak": "Very weak",
-        "weak": "Weak", 
+        "weak": "Weak",
         "medium": "Medium",
         "strong": "Strong",
         "veryStrong": "Very strong"
@@ -38,7 +38,7 @@
         "message": "This invitation link is not valid or has been corrupted."
       },
       "tokenExpired": {
-        "title": "Invitation expired", 
+        "title": "Invitation expired",
         "message": "This invitation has expired. Request a new invitation from your administrator."
       },
       "emailMismatch": {

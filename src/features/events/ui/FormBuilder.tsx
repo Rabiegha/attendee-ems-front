@@ -26,33 +26,50 @@ const FIELD_TYPES = [
 ]
 
 const DEFAULT_FIELDS: FormField[] = [
-  { id: 'firstName', name: 'firstName', label: 'Prénom', type: 'text', required: true },
-  { id: 'lastName', name: 'lastName', label: 'Nom', type: 'text', required: true },
+  {
+    id: 'firstName',
+    name: 'firstName',
+    label: 'Prénom',
+    type: 'text',
+    required: true,
+  },
+  {
+    id: 'lastName',
+    name: 'lastName',
+    label: 'Nom',
+    type: 'text',
+    required: true,
+  },
   { id: 'email', name: 'email', label: 'Email', type: 'email', required: true },
 ]
 
-export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) => {
+export const FormBuilder: React.FC<FormBuilderProps> = ({
+  fields,
+  onChange,
+}) => {
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null)
-  
+
   // Undo/Redo History
   const [history, setHistory] = React.useState<FormField[][]>([fields])
   const [historyIndex, setHistoryIndex] = React.useState(0)
-  const [isUpdatingFromHistory, setIsUpdatingFromHistory] = React.useState(false)
+  const [isUpdatingFromHistory, setIsUpdatingFromHistory] =
+    React.useState(false)
 
   // Initialize history when fields prop changes externally (not from undo/redo)
   useEffect(() => {
     if (!isUpdatingFromHistory && fields.length > 0) {
       const lastHistoryEntry = history[historyIndex]
-      const fieldsChanged = JSON.stringify(lastHistoryEntry) !== JSON.stringify(fields)
-      
+      const fieldsChanged =
+        JSON.stringify(lastHistoryEntry) !== JSON.stringify(fields)
+
       if (fieldsChanged && lastHistoryEntry) {
         // Only update if fields actually changed
-        setHistory(prev => {
+        setHistory((prev) => {
           const newHistory = prev.slice(0, historyIndex + 1)
           newHistory.push(fields)
           return newHistory.slice(-50) // Keep last 50 entries
         })
-        setHistoryIndex(prev => Math.min(prev + 1, 49))
+        setHistoryIndex((prev) => Math.min(prev + 1, 49))
       }
     }
     setIsUpdatingFromHistory(false)
@@ -90,7 +107,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
         undo()
-      } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+      } else if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === 'y' || (e.key === 'z' && e.shiftKey))
+      ) {
         e.preventDefault()
         redo()
       }
@@ -114,13 +134,15 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
   }
 
   const removeField = (id: string) => {
-    const newFields = fields.filter(f => f.id !== id)
+    const newFields = fields.filter((f) => f.id !== id)
     onChange(newFields)
     // History will be updated automatically via useEffect
   }
 
   const updateField = (id: string, updates: Partial<FormField>) => {
-    const newFields = fields.map(f => f.id === id ? { ...f, ...updates } : f)
+    const newFields = fields.map((f) =>
+      f.id === id ? { ...f, ...updates } : f
+    )
     onChange(newFields)
     // History will be updated automatically via useEffect
   }
@@ -133,7 +155,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
   // Drag & Drop handlers
   const handleDragStart = (index: number, e: React.DragEvent) => {
     setDraggedIndex(index)
-    
+
     // Create a custom drag image showing the entire field card
     const dragTarget = e.currentTarget.closest('.field-card') as HTMLElement
     if (dragTarget) {
@@ -150,19 +172,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
 
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault()
-    
+
     if (draggedIndex === null || draggedIndex === index) return
 
     const newFields = [...fields]
     const draggedItem = newFields[draggedIndex]
-    
+
     if (!draggedItem) return
-    
+
     // Remove from old position
     newFields.splice(draggedIndex, 1)
     // Insert at new position
     newFields.splice(index, 0, draggedItem)
-    
+
     onChange(newFields)
     setDraggedIndex(index)
   }
@@ -199,7 +221,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
               <Redo2 className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             </button>
           </div>
-          
+
           <Button variant="outline" size="sm" onClick={resetToDefaults}>
             Réinitialiser
           </Button>
@@ -232,7 +254,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
             >
               <div className="flex items-start space-x-3">
                 {/* Drag handle - Only this area is draggable */}
-                <div 
+                <div
                   draggable
                   onDragStart={(e) => handleDragStart(index, e)}
                   onDragEnd={handleDragEnd}
@@ -251,7 +273,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
                     <input
                       type="text"
                       value={field.label}
-                      onChange={(e) => updateField(field.id, { label: e.target.value })}
+                      onChange={(e) =>
+                        updateField(field.id, { label: e.target.value })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors duration-200"
                     />
                   </div>
@@ -263,10 +287,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
                     </label>
                     <select
                       value={field.type}
-                      onChange={(e) => updateField(field.id, { type: e.target.value as FormField['type'] })}
+                      onChange={(e) =>
+                        updateField(field.id, {
+                          type: e.target.value as FormField['type'],
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors duration-200"
                     >
-                      {FIELD_TYPES.map(type => (
+                      {FIELD_TYPES.map((type) => (
                         <option key={type.value} value={type.value}>
                           {type.label}
                         </option>
@@ -282,7 +310,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
                     <input
                       type="text"
                       value={field.placeholder || ''}
-                      onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
+                      onChange={(e) =>
+                        updateField(field.id, { placeholder: e.target.value })
+                      }
                       placeholder="Ex: Entrez votre nom"
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors duration-200"
                     />
@@ -297,9 +327,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
                       <input
                         type="text"
                         value={field.options?.join(', ') || ''}
-                        onChange={(e) => updateField(field.id, { 
-                          options: e.target.value.split(',').map(o => o.trim()).filter(Boolean)
-                        })}
+                        onChange={(e) =>
+                          updateField(field.id, {
+                            options: e.target.value
+                              .split(',')
+                              .map((o) => o.trim())
+                              .filter(Boolean),
+                          })
+                        }
                         placeholder="Option 1, Option 2, Option 3"
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors duration-200"
                       />
@@ -313,10 +348,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
                     <input
                       type="checkbox"
                       checked={field.required}
-                      onChange={(e) => updateField(field.id, { required: e.target.checked })}
+                      onChange={(e) =>
+                        updateField(field.id, { required: e.target.checked })
+                      }
                       className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Requis</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Requis
+                    </span>
                   </label>
                   <button
                     onClick={() => removeField(field.id)}
@@ -336,11 +375,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({ fields, onChange }) =>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            <strong>Info :</strong> Les champs Prénom, Nom et Email sont recommandés pour identifier les participants.
-            Vous pouvez ajouter des champs personnalisés selon vos besoins.
+            <strong>Info :</strong> Les champs Prénom, Nom et Email sont
+            recommandés pour identifier les participants. Vous pouvez ajouter
+            des champs personnalisés selon vos besoins.
           </p>
         </div>
-        
+
         {/* History Status */}
         <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-xs text-gray-600 dark:text-gray-400">
           <div className="flex items-center space-x-2">

@@ -6,89 +6,92 @@
 @layer base {
   :root {
     /* === COLORS - Système de couleurs unifié === */
-    
+
     /* Brand Colors */
-    --color-brand-50: 239 246 255;   /* blue-50 */
-    --color-brand-100: 219 234 254;  /* blue-100 */
-    --color-brand-500: 59 130 246;   /* blue-500 */
-    --color-brand-600: 37 99 235;    /* blue-600 */
-    --color-brand-700: 29 78 216;    /* blue-700 */
-    
+    --color-brand-50: 239 246 255; /* blue-50 */
+    --color-brand-100: 219 234 254; /* blue-100 */
+    --color-brand-500: 59 130 246; /* blue-500 */
+    --color-brand-600: 37 99 235; /* blue-600 */
+    --color-brand-700: 29 78 216; /* blue-700 */
+
     /* Neutral Colors */
-    --color-neutral-50: 249 250 251;   /* gray-50 */
-    --color-neutral-100: 243 244 246;  /* gray-100 */
-    --color-neutral-200: 229 231 235;  /* gray-200 */
-    --color-neutral-300: 209 213 219;  /* gray-300 */
-    --color-neutral-400: 156 163 175;  /* gray-400 */
-    --color-neutral-500: 107 114 128;  /* gray-500 */
-    --color-neutral-600: 75 85 99;     /* gray-600 */
-    --color-neutral-700: 55 65 81;     /* gray-700 */
-    --color-neutral-800: 31 41 55;     /* gray-800 */
-    --color-neutral-900: 17 24 39;     /* gray-900 */
-    
+    --color-neutral-50: 249 250 251; /* gray-50 */
+    --color-neutral-100: 243 244 246; /* gray-100 */
+    --color-neutral-200: 229 231 235; /* gray-200 */
+    --color-neutral-300: 209 213 219; /* gray-300 */
+    --color-neutral-400: 156 163 175; /* gray-400 */
+    --color-neutral-500: 107 114 128; /* gray-500 */
+    --color-neutral-600: 75 85 99; /* gray-600 */
+    --color-neutral-700: 55 65 81; /* gray-700 */
+    --color-neutral-800: 31 41 55; /* gray-800 */
+    --color-neutral-900: 17 24 39; /* gray-900 */
+
     /* Semantic Colors */
-    --color-success-50: 240 253 244;   /* green-50 */
-    --color-success-500: 34 197 94;    /* green-500 */
-    --color-success-600: 22 163 74;    /* green-600 */
-    
-    --color-warning-50: 255 251 235;   /* yellow-50 */
-    --color-warning-500: 245 158 11;   /* yellow-500 */
-    --color-warning-600: 217 119 6;    /* yellow-600 */
-    
-    --color-error-50: 254 242 242;     /* red-50 */
-    --color-error-400: 248 113 113;    /* red-400 - Better for dark mode */
-    --color-error-500: 239 68 68;      /* red-500 */
-    --color-error-600: 220 38 38;      /* red-600 */
-    --color-error-700: 185 28 28;      /* red-700 */
-    --color-error-700: 185 28 28;      /* red-700 */
-    
+    --color-success-50: 240 253 244; /* green-50 */
+    --color-success-500: 34 197 94; /* green-500 */
+    --color-success-600: 22 163 74; /* green-600 */
+
+    --color-warning-50: 255 251 235; /* yellow-50 */
+    --color-warning-500: 245 158 11; /* yellow-500 */
+    --color-warning-600: 217 119 6; /* yellow-600 */
+
+    --color-error-50: 254 242 242; /* red-50 */
+    --color-error-400: 248 113 113; /* red-400 - Better for dark mode */
+    --color-error-500: 239 68 68; /* red-500 */
+    --color-error-600: 220 38 38; /* red-600 */
+    --color-error-700: 185 28 28; /* red-700 */
+    --color-error-700: 185 28 28; /* red-700 */
+
     /* === SPACING - Système d'espacement cohérent === */
-    --spacing-xs: 0.25rem;    /* 4px */
-    --spacing-sm: 0.5rem;     /* 8px */
-    --spacing-md: 0.75rem;    /* 12px */
-    --spacing-lg: 1rem;       /* 16px */
-    --spacing-xl: 1.5rem;     /* 24px */
-    --spacing-2xl: 2rem;      /* 32px */
-    --spacing-3xl: 2.5rem;    /* 40px */
-    --spacing-4xl: 3rem;      /* 48px */
-    
+    --spacing-xs: 0.25rem; /* 4px */
+    --spacing-sm: 0.5rem; /* 8px */
+    --spacing-md: 0.75rem; /* 12px */
+    --spacing-lg: 1rem; /* 16px */
+    --spacing-xl: 1.5rem; /* 24px */
+    --spacing-2xl: 2rem; /* 32px */
+    --spacing-3xl: 2.5rem; /* 40px */
+    --spacing-4xl: 3rem; /* 48px */
+
     /* === TYPOGRAPHY - Système typographique === */
-    --font-size-xs: 0.75rem;     /* 12px */
-    --font-size-sm: 0.875rem;    /* 14px */
-    --font-size-base: 1rem;      /* 16px */
-    --font-size-lg: 1.125rem;    /* 18px */
-    --font-size-xl: 1.25rem;     /* 20px */
-    --font-size-2xl: 1.5rem;     /* 24px */
-    --font-size-3xl: 1.875rem;   /* 30px */
-    
+    --font-size-xs: 0.75rem; /* 12px */
+    --font-size-sm: 0.875rem; /* 14px */
+    --font-size-base: 1rem; /* 16px */
+    --font-size-lg: 1.125rem; /* 18px */
+    --font-size-xl: 1.25rem; /* 20px */
+    --font-size-2xl: 1.5rem; /* 24px */
+    --font-size-3xl: 1.875rem; /* 30px */
+
     --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
-    
+
     --line-height-tight: 1.25;
     --line-height-snug: 1.375;
     --line-height-normal: 1.5;
     --line-height-relaxed: 1.625;
-    
+
     /* === BORDERS & RADIUS === */
     --border-width-thin: 1px;
     --border-width-medium: 2px;
     --border-width-thick: 4px;
-    
-    --border-radius-sm: 0.375rem;   /* 6px */
-    --border-radius-md: 0.5rem;     /* 8px */
-    --border-radius-lg: 0.75rem;    /* 12px */
-    --border-radius-xl: 1rem;       /* 16px */
-    
+
+    --border-radius-sm: 0.375rem; /* 6px */
+    --border-radius-md: 0.5rem; /* 8px */
+    --border-radius-lg: 0.75rem; /* 12px */
+    --border-radius-xl: 1rem; /* 16px */
+
     /* === SHADOWS === */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    
+    --shadow-md:
+      0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg:
+      0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl:
+      0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
     /* === COMPONENT TOKENS === */
-    
+
     /* Modal */
     --modal-backdrop: rgb(0 0 0 / 0.5);
     --modal-backdrop-dark: rgb(0 0 0 / 0.75);
@@ -96,16 +99,16 @@
     --modal-content-bg-dark: rgb(var(--color-neutral-800));
     --modal-padding: var(--spacing-xl);
     --modal-radius: var(--border-radius-lg);
-    
+
     /* Button */
-    --button-height-sm: 2.25rem;     /* 36px */
-    --button-height-md: 2.5rem;      /* 40px */
-    --button-height-lg: 2.75rem;     /* 44px */
+    --button-height-sm: 2.25rem; /* 36px */
+    --button-height-md: 2.5rem; /* 40px */
+    --button-height-lg: 2.75rem; /* 44px */
     --button-padding-x-sm: var(--spacing-md);
     --button-padding-x-md: var(--spacing-lg);
     --button-padding-x-lg: var(--spacing-2xl);
     --button-radius: var(--border-radius-md);
-    
+
     /* Input */
     --input-height: var(--button-height-md);
     --input-padding-x: var(--spacing-md);
@@ -114,7 +117,7 @@
     --input-border: rgb(var(--color-neutral-300));
     --input-border-dark: rgb(var(--color-neutral-600));
     --input-focus-ring: rgb(var(--color-brand-500) / 0.2);
-    
+
     /* Card */
     --card-bg: rgb(var(--color-neutral-50));
     --card-bg-dark: rgb(var(--color-neutral-800));
@@ -123,15 +126,15 @@
     --card-padding: var(--spacing-xl);
     --card-radius: var(--border-radius-lg);
     --card-shadow: var(--shadow-sm);
-    
+
     /* === ANIMATIONS === */
     --animation-duration-fast: 150ms;
     --animation-duration-normal: 200ms;
     --animation-duration-slow: 300ms;
-    
+
     --animation-easing-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
     --animation-easing-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-    
+
     /* === Z-INDEX SCALE === */
     --z-dropdown: 1000;
     --z-sticky: 1020;
@@ -160,23 +163,25 @@
     backdrop-filter: blur(4px);
     z-index: var(--z-modal);
   }
-  
+
   .modal-backdrop {
     @apply fixed inset-0;
     background-color: var(--modal-backdrop);
-    transition: opacity var(--animation-duration-normal) var(--animation-easing-ease-out);
+    transition: opacity var(--animation-duration-normal)
+      var(--animation-easing-ease-out);
     z-index: var(--z-modal-backdrop);
   }
-  
+
   .modal-content {
     @apply relative w-full mx-4 rounded-lg shadow-xl;
     background-color: var(--modal-content-bg);
     border-radius: var(--modal-radius);
     box-shadow: var(--shadow-xl);
-    transition: all var(--animation-duration-normal) var(--animation-easing-ease-out);
+    transition: all var(--animation-duration-normal)
+      var(--animation-easing-ease-out);
     z-index: var(--z-modal);
   }
-  
+
   /* Base card styling */
   .card-base {
     background-color: var(--card-bg);
@@ -186,7 +191,7 @@
     padding: var(--card-padding);
     transition: all var(--animation-duration-normal);
   }
-  
+
   /* Typography utilities */
   .text-heading-lg {
     font-size: var(--font-size-2xl);
@@ -194,56 +199,110 @@
     line-height: var(--line-height-tight);
     @apply text-gray-900 dark:text-white;
   }
-  
+
   .text-heading-md {
     font-size: var(--font-size-xl);
     font-weight: var(--font-weight-semibold);
     line-height: var(--line-height-snug);
     @apply text-gray-900 dark:text-white;
   }
-  
+
   .text-heading-sm {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-snug);
     @apply text-gray-900 dark:text-white;
   }
-  
+
   .text-body {
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-normal);
     line-height: var(--line-height-normal);
     @apply text-gray-700 dark:text-gray-300;
   }
-  
+
   .text-body-sm {
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-normal);
     line-height: var(--line-height-normal);
     @apply text-gray-600 dark:text-gray-400;
   }
-  
+
   .text-caption {
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-normal);
     line-height: var(--line-height-normal);
     @apply text-gray-500 dark:text-gray-500;
   }
-  
+
   /* Page layout utilities */
   .page-title {
-    @apply text-3xl font-bold text-gray-900 dark:text-white tracking-tight;
+    @apply text-3xl font-bold text-gray-900 dark:text-white tracking-tight mb-2;
   }
-  
+
   .page-subtitle {
-    @apply text-lg text-gray-600 dark:text-gray-300;
+    @apply text-lg text-gray-600 dark:text-gray-300 mb-6;
   }
-  
+
   .section-title {
-    @apply text-xl font-semibold text-gray-900 dark:text-white;
+    @apply text-xl font-semibold text-gray-900 dark:text-white mb-4;
   }
-  
+
   .section-subtitle {
-    @apply text-sm text-gray-600 dark:text-gray-400;
+    @apply text-sm text-gray-600 dark:text-gray-400 mb-3;
+  }
+
+  /* Spacing utilities - consistent gaps and margins */
+  .space-section {
+    @apply space-y-6;
+  }
+
+  .space-form {
+    @apply space-y-4;
+  }
+
+  .space-compact {
+    @apply space-y-2;
+  }
+
+  .gap-section {
+    @apply gap-6;
+  }
+
+  .gap-form {
+    @apply gap-4;
+  }
+
+  .gap-compact {
+    @apply gap-2;
+  }
+
+  /* Table utilities */
+  .table-base {
+    @apply min-w-full divide-y divide-gray-200 dark:divide-gray-700;
+  }
+
+  .table-header {
+    @apply bg-gray-50 dark:bg-gray-700/50 transition-colors duration-200;
+  }
+
+  .table-body {
+    @apply bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors duration-200;
+  }
+
+  .table-row {
+    @apply hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150;
+  }
+
+  .table-row-selected {
+    @apply bg-blue-50 dark:bg-blue-900/20;
+  }
+
+  .table-head {
+    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider;
+  }
+
+  .table-cell {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100;
   }
 }

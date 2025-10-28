@@ -18,7 +18,8 @@ export const useTheme = () => {
       root.classList.remove('light', 'dark')
 
       if (newTheme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+          .matches
           ? 'dark'
           : 'light'
         root.classList.add(systemTheme)
@@ -37,13 +38,13 @@ export const useTheme = () => {
     // Écouter les changements de préférence système si mode system
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      
+
       const handleChange = () => {
         applyTheme('system')
       }
 
       mediaQuery.addEventListener('change', handleChange)
-      
+
       return () => mediaQuery.removeEventListener('change', handleChange)
     }
   }, [theme])
@@ -52,9 +53,9 @@ export const useTheme = () => {
     // Ajouter une transition fluide
     const root = document.documentElement
     root.style.transition = 'background-color 0.3s ease, color 0.3s ease'
-    
+
     setTheme(newTheme)
-    
+
     // Retirer la transition après l'animation
     setTimeout(() => {
       root.style.transition = ''
@@ -65,8 +66,14 @@ export const useTheme = () => {
     theme,
     setTheme: setThemeWithTransition,
     // Helpers pour vérifier le thème actuel
-    isDark: theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches),
-    isLight: theme === 'light' || (theme === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches),
+    isDark:
+      theme === 'dark' ||
+      (theme === 'system' &&
+        window.matchMedia('(prefers-color-scheme: dark)').matches),
+    isLight:
+      theme === 'light' ||
+      (theme === 'system' &&
+        !window.matchMedia('(prefers-color-scheme: dark)').matches),
     isSystem: theme === 'system',
   }
 }

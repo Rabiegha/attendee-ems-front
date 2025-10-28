@@ -1,88 +1,94 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { X, Search, Users, Check } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react'
+import { X, Search, Users, Check } from 'lucide-react'
 
 export interface MultiSelectOption {
-  id: string;
-  label: string;
-  subLabel?: string;
+  id: string
+  label: string
+  subLabel?: string
 }
 
 interface MultiSelectProps {
-  options: MultiSelectOption[];
-  value: string[];
-  onChange: (value: string[]) => void;
-  placeholder?: string;
-  disabled?: boolean;
-  maxSelections?: number;
-  searchPlaceholder?: string;
-  emptyMessage?: string;
-  className?: string;
+  options: MultiSelectOption[]
+  value: string[]
+  onChange: (value: string[]) => void
+  placeholder?: string
+  disabled?: boolean
+  maxSelections?: number
+  searchPlaceholder?: string
+  emptyMessage?: string
+  className?: string
 }
 
 export const MultiSelect: React.FC<MultiSelectProps> = ({
   options = [],
   value = [],
   onChange,
-  placeholder = "Sélectionner des éléments...",
+  placeholder = 'Sélectionner des éléments...',
   disabled = false,
   maxSelections,
-  searchPlaceholder = "Rechercher...",
-  emptyMessage = "Aucun élément trouvé",
-  className = ""
+  searchPlaceholder = 'Rechercher...',
+  emptyMessage = 'Aucun élément trouvé',
+  className = '',
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [isOpen, setIsOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   // Fermer le dropdown quand on clique ailleurs
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Filtrer les options selon la recherche
-  const filteredOptions = options.filter(option =>
-    option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    option.subLabel?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOptions = options.filter(
+    (option) =>
+      option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      option.subLabel?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   // Options sélectionnées pour affichage
-  const selectedOptions = value.map(id => options.find(opt => opt.id === id)).filter(Boolean) as MultiSelectOption[];
+  const selectedOptions = value
+    .map((id) => options.find((opt) => opt.id === id))
+    .filter(Boolean) as MultiSelectOption[]
 
   const handleOptionToggle = (optionId: string) => {
     if (value.includes(optionId)) {
       // Désélectionner
-      onChange(value.filter(id => id !== optionId));
+      onChange(value.filter((id) => id !== optionId))
     } else {
       // Sélectionner (vérifier la limite)
       if (!maxSelections || value.length < maxSelections) {
-        onChange([...value, optionId]);
+        onChange([...value, optionId])
       }
     }
-  };
+  }
 
   const handleRemoveSelection = (optionId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    onChange(value.filter(id => id !== optionId));
-  };
+    event.stopPropagation()
+    onChange(value.filter((id) => id !== optionId))
+  }
 
   const handleToggleDropdown = () => {
     if (!disabled) {
-      setIsOpen(!isOpen);
+      setIsOpen(!isOpen)
       if (!isOpen) {
-        setTimeout(() => inputRef.current?.focus(), 100);
+        setTimeout(() => inputRef.current?.focus(), 100)
       }
     }
-  };
+  }
 
-  const isAtMaxSelections = maxSelections && value.length >= maxSelections;
+  const isAtMaxSelections = maxSelections && value.length >= maxSelections
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
@@ -115,16 +121,20 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
               </button>
             </span>
           ))}
-          
+
           {/* Placeholder ou compteur */}
           {selectedOptions.length === 0 && (
-            <span className="text-gray-500 dark:text-gray-400 text-sm py-1">{placeholder}</span>
+            <span className="text-gray-500 dark:text-gray-400 text-sm py-1">
+              {placeholder}
+            </span>
           )}
         </div>
 
         {/* Indicateur d'état */}
         <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-          <Users className={`h-4 w-4 ${disabled ? 'text-gray-400' : 'text-gray-600 dark:text-gray-300'}`} />
+          <Users
+            className={`h-4 w-4 ${disabled ? 'text-gray-400' : 'text-gray-600 dark:text-gray-300'}`}
+          />
         </div>
       </div>
 
@@ -156,9 +166,9 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
               </div>
             ) : (
               filteredOptions.map((option) => {
-                const isSelected = value.includes(option.id);
-                const canSelect = !isAtMaxSelections || isSelected;
-                
+                const isSelected = value.includes(option.id)
+                const canSelect = !isAtMaxSelections || isSelected
+
                 return (
                   <div
                     key={option.id}
@@ -180,12 +190,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                         </div>
                       )}
                     </div>
-                    
+
                     {isSelected && (
                       <Check className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     )}
                   </div>
-                );
+                )
               })
             )}
           </div>
@@ -193,11 +203,12 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           {/* Info limite */}
           {maxSelections && (
             <div className="p-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 text-center">
-              {value.length} / {maxSelections} sélectionné{value.length > 1 ? 's' : ''}
+              {value.length} / {maxSelections} sélectionné
+              {value.length > 1 ? 's' : ''}
             </div>
           )}
         </div>
       )}
     </div>
-  );
-};
+  )
+}

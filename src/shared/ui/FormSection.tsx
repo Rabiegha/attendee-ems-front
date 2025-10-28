@@ -11,7 +11,7 @@ interface FormSectionProps {
 
 /**
  * FormSection - Section de formulaire standardisée
- * 
+ *
  * Usage:
  * ```tsx
  * <FormSection title="Informations personnelles" description="Remplissez vos coordonnées" required>
@@ -25,7 +25,7 @@ export const FormSection: React.FC<FormSectionProps> = ({
   title,
   description,
   className,
-  required = false
+  required = false,
 }) => {
   return (
     <div className={cn('space-y-4', className)}>
@@ -35,7 +35,10 @@ export const FormSection: React.FC<FormSectionProps> = ({
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               {title}
               {required && (
-                <span className="text-red-500 text-sm font-normal" aria-label="Required">
+                <span
+                  className="text-red-500 text-sm font-normal"
+                  aria-label="Required"
+                >
                   *
                 </span>
               )}
@@ -48,9 +51,7 @@ export const FormSection: React.FC<FormSectionProps> = ({
           )}
         </div>
       )}
-      <div className="space-y-4">
-        {children}
-      </div>
+      <div className="space-y-4">{children}</div>
     </div>
   )
 }

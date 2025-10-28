@@ -1,9 +1,6 @@
 import { rootApi } from '@/services/rootApi'
 import { API_ENDPOINTS } from '@/app/config/constants'
-import type {
-  AttendeeDTO,
-  ExportAttendeesResponse,
-} from '../dpo/attendee.dto'
+import type { AttendeeDTO, ExportAttendeesResponse } from '../dpo/attendee.dto'
 
 // Types pour l'historique d'un attendee
 export interface AttendeeHistoryItem {
@@ -28,15 +25,15 @@ export interface AttendeeHistoryItem {
     organizationName?: string
   }
 }
-import type { 
-  AttendeeDPO, 
-  CreateAttendeeDPO, 
-  UpdateAttendeeDPO
+import type {
+  AttendeeDPO,
+  CreateAttendeeDPO,
+  UpdateAttendeeDPO,
 } from '../dpo/attendee.dpo'
-import { 
-  mapAttendeeDTOtoDPO, 
-  mapCreateAttendeeDPOtoDTO, 
-  mapUpdateAttendeeDPOtoDTO
+import {
+  mapAttendeeDTOtoDPO,
+  mapCreateAttendeeDPOtoDTO,
+  mapUpdateAttendeeDPOtoDTO,
 } from '../dpo/attendee.mappers'
 
 export interface AttendeesListParams {
@@ -62,7 +59,7 @@ export const attendeesApi = rootApi.injectEndpoints({
         Object.entries(params).forEach(([key, value]) => {
           if (value !== undefined) {
             if (Array.isArray(value)) {
-              value.forEach(v => searchParams.append(key, v))
+              value.forEach((v) => searchParams.append(key, v))
             } else {
               searchParams.append(key, String(value))
             }
@@ -70,7 +67,7 @@ export const attendeesApi = rootApi.injectEndpoints({
         })
         return `${API_ENDPOINTS.ATTENDEES.LIST}?${searchParams.toString()}`
       },
-      transformResponse: (response: { data: AttendeeDTO[] }) => 
+      transformResponse: (response: { data: AttendeeDTO[] }) =>
         response.data.map(mapAttendeeDTOtoDPO),
       providesTags: (result) =>
         result
@@ -83,7 +80,8 @@ export const attendeesApi = rootApi.injectEndpoints({
 
     getAttendeeById: builder.query<AttendeeDPO, string>({
       query: (id) => API_ENDPOINTS.ATTENDEES.BY_ID(id),
-      transformResponse: (response: AttendeeDTO) => mapAttendeeDTOtoDPO(response),
+      transformResponse: (response: AttendeeDTO) =>
+        mapAttendeeDTOtoDPO(response),
       providesTags: (_result, _error, id) => [{ type: 'Attendee', id }],
     }),
 
@@ -93,17 +91,22 @@ export const attendeesApi = rootApi.injectEndpoints({
         method: 'POST',
         body: mapCreateAttendeeDPOtoDTO(attendeeData),
       }),
-      transformResponse: (response: AttendeeDTO) => mapAttendeeDTOtoDPO(response),
+      transformResponse: (response: AttendeeDTO) =>
+        mapAttendeeDTOtoDPO(response),
       invalidatesTags: [{ type: 'Attendees', id: 'LIST' }],
     }),
 
-    updateAttendee: builder.mutation<AttendeeDPO, { id: string; data: UpdateAttendeeDPO }>({
+    updateAttendee: builder.mutation<
+      AttendeeDPO,
+      { id: string; data: UpdateAttendeeDPO }
+    >({
       query: ({ id, data }) => ({
         url: API_ENDPOINTS.ATTENDEES.BY_ID(id),
         method: 'PUT',
         body: mapUpdateAttendeeDPOtoDTO(data),
       }),
-      transformResponse: (response: AttendeeDTO) => mapAttendeeDTOtoDPO(response),
+      transformResponse: (response: AttendeeDTO) =>
+        mapAttendeeDTOtoDPO(response),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Attendee', id },
         { type: 'Attendees', id: 'LIST' },
@@ -123,13 +126,17 @@ export const attendeesApi = rootApi.injectEndpoints({
       },
     }),
 
-    toggleAttendeeStatus: builder.mutation<AttendeeDPO, { id: string; isActive: boolean }>({
+    toggleAttendeeStatus: builder.mutation<
+      AttendeeDPO,
+      { id: string; isActive: boolean }
+    >({
       query: ({ id, isActive }) => ({
         url: API_ENDPOINTS.ATTENDEES.BY_ID(id),
         method: 'PATCH',
         body: { is_active: isActive },
       }),
-      transformResponse: (response: AttendeeDTO) => mapAttendeeDTOtoDPO(response),
+      transformResponse: (response: AttendeeDTO) =>
+        mapAttendeeDTOtoDPO(response),
       invalidatesTags: (_result, _error, { id }) => [
         { type: 'Attendee', id },
         { type: 'Attendees', id: 'LIST' },
@@ -150,24 +157,30 @@ export const attendeesApi = rootApi.injectEndpoints({
       },
     }),
 
-    exportAttendees: builder.mutation<ExportAttendeesResponse, { eventId?: string; format?: 'csv' | 'xlsx' }>({
+    exportAttendees: builder.mutation<
+      ExportAttendeesResponse,
+      { eventId?: string; format?: 'csv' | 'xlsx' }
+    >({
       query: ({ eventId, format = 'csv' }) => ({
-        url: `${API_ENDPOINTS.ATTENDEES.EXPORT}?${new URLSearchParams({ 
-          ...(eventId && { eventId }), 
-          format 
+        url: `${API_ENDPOINTS.ATTENDEES.EXPORT}?${new URLSearchParams({
+          ...(eventId && { eventId }),
+          format,
         })}`,
         method: 'POST',
       }),
     }),
 
-    getAttendeeHistory: builder.query<AttendeeHistoryItem[], { attendeeId: string; email: string }>({
+    getAttendeeHistory: builder.query<
+      AttendeeHistoryItem[],
+      { attendeeId: string; email: string }
+    >({
       query: ({ attendeeId, email }) => {
         const searchParams = new URLSearchParams()
         searchParams.append('email', email)
         return `${API_ENDPOINTS.ATTENDEES.HISTORY(attendeeId)}?${searchParams.toString()}`
       },
       providesTags: (_result, _error, { attendeeId }) => [
-        { type: 'Attendee', id: `history-${attendeeId}` }
+        { type: 'Attendee', id: `history-${attendeeId}` },
       ],
     }),
 
@@ -189,12 +202,15 @@ export const attendeesApi = rootApi.injectEndpoints({
         body: { ids },
       }),
       invalidatesTags: (_result, _error, ids) => [
-        ...ids.map(id => ({ type: 'Attendee' as const, id })),
+        ...ids.map((id) => ({ type: 'Attendee' as const, id })),
         { type: 'Attendees', id: 'LIST' },
       ],
     }),
 
-    bulkExportAttendees: builder.mutation<ExportAttendeesResponse, { ids: string[]; format?: 'csv' | 'xlsx' }>({
+    bulkExportAttendees: builder.mutation<
+      ExportAttendeesResponse,
+      { ids: string[]; format?: 'csv' | 'xlsx' }
+    >({
       query: ({ ids, format = 'csv' }) => ({
         url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-export`,
         method: 'POST',
@@ -208,7 +224,8 @@ export const attendeesApi = rootApi.injectEndpoints({
         url: `${API_ENDPOINTS.ATTENDEES.BY_ID(id)}/restore`,
         method: 'POST',
       }),
-      transformResponse: (response: AttendeeDTO) => mapAttendeeDTOtoDPO(response),
+      transformResponse: (response: AttendeeDTO) =>
+        mapAttendeeDTOtoDPO(response),
       invalidatesTags: (_result, _error, id) => [
         { type: 'Attendee', id },
         { type: 'Attendees', id: 'LIST' },
@@ -228,27 +245,32 @@ export const attendeesApi = rootApi.injectEndpoints({
     }),
 
     // Restaurer plusieurs attendees
-    bulkRestoreAttendees: builder.mutation<{ restoredCount: number }, string[]>({
-      query: (ids) => ({
-        url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-restore`,
-        method: 'POST',
-        body: { ids },
-      }),
-      invalidatesTags: (_result, _error, ids) => [
-        ...ids.map(id => ({ type: 'Attendee' as const, id })),
-        { type: 'Attendees', id: 'LIST' },
-      ],
-    }),
+    bulkRestoreAttendees: builder.mutation<{ restoredCount: number }, string[]>(
+      {
+        query: (ids) => ({
+          url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-restore`,
+          method: 'POST',
+          body: { ids },
+        }),
+        invalidatesTags: (_result, _error, ids) => [
+          ...ids.map((id) => ({ type: 'Attendee' as const, id })),
+          { type: 'Attendees', id: 'LIST' },
+        ],
+      }
+    ),
 
     // Supprimer définitivement plusieurs attendees
-    bulkPermanentDeleteAttendees: builder.mutation<{ deletedCount: number }, string[]>({
+    bulkPermanentDeleteAttendees: builder.mutation<
+      { deletedCount: number },
+      string[]
+    >({
       query: (ids) => ({
         url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-permanent-delete`,
         method: 'DELETE',
         body: { ids },
       }),
       invalidatesTags: (_result, _error, ids) => [
-        ...ids.map(id => ({ type: 'Attendee' as const, id })),
+        ...ids.map((id) => ({ type: 'Attendee' as const, id })),
         { type: 'Attendees', id: 'LIST' },
       ],
     }),

@@ -1,11 +1,11 @@
 /**
  * 🔒 GESTION DE LA HIÉRARCHIE DES RÔLES
- * 
+ *
  * Règles de sécurité :
  * 1. Un utilisateur ne peut PAS modifier son propre rôle
  * 2. Un utilisateur peut modifier uniquement des utilisateurs de niveau STRICTEMENT INFÉRIEUR
  * 3. Un utilisateur peut assigner uniquement des rôles de niveau STRICTEMENT INFÉRIEUR au sien
- * 
+ *
  * ⚠️ ATTENTION : Hiérarchie inversée dans la DB
  * (niveau plus BAS numériquement = plus de pouvoir) :
  * - SUPER_ADMIN : 1
@@ -49,7 +49,7 @@ export function canModifyUser(
     return {
       canModify: false,
       canAssignRole: false,
-      reason: 'Vous ne pouvez pas modifier votre propre rôle'
+      reason: 'Vous ne pouvez pas modifier votre propre rôle',
     }
   }
 
@@ -64,13 +64,13 @@ export function canModifyUser(
     return {
       canModify: false,
       canAssignRole: false,
-      reason: `Vous ne pouvez pas modifier un utilisateur avec le rôle "${targetUserRoleCode}" (niveau ${targetLevel}). Votre niveau est ${currentLevel}.`
+      reason: `Vous ne pouvez pas modifier un utilisateur avec le rôle "${targetUserRoleCode}" (niveau ${targetLevel}). Votre niveau est ${currentLevel}.`,
     }
   }
 
   return {
     canModify: true,
-    canAssignRole: true
+    canAssignRole: true,
   }
 }
 
@@ -91,7 +91,7 @@ export function canAssignRole(
   if (targetLevel <= currentLevel) {
     return {
       canAssign: false,
-      reason: `Vous ne pouvez pas assigner le rôle "${targetRoleCode}" (niveau ${targetLevel}). Votre niveau est ${currentLevel}.`
+      reason: `Vous ne pouvez pas assigner le rôle "${targetRoleCode}" (niveau ${targetLevel}). Votre niveau est ${currentLevel}.`,
     }
   }
 
@@ -103,13 +103,12 @@ export function canAssignRole(
  * @param currentUserRoleCode Code du rôle de l'utilisateur connecté
  * @param roles Liste des rôles disponibles
  */
-export function filterAssignableRoles<T extends { code: string; level?: number }>(
-  currentUserRoleCode: string,
-  roles: T[]
-): T[] {
+export function filterAssignableRoles<
+  T extends { code: string; level?: number },
+>(currentUserRoleCode: string, roles: T[]): T[] {
   const currentLevel = ROLE_LEVELS[currentUserRoleCode] || 0
 
-  return roles.filter(role => {
+  return roles.filter((role) => {
     const roleLevel = role.level || ROLE_LEVELS[role.code] || 0
     // Ne garder que les rôles de niveau STRICTEMENT INFÉRIEUR
     // ⚠️ Niveau plus HAUT numériquement = moins de pouvoir

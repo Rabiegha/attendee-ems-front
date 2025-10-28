@@ -4,27 +4,24 @@ import { X } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/lib/utils'
 
-const modalVariants = cva(
-  'modal-content',
-  {
-    variants: {
-      size: {
-        sm: 'max-w-sm',
-        md: 'max-w-md',
-        lg: 'max-w-lg',
-        xl: 'max-w-xl',
-        '2xl': 'max-w-2xl',
-        '3xl': 'max-w-3xl',
-        '4xl': 'max-w-4xl',
-        '5xl': 'max-w-5xl',
-        full: 'max-w-full mx-8'
-      }
+const modalVariants = cva('modal-content', {
+  variants: {
+    size: {
+      sm: 'max-w-sm',
+      md: 'max-w-md',
+      lg: 'max-w-lg',
+      xl: 'max-w-xl',
+      '2xl': 'max-w-2xl',
+      '3xl': 'max-w-3xl',
+      '4xl': 'max-w-4xl',
+      '5xl': 'max-w-5xl',
+      full: 'max-w-full mx-8',
     },
-    defaultVariants: {
-      size: 'lg'
-    }
-  }
-)
+  },
+  defaultVariants: {
+    size: 'lg',
+  },
+})
 
 interface ModalProps extends VariantProps<typeof modalVariants> {
   isOpen: boolean
@@ -94,22 +91,22 @@ export const Modal: React.FC<ModalProps> = ({
   return createPortal(
     <div className="modal-base">
       {/* Backdrop moderne avec blur plus intense */}
-      <div 
+      <div
         className={cn(
-          "fixed inset-0 bg-black/60 backdrop-blur-md transition-all duration-300 ease-out",
-          isVisible ? "opacity-100" : "opacity-0"
+          'fixed inset-0 bg-black/60 backdrop-blur-md transition-all duration-300 ease-out',
+          isVisible ? 'opacity-100' : 'opacity-0'
         )}
         onClick={handleBackdropClick}
       />
-      
+
       {/* Modal avec support light/dark mode */}
-      <div 
+      <div
         className={cn(
           modalVariants({ size: maxWidth }),
-          "relative bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl transition-all duration-300 ease-out transform max-h-[90vh] overflow-hidden",
-          isVisible 
-            ? "scale-100 translate-y-0 opacity-100" 
-            : "scale-95 translate-y-8 opacity-0",
+          'relative bg-white dark:bg-gray-800 backdrop-blur-xl border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl transition-all duration-300 ease-out transform max-h-[90vh] overflow-hidden',
+          isVisible
+            ? 'scale-100 translate-y-0 opacity-100'
+            : 'scale-95 translate-y-8 opacity-0',
           className
         )}
       >
@@ -134,10 +131,12 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Contenu avec scroll */}
-        <div className={cn(
-          "overflow-y-auto max-h-[calc(90vh-80px)]",
-          contentPadding && "p-6"
-        )}>
+        <div
+          className={cn(
+            'overflow-y-auto max-h-[calc(90vh-80px)]',
+            contentPadding && 'p-6'
+          )}
+        >
           {children}
         </div>
       </div>

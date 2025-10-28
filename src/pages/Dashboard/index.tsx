@@ -3,49 +3,59 @@ import { useTranslation } from 'react-i18next'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
 import { useGetAttendeesQuery } from '@/features/attendees/api/attendeesApi'
 import { useSelector } from 'react-redux'
-import { selectUser, selectOrganization } from '@/features/auth/model/sessionSlice'
+import {
+  selectUser,
+  selectOrganization,
+} from '@/features/auth/model/sessionSlice'
 import { StatsCards } from '@/widgets/StatsCards'
 import { EventList } from '@/features/events/ui/EventList'
 
 import { Can } from '@/shared/acl/guards/Can'
 import { useCan } from '@/shared/acl/hooks/useCan'
-import { 
-  Button, 
-  PageContainer, 
-  PageHeader, 
+import {
+  Button,
+  PageContainer,
+  PageHeader,
   PageSection,
   Card,
-  CardContent
+  CardContent,
 } from '@/shared/ui'
 import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
-import { Plus, Users, Calendar, Building2, Mail, Shield, LayoutDashboard } from 'lucide-react'
+import {
+  Plus,
+  Users,
+  Calendar,
+  Building2,
+  Mail,
+  Shield,
+  LayoutDashboard,
+} from 'lucide-react'
 
 export const Dashboard: React.FC = () => {
   const { t } = useTranslation(['common', 'events', 'auth'])
   const currentUser = useSelector(selectUser)
   const organization = useSelector(selectOrganization)
-  
+
   // État pour la modal de création d'événement
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  
+
   // Permissions
   const canReadOrganization = useCan('read', 'Organization')
   const canReadEvent = useCan('read', 'Event')
   const canReadAttendee = useCan('read', 'Attendee')
-  
+
   const { data: events = [], isLoading: eventsLoading } = useGetEventsQuery({
     limit: 5,
     sortBy: 'start_at',
     sortOrder: 'asc',
   })
-  
-  const { data: attendees = [], isLoading: attendeesLoading } = useGetAttendeesQuery({
-    pageSize: 10,
-    sortBy: 'created_at',
-    sortDir: 'desc',
-  })
 
-
+  const { data: attendees = [], isLoading: attendeesLoading } =
+    useGetAttendeesQuery({
+      pageSize: 10,
+      sortBy: 'created_at',
+      sortDir: 'desc',
+    })
 
   const handleCreateEvent = () => {
     setIsCreateModalOpen(true)
@@ -72,7 +82,7 @@ export const Dashboard: React.FC = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="text-right">
                 <div className="flex items-center space-x-2 text-body-sm">
                   <Shield className="h-4 w-4" />
@@ -89,25 +99,32 @@ export const Dashboard: React.FC = () => {
                 </p>
               </div>
             </div>
-            
+
             {/* Welcome message */}
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <p className="text-body">
-                Bienvenue{currentUser?.firstName ? ` ${currentUser.firstName}` : ''} ! 
-                Vous êtes connecté en tant que <span className="font-medium">{currentUser?.roles?.[0]}</span> 
-                {organization?.name && ` dans l'organisation ${organization.name}`}.
+                Bienvenue
+                {currentUser?.firstName ? ` ${currentUser.firstName}` : ''} !
+                Vous êtes connecté en tant que{' '}
+                <span className="font-medium">{currentUser?.roles?.[0]}</span>
+                {organization?.name &&
+                  ` dans l'organisation ${organization.name}`}
+                .
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <PageHeader 
+        <PageHeader
           title={t('navigation.dashboard')}
           description="Vue d'ensemble de votre organisation"
           icon={LayoutDashboard}
           actions={
             <Can do="create" on="Event">
-              <Button onClick={handleCreateEvent} leftIcon={<Plus className="h-4 w-4" />}>
+              <Button
+                onClick={handleCreateEvent}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
                 {t('events:events.create')}
               </Button>
             </Can>
@@ -115,8 +132,8 @@ export const Dashboard: React.FC = () => {
         />
 
         <PageSection spacing="lg">
-          <StatsCards 
-            events={events} 
+          <StatsCards
+            events={events}
             attendees={attendees}
             isLoading={eventsLoading || attendeesLoading}
           />
@@ -125,34 +142,34 @@ export const Dashboard: React.FC = () => {
         <PageSection spacing="lg">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <h2 className="section-title">
-                Événements récents
-              </h2>
+              <h2 className="section-title">Événements récents</h2>
               <EventList events={events} isLoading={eventsLoading} />
             </div>
 
             <div className="space-y-4">
-              <h2 className="section-title">
-                Participants récents
-              </h2>
+              <h2 className="section-title">Participants récents</h2>
               <Card variant="default" padding="md">
                 <CardContent>
                   {attendeesLoading ? (
                     <div className="animate-pulse space-y-2">
                       {[...Array(3)].map((_, i) => (
-                        <div key={i} className="h-4 bg-gray-200 dark:bg-gray-600 rounded"></div>
+                        <div
+                          key={i}
+                          className="h-4 bg-gray-200 dark:bg-gray-600 rounded"
+                        ></div>
                       ))}
                     </div>
                   ) : attendees.length > 0 ? (
                     <div className="space-y-2">
                       {attendees.slice(0, 5).map((attendee) => (
-                        <div key={attendee.id} className="flex items-center justify-between">
+                        <div
+                          key={attendee.id}
+                          className="flex items-center justify-between"
+                        >
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {attendee.firstName} {attendee.lastName}
                           </span>
-                          <span className="text-caption">
-                            {attendee.email}
-                          </span>
+                          <span className="text-caption">{attendee.email}</span>
                         </div>
                       ))}
                     </div>
@@ -183,9 +200,7 @@ export const Dashboard: React.FC = () => {
         <CardContent>
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="page-title">
-                {t('common:welcome')}
-              </h1>
+              <h1 className="page-title">{t('common:welcome')}</h1>
               <p className="page-subtitle mt-1">
                 {currentUser?.firstName} {currentUser?.lastName}
               </p>
@@ -202,9 +217,7 @@ export const Dashboard: React.FC = () => {
                 <span>Rôle: {currentUser?.roles?.[0] || 'Utilisateur'}</span>
               </div>
               {organization && (
-                <p className="text-body-sm mt-2">
-                  {organization.name}
-                </p>
+                <p className="text-body-sm mt-2">{organization.name}</p>
               )}
             </div>
           </div>
@@ -223,7 +236,9 @@ export const Dashboard: React.FC = () => {
                     <Calendar className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Événements</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Événements
+                    </h3>
                     <p className="text-body-sm">
                       {eventsLoading ? '...' : `${events.length} accessibles`}
                     </p>
@@ -242,9 +257,13 @@ export const Dashboard: React.FC = () => {
                     <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Participants</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Participants
+                    </h3>
                     <p className="text-body-sm">
-                      {attendeesLoading ? '...' : `${attendees.length} participants`}
+                      {attendeesLoading
+                        ? '...'
+                        : `${attendees.length} participants`}
                     </p>
                   </div>
                 </div>
@@ -261,7 +280,9 @@ export const Dashboard: React.FC = () => {
                     <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white">Organisation</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Organisation
+                    </h3>
                     <p className="text-body-sm">{organization.name}</p>
                   </div>
                 </div>
@@ -282,18 +303,18 @@ export const Dashboard: React.FC = () => {
                   <Button
                     variant="outline"
                     className="h-20 flex flex-col items-center justify-center space-y-2"
-                    onClick={() => window.location.href = '/events'}
+                    onClick={() => (window.location.href = '/events')}
                   >
                     <Calendar className="h-6 w-6" />
                     <span>Voir les événements</span>
                   </Button>
                 )}
-                
+
                 {canReadAttendee && (
                   <Button
                     variant="outline"
                     className="h-20 flex flex-col items-center justify-center space-y-2"
-                    onClick={() => window.location.href = '/attendees'}
+                    onClick={() => (window.location.href = '/attendees')}
                   >
                     <Users className="h-6 w-6" />
                     <span>Voir les participants</span>
@@ -307,7 +328,11 @@ export const Dashboard: React.FC = () => {
 
       {/* Message d'aide si aucune permission */}
       {!canReadEvent && !canReadAttendee && !canReadOrganization && (
-        <Card variant="default" padding="lg" className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+        <Card
+          variant="default"
+          padding="lg"
+          className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
+        >
           <CardContent>
             <div className="flex items-start space-x-3">
               <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
@@ -316,7 +341,8 @@ export const Dashboard: React.FC = () => {
                   Besoin d'aide ou de permissions supplémentaires ?
                 </h3>
                 <p className="text-body-sm text-blue-700 dark:text-blue-300 mt-1">
-                  Contactez votre administrateur pour obtenir l'accès aux fonctionnalités dont vous avez besoin.
+                  Contactez votre administrateur pour obtenir l'accès aux
+                  fonctionnalités dont vous avez besoin.
                 </p>
                 {organization && (
                   <p className="text-body-sm text-blue-600 dark:text-blue-400 mt-2">

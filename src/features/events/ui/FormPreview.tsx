@@ -17,14 +17,14 @@ interface FormPreviewProps {
   showDescription?: boolean
 }
 
-export const FormPreview: React.FC<FormPreviewProps> = ({ 
-  event, 
-  fields, 
+export const FormPreview: React.FC<FormPreviewProps> = ({
+  event,
+  fields,
   testMode = false,
   submitButtonText = "S'inscrire",
   submitButtonColor = '#4F46E5',
   showTitle = true,
-  showDescription = true
+  showDescription = true,
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -33,12 +33,12 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
   const [createRegistration] = useCreateRegistrationMutation()
 
   const handleInputChange = (fieldId: string, value: string) => {
-    setFormData(prev => ({ ...prev, [fieldId]: value }))
+    setFormData((prev) => ({ ...prev, [fieldId]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!testMode) return
 
     setIsSubmitting(true)
@@ -48,17 +48,17 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       const attendee: any = {}
       const registrationData: any = {}
       const answers: any = {}
-      
+
       // Helper pour convertir camelCase en snake_case
       const toSnakeCase = (str: string) => {
-        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+        return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
       }
-      
+
       // Group form data by field configuration
-      fields.forEach(field => {
+      fields.forEach((field) => {
         const value = formData[field.id]
         if (!value) return
-        
+
         if (field.attendeeField) {
           // Map to attendee table column (convert camelCase to snake_case)
           const backendFieldName = toSnakeCase(field.attendeeField)
@@ -71,10 +71,10 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
           answers[field.key] = value
         }
       })
-      
+
       // Email is required
       if (!attendee.email) {
-        toast.error('Email requis', 'L\'adresse email est obligatoire')
+        toast.error('Email requis', "L'adresse email est obligatoire")
         return
       }
 
@@ -92,12 +92,12 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
         attendee,
         attendance_type: attendanceType,
       }
-      
+
       // Add registration-specific data
       if (registrationData.attendee_type) {
         requestData.attendee_type = registrationData.attendee_type
       }
-      
+
       // Add custom answers
       if (Object.keys(answers).length > 0) {
         requestData.answers = answers
@@ -109,20 +109,23 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       }).unwrap()
 
       setIsSubmitted(true)
-      toast.success('Inscription réussie !', 'Votre inscription a été enregistrée')
+      toast.success(
+        'Inscription réussie !',
+        'Votre inscription a été enregistrée'
+      )
     } catch (error: any) {
-      console.error('Erreur lors de l\'inscription:', error)
-      
+      console.error("Erreur lors de l'inscription:", error)
+
       // Handle specific error cases
-      let errorMessage = 'Une erreur est survenue lors de l\'inscription'
-      
+      let errorMessage = "Une erreur est survenue lors de l'inscription"
+
       if (error?.status === 409) {
         errorMessage = 'Cet email est déjà inscrit à cet événement'
       } else if (error?.data?.message) {
         errorMessage = error.data.message
       }
-      
-      toast.error('Erreur d\'inscription', errorMessage)
+
+      toast.error("Erreur d'inscription", errorMessage)
     } finally {
       setIsSubmitting(false)
     }
@@ -133,8 +136,9 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
     setIsSubmitted(false)
   }
   const renderField = (field: FormField) => {
-    const baseClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors duration-200"
-    
+    const baseClasses =
+      'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors duration-200'
+
     const value = formData[field.id] || ''
     const disabled = !testMode || isSubmitted
 
@@ -153,19 +157,21 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
         )
       case 'select':
         return (
-          <select 
+          <select
             value={value}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
-            className={baseClasses} 
-            required={field.required} 
+            className={baseClasses}
+            required={field.required}
             disabled={disabled}
           >
             <option value="">Sélectionnez une option</option>
-            {field.options?.map((option: { value: string; label: string }, idx: number) => (
-              <option key={idx} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            {field.options?.map(
+              (option: { value: string; label: string }, idx: number) => (
+                <option key={idx} value={option.value}>
+                  {option.label}
+                </option>
+              )
+            )}
           </select>
         )
       default:
@@ -233,11 +239,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               Votre inscription a été enregistrée avec succès (mode test)
             </p>
-            <Button
-              variant="outline"
-              onClick={resetForm}
-              type="button"
-            >
+            <Button variant="outline" onClick={resetForm} type="button">
               Nouvelle inscription
             </Button>
           </div>
@@ -257,7 +259,9 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             {fields.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <p>Aucun champ configuré</p>
-                <p className="text-sm mt-2">Ajoutez des champs dans la configuration</p>
+                <p className="text-sm mt-2">
+                  Ajoutez des champs dans la configuration
+                </p>
               </div>
             ) : (
               <>
@@ -265,7 +269,9 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
                   <div key={field.id}>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       {field.label}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                      {field.required && (
+                        <span className="text-red-500 ml-1">*</span>
+                      )}
                     </label>
                     {renderField(field)}
                   </div>
@@ -278,19 +284,23 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
                     className="w-full px-4 py-2 rounded-md text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
                     style={{ backgroundColor: submitButtonColor }}
                   >
-                    {isSubmitting ? 'Inscription en cours...' : submitButtonText}
+                    {isSubmitting
+                      ? 'Inscription en cours...'
+                      : submitButtonText}
                   </button>
                 </div>
 
                 {testMode && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    * Ce formulaire est en mode test - Les inscriptions ne seront pas réellement enregistrées
+                    * Ce formulaire est en mode test - Les inscriptions ne
+                    seront pas réellement enregistrées
                   </p>
                 )}
 
                 {!testMode && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    * Champs obligatoires - Activez le mode test pour essayer le formulaire
+                    * Champs obligatoires - Activez le mode test pour essayer le
+                    formulaire
                   </p>
                 )}
               </>

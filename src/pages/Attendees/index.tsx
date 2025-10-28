@@ -2,15 +2,15 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useGetAttendeesQuery } from '@/features/attendees/api/attendeesApi'
 import { useSelector, useDispatch } from 'react-redux'
-import { 
-  selectAttendeesFilters, 
-  selectAttendeesActiveTab, 
-  setActiveTab 
+import {
+  selectAttendeesFilters,
+  selectAttendeesActiveTab,
+  setActiveTab,
 } from '@/features/attendees/model/attendeesSlice'
 import { AttendeeTable } from '@/features/attendees/ui/AttendeeTable'
 import { AttendeeFilters } from '@/features/attendees/ui/AttendeeFilters'
 import { Can } from '@/shared/acl/guards/Can'
-import { 
+import {
   Button,
   PageContainer,
   PageHeader,
@@ -19,7 +19,7 @@ import {
   CardContent,
   ActionGroup,
   Tabs,
-  type TabItem
+  type TabItem,
 } from '@/shared/ui'
 import { Plus, Download, Users } from 'lucide-react'
 
@@ -28,21 +28,25 @@ export const Attendees: React.FC = () => {
   const dispatch = useDispatch()
   const filters = useSelector(selectAttendeesFilters)
   const activeTab = useSelector(selectAttendeesActiveTab)
-  
-  const { data: attendees = [], isLoading, error } = useGetAttendeesQuery(filters)
+
+  const {
+    data: attendees = [],
+    isLoading,
+    error,
+  } = useGetAttendeesQuery(filters)
 
   // Configure tabs
   const tabs: TabItem[] = [
     {
       id: 'active',
       label: 'Participants actifs',
-      ...(activeTab === 'active' && { count: attendees.length })
+      ...(activeTab === 'active' && { count: attendees.length }),
     },
     {
       id: 'deleted',
       label: 'Participants supprimés',
-      ...(activeTab === 'deleted' && { count: attendees.length })
-    }
+      ...(activeTab === 'deleted' && { count: attendees.length }),
+    },
   ]
 
   const handleTabChange = (tabId: string) => {
@@ -51,14 +55,17 @@ export const Attendees: React.FC = () => {
 
   return (
     <PageContainer maxWidth="7xl" padding="lg">
-      <PageHeader 
+      <PageHeader
         title={t('attendees.title')}
         description="Gérez les participants inscrits à vos événements"
         icon={Users}
         actions={
           <ActionGroup align="right" spacing="md">
             <Can do="export" on="Attendee">
-              <Button variant="outline" leftIcon={<Download className="h-4 w-4" />}>
+              <Button
+                variant="outline"
+                leftIcon={<Download className="h-4 w-4" />}
+              >
                 {t('attendees.export')}
               </Button>
             </Can>
@@ -77,7 +84,7 @@ export const Attendees: React.FC = () => {
 
       <PageSection spacing="lg">
         <Card variant="default" padding="none">
-          <Tabs 
+          <Tabs
             items={tabs}
             activeTab={activeTab}
             onTabChange={handleTabChange}
@@ -86,11 +93,13 @@ export const Attendees: React.FC = () => {
           <CardContent>
             {error ? (
               <div className="p-6 text-center">
-                <p className="text-red-600 dark:text-red-400">Erreur lors du chargement des participants</p>
+                <p className="text-red-600 dark:text-red-400">
+                  Erreur lors du chargement des participants
+                </p>
               </div>
             ) : (
-              <AttendeeTable 
-                attendees={attendees} 
+              <AttendeeTable
+                attendees={attendees}
                 isLoading={isLoading}
                 isDeletedTab={activeTab === 'deleted'}
               />

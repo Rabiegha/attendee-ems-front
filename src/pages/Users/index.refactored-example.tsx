@@ -1,26 +1,34 @@
 /**
  * EXEMPLE REFACTORISÉ - UsersPage
- * 
+ *
  * Ce fichier démontre l'utilisation des nouveaux composants du design system:
  * - PageContainer pour le layout de base
  * - PageHeader pour l'en-tête avec actions
  * - PageSection pour les sections de contenu
  * - Card pour les cartes de statistiques
  * - ActionGroup pour grouper les boutons
- * 
+ *
  * Comparez avec src/pages/Users/index.tsx pour voir les améliorations
  */
 
-import { Users, Mail, Calendar, UserCheck, UserX, User as UserIcon, RefreshCw } from 'lucide-react'
-import { 
-  Button, 
+import {
+  Users,
+  Mail,
+  Calendar,
+  UserCheck,
+  UserX,
+  User as UserIcon,
+  RefreshCw,
+} from 'lucide-react'
+import {
+  Button,
   Card,
   CardContent,
-  PageContainer, 
-  PageHeader, 
+  PageContainer,
+  PageHeader,
   PageSection,
   ActionGroup,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/shared/ui'
 import { useNavigate } from 'react-router-dom'
 import { useGetUsersQuery } from '@/features/users/api/usersApi'
@@ -41,31 +49,33 @@ export function UsersPageRefactored() {
   // Calcul des statistiques
   const stats = {
     total: usersData?.total || 0,
-    active: usersData?.users?.filter(u => u.is_active).length || 0,
-    pending: usersData?.users?.filter(u => (u as any).mustChangePassword).length || 0,
-    inactive: usersData?.users?.filter(u => !u.is_active).length || 0
+    active: usersData?.users?.filter((u) => u.is_active).length || 0,
+    pending:
+      usersData?.users?.filter((u) => (u as any).mustChangePassword).length ||
+      0,
+    inactive: usersData?.users?.filter((u) => !u.is_active).length || 0,
   }
 
   return (
     <PageContainer maxWidth="7xl" padding="lg">
       {/* En-tête de page avec nouveau composant PageHeader */}
-      <PageHeader 
+      <PageHeader
         title="Gestion des utilisateurs"
         description="Créez et gérez les comptes utilisateur de votre organisation"
         icon={Users}
         actions={
           <ActionGroup align="right" spacing="md">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleRefresh}
               loading={isLoading}
               leftIcon={<RefreshCw className="h-4 w-4" />}
             >
               Actualiser
             </Button>
-            
+
             <Can do="create" on="User">
-              <Button 
+              <Button
                 variant="default"
                 onClick={handleInviteUser}
                 leftIcon={<Mail className="h-4 w-4" />}
@@ -164,22 +174,24 @@ export function UsersPageRefactored() {
           )}
 
           {/* Empty state */}
-          {!isLoading && (!usersData?.users || usersData.users.length === 0) && (
-            <div className="p-12 text-center">
-              <Users className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-              <h3 className="text-heading-sm mb-2">
-                Aucun utilisateur
-              </h3>
-              <p className="text-body text-gray-500 dark:text-gray-400 mb-6">
-                Commencez par créer votre premier utilisateur.
-              </p>
-              <Can do="create" on="User">
-                <Button onClick={handleInviteUser} leftIcon={<Mail className="h-4 w-4" />}>
-                  Inviter un utilisateur
-                </Button>
-              </Can>
-            </div>
-          )}
+          {!isLoading &&
+            (!usersData?.users || usersData.users.length === 0) && (
+              <div className="p-12 text-center">
+                <Users className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+                <h3 className="text-heading-sm mb-2">Aucun utilisateur</h3>
+                <p className="text-body text-gray-500 dark:text-gray-400 mb-6">
+                  Commencez par créer votre premier utilisateur.
+                </p>
+                <Can do="create" on="User">
+                  <Button
+                    onClick={handleInviteUser}
+                    leftIcon={<Mail className="h-4 w-4" />}
+                  >
+                    Inviter un utilisateur
+                  </Button>
+                </Can>
+              </div>
+            )}
 
           {/* Users table */}
           {!isLoading && usersData?.users && usersData.users.length > 0 && (
@@ -206,7 +218,10 @@ export function UsersPageRefactored() {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {usersData.users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <tr
+                      key={user.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-10 w-10 flex-shrink-0">
@@ -216,14 +231,11 @@ export function UsersPageRefactored() {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {user.first_name && user.last_name ? 
-                                `${user.first_name} ${user.last_name}` : 
-                                user.email
-                              }
+                              {user.first_name && user.last_name
+                                ? `${user.first_name} ${user.last_name}`
+                                : user.email}
                             </div>
-                            <div className="text-caption">
-                              {user.email}
-                            </div>
+                            <div className="text-caption">{user.email}</div>
                           </div>
                         </div>
                       </td>
@@ -255,7 +267,11 @@ export function UsersPageRefactored() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-1 text-body-sm">
                           <Calendar className="h-4 w-4" />
-                          {user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR') : 'N/A'}
+                          {user.created_at
+                            ? new Date(user.created_at).toLocaleDateString(
+                                'fr-FR'
+                              )
+                            : 'N/A'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">

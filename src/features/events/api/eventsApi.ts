@@ -2,7 +2,11 @@ import { rootApi } from '@/services/rootApi'
 import { API_ENDPOINTS } from '@/app/config/constants'
 import type { EventDTO } from '../dpo/event.dto'
 import type { EventDPO, CreateEventDPO, UpdateEventDPO } from '../dpo/event.dpo'
-import { mapEventDTOtoDPO, mapCreateEventDPOtoDTO, mapUpdateEventDPOtoDTO } from '../dpo/event.mappers'
+import {
+  mapEventDTOtoDPO,
+  mapCreateEventDPOtoDTO,
+  mapUpdateEventDPOtoDTO,
+} from '../dpo/event.mappers'
 
 export interface EventsListParams {
   page?: number
@@ -33,7 +37,7 @@ export const eventsApi = rootApi.injectEndpoints({
         Object.entries(params).forEach(([key, value]) => {
           if (value !== undefined) {
             if (Array.isArray(value)) {
-              value.forEach(v => searchParams.append(key, v))
+              value.forEach((v) => searchParams.append(key, v))
             } else {
               searchParams.append(key, String(value))
             }
@@ -41,7 +45,7 @@ export const eventsApi = rootApi.injectEndpoints({
         })
         return `${API_ENDPOINTS.EVENTS.LIST}?${searchParams.toString()}`
       },
-      transformResponse: (response: EventsListResponse) => 
+      transformResponse: (response: EventsListResponse) =>
         response.data.map(mapEventDTOtoDPO),
       providesTags: (result) =>
         result
@@ -68,7 +72,10 @@ export const eventsApi = rootApi.injectEndpoints({
       invalidatesTags: [{ type: 'Events', id: 'LIST' }],
     }),
 
-    updateEvent: builder.mutation<EventDPO, { id: string; data: UpdateEventDPO }>({
+    updateEvent: builder.mutation<
+      EventDPO,
+      { id: string; data: UpdateEventDPO }
+    >({
       query: ({ id, data }) => ({
         url: API_ENDPOINTS.EVENTS.UPDATE(id),
         method: 'PUT',
@@ -94,29 +101,43 @@ export const eventsApi = rootApi.injectEndpoints({
       },
     }),
 
-    updateRegistrationFields: builder.mutation<EventDPO, { 
-      id: string
-      fields: any[]
-      submitButtonText?: string
-      submitButtonColor?: string
-      showTitle?: boolean
-      showDescription?: boolean
-    }>({
-      query: ({ id, fields, submitButtonText, submitButtonColor, showTitle, showDescription }) => ({
+    updateRegistrationFields: builder.mutation<
+      EventDPO,
+      {
+        id: string
+        fields: any[]
+        submitButtonText?: string
+        submitButtonColor?: string
+        showTitle?: boolean
+        showDescription?: boolean
+      }
+    >({
+      query: ({
+        id,
+        fields,
+        submitButtonText,
+        submitButtonColor,
+        showTitle,
+        showDescription,
+      }) => ({
         url: API_ENDPOINTS.EVENTS.UPDATE(id),
         method: 'PUT',
-        body: { 
+        body: {
           registration_fields: fields,
-          ...(submitButtonText !== undefined && { submit_button_text: submitButtonText }),
-          ...(submitButtonColor !== undefined && { submit_button_color: submitButtonColor }),
+          ...(submitButtonText !== undefined && {
+            submit_button_text: submitButtonText,
+          }),
+          ...(submitButtonColor !== undefined && {
+            submit_button_color: submitButtonColor,
+          }),
           ...(showTitle !== undefined && { show_title: showTitle }),
-          ...(showDescription !== undefined && { show_description: showDescription }),
+          ...(showDescription !== undefined && {
+            show_description: showDescription,
+          }),
         },
       }),
       transformResponse: (response: EventDTO) => mapEventDTOtoDPO(response),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: 'Event', id },
-      ],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Event', id }],
     }),
 
     deleteEvent: builder.mutation<void, string>({
@@ -137,12 +158,15 @@ export const eventsApi = rootApi.injectEndpoints({
         body: { ids },
       }),
       invalidatesTags: (_result, _error, ids) => [
-        ...ids.map(id => ({ type: 'Event' as const, id })),
+        ...ids.map((id) => ({ type: 'Event' as const, id })),
         { type: 'Events', id: 'LIST' },
       ],
     }),
 
-    bulkExportEvents: builder.mutation<{ downloadUrl: string; filename: string; expiresAt: string }, { ids: string[]; format?: 'csv' | 'xlsx' }>({
+    bulkExportEvents: builder.mutation<
+      { downloadUrl: string; filename: string; expiresAt: string },
+      { ids: string[]; format?: 'csv' | 'xlsx' }
+    >({
       query: ({ ids, format = 'csv' }) => ({
         url: `${API_ENDPOINTS.EVENTS.LIST}/bulk-export`,
         method: 'POST',
@@ -150,7 +174,10 @@ export const eventsApi = rootApi.injectEndpoints({
       }),
     }),
 
-    changeEventStatus: builder.mutation<EventDPO, { id: string; status: string }>({
+    changeEventStatus: builder.mutation<
+      EventDPO,
+      { id: string; status: string }
+    >({
       query: ({ id, status }) => ({
         url: API_ENDPOINTS.EVENTS.CHANGE_STATUS(id),
         method: 'PUT',

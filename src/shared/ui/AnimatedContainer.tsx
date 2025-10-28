@@ -12,7 +12,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
   children,
   className,
   delay = 0,
-  animation = 'fade-in'
+  animation = 'fade-in',
 }) => {
   const [isVisible, setIsVisible] = useState(false)
 
@@ -26,7 +26,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
 
   const getAnimationClasses = () => {
     const baseClasses = 'transition-all duration-500 ease-out'
-    
+
     if (!isVisible) {
       switch (animation) {
         case 'fade-in':
@@ -56,11 +56,7 @@ export const AnimatedContainer: React.FC<AnimatedContainerProps> = ({
     }
   }
 
-  return (
-    <div className={cn(getAnimationClasses(), className)}>
-      {children}
-    </div>
-  )
+  return <div className={cn(getAnimationClasses(), className)}>{children}</div>
 }
 
 export default AnimatedContainer

@@ -1,62 +1,75 @@
-import React from 'react';
-import { CheckCircle, AlertTriangle, XCircle, Info, Building2, Users, Mail, X } from 'lucide-react';
-import { Modal } from './Modal';
-import { Button } from './Button';
+import React from 'react'
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Info,
+  Building2,
+  Users,
+  Mail,
+  X,
+} from 'lucide-react'
+import { Modal } from './Modal'
+import { Button } from './Button'
 
 // Types de modals supportés
-export type ModalType = 
-  | 'success' 
-  | 'error' 
-  | 'warning' 
+export type ModalType =
+  | 'success'
+  | 'error'
+  | 'warning'
   | 'info'
   | 'confirmation'
   | 'organization-created'
   | 'user-created'
-  | 'invitation-sent';
+  | 'invitation-sent'
 
 // Configuration d'un modal
 export interface ModalConfig {
-  type: ModalType;
-  title: string;
-  message: string;
+  type: ModalType
+  title: string
+  message: string
   details?: {
-    name?: string;
-    slug?: string;
-    email?: string;
-    organization?: string;
-    [key: string]: any;
-  };
+    name?: string
+    slug?: string
+    email?: string
+    organization?: string
+    [key: string]: any
+  }
   actions?: {
     primary?: {
-      label: string;
-      action: () => void;
-      variant?: 'default' | 'destructive' | 'outline';
-    };
+      label: string
+      action: () => void
+      variant?: 'default' | 'destructive' | 'outline'
+    }
     secondary?: {
-      label: string;
-      action: () => void;
-    };
-  };
+      label: string
+      action: () => void
+    }
+  }
 }
 
 interface UniversalModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  config: ModalConfig;
+  isOpen: boolean
+  onClose: () => void
+  config: ModalConfig
 }
 
 // Configurations par type de modal avec thème sombre
-const modalConfigs: Record<ModalType, {
-  icon: React.ComponentType<any>;
-  iconColor: string;
-  iconBg: string;
-  titleColor: string;
-  cardStyle?: string;
-}> = {
+const modalConfigs: Record<
+  ModalType,
+  {
+    icon: React.ComponentType<any>
+    iconColor: string
+    iconBg: string
+    titleColor: string
+    cardStyle?: string
+  }
+> = {
   success: {
     icon: CheckCircle,
     iconColor: 'text-white',
-    iconBg: 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/25',
+    iconBg:
+      'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/25',
     titleColor: 'text-green-400',
   },
   error: {
@@ -68,7 +81,8 @@ const modalConfigs: Record<ModalType, {
   warning: {
     icon: AlertTriangle,
     iconColor: 'text-white',
-    iconBg: 'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-yellow-500/25',
+    iconBg:
+      'bg-gradient-to-br from-yellow-500 to-orange-600 shadow-yellow-500/25',
     titleColor: 'text-yellow-400',
   },
   info: {
@@ -86,7 +100,8 @@ const modalConfigs: Record<ModalType, {
   'organization-created': {
     icon: Building2,
     iconColor: 'text-white',
-    iconBg: 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/25',
+    iconBg:
+      'bg-gradient-to-br from-green-500 to-emerald-600 shadow-green-500/25',
     titleColor: 'text-green-400',
     cardStyle: 'bg-gray-800/50 border-gray-700/50',
   },
@@ -100,21 +115,22 @@ const modalConfigs: Record<ModalType, {
   'invitation-sent': {
     icon: Mail,
     iconColor: 'text-white',
-    iconBg: 'bg-gradient-to-br from-purple-500 to-pink-600 shadow-purple-500/25',
+    iconBg:
+      'bg-gradient-to-br from-purple-500 to-pink-600 shadow-purple-500/25',
     titleColor: 'text-purple-400',
     cardStyle: 'bg-gray-800/50 border-gray-700/50',
   },
-};
+}
 
 export const UniversalModal: React.FC<UniversalModalProps> = ({
   isOpen,
   onClose,
-  config
+  config,
 }) => {
-  const modalConfig = modalConfigs[config.type];
+  const modalConfig = modalConfigs[config.type]
 
   const renderDetails = () => {
-    if (!config.details) return null;
+    if (!config.details) return null
 
     switch (config.type) {
       case 'organization-created':
@@ -123,7 +139,9 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
             {config.details.name && (
               <div className="flex items-center justify-between text-sm mb-3">
                 <span className="font-medium text-gray-400">Nom :</span>
-                <span className="text-green-400 font-semibold">{config.details.name}</span>
+                <span className="text-green-400 font-semibold">
+                  {config.details.name}
+                </span>
               </div>
             )}
             {config.details.slug && (
@@ -135,7 +153,7 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
               </div>
             )}
           </div>
-        );
+        )
 
       case 'user-created':
       case 'invitation-sent':
@@ -144,13 +162,19 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
             {config.details.email && (
               <div className="flex items-center justify-between text-sm mb-3">
                 <span className="font-medium text-gray-400">Email :</span>
-                <span className="font-mono text-gray-300 bg-gray-900/50 px-3 py-1 rounded-lg border border-gray-700/50">{config.details.email}</span>
+                <span className="font-mono text-gray-300 bg-gray-900/50 px-3 py-1 rounded-lg border border-gray-700/50">
+                  {config.details.email}
+                </span>
               </div>
             )}
             {config.details.organization && (
               <div className="flex items-center justify-between text-sm mb-3">
-                <span className="font-medium text-gray-400">Organisation :</span>
-                <span className="text-gray-300 font-semibold">{config.details.organization}</span>
+                <span className="font-medium text-gray-400">
+                  Organisation :
+                </span>
+                <span className="text-gray-300 font-semibold">
+                  {config.details.organization}
+                </span>
               </div>
             )}
             {config.details.organizationSlug && (
@@ -162,12 +186,12 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
               </div>
             )}
           </div>
-        );
+        )
 
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   return (
     <Modal
@@ -188,7 +212,9 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
         </button>
 
         {/* Titre moderne */}
-        <h2 className={`text-2xl font-bold mb-6 ${modalConfig.titleColor} leading-tight`}>
+        <h2
+          className={`text-2xl font-bold mb-6 ${modalConfig.titleColor} leading-tight`}
+        >
           {config.title}
         </h2>
 
@@ -206,33 +232,34 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
             <Button
               variant="outline"
               onClick={() => {
-                config.actions!.secondary!.action();
-                onClose();
+                config.actions!.secondary!.action()
+                onClose()
               }}
               className="px-6 py-3 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200 rounded-xl"
             >
               {config.actions.secondary.label}
             </Button>
           )}
-          
+
           <Button
             variant={config.actions?.primary?.variant || 'default'}
             onClick={() => {
               if (config.actions?.primary) {
-                config.actions.primary.action();
+                config.actions.primary.action()
               }
-              onClose();
+              onClose()
             }}
             className={`px-8 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 ${
-              config.type === 'success' || config.type === 'organization-created'
+              config.type === 'success' ||
+              config.type === 'organization-created'
                 ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-green-500/25'
                 : config.type === 'error'
-                ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-red-500/25'
-                : config.type === 'warning'
-                ? 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white shadow-yellow-500/25'
-                : config.type === 'info' || config.type === 'confirmation'
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-blue-500/25'
-                : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-purple-500/25'
+                  ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-red-500/25'
+                  : config.type === 'warning'
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white shadow-yellow-500/25'
+                    : config.type === 'info' || config.type === 'confirmation'
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-blue-500/25'
+                      : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white shadow-purple-500/25'
             }`}
           >
             {config.actions?.primary?.label || 'OK'}
@@ -240,5 +267,5 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
         </div>
       </div>
     </Modal>
-  );
-};
+  )
+}

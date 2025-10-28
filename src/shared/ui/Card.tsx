@@ -2,40 +2,39 @@ import React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/lib/utils'
 
-const cardVariants = cva(
-  'card-base transition-colors duration-200',
-  {
-    variants: {
-      variant: {
-        default: 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700',
-        elevated: 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg',
-        outlined: 'bg-transparent border-2 border-gray-300 dark:border-gray-600',
-        ghost: 'bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700/50'
-      },
-      padding: {
-        none: 'p-0',
-        sm: 'p-4',
-        md: 'p-6', // Default
-        lg: 'p-8',
-        xl: 'p-10'
-      },
-      radius: {
-        none: 'rounded-none',
-        sm: 'rounded-md',
-        md: 'rounded-lg', // Default
-        lg: 'rounded-xl',
-        full: 'rounded-2xl'
-      }
+const cardVariants = cva('card-base transition-colors duration-200', {
+  variants: {
+    variant: {
+      default: 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700',
+      elevated:
+        'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg',
+      outlined: 'bg-transparent border-2 border-gray-300 dark:border-gray-600',
+      ghost:
+        'bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700/50',
     },
-    defaultVariants: {
-      variant: 'default',
-      padding: 'md',
-      radius: 'md'
-    }
-  }
-)
+    padding: {
+      none: 'p-0',
+      sm: 'p-4',
+      md: 'p-6', // Default
+      lg: 'p-8',
+      xl: 'p-10',
+    },
+    radius: {
+      none: 'rounded-none',
+      sm: 'rounded-md',
+      md: 'rounded-lg', // Default
+      lg: 'rounded-xl',
+      full: 'rounded-2xl',
+    },
+  },
+  defaultVariants: {
+    variant: 'default',
+    padding: 'md',
+    radius: 'md',
+  },
+})
 
-interface CardProps 
+interface CardProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof cardVariants> {
   asChild?: boolean
@@ -108,18 +107,21 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('flex items-center pt-6 border-t border-gray-200 dark:border-gray-700', className)}
+    className={cn(
+      'flex items-center pt-6 border-t border-gray-200 dark:border-gray-700',
+      className
+    )}
     {...props}
   />
 ))
 CardFooter.displayName = 'CardFooter'
 
-export { 
-  Card, 
-  CardHeader, 
-  CardFooter, 
-  CardTitle, 
-  CardDescription, 
+export {
+  Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardDescription,
   CardContent,
-  type CardProps
+  type CardProps,
 }

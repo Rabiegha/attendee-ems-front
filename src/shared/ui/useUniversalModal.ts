@@ -1,70 +1,86 @@
-import { useState } from 'react';
-import type { ModalConfig } from './UniversalModal';
+import { useState } from 'react'
+import type { ModalConfig } from './UniversalModal'
 
 export const useUniversalModal = () => {
   const [modalState, setModalState] = useState<{
-    isOpen: boolean;
-    config: ModalConfig | null;
+    isOpen: boolean
+    config: ModalConfig | null
   }>({
     isOpen: false,
     config: null,
-  });
+  })
 
   const showModal = (config: ModalConfig) => {
     setModalState({
       isOpen: true,
       config,
-    });
-  };
+    })
+  }
 
   const hideModal = () => {
     setModalState({
       isOpen: false,
       config: null,
-    });
-  };
+    })
+  }
 
   // Helpers pour les types courants
-  const showSuccess = (title: string, message: string, actions?: ModalConfig['actions']) => {
+  const showSuccess = (
+    title: string,
+    message: string,
+    actions?: ModalConfig['actions']
+  ) => {
     showModal({
       type: 'success',
       title,
       message,
       ...(actions && { actions }),
-    });
-  };
+    })
+  }
 
-  const showError = (title: string, message: string, actions?: ModalConfig['actions']) => {
+  const showError = (
+    title: string,
+    message: string,
+    actions?: ModalConfig['actions']
+  ) => {
     showModal({
       type: 'error',
       title,
       message,
       ...(actions && { actions }),
-    });
-  };
+    })
+  }
 
-  const showWarning = (title: string, message: string, actions?: ModalConfig['actions']) => {
+  const showWarning = (
+    title: string,
+    message: string,
+    actions?: ModalConfig['actions']
+  ) => {
     showModal({
       type: 'warning',
       title,
       message,
       ...(actions && { actions }),
-    });
-  };
+    })
+  }
 
-  const showInfo = (title: string, message: string, actions?: ModalConfig['actions']) => {
+  const showInfo = (
+    title: string,
+    message: string,
+    actions?: ModalConfig['actions']
+  ) => {
     showModal({
       type: 'info',
       title,
       message,
       ...(actions && { actions }),
-    });
-  };
+    })
+  }
 
   const showConfirmation = (
-    title: string, 
-    message: string, 
-    onConfirm: () => void, 
+    title: string,
+    message: string,
+    onConfirm: () => void,
     onCancel?: () => void
   ) => {
     showModal({
@@ -81,12 +97,12 @@ export const useUniversalModal = () => {
           action: onCancel || (() => {}),
         },
       },
-    });
-  };
+    })
+  }
 
   const showOrganizationCreated = (
-    name: string, 
-    slug: string, 
+    name: string,
+    slug: string,
     onViewOrganizations?: () => void
   ) => {
     showModal({
@@ -106,12 +122,12 @@ export const useUniversalModal = () => {
           },
         }),
       },
-    });
-  };
+    })
+  }
 
   const showUserCreated = (
-    email: string, 
-    organization?: string, 
+    email: string,
+    organization?: string,
     onViewUsers?: () => void
   ) => {
     showModal({
@@ -131,12 +147,12 @@ export const useUniversalModal = () => {
           },
         }),
       },
-    });
-  };
+    })
+  }
 
   const showInvitationSent = (
-    email: string, 
-    organization?: string, 
+    email: string,
+    organization?: string,
     onSendAnother?: () => void
   ) => {
     showModal({
@@ -156,8 +172,8 @@ export const useUniversalModal = () => {
           },
         }),
       },
-    });
-  };
+    })
+  }
 
   const showInvitationSentWithOrg = (
     email: string,
@@ -169,8 +185,8 @@ export const useUniversalModal = () => {
       type: 'invitation-sent',
       title: 'Organisation et invitation créées !',
       message: `L'organisation "${organizationName}" a été créée et l'invitation a été envoyée à ${email}.`,
-      details: { 
-        email, 
+      details: {
+        email,
         organization: organizationName,
         organizationSlug,
       },
@@ -186,8 +202,8 @@ export const useUniversalModal = () => {
           },
         }),
       },
-    });
-  };
+    })
+  }
 
   return {
     modalState,
@@ -202,5 +218,5 @@ export const useUniversalModal = () => {
     showUserCreated,
     showInvitationSent,
     showInvitationSentWithOrg,
-  };
-};
+  }
+}

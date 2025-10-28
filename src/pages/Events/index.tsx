@@ -3,44 +3,39 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
 import { Can } from '@/shared/acl/guards/Can'
-import { 
-  Button, 
+import {
+  Button,
   Input,
   PageContainer,
   PageHeader,
   PageSection,
   Card,
   CardContent,
-  LoadingSpinner
+  LoadingSpinner,
 } from '@/shared/ui'
 import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
 import { DeleteEventModal } from '@/features/events/ui/DeleteEventModal'
 import { formatDateForDisplay } from '@/shared/lib/date-utils'
 import { formatAttendeesCount } from '@/shared/lib/utils'
-import { 
-  Plus, 
-  Search, 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Clock
-} from 'lucide-react'
+import { Plus, Search, Calendar, MapPin, Users, Clock } from 'lucide-react'
 
 interface EventsPageProps {}
 
 export const EventsPage: React.FC<EventsPageProps> = () => {
   const { t } = useTranslation(['events', 'common'])
-  
+
   // État pour les modals
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [deletingEvent, setDeletingEvent] = useState<any>(null)
-  
+
   // Filtres et recherche
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [sortBy, setSortBy] = useState<'name' | 'startDate' | 'createdAt'>('startDate')
+  const [sortBy, setSortBy] = useState<'name' | 'startDate' | 'createdAt'>(
+    'startDate'
+  )
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // Récupération des événements avec filtres
@@ -50,15 +45,15 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       sortOrder,
       limit: 50,
     }
-    
+
     if (searchQuery) {
       params.search = searchQuery
     }
-    
+
     if (statusFilter !== 'all') {
       params.status = statusFilter
     }
-    
+
     return params
   }, [searchQuery, statusFilter, sortBy, sortOrder])
 
@@ -70,8 +65,6 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   const handleCreateEvent = () => {
     setIsCreateModalOpen(true)
   }
-
-
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -119,13 +112,16 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
   return (
     <PageContainer maxWidth="7xl" padding="lg">
-      <PageHeader 
+      <PageHeader
         title={t('events:page.title')}
         description={`${filteredEvents.length} événement${filteredEvents.length > 1 ? 's' : ''} trouvé${filteredEvents.length > 1 ? 's' : ''}`}
         icon={Calendar}
         actions={
           <Can do="create" on="Event">
-            <Button onClick={handleCreateEvent} leftIcon={<Plus className="h-4 w-4" />}>
+            <Button
+              onClick={handleCreateEvent}
+              leftIcon={<Plus className="h-4 w-4" />}
+            >
               {t('events:actions.create')}
             </Button>
           </Can>
@@ -146,7 +142,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                   leftIcon={<Search className="h-4 w-4" />}
                 />
               </div>
-              
+
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -159,7 +155,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 <option value="completed">Terminé</option>
                 <option value="cancelled">Annulé</option>
               </select>
-              
+
               <select
                 value={`${sortBy}-${sortOrder}`}
                 onChange={(e) => {
@@ -186,17 +182,17 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
           <Card variant="default" padding="lg" className="text-center py-12">
             <CardContent>
               <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-              <h3 className="text-heading-sm mb-2">
-                Aucun événement trouvé
-              </h3>
+              <h3 className="text-heading-sm mb-2">Aucun événement trouvé</h3>
               <p className="text-body text-gray-500 dark:text-gray-400 mb-6">
-                {searchQuery 
-                  ? "Aucun événement ne correspond à votre recherche."
-                  : "Commencez par créer votre premier événement."
-                }
+                {searchQuery
+                  ? 'Aucun événement ne correspond à votre recherche.'
+                  : 'Commencez par créer votre premier événement.'}
               </p>
               <Can do="create" on="Event">
-                <Button onClick={handleCreateEvent} leftIcon={<Plus className="h-4 w-4" />}>
+                <Button
+                  onClick={handleCreateEvent}
+                  leftIcon={<Plus className="h-4 w-4" />}
+                >
                   Créer un événement
                 </Button>
               </Can>
@@ -220,38 +216,43 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                       <h3 className="text-heading-sm line-clamp-2">
                         {event.name}
                       </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}
+                      >
                         {event.status}
                       </span>
                     </div>
-                    
+
                     {event.description && (
                       <p className="text-body-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
                         {event.description}
                       </p>
                     )}
-                    
+
                     <div className="space-y-2 text-body-sm">
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-2" />
                         <span>{formatDateForDisplay(event.startDate)}</span>
                       </div>
-                      
+
                       {event.location && (
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-2" />
                           <span className="truncate">{event.location}</span>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center">
                         <Users className="h-4 w-4 mr-2" />
                         <span>
-                          {formatAttendeesCount(event.currentAttendees, event.maxAttendees)}
+                          {formatAttendeesCount(
+                            event.currentAttendees,
+                            event.maxAttendees
+                          )}
                         </span>
                       </div>
                     </div>
-                    
+
                     {event.tags && event.tags.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1">
                         {event.tags.slice(0, 3).map((tag) => (

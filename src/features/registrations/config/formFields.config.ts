@@ -3,48 +3,48 @@
  * Utilisé pour : formulaires dynamiques, import/export Excel, validation
  */
 
-export type FieldType = 
-  | 'text'           // Texte court
-  | 'email'          // Email avec validation
-  | 'phone'          // Téléphone
-  | 'textarea'       // Texte long (commentaires)
-  | 'select'         // Liste déroulante
-  | 'country'        // Sélecteur de pays
-  | 'attendee_type'  // Type de participant (Staff, Partenaire, Invité...)
+export type FieldType =
+  | 'text' // Texte court
+  | 'email' // Email avec validation
+  | 'phone' // Téléphone
+  | 'textarea' // Texte long (commentaires)
+  | 'select' // Liste déroulante
+  | 'country' // Sélecteur de pays
+  | 'attendee_type' // Type de participant (Staff, Partenaire, Invité...)
 
 export interface FormFieldConfig {
   // Identifiants
-  key: string                    // Clé unique pour le champ (nom de colonne Excel, nom de propriété)
-  
+  key: string // Clé unique pour le champ (nom de colonne Excel, nom de propriété)
+
   // Affichage
-  label: string                  // Label affiché dans le formulaire
-  placeholder?: string           // Texte d'aide
-  type: FieldType                // Type de champ
-  
+  label: string // Label affiché dans le formulaire
+  placeholder?: string // Texte d'aide
+  type: FieldType // Type de champ
+
   // Validation
-  required?: boolean             // Champ obligatoire ?
+  required?: boolean // Champ obligatoire ?
   validation?: {
     minLength?: number
     maxLength?: number
     pattern?: RegExp
     message?: string
   }
-  
+
   // Comportement
-  visibleInPublicForm?: boolean  // Visible pour les inscriptions publiques ?
-  visibleInAdminForm?: boolean   // Visible pour les admins ?
+  visibleInPublicForm?: boolean // Visible pour les inscriptions publiques ?
+  visibleInAdminForm?: boolean // Visible pour les admins ?
   visibleInAttendeeTable?: boolean // Affiché dans la table des participants ?
-  visibleInExport?: boolean      // Inclus dans les exports Excel ?
-  adminOnly?: boolean            // Modifiable uniquement par admin ?
-  
+  visibleInExport?: boolean // Inclus dans les exports Excel ?
+  adminOnly?: boolean // Modifiable uniquement par admin ?
+
   // Mapping base de données
-  attendeeField?: string         // Champ de la table attendees
-  registrationField?: string     // Champ de registration (si non dans answers)
-  storeInAnswers?: boolean       // Stocké dans le JSON answers ?
-  
+  attendeeField?: string // Champ de la table attendees
+  registrationField?: string // Champ de registration (si non dans answers)
+  storeInAnswers?: boolean // Stocké dans le JSON answers ?
+
   // Options pour les listes
   options?: Array<{ value: string; label: string }>
-  optionsKey?: string            // Pour les listes multiples : nom unique de la liste
+  optionsKey?: string // Pour les listes multiples : nom unique de la liste
 }
 
 /**
@@ -145,7 +145,7 @@ export const STANDARD_FORM_FIELDS: FormFieldConfig[] = [
     visibleInAttendeeTable: true,
     visibleInExport: true,
   },
-  
+
   // ===== CHAMPS REGISTRATION (Spécifiques à l'événement) =====
   {
     key: 'attendee_type',
@@ -154,11 +154,11 @@ export const STANDARD_FORM_FIELDS: FormFieldConfig[] = [
     type: 'attendee_type',
     required: false,
     registrationField: 'eventAttendeeTypeId',
-    visibleInPublicForm: false,      // ❌ Pas visible pour le public
-    visibleInAdminForm: true,        // ✅ Admin peut choisir
-    visibleInAttendeeTable: true,    // ✅ Affiché dans la table
-    visibleInExport: true,           // ✅ Exporté dans Excel
-    adminOnly: true,                 // ✅ Modifiable uniquement par admin
+    visibleInPublicForm: false, // ❌ Pas visible pour le public
+    visibleInAdminForm: true, // ✅ Admin peut choisir
+    visibleInAttendeeTable: true, // ✅ Affiché dans la table
+    visibleInExport: true, // ✅ Exporté dans Excel
+    adminOnly: true, // ✅ Modifiable uniquement par admin
     // Options chargées dynamiquement depuis l'API (Staff, Partenaire, Invité, etc.)
   },
   {
@@ -169,7 +169,7 @@ export const STANDARD_FORM_FIELDS: FormFieldConfig[] = [
     registrationField: 'attendanceType',
     visibleInPublicForm: true,
     visibleInAdminForm: true,
-    visibleInAttendeeTable: false,   // ❌ Pas dans la table attendee
+    visibleInAttendeeTable: false, // ❌ Pas dans la table attendee
     visibleInExport: true,
     options: [
       { value: 'onsite', label: 'Présentiel' },
@@ -177,7 +177,7 @@ export const STANDARD_FORM_FIELDS: FormFieldConfig[] = [
       { value: 'hybrid', label: 'Hybride' },
     ],
   },
-  
+
   // ===== CHAMPS PERSONNALISÉS (Stockés dans answers JSON) =====
   {
     key: 'comment',
@@ -188,8 +188,8 @@ export const STANDARD_FORM_FIELDS: FormFieldConfig[] = [
     storeInAnswers: true,
     visibleInPublicForm: true,
     visibleInAdminForm: true,
-    visibleInAttendeeTable: false,   // ❌ Pas dans la table attendee
-    visibleInExport: true,           // ✅ Mais exporté dans Excel
+    visibleInAttendeeTable: false, // ❌ Pas dans la table attendee
+    visibleInExport: true, // ✅ Mais exporté dans Excel
   },
 ]
 
@@ -199,29 +199,77 @@ export const STANDARD_FORM_FIELDS: FormFieldConfig[] = [
  */
 export const EXCEL_COLUMN_ALIASES: Record<string, string[]> = {
   email: ['email', 'Email', 'E-mail', 'e-mail', 'mail', 'Mail'],
-  first_name: ['first_name', 'First Name', 'Prénom', 'prénom', 'prenom', 'firstname', 'FirstName'],
+  first_name: [
+    'first_name',
+    'First Name',
+    'Prénom',
+    'prénom',
+    'prenom',
+    'firstname',
+    'FirstName',
+  ],
   last_name: ['last_name', 'Last Name', 'Nom', 'nom', 'lastname', 'LastName'],
-  phone: ['phone', 'Phone', 'Téléphone', 'téléphone', 'telephone', 'Tel', 'tel'],
-  company: ['company', 'Company', 'Organisation', 'organisation', 'Entreprise', 'entreprise', 'org'],
-  job_title: ['job_title', 'Job Title', 'Désignation', 'désignation', 'Poste', 'poste', 'title'],
+  phone: [
+    'phone',
+    'Phone',
+    'Téléphone',
+    'téléphone',
+    'telephone',
+    'Tel',
+    'tel',
+  ],
+  company: [
+    'company',
+    'Company',
+    'Organisation',
+    'organisation',
+    'Entreprise',
+    'entreprise',
+    'org',
+  ],
+  job_title: [
+    'job_title',
+    'Job Title',
+    'Désignation',
+    'désignation',
+    'Poste',
+    'poste',
+    'title',
+  ],
   country: ['country', 'Country', 'Pays', 'pays'],
-  attendee_type: ['attendee_type', 'Attendee Type', 'Type', 'type', 'participant_type'],
+  attendee_type: [
+    'attendee_type',
+    'Attendee Type',
+    'Type',
+    'type',
+    'participant_type',
+  ],
   attendance_type: ['attendance_type', 'Attendance Type', 'Mode', 'mode'],
-  comment: ['comment', 'Comment', 'Commentaire', 'commentaire', 'comments', 'Comments'],
+  comment: [
+    'comment',
+    'Comment',
+    'Commentaire',
+    'commentaire',
+    'comments',
+    'Comments',
+  ],
 }
 
 /**
  * Utilitaire : Trouver la valeur d'une colonne Excel avec ses alias
  */
-export function findExcelValue(row: Record<string, any>, fieldKey: string): any {
+export function findExcelValue(
+  row: Record<string, any>,
+  fieldKey: string
+): any {
   const aliases = EXCEL_COLUMN_ALIASES[fieldKey] || [fieldKey]
-  
+
   for (const alias of aliases) {
     if (row[alias] !== undefined && row[alias] !== null && row[alias] !== '') {
       return row[alias]
     }
   }
-  
+
   return null
 }
 
@@ -229,28 +277,28 @@ export function findExcelValue(row: Record<string, any>, fieldKey: string): any 
  * Utilitaire : Obtenir les champs visibles pour le formulaire public
  */
 export function getPublicFormFields(): FormFieldConfig[] {
-  return STANDARD_FORM_FIELDS.filter(field => field.visibleInPublicForm)
+  return STANDARD_FORM_FIELDS.filter((field) => field.visibleInPublicForm)
 }
 
 /**
  * Utilitaire : Obtenir les champs visibles pour le formulaire admin
  */
 export function getAdminFormFields(): FormFieldConfig[] {
-  return STANDARD_FORM_FIELDS.filter(field => field.visibleInAdminForm)
+  return STANDARD_FORM_FIELDS.filter((field) => field.visibleInAdminForm)
 }
 
 /**
  * Utilitaire : Obtenir les champs à afficher dans la table attendee
  */
 export function getAttendeeTableFields(): FormFieldConfig[] {
-  return STANDARD_FORM_FIELDS.filter(field => field.visibleInAttendeeTable)
+  return STANDARD_FORM_FIELDS.filter((field) => field.visibleInAttendeeTable)
 }
 
 /**
  * Utilitaire : Obtenir les champs à exporter dans Excel
  */
 export function getExportFields(): FormFieldConfig[] {
-  return STANDARD_FORM_FIELDS.filter(field => field.visibleInExport)
+  return STANDARD_FORM_FIELDS.filter((field) => field.visibleInExport)
 }
 
 /**

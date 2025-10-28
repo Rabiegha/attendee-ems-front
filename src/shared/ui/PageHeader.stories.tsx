@@ -44,7 +44,7 @@ export const WithDescription: Story = {
 export const WithIcon: Story = {
   args: {
     title: 'Dashboard',
-    description: 'Vue d\'ensemble de votre organisation',
+    description: "Vue d'ensemble de votre organisation",
     icon: Calendar,
   },
 }
@@ -55,7 +55,11 @@ export const WithSingleAction: Story = {
     title: 'Événements',
     description: 'Liste de tous vos événements',
     icon: Calendar,
-    actions: <Button leftIcon={<Plus className="h-4 w-4" />}>Créer un événement</Button>,
+    actions: (
+      <Button leftIcon={<Plus className="h-4 w-4" />}>
+        Créer un événement
+      </Button>
+    ),
   },
 }
 
@@ -70,9 +74,7 @@ export const WithMultipleActions: Story = {
         <Button variant="outline" leftIcon={<Settings className="h-4 w-4" />}>
           Paramètres
         </Button>
-        <Button leftIcon={<Plus className="h-4 w-4" />}>
-          Inviter
-        </Button>
+        <Button leftIcon={<Plus className="h-4 w-4" />}>Inviter</Button>
       </div>
     ),
   },
@@ -89,7 +91,8 @@ export const TitleOnly: Story = {
 export const LongTitle: Story = {
   args: {
     title: 'Gestion des événements et des participants pour votre organisation',
-    description: 'Une description qui explique en détail les fonctionnalités disponibles sur cette page',
+    description:
+      'Une description qui explique en détail les fonctionnalités disponibles sur cette page',
     icon: Calendar,
     actions: <Button>Action</Button>,
   },

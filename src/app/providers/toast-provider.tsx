@@ -11,12 +11,7 @@ export const ToastProvider: React.FC = () => {
     dispatch(removeToast(id))
   }
 
-  return (
-    <ToastContainer
-      toasts={toasts}
-      onRemove={handleRemoveToast}
-    />
-  )
+  return <ToastContainer toasts={toasts} onRemove={handleRemoveToast} />
 }
 
 export default ToastProvider

@@ -13,16 +13,12 @@ interface PermanentDeleteAttendeeModalProps {
   isLoading?: boolean
 }
 
-export const PermanentDeleteAttendeeModal: React.FC<PermanentDeleteAttendeeModalProps> = ({
-  attendee,
-  isOpen,
-  onClose,
-  onPermanentDelete,
-  isLoading = false
-}) => {
+export const PermanentDeleteAttendeeModal: React.FC<
+  PermanentDeleteAttendeeModalProps
+> = ({ attendee, isOpen, onClose, onPermanentDelete, isLoading = false }) => {
   const handlePermanentDelete = async () => {
     if (!attendee) return
-    
+
     try {
       await onPermanentDelete(attendee.id)
       onClose()
@@ -34,8 +30,8 @@ export const PermanentDeleteAttendeeModal: React.FC<PermanentDeleteAttendeeModal
   if (!isOpen || !attendee) return null
 
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       onClose={onClose}
       maxWidth="md"
       showCloseButton={false}
@@ -50,11 +46,11 @@ export const PermanentDeleteAttendeeModal: React.FC<PermanentDeleteAttendeeModal
           <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/20 dark:to-red-800/20 mb-6">
             <Trash className="w-8 h-8 text-red-600 dark:text-red-400" />
           </div>
-          
+
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
             Suppression définitive
           </h3>
-          
+
           <div className="text-gray-600 dark:text-gray-300 space-y-2">
             <p className="text-lg">
               <span className="font-semibold text-gray-900 dark:text-white">
@@ -72,13 +68,28 @@ export const PermanentDeleteAttendeeModal: React.FC<PermanentDeleteAttendeeModal
           <div className="flex items-start space-x-3">
             <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div className="text-red-800 dark:text-red-200">
-              <p className="font-bold mb-2">⚠️ ATTENTION : Cette action est irréversible !</p>
-              <p className="font-medium mb-2">Cette suppression définitive va :</p>
+              <p className="font-bold mb-2">
+                ⚠️ ATTENTION : Cette action est irréversible !
+              </p>
+              <p className="font-medium mb-2">
+                Cette suppression définitive va :
+              </p>
               <ul className="text-sm space-y-1 list-disc list-inside">
-                <li><strong>Supprimer définitivement</strong> ce participant</li>
-                <li><strong>Supprimer toutes ses inscriptions</strong> aux événements</li>
-                <li><strong>Supprimer toutes ses statistiques</strong> et données de participation</li>
-                <li><strong>Supprimer son historique complet</strong> dans le système</li>
+                <li>
+                  <strong>Supprimer définitivement</strong> ce participant
+                </li>
+                <li>
+                  <strong>Supprimer toutes ses inscriptions</strong> aux
+                  événements
+                </li>
+                <li>
+                  <strong>Supprimer toutes ses statistiques</strong> et données
+                  de participation
+                </li>
+                <li>
+                  <strong>Supprimer son historique complet</strong> dans le
+                  système
+                </li>
               </ul>
             </div>
           </div>
@@ -87,8 +98,10 @@ export const PermanentDeleteAttendeeModal: React.FC<PermanentDeleteAttendeeModal
         {/* Message final */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 mb-8">
           <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
-            <strong>Cette action ne peut pas être annulée.</strong><br />
-            Toutes les données associées à ce participant seront perdues définitivement.
+            <strong>Cette action ne peut pas être annulée.</strong>
+            <br />
+            Toutes les données associées à ce participant seront perdues
+            définitivement.
           </p>
         </div>
 

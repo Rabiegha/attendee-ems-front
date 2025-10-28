@@ -17,7 +17,7 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     createdAt: dto.created_at, // Date d'inscription réelle
     updatedAt: dto.updated_at,
   }
-  
+
   if (dto.attendee) {
     result.attendee = {
       id: dto.attendee.id,
@@ -25,12 +25,16 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
       lastName: dto.attendee.last_name,
       email: dto.attendee.email,
     }
-    if (dto.attendee.phone !== undefined) result.attendee.phone = dto.attendee.phone
-    if (dto.attendee.company !== undefined) result.attendee.company = dto.attendee.company
-    if (dto.attendee.job_title !== undefined) result.attendee.jobTitle = dto.attendee.job_title
-    if (dto.attendee.country !== undefined) result.attendee.country = dto.attendee.country
+    if (dto.attendee.phone !== undefined)
+      result.attendee.phone = dto.attendee.phone
+    if (dto.attendee.company !== undefined)
+      result.attendee.company = dto.attendee.company
+    if (dto.attendee.job_title !== undefined)
+      result.attendee.jobTitle = dto.attendee.job_title
+    if (dto.attendee.country !== undefined)
+      result.attendee.country = dto.attendee.country
   }
-  
+
   return result
 }
 
@@ -50,7 +54,7 @@ export function mapRegistrationDPOtoDTO(dpo: RegistrationDPO): RegistrationDTO {
     created_at: dpo.createdAt,
     updated_at: dpo.updatedAt,
   }
-  
+
   if (dpo.attendee) {
     result.attendee = {
       id: dpo.attendee.id,
@@ -58,12 +62,15 @@ export function mapRegistrationDPOtoDTO(dpo: RegistrationDPO): RegistrationDTO {
       last_name: dpo.attendee.lastName,
       email: dpo.attendee.email,
     }
-    if (dpo.attendee.phone !== undefined) result.attendee.phone = dpo.attendee.phone
-    if (dpo.attendee.company !== undefined) result.attendee.company = dpo.attendee.company
-    if (dpo.attendee.jobTitle !== undefined) result.attendee.job_title = dpo.attendee.jobTitle
-    if (dpo.attendee.country !== undefined) result.attendee.country = dpo.attendee.country
+    if (dpo.attendee.phone !== undefined)
+      result.attendee.phone = dpo.attendee.phone
+    if (dpo.attendee.company !== undefined)
+      result.attendee.company = dpo.attendee.company
+    if (dpo.attendee.jobTitle !== undefined)
+      result.attendee.job_title = dpo.attendee.jobTitle
+    if (dpo.attendee.country !== undefined)
+      result.attendee.country = dpo.attendee.country
   }
-  
+
   return result
 }
-

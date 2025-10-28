@@ -13,7 +13,7 @@ interface CreateEventModalProps {
 
 export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   isOpen,
-  onClose
+  onClose,
 }) => {
   const [createEvent, { isLoading }] = useCreateEventMutation()
   const toast = useToast()
@@ -24,31 +24,31 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       const eventData: any = {
         name: data.name,
         startDate: data.startDate, // Garder comme string ISO
-        endDate: data.endDate,     // Garder comme string ISO
-        status: 'published' // Toujours publier directement
+        endDate: data.endDate, // Garder comme string ISO
+        status: 'published', // Toujours publier directement
       }
-      
+
       // Ajouter seulement les champs optionnels qui ont une valeur
       if (data.description && data.description.trim()) {
         eventData.description = data.description
       }
-      
+
       if (data.location && data.location.trim()) {
         eventData.location = data.location
       }
-      
+
       if (data.maxAttendees && data.maxAttendees > 0) {
         eventData.maxAttendees = data.maxAttendees
       }
-      
+
       if (data.tags && data.tags.length > 0) {
         eventData.tags = data.tags
       }
-      
+
       if (data.partnerIds && data.partnerIds.length > 0) {
         eventData.partnerIds = data.partnerIds
       }
-      
+
       await createEvent(eventData).unwrap()
       toast.success(
         'Événement créé !',
@@ -59,7 +59,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
       console.error('Erreur lors de la création:', error)
       toast.error(
         'Erreur de création',
-        'Une erreur est survenue lors de la création de l\'événement. Veuillez réessayer.'
+        "Une erreur est survenue lors de la création de l'événement. Veuillez réessayer."
       )
     }
   }
@@ -67,8 +67,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
   if (!isOpen) return null
 
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       onClose={onClose}
       showCloseButton={false}
       contentPadding={false}
@@ -80,8 +80,12 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({
 
         {/* Titre moderne */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">Nouvel événement</h2>
-          <p className="text-gray-400">Créez un événement pour votre organisation</p>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Nouvel événement
+          </h2>
+          <p className="text-gray-400">
+            Créez un événement pour votre organisation
+          </p>
         </div>
 
         <EventForm

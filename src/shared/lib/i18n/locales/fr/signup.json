@@ -6,7 +6,7 @@
       "email": "Adresse email",
       "emailHint": "Cette adresse email ne peut pas être modifiée",
       "firstName": "Prénom",
-      "lastName": "Nom de famille", 
+      "lastName": "Nom de famille",
       "password": "Mot de passe",
       "confirmPassword": "Confirmer le mot de passe",
       "phone": "Téléphone",
@@ -18,7 +18,7 @@
     "password": {
       "strength": {
         "veryWeak": "Très faible",
-        "weak": "Faible", 
+        "weak": "Faible",
         "medium": "Moyen",
         "strong": "Fort",
         "veryStrong": "Très fort"
@@ -38,7 +38,7 @@
         "message": "Ce lien d'invitation n'est pas valide ou a été corrompu."
       },
       "tokenExpired": {
-        "title": "Invitation expirée", 
+        "title": "Invitation expirée",
         "message": "Cette invitation a expiré. Demandez une nouvelle invitation à votre administrateur."
       },
       "emailMismatch": {

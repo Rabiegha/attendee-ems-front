@@ -49,15 +49,15 @@ export function isTokenExpired(token: string): boolean {
   try {
     const parts = token.split('.')
     if (parts.length !== 3) return true
-    
+
     const payloadPart = parts[1]
     if (!payloadPart) return true
-    
+
     const payload = JSON.parse(atob(payloadPart))
     const exp = payload.exp
-    
+
     if (!exp) return true
-    
+
     return Date.now() >= exp * 1000
   } catch (error) {
     console.warn('[Auth] Token invalide:', error)

@@ -1,17 +1,20 @@
 import { rootApi } from '@/services/rootApi'
 import { API_ENDPOINTS } from '@/app/config/constants'
-import type { 
-  Organization, 
-  CreateOrganizationRequest, 
+import type {
+  Organization,
+  CreateOrganizationRequest,
   CreateOrganizationResponse,
   GetOrganizationsResponse,
-  GetOrganizationUsersResponse
+  GetOrganizationUsersResponse,
 } from '../types'
 
 export const organizationsApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     // Créer une organisation (SUPER_ADMIN uniquement)
-    createOrganization: builder.mutation<CreateOrganizationResponse, CreateOrganizationRequest>({
+    createOrganization: builder.mutation<
+      CreateOrganizationResponse,
+      CreateOrganizationRequest
+    >({
       query: (data) => ({
         url: API_ENDPOINTS.ORGANIZATIONS.CREATE,
         method: 'POST',
@@ -30,7 +33,9 @@ export const organizationsApi = rootApi.injectEndpoints({
     getOrganizations: builder.query<GetOrganizationsResponse, void>({
       query: () => API_ENDPOINTS.ORGANIZATIONS.LIST,
       providesTags: ['Organizations'],
-      transformResponse: (response: Organization[]) => ({ organizations: response }),
+      transformResponse: (response: Organization[]) => ({
+        organizations: response,
+      }),
     }),
 
     // Récupérer les utilisateurs d'une organisation spécifique
@@ -38,18 +43,23 @@ export const organizationsApi = rootApi.injectEndpoints({
       query: (orgId) => API_ENDPOINTS.ORGANIZATIONS.USERS(orgId),
       providesTags: (_result, _error, orgId) => [
         { type: 'User', id: 'LIST' },
-        { type: 'Organizations', id: orgId }
+        { type: 'Organizations', id: orgId },
       ],
     }),
 
     // Mettre à jour une organisation
-    updateOrganization: builder.mutation<Organization, { id: string; data: Partial<Organization> }>({
+    updateOrganization: builder.mutation<
+      Organization,
+      { id: string; data: Partial<Organization> }
+    >({
       query: ({ id, data }) => ({
         url: `/organizations/${id}`,
         method: 'PATCH',
         body: data,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Organizations', id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Organizations', id },
+      ],
     }),
 
     // Supprimer une organisation (SUPER_ADMIN uniquement)

@@ -8,24 +8,27 @@ const selectVariants = cva(
   {
     variants: {
       variant: {
-        default: 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500/20 focus:border-blue-500',
-        error: 'border-red-500 dark:border-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-red-500/20 focus:border-red-500',
-        success: 'border-green-500 dark:border-green-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-green-500/20 focus:border-green-500'
+        default:
+          'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-blue-500/20 focus:border-blue-500',
+        error:
+          'border-red-500 dark:border-red-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-red-500/20 focus:border-red-500',
+        success:
+          'border-green-500 dark:border-green-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-green-500/20 focus:border-green-500',
       },
       size: {
         sm: 'h-8 text-xs',
         default: 'h-10 text-sm',
-        lg: 'h-12 text-base'
-      }
+        lg: 'h-12 text-base',
+      },
     },
     defaultVariants: {
       variant: 'default',
-      size: 'default'
-    }
+      size: 'default',
+    },
   }
 )
 
-interface SelectProps 
+interface SelectProps
   extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'>,
     VariantProps<typeof selectVariants> {
   placeholder?: string
@@ -36,7 +39,21 @@ interface SelectProps
 }
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, variant, size, children, error, success, placeholder, leftIcon, rightIcon, ...props }, ref) => {
+  (
+    {
+      className,
+      variant,
+      size,
+      children,
+      error,
+      success,
+      placeholder,
+      leftIcon,
+      rightIcon,
+      ...props
+    },
+    ref
+  ) => {
     const variantToUse = error ? 'error' : success ? 'success' : variant
 
     return (
@@ -75,7 +92,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
 Select.displayName = 'Select'
 
 // Option component pour cohérence
-interface SelectOptionProps extends React.OptionHTMLAttributes<HTMLOptionElement> {
+interface SelectOptionProps
+  extends React.OptionHTMLAttributes<HTMLOptionElement> {
   children: React.ReactNode
 }
 

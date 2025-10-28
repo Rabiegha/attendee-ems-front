@@ -8,6 +8,7 @@
 ## 🐛 PROBLÈME IDENTIFIÉ
 
 ### Symptômes
+
 1. **Scénario de reproduction** :
    - Utilisateur se connecte → OK
    - Utilisateur se déconnecte → Redirection vers `/auth/login` ✅
@@ -34,6 +35,7 @@ catch (error) {
 ```
 
 **Pourquoi c'était un problème ?**
+
 - Le refresh token HttpOnly est révoqué lors du logout ✅
 - Le cookie est supprimé ✅
 - MAIS : Si une ancienne valeur `isAuthenticated: true` persiste en mémoire Redux
@@ -51,9 +53,9 @@ catch (error) {
 ```typescript
 // ✅ APRÈS (CODE CORRIGÉ)
 catch (error: any) {
-  console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):', 
+  console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):',
     error?.status || error?.message)
-  
+
   // CRITIQUE : Nettoyer la session en cas d'échec du refresh
   // Cela garantit que l'utilisateur ne reste pas dans un état "fantôme"
   store.dispatch(clearSession())
@@ -61,6 +63,7 @@ catch (error: any) {
 ```
 
 **Pourquoi ça fonctionne ?**
+
 - `clearSession()` réinitialise tout : `isAuthenticated: false`, `user: null`, `token: null`
 - Le `RootLayout` détecte `isAuthenticated: false` et redirige vers `/auth/login`
 - Plus de "dashboard fantôme"
@@ -72,13 +75,16 @@ catch (error: any) {
 ```typescript
 // ✅ Vérification de sécurité ajoutée
 if (!isBootstrapping && isAuthenticated && (!user || !token)) {
-  console.error('[ROOTLAYOUT] ⚠️ CRITICAL: Authenticated but no user/token! Forcing logout...')
+  console.error(
+    '[ROOTLAYOUT] ⚠️ CRITICAL: Authenticated but no user/token! Forcing logout...'
+  )
   navigate('/auth/login', { replace: true })
   return
 }
 ```
 
 **Protection multi-niveaux** :
+
 1. ✅ Attendre la fin du bootstrap
 2. ✅ Vérifier `isAuthenticated`
 3. ✅ **NOUVEAU** : Vérifier que `user` et `token` existent vraiment
@@ -98,12 +104,13 @@ const handleLogout = () => {
 
 // ✅ APRÈS : Logout complet
 const handleLogout = async () => {
-  await performLogout()  // Fonction centralisée
+  await performLogout() // Fonction centralisée
   navigate('/auth/login', { replace: true })
 }
 ```
 
 **Fonction `performLogout()` fait** :
+
 1. Arrête le timer de refresh proactif
 2. Nettoie la session Redux
 3. Diffuse la déconnexion aux autres onglets (BroadcastChannel)
@@ -122,7 +129,7 @@ sequenceDiagram
     participant Browser
     participant Frontend
     participant Backend
-    
+
     User->>Browser: F5 (Refresh)
     Frontend->>Frontend: bootstrapAuth()
     Frontend->>Backend: POST /auth/refresh (cookie HttpOnly)
@@ -141,14 +148,14 @@ sequenceDiagram
     participant Browser
     participant Frontend
     participant Backend
-    
+
     User->>Frontend: Clic "Déconnexion"
     Frontend->>Backend: POST /auth/logout
     Backend->>Backend: Révoque refresh token
     Frontend->>Frontend: clearSession()
     Frontend->>Frontend: isAuthenticated = false ✅
     Frontend-->>User: Redirection /auth/login
-    
+
     User->>Browser: F5 (Refresh)
     Frontend->>Frontend: bootstrapAuth()
     Frontend->>Backend: POST /auth/refresh (cookie vide)
@@ -163,6 +170,7 @@ sequenceDiagram
 ## 🧪 TESTS DE VALIDATION
 
 ### Scénario de Test 1 : Logout + Refresh
+
 1. ✅ Se connecter avec un compte valide
 2. ✅ Vérifier que le dashboard s'affiche avec données
 3. ✅ Cliquer sur "Déconnexion"
@@ -172,12 +180,14 @@ sequenceDiagram
 7. ✅ **ATTENDU** : Pas de redirection vers dashboard
 
 ### Scénario de Test 2 : Session Expirée
+
 1. ✅ Se connecter
 2. ✅ Attendre expiration du refresh token (7 jours par défaut)
 3. ✅ Refresh la page
 4. ✅ **ATTENDU** : Redirection automatique vers `/auth/login`
 
 ### Scénario de Test 3 : Multi-Onglets
+
 1. ✅ Se connecter dans l'onglet A
 2. ✅ Ouvrir onglet B (même session)
 3. ✅ Se déconnecter dans l'onglet A
@@ -216,11 +226,13 @@ sequenceDiagram
 ## 🛡️ SÉCURITÉ RENFORCÉE
 
 ### Avant le Fix
+
 - ❌ Possibilité d'état "fantôme" (authentifié sans données)
 - ❌ Dashboard vide accessible
 - ❌ Logout backend pas toujours appelé
 
 ### Après le Fix
+
 - ✅ `clearSession()` systématique en cas d'échec
 - ✅ Vérification multi-niveaux dans `RootLayout`
 - ✅ Logout backend toujours appelé (révocation refresh token)
@@ -231,7 +243,7 @@ sequenceDiagram
 
 ## 📝 FICHIERS MODIFIÉS
 
-1. **`src/features/auth/authLifecycle.ts`** 
+1. **`src/features/auth/authLifecycle.ts`**
    - Ajout `clearSession()` dans le catch du bootstrap
    - Amélioration des logs avec status code
 
@@ -250,11 +262,13 @@ sequenceDiagram
 ## 🎯 AMÉLIORATIONS FUTURES
 
 ### Court Terme (Optionnel)
+
 - [ ] Ajouter un toast "Session expirée" lors du logout automatique
 - [ ] Métriques Sentry pour tracker les états incohérents
 - [ ] Tests E2E avec Playwright pour les scénarios de logout
 
 ### Long Terme (Sécurité Production)
+
 - [ ] Rate limiting sur `/auth/refresh` (déjà en place backend ?)
 - [ ] Rotation du refresh token à chaque refresh (déjà implémenté ✅)
 - [ ] Invalidation de tous les refresh tokens lors du changement de mot de passe
@@ -268,6 +282,7 @@ sequenceDiagram
 **APRÈS** : Redirection systématique vers `/auth/login` si non authentifié
 
 **Impact** :
+
 - 🔒 Sécurité renforcée
 - 🚀 UX cohérente
 - 🐛 Bug critique résolu

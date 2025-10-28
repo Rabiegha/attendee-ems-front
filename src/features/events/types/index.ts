@@ -5,14 +5,26 @@
 
 // ========== EVENT TYPES ==========
 
-export type EventStatus = 'draft' | 'published' | 'active' | 'completed' | 'cancelled'
+export type EventStatus =
+  | 'draft'
+  | 'published'
+  | 'active'
+  | 'completed'
+  | 'cancelled'
 export type LocationType = 'physical' | 'online' | 'hybrid'
 export type AttendanceMode = 'onsite' | 'online' | 'hybrid'
 
 // Champ de formulaire d'inscription
 export interface RegistrationField {
   name: string
-  type: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'multiselect' | 'checkbox'
+  type:
+    | 'text'
+    | 'email'
+    | 'tel'
+    | 'textarea'
+    | 'select'
+    | 'multiselect'
+    | 'checkbox'
   label: string
   required: boolean
   enabled: boolean
@@ -77,7 +89,7 @@ export interface Event {
   timezone: string
   status: EventStatus
   capacity?: number | null
-  
+
   // Location
   location_type?: LocationType
   address_formatted?: string
@@ -89,18 +101,18 @@ export interface Event {
   latitude?: number
   longitude?: number
   place_id?: string
-  
+
   // Références
   org_activity_sector_id?: string
   org_event_type_id?: string
   created_by?: string
-  
+
   // Settings
   settings?: EventSettings
-  
+
   // Statistiques
   statistics?: EventStatistics
-  
+
   // Timestamps
   created_at: string
   updated_at: string
@@ -116,7 +128,7 @@ export interface CreateEventDTO {
   timezone?: string
   status?: EventStatus
   capacity?: number | null
-  
+
   location?: {
     type: LocationType
     address_formatted?: string
@@ -125,10 +137,10 @@ export interface CreateEventDTO {
     latitude?: number
     longitude?: number
   }
-  
+
   org_activity_sector_id?: string
   org_event_type_id?: string
-  
+
   settings?: {
     website_url?: string
     attendance_mode?: AttendanceMode
@@ -138,7 +150,7 @@ export interface CreateEventDTO {
     auto_transition_to_completed?: boolean
     registration_fields?: RegistrationFieldsConfig
   }
-  
+
   partner_ids?: string[]
   org_id?: string // SUPER_ADMIN seulement
 }
@@ -150,7 +162,11 @@ export interface UpdateEventDTO extends Partial<CreateEventDTO> {
 
 // ========== REGISTRATION TYPES ==========
 
-export type RegistrationStatus = 'awaiting' | 'approved' | 'refused' | 'cancelled'
+export type RegistrationStatus =
+  | 'awaiting'
+  | 'approved'
+  | 'refused'
+  | 'cancelled'
 export type AttendanceType = 'online' | 'onsite' | 'hybrid'
 
 // Registration complète
@@ -168,7 +184,7 @@ export interface Registration {
   confirmed_at?: string
   created_at: string
   updated_at: string
-  
+
   // Relations (peuplées par l'API)
   attendee?: {
     id: string
@@ -185,7 +201,7 @@ export interface Registration {
     color_hex: string
     text_color_hex?: string
   }
-  
+
   // Infos supplémentaires
   confirmation_number?: string
   checked_in?: boolean

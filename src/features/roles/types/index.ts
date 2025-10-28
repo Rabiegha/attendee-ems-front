@@ -35,11 +35,11 @@ export interface UpdateRolePermissionsResponse {
 // Permission categories for organization
 export const PERMISSION_CATEGORIES = {
   EVENTS: 'Événements',
-  USERS: 'Utilisateurs', 
+  USERS: 'Utilisateurs',
   ATTENDEES: 'Participants',
   REPORTS: 'Rapports',
   SETTINGS: 'Paramètres',
-  ORGANIZATION: 'Organisation'
+  ORGANIZATION: 'Organisation',
 } as const
 
 export type PermissionCategory = keyof typeof PERMISSION_CATEGORIES

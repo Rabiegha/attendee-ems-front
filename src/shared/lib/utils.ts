@@ -11,7 +11,10 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format date to locale string
  */
-export function formatDate(date: Date | string | null | undefined, locale = 'fr-FR'): string {
+export function formatDate(
+  date: Date | string | null | undefined,
+  locale = 'fr-FR'
+): string {
   if (!date) return '-'
   const dateObj = typeof date === 'string' ? new Date(date) : date
   return dateObj.toLocaleDateString(locale)
@@ -20,7 +23,10 @@ export function formatDate(date: Date | string | null | undefined, locale = 'fr-
 /**
  * Format date and time to locale string
  */
-export function formatDateTime(date: Date | string | null | undefined, locale = 'fr-FR'): string {
+export function formatDateTime(
+  date: Date | string | null | undefined,
+  locale = 'fr-FR'
+): string {
   if (!date) return '-'
   const dateObj = typeof date === 'string' ? new Date(date) : date
   return dateObj.toLocaleString(locale)
@@ -76,13 +82,16 @@ export function isEmpty(value: any): boolean {
  * Format attendees count display
  * Shows "X participants" for unlimited events, "X / Y participants" for limited events
  */
-export function formatAttendeesCount(current: number, max?: number | null): string {
+export function formatAttendeesCount(
+  current: number,
+  max?: number | null
+): string {
   const currentCount = current || 0
-  
+
   // Considérer comme "sans limite" si max est null, undefined, 0, ou > 100000 (notre hack MSW)
   if (!max || max === 0 || max > 100000) {
     return `${currentCount} participant${currentCount !== 1 ? 's' : ''}`
   }
-  
+
   return `${currentCount} / ${max} participant${currentCount !== 1 ? 's' : ''}`
 }

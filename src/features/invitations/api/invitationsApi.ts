@@ -1,15 +1,18 @@
 import { rootApi } from '@/services/rootApi'
-import type { 
-  CreateInvitationRequest, 
+import type {
+  CreateInvitationRequest,
   CreateInvitationResponse,
   CompleteInvitationRequest,
-  UserInvitation
+  UserInvitation,
 } from '../types/invitation.types'
 
 export const invitationsApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     // Envoyer une invitation
-    sendInvitation: builder.mutation<CreateInvitationResponse, CreateInvitationRequest>({
+    sendInvitation: builder.mutation<
+      CreateInvitationResponse,
+      CreateInvitationRequest
+    >({
       query: (invitation) => ({
         url: '/invitations/send',
         method: 'POST',
@@ -19,15 +22,18 @@ export const invitationsApi = rootApi.injectEndpoints({
     }),
 
     // Récupérer les invitations (pour la page de gestion)
-    getInvitations: builder.query<{
-      invitations: UserInvitation[]
-      total: number
-      pending: number
-    }, { 
-      status?: 'pending' | 'accepted' | 'expired' | 'cancelled'
-      limit?: number
-      offset?: number 
-    }>({
+    getInvitations: builder.query<
+      {
+        invitations: UserInvitation[]
+        total: number
+        pending: number
+      },
+      {
+        status?: 'pending' | 'accepted' | 'expired' | 'cancelled'
+        limit?: number
+        offset?: number
+      }
+    >({
       query: ({ status, limit = 20, offset = 0 } = {}) => {
         const params = new URLSearchParams({
           limit: limit.toString(),
@@ -60,24 +66,30 @@ export const invitationsApi = rootApi.injectEndpoints({
     }),
 
     // Valider un token d'invitation (page publique)
-    validateInvitationToken: builder.query<{
-      valid: boolean
-      email: string
-      organization: string
-      role: string
-      expiresAt: string
-    }, string>({
+    validateInvitationToken: builder.query<
+      {
+        valid: boolean
+        email: string
+        organization: string
+        role: string
+        expiresAt: string
+      },
+      string
+    >({
       query: (token) => `/invitations/validate/${token}`,
     }),
 
     // Compléter une invitation (page publique)
-    completeInvitation: builder.mutation<{
-      user: any
-      message: string
-    }, {
-      token: string
-      userData: CompleteInvitationRequest
-    }>({
+    completeInvitation: builder.mutation<
+      {
+        user: any
+        message: string
+      },
+      {
+        token: string
+        userData: CompleteInvitationRequest
+      }
+    >({
       query: ({ token, userData }) => ({
         url: `/invitations/complete/${token}`,
         method: 'POST',

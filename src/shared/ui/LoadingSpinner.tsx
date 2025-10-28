@@ -5,18 +5,20 @@ interface LoadingSpinnerProps {
   className?: string
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  size = 'md', 
-  className = '' 
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = 'md',
+  className = '',
 }) => {
   const sizeClasses = {
     sm: 'h-4 w-4',
     md: 'h-8 w-8',
-    lg: 'h-12 w-12'
+    lg: 'h-12 w-12',
   }
 
   return (
-    <div className={`animate-spin rounded-full border-2 border-gray-300 border-t-blue-600 ${sizeClasses[size]} ${className}`} />
+    <div
+      className={`animate-spin rounded-full border-2 border-gray-300 border-t-blue-600 ${sizeClasses[size]} ${className}`}
+    />
   )
 }
 
@@ -25,12 +27,14 @@ interface LoadingStateProps {
   className?: string
 }
 
-export const LoadingState: React.FC<LoadingStateProps> = ({ 
-  message = 'Chargement...', 
-  className = '' 
+export const LoadingState: React.FC<LoadingStateProps> = ({
+  message = 'Chargement...',
+  className = '',
 }) => {
   return (
-    <div className={`flex flex-col items-center justify-center py-12 ${className}`}>
+    <div
+      className={`flex flex-col items-center justify-center py-12 ${className}`}
+    >
       <LoadingSpinner size="lg" />
       <p className="mt-4 text-gray-600">{message}</p>
     </div>

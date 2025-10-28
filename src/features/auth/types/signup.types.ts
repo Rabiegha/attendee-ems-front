@@ -1,6 +1,6 @@
 /**
  * 🔐 TYPES POUR LE SIGNUP SÉCURISÉ
- * 
+ *
  * Workflow: Validation token → Vérification email → Complétion profil → Activation compte
  */
 
@@ -48,7 +48,12 @@ export interface CompleteSignupResponse {
 }
 
 export interface SignupValidationError {
-  type: 'INVALID_TOKEN' | 'TOKEN_EXPIRED' | 'EMAIL_MISMATCH' | 'USER_ALREADY_ACTIVE' | 'INVITATION_USED'
+  type:
+    | 'INVALID_TOKEN'
+    | 'TOKEN_EXPIRED'
+    | 'EMAIL_MISMATCH'
+    | 'USER_ALREADY_ACTIVE'
+    | 'INVITATION_USED'
   message: string
   redirectTo?: string
 }

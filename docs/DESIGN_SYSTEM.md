@@ -34,19 +34,19 @@ Toutes les couleurs suivent un système unifié :
 
 ```css
 /* Brand Colors */
---color-brand-600: 37 99 235;      /* Bleu principal */
---color-brand-700: 29 78 216;      /* Bleu foncé */
+--color-brand-600: 37 99 235; /* Bleu principal */
+--color-brand-700: 29 78 216; /* Bleu foncé */
 
 /* Neutral Colors */
---color-neutral-50: 249 250 251;   /* Fond clair */
---color-neutral-800: 31 41 55;     /* Fond sombre */
---color-neutral-200: 229 231 235;  /* Bordure claire */
---color-neutral-700: 55 65 81;     /* Bordure sombre */
+--color-neutral-50: 249 250 251; /* Fond clair */
+--color-neutral-800: 31 41 55; /* Fond sombre */
+--color-neutral-200: 229 231 235; /* Bordure claire */
+--color-neutral-700: 55 65 81; /* Bordure sombre */
 
 /* Semantic Colors */
---color-success-600: 22 163 74;    /* Vert succès */
---color-error-600: 220 38 38;      /* Rouge erreur */
---color-warning-600: 217 119 6;    /* Orange avertissement */
+--color-success-600: 22 163 74; /* Vert succès */
+--color-error-600: 220 38 38; /* Rouge erreur */
+--color-warning-600: 217 119 6; /* Orange avertissement */
 ```
 
 ### Espacement
@@ -54,11 +54,11 @@ Toutes les couleurs suivent un système unifié :
 Système d'espacement cohérent :
 
 ```css
---spacing-sm: 0.5rem;     /* 8px */
---spacing-md: 0.75rem;    /* 12px */
---spacing-lg: 1rem;       /* 16px */
---spacing-xl: 1.5rem;     /* 24px */
---spacing-2xl: 2rem;      /* 32px */
+--spacing-sm: 0.5rem; /* 8px */
+--spacing-md: 0.75rem; /* 12px */
+--spacing-lg: 1rem; /* 16px */
+--spacing-xl: 1.5rem; /* 24px */
+--spacing-2xl: 2rem; /* 32px */
 ```
 
 ### Typography
@@ -66,11 +66,11 @@ Système d'espacement cohérent :
 Échelle typographique standardisée :
 
 ```css
---font-size-sm: 0.875rem;    /* 14px */
---font-size-base: 1rem;      /* 16px */
---font-size-lg: 1.125rem;    /* 18px */
---font-size-xl: 1.25rem;     /* 20px */
---font-size-2xl: 1.5rem;     /* 24px */
+--font-size-sm: 0.875rem; /* 14px */
+--font-size-base: 1rem; /* 16px */
+--font-size-lg: 1.125rem; /* 18px */
+--font-size-xl: 1.25rem; /* 20px */
+--font-size-2xl: 1.5rem; /* 24px */
 ```
 
 ## 🧩 Composants
@@ -97,7 +97,7 @@ import { Button } from '@/shared/ui'
 ```tsx
 import { Input } from '@/shared/ui'
 
-<Input 
+;<Input
   placeholder="Saisissez votre texte"
   error={!!errors.field}
   leftIcon={<Mail className="h-4 w-4" />}
@@ -109,7 +109,7 @@ import { Input } from '@/shared/ui'
 ```tsx
 import { Select, SelectOption } from '@/shared/ui'
 
-<Select placeholder="Choisissez une option">
+;<Select placeholder="Choisissez une option">
   <SelectOption value="1">Option 1</SelectOption>
   <SelectOption value="2">Option 2</SelectOption>
 </Select>
@@ -120,7 +120,7 @@ import { Select, SelectOption } from '@/shared/ui'
 ```tsx
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui'
 
-<Card variant="elevated" padding="lg">
+;<Card variant="elevated" padding="lg">
   <CardHeader>
     <CardTitle>Titre</CardTitle>
   </CardHeader>
@@ -135,7 +135,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/shared/ui'
 ```tsx
 import { Modal } from '@/shared/ui'
 
-<Modal 
+;<Modal
   isOpen={isOpen}
   onClose={onClose}
   title="Titre de la modal"
@@ -154,7 +154,7 @@ import { Modal } from '@/shared/ui'
 ```tsx
 // ✅ BON
 <div className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors duration-200">
-  
+
 // ❌ MAUVAIS
 <div className="bg-white text-gray-900">
 ```
@@ -201,10 +201,10 @@ transition-colors duration-200
 ```tsx
 // Marges entre sections
 <div className="space-y-6">      <!-- 24px -->
-  
+
 // Marges entre éléments
 <div className="space-y-4">      <!-- 16px -->
-  
+
 // Marges entre textes
 <div className="space-y-2">      <!-- 8px -->
 ```
@@ -213,14 +213,14 @@ transition-colors duration-200
 
 ```tsx
 // Boutons
-<Button 
-  disabled={isLoading} 
+<Button
+  disabled={isLoading}
   loading={isLoading}
   loadingText="Chargement..."
 >
 
 // Inputs avec validation
-<Input 
+<Input
   error={!!errors.field}
   success={isValid}
 />
@@ -233,7 +233,7 @@ transition-colors duration-200
 <Modal title="Titre" maxWidth="lg">
   <form className="space-y-6">
     {/* Champs */}
-    
+
     {/* Actions en bas */}
     <div className="flex items-center justify-end space-x-3 pt-6 border-t">
       <Button variant="outline">Annuler</Button>
@@ -281,12 +281,12 @@ transition-colors duration-200
 // MAUVAIS
 <Modal>
   <div className="p-4">  <!-- Padding personnalisé -->
-    
+
 // BON
 <Modal contentPadding={true}>  <!-- Padding uniforme -->
 ```
 
-##  Testing
+## Testing
 
 ### Checklist qualité
 

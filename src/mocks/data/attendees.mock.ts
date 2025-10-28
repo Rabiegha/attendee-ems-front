@@ -1,6 +1,6 @@
 /**
  * Mock Data - Attendees
- * 
+ *
  * Profils CRM réalistes avec statistiques pré-calculées
  * Utilisés pour tester le module CRM global et les inscriptions
  */
@@ -31,10 +31,10 @@ export const mockAttendees: Attendee[] = [
       checked_in: 7,
       attendance_rate: 87.5,
       last_event_at: '2025-10-23T08:00:00Z',
-      first_event_at: '2024-05-20T09:00:00Z'
+      first_event_at: '2024-05-20T09:00:00Z',
     },
     created_at: '2024-05-15T10:00:00Z',
-    updated_at: '2025-10-22T14:30:00Z'
+    updated_at: '2025-10-22T14:30:00Z',
   },
   {
     id: 'att-002',
@@ -56,10 +56,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 5,
-      attendance_rate: 100.0
+      attendance_rate: 100.0,
     },
     created_at: '2024-08-10T09:00:00Z',
-    updated_at: '2025-10-15T11:20:00Z'
+    updated_at: '2025-10-15T11:20:00Z',
   },
   {
     id: 'att-003',
@@ -81,10 +81,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 1,
       refused: 0,
       checked_in: 2,
-      attendance_rate: 66.7
+      attendance_rate: 66.7,
     },
     created_at: '2025-06-20T14:30:00Z',
-    updated_at: '2025-10-18T16:45:00Z'
+    updated_at: '2025-10-18T16:45:00Z',
   },
   {
     id: 'att-004',
@@ -106,10 +106,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 5,
-      attendance_rate: 83.3
+      attendance_rate: 83.3,
     },
     created_at: '2024-07-12T11:00:00Z',
-    updated_at: '2025-10-20T09:15:00Z'
+    updated_at: '2025-10-20T09:15:00Z',
   },
   {
     id: 'att-005',
@@ -131,10 +131,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 1,
-      attendance_rate: 50.0
+      attendance_rate: 50.0,
     },
     created_at: '2025-08-05T15:20:00Z',
-    updated_at: '2025-09-28T10:30:00Z'
+    updated_at: '2025-09-28T10:30:00Z',
   },
   {
     id: 'att-006',
@@ -148,7 +148,7 @@ export const mockAttendees: Attendee[] = [
     country: 'France',
     default_type_id: 'type-speaker',
     labels: ['speaker'],
-    notes: 'Excellente speaker sur l\'IA générative',
+    notes: "Excellente speaker sur l'IA générative",
     statistics: {
       total_events: 4,
       total_registrations: 4,
@@ -156,10 +156,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 4,
-      attendance_rate: 100.0
+      attendance_rate: 100.0,
     },
     created_at: '2025-05-18T13:45:00Z',
-    updated_at: '2025-10-19T14:20:00Z'
+    updated_at: '2025-10-19T14:20:00Z',
   },
   {
     id: 'att-007',
@@ -181,10 +181,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 0,
-      attendance_rate: 0.0
+      attendance_rate: 0.0,
     },
     created_at: '2025-10-01T09:30:00Z',
-    updated_at: '2025-10-01T09:30:00Z'
+    updated_at: '2025-10-01T09:30:00Z',
   },
   {
     id: 'att-008',
@@ -206,10 +206,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 1,
       refused: 0,
       checked_in: 5,
-      attendance_rate: 83.3
+      attendance_rate: 83.3,
     },
     created_at: '2024-11-22T10:15:00Z',
-    updated_at: '2025-10-22T11:40:00Z'
+    updated_at: '2025-10-22T11:40:00Z',
   },
   {
     id: 'att-009',
@@ -231,10 +231,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 1,
       checked_in: 2,
-      attendance_rate: 100.0
+      attendance_rate: 100.0,
     },
     created_at: '2025-07-30T14:00:00Z',
-    updated_at: '2025-09-25T16:30:00Z'
+    updated_at: '2025-09-25T16:30:00Z',
   },
   {
     id: 'att-010',
@@ -256,10 +256,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 1,
-      attendance_rate: 100.0
+      attendance_rate: 100.0,
     },
     created_at: '2025-09-10T11:20:00Z',
-    updated_at: '2025-09-15T09:45:00Z'
+    updated_at: '2025-09-15T09:45:00Z',
   },
 
   // ========== ATTENDEES ORG: STARTUP-HUB ==========
@@ -283,10 +283,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 4,
-      attendance_rate: 80.0
+      attendance_rate: 80.0,
     },
     created_at: '2024-06-15T10:00:00Z',
-    updated_at: '2025-10-18T14:30:00Z'
+    updated_at: '2025-10-18T14:30:00Z',
   },
   {
     id: 'att-012',
@@ -308,10 +308,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 3,
-      attendance_rate: 75.0
+      attendance_rate: 75.0,
     },
     created_at: '2025-03-20T09:30:00Z',
-    updated_at: '2025-09-28T15:45:00Z'
+    updated_at: '2025-09-28T15:45:00Z',
   },
   {
     id: 'att-013',
@@ -333,10 +333,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 6,
-      attendance_rate: 100.0
+      attendance_rate: 100.0,
     },
     created_at: '2024-09-10T11:00:00Z',
-    updated_at: '2025-10-20T10:15:00Z'
+    updated_at: '2025-10-20T10:15:00Z',
   },
   {
     id: 'att-014',
@@ -358,10 +358,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 2,
-      attendance_rate: 66.7
+      attendance_rate: 66.7,
     },
     created_at: '2025-04-12T14:20:00Z',
-    updated_at: '2025-09-28T11:30:00Z'
+    updated_at: '2025-09-28T11:30:00Z',
   },
   {
     id: 'att-015',
@@ -383,10 +383,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 7,
-      attendance_rate: 87.5
+      attendance_rate: 87.5,
     },
     created_at: '2024-05-05T09:00:00Z',
-    updated_at: '2025-10-19T13:20:00Z'
+    updated_at: '2025-10-19T13:20:00Z',
   },
 
   // ========== ATTENDEES ORG: DESIGN-STUDIO ==========
@@ -410,10 +410,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 1,
-      attendance_rate: 50.0
+      attendance_rate: 50.0,
     },
     created_at: '2025-09-15T10:30:00Z',
-    updated_at: '2025-10-18T14:00:00Z'
+    updated_at: '2025-10-18T14:00:00Z',
   },
   {
     id: 'att-017',
@@ -435,10 +435,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 0,
-      attendance_rate: 0.0
+      attendance_rate: 0.0,
     },
     created_at: '2025-10-05T11:45:00Z',
-    updated_at: '2025-10-05T11:45:00Z'
+    updated_at: '2025-10-05T11:45:00Z',
   },
 
   // ========== ATTENDEES ORG: MARKETING-AGENCY ==========
@@ -454,7 +454,7 @@ export const mockAttendees: Attendee[] = [
     country: 'France',
     default_type_id: 'type-vip',
     labels: ['vip'],
-    notes: 'VIP - Cliente importante de l\'agence',
+    notes: "VIP - Cliente importante de l'agence",
     statistics: {
       total_events: 1,
       total_registrations: 1,
@@ -462,10 +462,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 0,
-      attendance_rate: 0.0
+      attendance_rate: 0.0,
     },
     created_at: '2025-09-28T15:00:00Z',
-    updated_at: '2025-09-28T15:00:00Z'
+    updated_at: '2025-09-28T15:00:00Z',
   },
 
   // ========== PLUS D'ATTENDEES TECH-CORP (continuer jusqu'à 150+) ==========
@@ -489,10 +489,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 2,
-      attendance_rate: 100.0
+      attendance_rate: 100.0,
     },
     created_at: '2025-08-20T10:00:00Z',
-    updated_at: '2025-10-15T12:30:00Z'
+    updated_at: '2025-10-15T12:30:00Z',
   },
   {
     id: 'att-020',
@@ -514,10 +514,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 2,
-      attendance_rate: 66.7
+      attendance_rate: 66.7,
     },
     created_at: '2025-07-12T14:15:00Z',
-    updated_at: '2025-10-20T09:45:00Z'
+    updated_at: '2025-10-20T09:45:00Z',
   },
   {
     id: 'att-021',
@@ -539,10 +539,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 3,
-      attendance_rate: 75.0
+      attendance_rate: 75.0,
     },
     created_at: '2025-06-05T11:30:00Z',
-    updated_at: '2025-10-18T15:20:00Z'
+    updated_at: '2025-10-18T15:20:00Z',
   },
   {
     id: 'att-022',
@@ -564,10 +564,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 1,
       refused: 0,
       checked_in: 0,
-      attendance_rate: 0.0
+      attendance_rate: 0.0,
     },
     created_at: '2025-10-15T16:00:00Z',
-    updated_at: '2025-10-15T16:00:00Z'
+    updated_at: '2025-10-15T16:00:00Z',
   },
   {
     id: 'att-023',
@@ -589,10 +589,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 4,
-      attendance_rate: 80.0
+      attendance_rate: 80.0,
     },
     created_at: '2024-12-10T09:00:00Z',
-    updated_at: '2025-10-19T10:30:00Z'
+    updated_at: '2025-10-19T10:30:00Z',
   },
   {
     id: 'att-024',
@@ -614,10 +614,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 1,
-      attendance_rate: 50.0
+      attendance_rate: 50.0,
     },
     created_at: '2025-08-30T13:45:00Z',
-    updated_at: '2025-09-28T14:20:00Z'
+    updated_at: '2025-09-28T14:20:00Z',
   },
   {
     id: 'att-025',
@@ -639,10 +639,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 5,
-      attendance_rate: 83.3
+      attendance_rate: 83.3,
     },
     created_at: '2024-10-22T10:15:00Z',
-    updated_at: '2025-10-20T11:45:00Z'
+    updated_at: '2025-10-20T11:45:00Z',
   },
   {
     id: 'att-026',
@@ -664,10 +664,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 1,
-      attendance_rate: 100.0
+      attendance_rate: 100.0,
     },
     created_at: '2025-09-12T15:30:00Z',
-    updated_at: '2025-09-15T09:00:00Z'
+    updated_at: '2025-09-15T09:00:00Z',
   },
   {
     id: 'att-027',
@@ -689,10 +689,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 1,
       checked_in: 0,
-      attendance_rate: 0.0
+      attendance_rate: 0.0,
     },
     created_at: '2025-08-15T11:00:00Z',
-    updated_at: '2025-10-10T16:20:00Z'
+    updated_at: '2025-10-10T16:20:00Z',
   },
   {
     id: 'att-028',
@@ -714,10 +714,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 3,
-      attendance_rate: 100.0
+      attendance_rate: 100.0,
     },
     created_at: '2025-07-20T09:45:00Z',
-    updated_at: '2025-10-19T12:15:00Z'
+    updated_at: '2025-10-19T12:15:00Z',
   },
   {
     id: 'att-029',
@@ -739,10 +739,10 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 3,
-      attendance_rate: 75.0
+      attendance_rate: 75.0,
     },
     created_at: '2025-05-10T14:00:00Z',
-    updated_at: '2025-10-18T10:30:00Z'
+    updated_at: '2025-10-18T10:30:00Z',
   },
   {
     id: 'att-030',
@@ -764,40 +764,48 @@ export const mockAttendees: Attendee[] = [
       awaiting: 0,
       refused: 0,
       checked_in: 6,
-      attendance_rate: 85.7
+      attendance_rate: 85.7,
     },
     created_at: '2024-08-05T10:20:00Z',
-    updated_at: '2025-10-20T13:40:00Z'
-  }
+    updated_at: '2025-10-20T13:40:00Z',
+  },
 ]
 
 // Helper pour récupérer attendees par org_id
 export const getAttendeesByOrgId = (orgId: string): Attendee[] => {
-  return mockAttendees.filter(attendee => attendee.org_id === orgId)
+  return mockAttendees.filter((attendee) => attendee.org_id === orgId)
 }
 
 // Helper pour récupérer attendee par email + org
-export const getAttendeeByEmail = (orgId: string, email: string): Attendee | undefined => {
+export const getAttendeeByEmail = (
+  orgId: string,
+  email: string
+): Attendee | undefined => {
   return mockAttendees.find(
-    attendee => attendee.org_id === orgId && attendee.email === email
+    (attendee) => attendee.org_id === orgId && attendee.email === email
   )
 }
 
 // Helper pour filtrer par labels
-export const getAttendeesByLabels = (orgId: string, labels: string[]): Attendee[] => {
+export const getAttendeesByLabels = (
+  orgId: string,
+  labels: string[]
+): Attendee[] => {
   return mockAttendees.filter(
-    attendee =>
+    (attendee) =>
       attendee.org_id === orgId &&
-      labels.some(label => attendee.labels?.includes(label))
+      labels.some((label) => attendee.labels?.includes(label))
   )
 }
 
 // Helper pour filtrer par nombre minimum d'événements
-export const getAttendeesByMinEvents = (orgId: string, minEvents: number): Attendee[] => {
+export const getAttendeesByMinEvents = (
+  orgId: string,
+  minEvents: number
+): Attendee[] => {
   return mockAttendees.filter(
-    attendee =>
-      attendee.org_id === orgId &&
-      attendee.statistics.total_events >= minEvents
+    (attendee) =>
+      attendee.org_id === orgId && attendee.statistics.total_events >= minEvents
   )
 }
 

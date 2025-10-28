@@ -29,11 +29,11 @@ import PublicRegistration from '@/pages/PublicRegistration'
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
   const { id } = useParams<{ id: string }>()
-  
+
   if (!id) {
     return <Navigate to="/events" replace />
   }
-  
+
   return (
     <EventGuard eventId={id} action="read">
       <EventDetails />
@@ -67,9 +67,7 @@ export const router = createBrowserRouter([
           },
           {
             path: ':id',
-            element: (
-              <EventDetailsWithGuard />
-            ),
+            element: <EventDetailsWithGuard />,
           },
         ],
       },

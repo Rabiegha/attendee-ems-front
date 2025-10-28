@@ -12,12 +12,9 @@ interface CreateOrganizationModalProps {
   onError?: (error: any) => void
 }
 
-export const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = ({
-  isOpen,
-  onClose,
-  onSuccess,
-  onError,
-}) => {
+export const CreateOrganizationModal: React.FC<
+  CreateOrganizationModalProps
+> = ({ isOpen, onClose, onSuccess, onError }) => {
   const [createOrganization, { isLoading }] = useCreateOrganizationMutation()
 
   const handleSubmit = async (data: CreateOrganizationRequest) => {
@@ -25,15 +22,18 @@ export const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
       const result = await createOrganization(data).unwrap()
 
       // Générer le slug depuis le nom si pas fourni par l'API
-      const slug = result.slug || data.name.toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
+      const slug =
+        result.slug ||
+        data.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '')
 
       onSuccess?.(data.name, slug)
       onClose()
     } catch (err) {
-      console.error('Erreur lors de la création de l\'organisation:', err)
-      
+      console.error("Erreur lors de la création de l'organisation:", err)
+
       // Passer l'erreur au parent pour affichage du modal
       onError?.(err)
     }
@@ -53,7 +53,9 @@ export const CreateOrganizationModal: React.FC<CreateOrganizationModalProps> = (
 
         {/* Titre simple */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">Nouvelle organisation</h2>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            Nouvelle organisation
+          </h2>
           <p className="text-gray-400">Créez une nouvelle organisation</p>
         </div>
 

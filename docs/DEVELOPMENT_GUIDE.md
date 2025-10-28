@@ -30,6 +30,7 @@ src/
 ### Standards de Code ✅
 
 #### TypeScript Configuration
+
 ```jsonc
 {
   "compilerOptions": {
@@ -43,19 +44,17 @@ src/
       "@/*": ["./src/*"],
       "@/app/*": ["./src/app/*"],
       "@/features/*": ["./src/features/*"],
-      "@/shared/*": ["./src/shared/*"]
-    }
-  }
+      "@/shared/*": ["./src/shared/*"],
+    },
+  },
 }
 ```
 
 #### ESLint + Prettier
+
 ```json
 {
-  "extends": [
-    "@typescript-eslint/recommended",
-    "eslint-config-prettier"
-  ],
+  "extends": ["@typescript-eslint/recommended", "eslint-config-prettier"],
   "rules": {
     "no-console": "warn",
     "@typescript-eslint/no-unused-vars": "error",
@@ -67,6 +66,7 @@ src/
 ## 🔧 Stack Technologique
 
 ### Frontend
+
 - **React 18** avec TypeScript strict
 - **Vite** pour bundling rapide
 - **Redux Toolkit Query** pour state management
@@ -75,6 +75,7 @@ src/
 - **@casl/ability** pour RBAC
 
 ### Backend
+
 - **NestJS** avec TypeScript
 - **PostgreSQL** + **Prisma ORM**
 - **JWT** + **Refresh Tokens**
@@ -85,14 +86,20 @@ src/
 ## 🔄 Système API Centralisé
 
 ### rootApi Architecture
+
 ```typescript
 // services/rootApi.ts
 export const rootApi = createApi({
   reducerPath: 'rootApi',
   baseQuery: baseQueryWithReauth, // Gestion auto 401 + refresh
   tagTypes: [
-    'Auth', 'User', 'Event', 'Attendee', 
-    'Role', 'Invitation', 'Organization'
+    'Auth',
+    'User',
+    'Event',
+    'Attendee',
+    'Role',
+    'Invitation',
+    'Organization',
   ],
   endpoints: () => ({}), // Injectés par les features
 })
@@ -100,7 +107,7 @@ export const rootApi = createApi({
 // Auto-refresh transparent
 const baseQueryWithReauth = async (args, api, extra) => {
   let result = await baseQuery(args, api, extra)
-  
+
   if (result.error?.status === 401) {
     // Tentative refresh automatique
     const refreshResult = await baseQuery('/auth/refresh', api, extra)
@@ -117,6 +124,7 @@ const baseQueryWithReauth = async (args, api, extra) => {
 ```
 
 ### Injection d'Endpoints par Feature
+
 ```typescript
 // features/auth/api/authApi.ts
 export const authApi = rootApi.injectEndpoints({
@@ -138,15 +146,16 @@ export const { useLoginMutation } = authApi
 ## 🛡️ Système RBAC
 
 ### Rôles et Permissions
+
 ```typescript
 // 6 rôles hiérarchiques
-export type UserRole = 
-  | 'SUPER_ADMIN'  // Accès global
-  | 'ADMIN'        // Gestion organisation
-  | 'MANAGER'      // Gestion événements
-  | 'VIEWER'       // Lecture seule
-  | 'PARTNER'      // Événements assignés
-  | 'HOSTESS'      // Check-in/scan
+export type UserRole =
+  | 'SUPER_ADMIN' // Accès global
+  | 'ADMIN' // Gestion organisation
+  | 'MANAGER' // Gestion événements
+  | 'VIEWER' // Lecture seule
+  | 'PARTNER' // Événements assignés
+  | 'HOSTESS' // Check-in/scan
 
 // Permissions granulaires avec conditions
 export interface Permission {
@@ -157,6 +166,7 @@ export interface Permission {
 ```
 
 ### Utilisation dans les Composants
+
 ```tsx
 import { Can, useCan } from '@/shared/acl'
 
@@ -178,6 +188,7 @@ const canExportData = useCan('export', 'Attendee')
 ## 🎨 Design System
 
 ### Dark Mode Obligatoire
+
 ```tsx
 // Tous les composants doivent supporter dark mode
 <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
@@ -193,6 +204,7 @@ const canExportData = useCan('export', 'Attendee')
 ```
 
 ### Composants UI Système
+
 ```tsx
 // Utiliser les composants shared/ui
 import { Button, Modal, Toast } from '@/shared/ui'
@@ -203,6 +215,7 @@ success('Action réussie!', 'Description détaillée')
 ```
 
 ### Palette de Couleurs
+
 ```css
 /* Variables CSS pour cohérence */
 :root {
@@ -211,7 +224,7 @@ success('Action réussie!', 'Description détaillée')
   --foreground: hsl(222, 84%, 5%);
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --background: hsl(222, 84%, 5%);
   --foreground: hsl(210, 40%, 98%);
 }
@@ -220,6 +233,7 @@ success('Action réussie!', 'Description détaillée')
 ## ✅ Validation et Formulaires
 
 ### Schémas Zod
+
 ```typescript
 export const createUserSchema = z.object({
   firstName: z.string().min(2, 'Prénom requis (min 2 caractères)'),
@@ -233,6 +247,7 @@ export type CreateUserFormData = z.infer<typeof createUserSchema>
 ```
 
 ### React Hook Form Integration
+
 ```tsx
 const form = useForm<CreateUserFormData>({
   resolver: zodResolver(createUserSchema),
@@ -253,6 +268,7 @@ const onSubmit = async (data: CreateUserFormData) => {
 ## 🧪 Tests
 
 ### Configuration Vitest + Testing Library
+
 ```typescript
 // vitest.config.ts
 export default defineConfig({
@@ -267,7 +283,7 @@ export default defineConfig({
 describe('CreateUserModal', () => {
   it('should validate form inputs', async () => {
     render(<CreateUserModal />)
-    
+
     await user.type(screen.getByLabelText(/email/i), 'invalid-email')
     expect(screen.getByText(/email invalide/i)).toBeInTheDocument()
   })
@@ -275,6 +291,7 @@ describe('CreateUserModal', () => {
 ```
 
 ### Tests E2E avec Playwright
+
 ```typescript
 // tests/e2e/auth.spec.ts
 test('should login and access dashboard', async ({ page }) => {
@@ -282,7 +299,7 @@ test('should login and access dashboard', async ({ page }) => {
   await page.fill('[data-testid="email"]', 'john.doe@system.com')
   await page.fill('[data-testid="password"]', 'admin123')
   await page.click('[data-testid="login-button"]')
-  
+
   await expect(page).toHaveURL('/dashboard')
 })
 ```
@@ -290,6 +307,7 @@ test('should login and access dashboard', async ({ page }) => {
 ## 🚀 Workflow de Développement
 
 ### 1. Créer une Feature
+
 ```bash
 # Créer la structure feature
 mkdir -p src/features/new-feature/{api,ui,types}
@@ -301,12 +319,13 @@ touch src/features/new-feature/types/newFeature.types.ts
 ```
 
 ### 2. Développement avec Hot Reload
+
 ```bash
 # Terminal 1: Backend
 cd attendee-ems-back
 npm run start:dev
 
-# Terminal 2: Frontend  
+# Terminal 2: Frontend
 cd attendee-EMS
 npm run dev
 
@@ -315,6 +334,7 @@ docker-compose -f docker-compose.dev.yml logs -f db
 ```
 
 ### 3. Validation Qualité
+
 ```bash
 # TypeScript
 npm run typecheck
@@ -333,24 +353,28 @@ npm run build
 ## 📋 Checklist Nouvelle Feature
 
 ### 🎯 Architecture
+
 - [ ] Structure FSD respectée
 - [ ] Types TypeScript stricts définis
 - [ ] API RTK Query injectée dans rootApi
 - [ ] Composants UI dans feature/ui/
 
 ### 🎨 Interface
+
 - [ ] Dark mode supporté complet
 - [ ] Composants shared/ui utilisés
 - [ ] Responsive design mobile-first
 - [ ] Accessibilité WCAG respectée
 
 ### 🔒 Sécurité
+
 - [ ] Permissions RBAC configurées
 - [ ] Guards `<Can>` sur actions sensibles
 - [ ] Validation Zod côté client
 - [ ] Validation backend correspondante
 
 ### 🧪 Qualité
+
 - [ ] Tests unitaires écrits
 - [ ] Tests E2E critiques couverts
 - [ ] Pas d'erreurs TypeScript
@@ -359,6 +383,7 @@ npm run build
 ## 🔧 Scripts Utiles
 
 ### Base de Données
+
 ```bash
 # Migrations
 npm run db:migrate
@@ -373,6 +398,7 @@ npm run db:studio
 ```
 
 ### Docker Development
+
 ```bash
 # Démarrage complet
 docker-compose -f docker-compose.dev.yml up -d
@@ -388,6 +414,7 @@ docker-compose -f docker-compose.dev.yml down -v
 ```
 
 ### Production Build
+
 ```bash
 # Frontend
 npm run build
@@ -404,6 +431,7 @@ docker-compose -f docker-compose.prod.yml up -d
 ## 📊 Métriques de Qualité
 
 ### Standards à Maintenir
+
 - **TypeScript Strict**: 100% (0 any types)
 - **Test Coverage**: > 80%
 - **Performance Score**: > 90
@@ -411,6 +439,7 @@ docker-compose -f docker-compose.prod.yml up -d
 - **SEO Score**: > 85
 
 ### Outils de Monitoring
+
 ```bash
 # Bundle analyzer
 npm run build -- --analyze
@@ -425,18 +454,21 @@ npm audit
 ## 🎯 Bonnes Pratiques
 
 ### Code Organization
+
 1. **Une responsabilité par fichier**
 2. **Imports absolus avec alias @/**
 3. **Types exportés depuis index.ts**
 4. **Composants < 200 lignes**
 
 ### State Management
+
 1. **Server state avec RTK Query**
 2. **UI state local avec useState**
 3. **Global state minimal (session uniquement)**
 4. **Pas de state redondant**
 
 ### Performance
+
 1. **Lazy loading des routes**
 2. **Code splitting par feature**
 3. **Memoization avec useMemo/useCallback**

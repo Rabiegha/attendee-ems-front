@@ -11,9 +11,9 @@ interface AccessDeniedProps {
 }
 
 export const AccessDenied: React.FC<AccessDeniedProps> = ({
-  title = "Accès refusé",
+  title = 'Accès refusé',
   message = "Vous n'avez pas les permissions nécessaires pour accéder à cette page.",
-  showContactAdmin = true
+  showContactAdmin = true,
 }) => {
   const navigate = useNavigate()
 
@@ -51,7 +51,8 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
                     Besoin d'accès ?
                   </p>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Contactez votre administrateur pour demander les permissions nécessaires.
+                    Contactez votre administrateur pour demander les permissions
+                    nécessaires.
                   </p>
                 </div>
               </div>
@@ -68,7 +69,7 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
               <Home className="h-4 w-4 mr-2" />
               Retour à l'accueil
             </Button>
-            
+
             <Button
               onClick={() => navigate(-1)}
               variant="secondary"
@@ -81,7 +82,8 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support.
+          Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le
+          support.
         </p>
       </div>
     </div>

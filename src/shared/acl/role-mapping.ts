@@ -1,6 +1,6 @@
 /**
  * Mapping entre les rôles backend (base de données) et les rôles CASL (frontend)
- * 
+ *
  * Backend utilise snake_case en minuscules
  * CASL utilise UPPER_CASE avec underscore
  */
@@ -10,27 +10,27 @@ import type { UserRole } from './policies/rbac-presets'
 // Mapping des rôles backend vers rôles CASL (6 rôles du système EMS)
 export const ROLE_MAPPING: Record<string, UserRole> = {
   // Nouveaux rôles du système EMS
-  'SUPER_ADMIN': 'SUPER_ADMIN',  // Accès global omniscient (sans org)
-  'ADMIN': 'ADMIN',              // Gestion équipe + invitations (scope org)
-  'MANAGER': 'MANAGER',          // Gestion événements sans invitations (scope org)
-  'VIEWER': 'VIEWER',            // Lecture seule tous événements org (scope org)
-  'PARTNER': 'PARTNER',          // Lecture seule événements assignés (scope org)
-  'HOTESSE': 'HOTESSE',          // Scan QR codes événements assignés (scope org)
-  
+  SUPER_ADMIN: 'SUPER_ADMIN', // Accès global omniscient (sans org)
+  ADMIN: 'ADMIN', // Gestion équipe + invitations (scope org)
+  MANAGER: 'MANAGER', // Gestion événements sans invitations (scope org)
+  VIEWER: 'VIEWER', // Lecture seule tous événements org (scope org)
+  PARTNER: 'PARTNER', // Lecture seule événements assignés (scope org)
+  HOTESSE: 'HOTESSE', // Scan QR codes événements assignés (scope org)
+
   // Support snake_case et minuscules du backend
-  'super_admin': 'SUPER_ADMIN',
-  'admin': 'ADMIN',
-  'manager': 'MANAGER',
-  'viewer': 'VIEWER',
-  'partner': 'PARTNER',
-  'hotesse': 'HOTESSE',
-  
+  super_admin: 'SUPER_ADMIN',
+  admin: 'ADMIN',
+  manager: 'MANAGER',
+  viewer: 'VIEWER',
+  partner: 'PARTNER',
+  hotesse: 'HOTESSE',
+
   // Legacy roles (pour compatibilité avec anciennes données)
-  'org_admin': 'ADMIN',
-  'org_manager': 'MANAGER',
-  'event_manager': 'MANAGER',
-  'readonly': 'VIEWER',
-  'checkin_staff': 'HOTESSE',
+  org_admin: 'ADMIN',
+  org_manager: 'MANAGER',
+  event_manager: 'MANAGER',
+  readonly: 'VIEWER',
+  checkin_staff: 'HOTESSE',
 }
 
 /**
@@ -41,7 +41,9 @@ export const ROLE_MAPPING: Record<string, UserRole> = {
 export function mapBackendRoleToCASQL(backendRole: string): UserRole {
   const mapped = ROLE_MAPPING[backendRole]
   if (!mapped) {
-    console.warn(`[RBAC] Unknown backend role: ${backendRole}, defaulting to VIEWER`)
+    console.warn(
+      `[RBAC] Unknown backend role: ${backendRole}, defaulting to VIEWER`
+    )
     return 'VIEWER'
   }
   return mapped
@@ -60,19 +62,19 @@ export function mapBackendRolesToCASQL(backendRoles: string[]): UserRole[] {
  * Labels user-friendly pour l'affichage des rôles
  */
 export const ROLE_LABELS: Record<string, string> = {
-  'SUPER_ADMIN': 'Super Administrateur',
-  'ADMIN': 'Administrateur',
-  'MANAGER': 'Manager', 
-  'VIEWER': 'Visualiseur',
-  'PARTNER': 'Partenaire',
-  'HOTESSE': 'Hôtesse d\'accueil',
-  
+  SUPER_ADMIN: 'Super Administrateur',
+  ADMIN: 'Administrateur',
+  MANAGER: 'Manager',
+  VIEWER: 'Visualiseur',
+  PARTNER: 'Partenaire',
+  HOTESSE: "Hôtesse d'accueil",
+
   // Legacy labels pour compatibilité
-  'ORG_ADMIN': 'Administrateur Organisation', 
-  'ORG_MANAGER': 'Manager Organisation',
-  'EVENT_MANAGER': 'Manager Événement',
-  'CHECKIN_STAFF': 'Personnel Accueil',
-  'READONLY': 'Lecture seule',
+  ORG_ADMIN: 'Administrateur Organisation',
+  ORG_MANAGER: 'Manager Organisation',
+  EVENT_MANAGER: 'Manager Événement',
+  CHECKIN_STAFF: 'Personnel Accueil',
+  READONLY: 'Lecture seule',
 }
 
 /**

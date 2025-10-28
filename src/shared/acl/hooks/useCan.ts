@@ -14,7 +14,7 @@ export const useCan = (
   subjectInstance?: any
 ): boolean => {
   const ability = useAbility()
-  
+
   try {
     if (subjectInstance) {
       // Create a subject instance with type

@@ -6,7 +6,7 @@ export interface Role {
   code: string
   name: string
   description: string
-  level: number  // Hiérarchie du rôle (0=SUPER_ADMIN, 1=ADMIN, 2=MANAGER, etc.)
+  level: number // Hiérarchie du rôle (0=SUPER_ADMIN, 1=ADMIN, 2=MANAGER, etc.)
   org_id: string | null
   is_system_role: boolean
   created_at: string
@@ -24,14 +24,19 @@ export interface Permission {
 export const rolesApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     // 🔥 NOUVEAU NOM pour forcer le rechargement du cache
-    getRolesFiltered: builder.query<Role[], { orgId?: string; templatesOnly?: boolean }>({
+    getRolesFiltered: builder.query<
+      Role[],
+      { orgId?: string; templatesOnly?: boolean }
+    >({
       query: (params) => {
         console.log('🔍 [ROLES API] Building query with params:', params)
         const queryParams = new URLSearchParams()
         if (params.orgId) queryParams.append('orgId', params.orgId)
         if (params.templatesOnly) queryParams.append('templatesOnly', 'true')
         const queryString = queryParams.toString()
-        const finalUrl = queryString ? `${API_ENDPOINTS.ROLES.LIST}?${queryString}` : API_ENDPOINTS.ROLES.LIST
+        const finalUrl = queryString
+          ? `${API_ENDPOINTS.ROLES.LIST}?${queryString}`
+          : API_ENDPOINTS.ROLES.LIST
         console.log('🌐 [ROLES API] Final URL:', finalUrl)
         return finalUrl
       },
@@ -47,7 +52,10 @@ export const rolesApi = rootApi.injectEndpoints({
     }),
 
     // Récupérer tous les rôles (filtrés par organisation côté backend) - ANCIEN
-    getRoles: builder.query<Role[], { orgId?: string; templatesOnly?: boolean } | void>({
+    getRoles: builder.query<
+      Role[],
+      { orgId?: string; templatesOnly?: boolean } | void
+    >({
       query: (params) => {
         console.log('🔍 [ROLES API] Building query with params:', params)
         const queryParams = new URLSearchParams()
@@ -56,7 +64,9 @@ export const rolesApi = rootApi.injectEndpoints({
           if (params.templatesOnly) queryParams.append('templatesOnly', 'true')
         }
         const queryString = queryParams.toString()
-        const finalUrl = queryString ? `${API_ENDPOINTS.ROLES.LIST}?${queryString}` : API_ENDPOINTS.ROLES.LIST
+        const finalUrl = queryString
+          ? `${API_ENDPOINTS.ROLES.LIST}?${queryString}`
+          : API_ENDPOINTS.ROLES.LIST
         console.log('🌐 [ROLES API] Final URL:', finalUrl)
         return finalUrl
       },
@@ -80,7 +90,10 @@ export const rolesApi = rootApi.injectEndpoints({
     }),
 
     // Mettre à jour les permissions d'un rôle
-    updateRolePermissions: builder.mutation<Role, { roleId: string; permissionIds: string[] }>({
+    updateRolePermissions: builder.mutation<
+      Role,
+      { roleId: string; permissionIds: string[] }
+    >({
       query: ({ roleId, permissionIds }) => ({
         url: `${API_ENDPOINTS.ROLES.LIST}/${roleId}/permissions`,
         method: 'PATCH',
@@ -103,7 +116,7 @@ export const rolesApi = rootApi.injectEndpoints({
 })
 
 export const {
-  useGetRolesFilteredQuery,  // 🔥 NOUVEAU hook
+  useGetRolesFilteredQuery, // 🔥 NOUVEAU hook
   useGetRolesQuery,
   useGetRoleQuery,
   useUpdateRolePermissionsMutation,

@@ -25,7 +25,9 @@ export const ForbiddenPage: React.FC = () => {
 
           {/* Titre */}
           <div className="mb-3">
-            <p className="text-5xl font-bold text-gray-900 dark:text-white mb-2">403</p>
+            <p className="text-5xl font-bold text-gray-900 dark:text-white mb-2">
+              403
+            </p>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               {t('errors.forbidden')}
             </h1>
@@ -33,7 +35,8 @@ export const ForbiddenPage: React.FC = () => {
 
           {/* Message */}
           <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-            Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+            Vous n'avez pas les permissions nécessaires pour accéder à cette
+            page.
           </p>
 
           {/* Informations supplémentaires */}
@@ -45,7 +48,8 @@ export const ForbiddenPage: React.FC = () => {
                   Besoin d'accès ?
                 </p>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Contactez votre administrateur pour demander les permissions nécessaires.
+                  Contactez votre administrateur pour demander les permissions
+                  nécessaires.
                 </p>
               </div>
             </div>
@@ -61,7 +65,7 @@ export const ForbiddenPage: React.FC = () => {
               <Home className="h-4 w-4 mr-2" />
               Retour à l'accueil
             </Button>
-            
+
             <Button
               onClick={() => navigate(-1)}
               variant="secondary"
@@ -74,7 +78,8 @@ export const ForbiddenPage: React.FC = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le support.
+          Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le
+          support.
         </p>
       </div>
     </div>

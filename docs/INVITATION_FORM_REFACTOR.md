@@ -21,6 +21,7 @@ Lorsqu'un **SUPER_ADMIN** créait un utilisateur dans une autre organisation, il
 ### Workflow Redesigné pour SUPER_ADMIN
 
 #### Cas 1 : Création dans une organisation existante
+
 ```
 1. Saisir email
 2. 🔹 SÉLECTIONNER l'organisation (nouveau : requis en premier)
@@ -30,6 +31,7 @@ Lorsqu'un **SUPER_ADMIN** créait un utilisateur dans une autre organisation, il
 ```
 
 #### Cas 2 : Création d'une nouvelle organisation
+
 ```
 1. Saisir email
 2. 🔹 Cocher "Créer une nouvelle organisation"
@@ -40,6 +42,7 @@ Lorsqu'un **SUPER_ADMIN** créait un utilisateur dans une autre organisation, il
 ```
 
 #### Cas 3 : Admin normal (inchangé)
+
 ```
 1. Saisir email
 2. Choisir le rôle (automatiquement filtré à son org par le backend)
@@ -100,6 +103,7 @@ async findSystemTemplates() {
 ```
 
 **Endpoints disponibles** :
+
 - `GET /roles` → Rôles filtrés par org (admin normal)
 - `GET /roles?orgId=xxx-xxx-xxx` → Rôles d'une org spécifique (SUPER_ADMIN)
 - `GET /roles?templatesOnly=true` → Rôles templates système (SUPER_ADMIN + nouvelle org)
@@ -117,16 +121,19 @@ getRoles: builder.query<Role[], void>({
 })
 
 // ✅ APRÈS : Query avec paramètres optionnels
-getRoles: builder.query<Role[], { orgId?: string; templatesOnly?: boolean } | void>({
+getRoles: builder.query<
+  Role[],
+  { orgId?: string; templatesOnly?: boolean } | void
+>({
   query: (params) => {
-    if (!params) return '/roles';
-    
-    const queryParams = new URLSearchParams();
-    if (params.orgId) queryParams.append('orgId', params.orgId);
-    if (params.templatesOnly) queryParams.append('templatesOnly', 'true');
-    
-    const queryString = queryParams.toString();
-    return queryString ? `/roles?${queryString}` : '/roles';
+    if (!params) return '/roles'
+
+    const queryParams = new URLSearchParams()
+    if (params.orgId) queryParams.append('orgId', params.orgId)
+    if (params.templatesOnly) queryParams.append('templatesOnly', 'true')
+
+    const queryString = queryParams.toString()
+    return queryString ? `/roles?${queryString}` : '/roles'
   },
   providesTags: ['Role'],
 })
@@ -142,59 +149,61 @@ getRoles: builder.query<Role[], { orgId?: string; templatesOnly?: boolean } | vo
 
 ```typescript
 // 🔹 Track l'organisation sélectionnée pour SUPER_ADMIN
-const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null);
+const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
 
 // Initialisation pour admin normal (auto-select son org)
 useEffect(() => {
   if (!isSuperAdmin && currentOrgId) {
-    setSelectedOrgId(currentOrgId);
+    setSelectedOrgId(currentOrgId)
   }
-}, [isSuperAdmin, currentOrgId]);
+}, [isSuperAdmin, currentOrgId])
 ```
 
 #### Logique de query dynamique
 
 ```typescript
 // 🔹 Construction des paramètres selon le contexte
-const rolesQueryParams = isSuperAdmin && formData.createNewOrg
-  ? { templatesOnly: true }                    // Nouvelle org → templates
-  : isSuperAdmin && selectedOrgId
-  ? { orgId: selectedOrgId }                   // Org existante → rôles spécifiques
-  : undefined;                                 // Admin normal → backend par défaut
+const rolesQueryParams =
+  isSuperAdmin && formData.createNewOrg
+    ? { templatesOnly: true } // Nouvelle org → templates
+    : isSuperAdmin && selectedOrgId
+      ? { orgId: selectedOrgId } // Org existante → rôles spécifiques
+      : undefined // Admin normal → backend par défaut
 
 // 🔹 Skip la query si SUPER_ADMIN n'a pas encore choisi d'org
-const shouldSkipRolesQuery = isSuperAdmin 
-  ? (!formData.createNewOrg && !selectedOrgId)
-  : false;
+const shouldSkipRolesQuery = isSuperAdmin
+  ? !formData.createNewOrg && !selectedOrgId
+  : false
 
 const { data: roles, isLoading: isLoadingRoles } = useGetRolesQuery(
   rolesQueryParams,
   { skip: shouldSkipRolesQuery }
-);
+)
 ```
 
 #### Gestion du changement d'organisation
 
 ```typescript
 const handleInputChange = (field: string, value: unknown) => {
-  setFormData(prev => ({
+  setFormData((prev) => ({
     ...prev,
     [field]: value,
     // 🔹 Reset du roleId si l'org ou le mode change
     ...(field === 'orgId' && { roleId: '' }),
-    ...(field === 'createNewOrg' && { roleId: '' })
-  }));
+    ...(field === 'createNewOrg' && { roleId: '' }),
+  }))
 
   // 🔹 Mise à jour du selectedOrgId pour trigger la query
   if (field === 'orgId' && typeof value === 'string') {
-    setSelectedOrgId(value || null);
+    setSelectedOrgId(value || null)
   }
-};
+}
 ```
 
 #### Réorganisation de l'UI
 
 **Ordre AVANT (incorrect)** :
+
 ```
 1. Email
 2. Rôle ❌ (tous les rôles de toutes les orgs)
@@ -202,6 +211,7 @@ const handleInputChange = (field: string, value: unknown) => {
 ```
 
 **Ordre APRÈS (correct)** :
+
 ```
 1. Email
 2. 🔹 Organisation (obligatoire en premier pour SUPER_ADMIN)
@@ -241,21 +251,25 @@ const handleInputChange = (field: string, value: unknown) => {
 ### 3. Tooltip informatif pour nouvelle org
 
 ```tsx
-{formData.createNewOrg && (
-  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-    💡 Rôles par défaut (Admin, Manager, Partner, Viewer, Hôtesse) disponibles
-  </p>
-)}
+{
+  formData.createNewOrg && (
+    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+      💡 Rôles par défaut (Admin, Manager, Partner, Viewer, Hôtesse) disponibles
+    </p>
+  )
+}
 ```
 
 ### 4. Message si aucun rôle disponible
 
 ```tsx
-{!isLoadingRoles && !roles?.length && !rolesError && selectedOrgId && (
-  <option value="" disabled>
-    Aucun rôle disponible pour cette organisation
-  </option>
-)}
+{
+  !isLoadingRoles && !roles?.length && !rolesError && selectedOrgId && (
+    <option value="" disabled>
+      Aucun rôle disponible pour cette organisation
+    </option>
+  )
+}
 ```
 
 ---
@@ -265,6 +279,7 @@ const handleInputChange = (field: string, value: unknown) => {
 ### Scénarios à tester
 
 #### ✅ SUPER_ADMIN - Organisation existante
+
 1. Se connecter comme `john.doe@system.com` (SUPER_ADMIN)
 2. Aller sur `/invitations`
 3. Saisir un email
@@ -277,6 +292,7 @@ const handleInputChange = (field: string, value: unknown) => {
 10. **Vérifier** : Utilisateur créé avec le bon rôle et la bonne org
 
 #### ✅ SUPER_ADMIN - Nouvelle organisation
+
 1. Se connecter comme `john.doe@system.com`
 2. Aller sur `/invitations`
 3. Saisir un email
@@ -289,6 +305,7 @@ const handleInputChange = (field: string, value: unknown) => {
 10. **Vérifier** : Nouvelle org créée + utilisateur assigné
 
 #### ✅ ADMIN - Organisation propre (comportement inchangé)
+
 1. Se connecter comme admin Acme Corp
 2. Aller sur `/invitations`
 3. Saisir un email
@@ -301,12 +318,14 @@ const handleInputChange = (field: string, value: unknown) => {
 ## 📊 IMPACT
 
 ### Avant
+
 - ❌ SUPER_ADMIN voyait ~10-50 rôles mélangés
 - ❌ Pas de contexte organisationnel
 - ❌ Risque d'erreur d'attribution
 - ❌ UX confuse
 
 ### Après
+
 - ✅ SUPER_ADMIN voit 5-10 rôles max (filtrés)
 - ✅ Contexte clair (org sélectionnée = rôles de cette org)
 - ✅ Impossible d'assigner le mauvais rôle
@@ -317,11 +336,13 @@ const handleInputChange = (field: string, value: unknown) => {
 ## 🔐 SÉCURITÉ
 
 ### Isolation multi-tenant renforcée
+
 - Backend valide toujours `orgId` côté serveur
 - Frontend ne peut plus envoyer un `roleId` d'une autre org
 - Query params explicites (pas de comportement implicite)
 
 ### Audit trail
+
 - Logs backend : `orgId` + `roleId` explicites dans les requêtes
 - Traçabilité améliorée pour le debug
 
@@ -330,17 +351,21 @@ const handleInputChange = (field: string, value: unknown) => {
 ## 📝 NOTES TECHNIQUES
 
 ### Prisma Client Regeneration
+
 Après ajout de `findSystemTemplates()` :
+
 ```bash
 docker exec ems_api npx prisma generate
 docker restart ems_api
 ```
 
 ### RTK Query Cache
+
 - Le cache RTK Query se met à jour automatiquement quand `rolesQueryParams` change
 - `skip: true` évite les queries inutiles (ex: SUPER_ADMIN sans org sélectionnée)
 
 ### Dark Mode
+
 - Tous les nouveaux éléments UI supportent le dark mode
 - Classes `dark:` appliquées sur tous les composants
 

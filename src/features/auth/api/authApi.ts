@@ -1,6 +1,9 @@
 import { rootApi } from '@/services/rootApi'
 import { API_ENDPOINTS } from '@/app/config/constants'
-import { normalizeUserData, normalizeOrganizationData } from '@/shared/lib/user-utils'
+import {
+  normalizeUserData,
+  normalizeOrganizationData,
+} from '@/shared/lib/user-utils'
 import type { AppRule } from '@/shared/acl/app-ability'
 
 export interface LoginRequest {
@@ -20,8 +23,8 @@ export interface User {
   email: string
   firstName?: string
   lastName?: string
-  first_name?: string  // Support backend format
-  last_name?: string   // Support backend format
+  first_name?: string // Support backend format
+  last_name?: string // Support backend format
   phone?: string
   company?: string
   job_title?: string
@@ -30,7 +33,7 @@ export interface User {
   roles: string[]
   permissions?: string[] // JWT permissions in "code:scope" format
   orgId?: string
-  org_id?: string      // Support backend format
+  org_id?: string // Support backend format
   eventIds?: string[]
   isSuperAdmin?: boolean
   is_active?: boolean
@@ -78,7 +81,10 @@ export interface PolicyResponse {
 
 export const authApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    refresh: builder.mutation<{ access_token: string; expires_in: number }, void>({
+    refresh: builder.mutation<
+      { access_token: string; expires_in: number },
+      void
+    >({
       query: () => ({ url: API_ENDPOINTS.AUTH.REFRESH, method: 'POST' }),
     }),
     login: builder.mutation<LoginResponse, LoginRequest>({
@@ -93,22 +99,24 @@ export const authApi = rootApi.injectEndpoints({
           access_token: response.access_token,
           expires_in: response.expires_in || 900, // 15 minutes par défaut
           user: response.user ? normalizeUserData(response.user) : undefined,
-          organization: response.organization ? normalizeOrganizationData(response.organization) : undefined,
+          organization: response.organization
+            ? normalizeOrganizationData(response.organization)
+            : undefined,
         }
       },
       invalidatesTags: ['Auth'],
     }),
-    
+
     me: builder.query<UserProfileResponse, void>({
       query: () => API_ENDPOINTS.AUTH.ME,
       providesTags: ['Auth'],
     }),
-    
+
     getPolicy: builder.query<PolicyResponse, void>({
       query: () => API_ENDPOINTS.AUTH.POLICY,
       providesTags: ['Policy'],
     }),
-    
+
     logout: builder.mutation<{ ok: boolean }, void>({
       query: () => ({
         url: API_ENDPOINTS.AUTH.LOGOUT,

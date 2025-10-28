@@ -2,13 +2,13 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import { Search, Filter, X } from 'lucide-react'
-import { 
+import {
   selectAttendeesSearchQuery,
   selectAttendeesSelectedStatus,
   selectAttendeesSelectedTags,
   setSearchQuery,
   setSelectedStatus,
-  resetFilters
+  resetFilters,
 } from '../model/attendeesSlice'
 import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
@@ -22,12 +22,13 @@ const statusOptions = [
 export const AttendeeFilters: React.FC = () => {
   const { t } = useTranslation('attendees')
   const dispatch = useDispatch()
-  
+
   const searchQuery = useSelector(selectAttendeesSearchQuery)
   const selectedStatus = useSelector(selectAttendeesSelectedStatus)
   const selectedTags = useSelector(selectAttendeesSelectedTags)
 
-  const hasActiveFilters = searchQuery || selectedStatus || selectedTags.length > 0
+  const hasActiveFilters =
+    searchQuery || selectedStatus || selectedTags.length > 0
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setSearchQuery(e.target.value))
@@ -53,7 +54,7 @@ export const AttendeeFilters: React.FC = () => {
             leftIcon={<Search className="h-4 w-4" />}
           />
         </div>
-        
+
         <div className="w-48">
           <select
             value={selectedStatus || ''}
@@ -73,7 +74,7 @@ export const AttendeeFilters: React.FC = () => {
             <Filter className="h-4 w-4 mr-2" />
             Filtres
           </Button>
-          
+
           {hasActiveFilters && (
             <Button
               variant="ghost"

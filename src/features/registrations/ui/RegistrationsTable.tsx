@@ -1,14 +1,27 @@
 import React, { useState, useMemo } from 'react'
-import { Search, Filter, Download, CheckCircle, XCircle, Clock, Ban, Mail, Phone, Building2, Edit2, Trash2 } from 'lucide-react'
+import {
+  Search,
+  Filter,
+  Download,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Ban,
+  Mail,
+  Phone,
+  Building2,
+  Edit2,
+  Trash2,
+} from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button } from '@/shared/ui/Button'
 import { formatDateTime } from '@/shared/lib/utils'
-import { 
-  useUpdateRegistrationStatusMutation, 
-  useUpdateRegistrationMutation, 
+import {
+  useUpdateRegistrationStatusMutation,
+  useUpdateRegistrationMutation,
   useDeleteRegistrationMutation,
   useBulkDeleteRegistrationsMutation,
-  useBulkExportRegistrationsMutation
+  useBulkExportRegistrationsMutation,
 } from '../api/registrationsApi'
 import { useToast } from '@/shared/hooks/useToast'
 import { EditRegistrationModal } from './EditRegistrationModal'
@@ -24,36 +37,61 @@ interface RegistrationsTableProps {
 }
 
 const STATUS_CONFIG = {
-  awaiting: { label: 'En attente', icon: Clock, color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200' },
-  approved: { label: 'Approuvé', icon: CheckCircle, color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200' },
-  refused: { label: 'Refusé', icon: XCircle, color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200' },
-  cancelled: { label: 'Annulé', icon: Ban, color: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200' },
+  awaiting: {
+    label: 'En attente',
+    icon: Clock,
+    color:
+      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200',
+  },
+  approved: {
+    label: 'Approuvé',
+    icon: CheckCircle,
+    color:
+      'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200',
+  },
+  refused: {
+    label: 'Refusé',
+    icon: XCircle,
+    color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200',
+  },
+  cancelled: {
+    label: 'Annulé',
+    icon: Ban,
+    color: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+  },
 }
 
-export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({ 
-  registrations, 
+export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
+  registrations,
   isLoading,
   eventId,
-  onExport 
+  onExport,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [editingRegistration, setEditingRegistration] = useState<RegistrationDPO | null>(null)
-  const [deletingRegistration, setDeletingRegistration] = useState<RegistrationDPO | null>(null)
+  const [editingRegistration, setEditingRegistration] =
+    useState<RegistrationDPO | null>(null)
+  const [deletingRegistration, setDeletingRegistration] =
+    useState<RegistrationDPO | null>(null)
   const toast = useToast()
-  
+
   const [updateStatus] = useUpdateRegistrationStatusMutation()
-  const [updateRegistration, { isLoading: isUpdating }] = useUpdateRegistrationMutation()
+  const [updateRegistration, { isLoading: isUpdating }] =
+    useUpdateRegistrationMutation()
   const [deleteRegistration] = useDeleteRegistrationMutation()
   const [bulkDeleteRegistrations] = useBulkDeleteRegistrationsMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
 
-
-
-  const handleStatusChange = async (registrationId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    registrationId: string,
+    newStatus: string
+  ) => {
     try {
       await updateStatus({ id: registrationId, status: newStatus }).unwrap()
-      toast.success('Statut mis à jour', `L'inscription a été ${STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG].label.toLowerCase()}`)
+      toast.success(
+        'Statut mis à jour',
+        `L'inscription a été ${STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG].label.toLowerCase()}`
+      )
     } catch (error) {
       console.error('Error updating status:', error)
       toast.error('Erreur', 'Impossible de mettre à jour le statut')
@@ -62,45 +100,55 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
   const handleUpdate = async (data: any) => {
     if (!editingRegistration) return
-    
+
     try {
-      await updateRegistration({ 
-        id: editingRegistration.id, 
+      await updateRegistration({
+        id: editingRegistration.id,
         eventId,
-        data 
+        data,
       }).unwrap()
-      toast.success('Inscription mise à jour', 'Les informations ont été modifiées avec succès')
+      toast.success(
+        'Inscription mise à jour',
+        'Les informations ont été modifiées avec succès'
+      )
       setEditingRegistration(null)
     } catch (error) {
       console.error('Error updating registration:', error)
-      toast.error('Erreur', 'Impossible de mettre à jour l\'inscription')
+      toast.error('Erreur', "Impossible de mettre à jour l'inscription")
     }
   }
 
   const handleDelete = async () => {
     if (!deletingRegistration) return
-    
+
     try {
-      await deleteRegistration({ 
+      await deleteRegistration({
         id: deletingRegistration.id,
-        eventId 
+        eventId,
       }).unwrap()
-      toast.success('Inscription supprimée', 'L\'inscription a été supprimée avec succès')
+      toast.success(
+        'Inscription supprimée',
+        "L'inscription a été supprimée avec succès"
+      )
       setDeletingRegistration(null)
     } catch (error) {
       console.error('Error deleting registration:', error)
-      toast.error('Erreur', 'Impossible de supprimer l\'inscription')
+      toast.error('Erreur', "Impossible de supprimer l'inscription")
     }
   }
 
   // Filtrage
-  const filteredRegistrations = registrations.filter(reg => {
-    const matchesSearch = 
-      !searchQuery || 
-      reg.attendee?.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      reg.attendee?.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  const filteredRegistrations = registrations.filter((reg) => {
+    const matchesSearch =
+      !searchQuery ||
+      reg.attendee?.firstName
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      reg.attendee?.lastName
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       reg.attendee?.email.toLowerCase().includes(searchQuery.toLowerCase())
-    
+
     const matchesStatus = statusFilter === 'all' || reg.status === statusFilter
 
     return matchesSearch && matchesStatus
@@ -125,42 +173,46 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   // Bulk actions
   const bulkActions = useMemo(() => {
     const actions = []
-    
+
     // Default export action using API mutation
-    actions.push(createBulkActions.export(async (selectedIds) => {
-      try {
-        const response = await bulkExportRegistrations({ 
-          ids: Array.from(selectedIds),
-          format: 'csv' 
-        }).unwrap()
-        
-        // Download the file using the URL provided by the API
-        const a = document.createElement('a')
-        a.style.display = 'none'
-        a.href = response.downloadUrl
-        a.download = response.filename || 'inscriptions.csv'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        
-        unselectAll()
-      } catch (error) {
-        console.error('Erreur lors de l\'export:', error)
-        throw error
-      }
-    }))
-    
+    actions.push(
+      createBulkActions.export(async (selectedIds) => {
+        try {
+          const response = await bulkExportRegistrations({
+            ids: Array.from(selectedIds),
+            format: 'csv',
+          }).unwrap()
+
+          // Download the file using the URL provided by the API
+          const a = document.createElement('a')
+          a.style.display = 'none'
+          a.href = response.downloadUrl
+          a.download = response.filename || 'inscriptions.csv'
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+
+          unselectAll()
+        } catch (error) {
+          console.error("Erreur lors de l'export:", error)
+          throw error
+        }
+      })
+    )
+
     // Default delete action using API mutation
-    actions.push(createBulkActions.delete(async (selectedIds) => {
-      try {
-        await bulkDeleteRegistrations(Array.from(selectedIds)).unwrap()
-        unselectAll()
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error)
-        throw error
-      }
-    }))
-    
+    actions.push(
+      createBulkActions.delete(async (selectedIds) => {
+        try {
+          await bulkDeleteRegistrations(Array.from(selectedIds)).unwrap()
+          unselectAll()
+        } catch (error) {
+          console.error('Erreur lors de la suppression:', error)
+          throw error
+        }
+      })
+    )
+
     return actions
   }, [bulkDeleteRegistrations, bulkExportRegistrations, unselectAll])
 
@@ -168,7 +220,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     return (
       <div className="space-y-4">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className="animate-pulse bg-gray-200 dark:bg-gray-600 h-16 rounded-lg"></div>
+          <div
+            key={i}
+            className="animate-pulse bg-gray-200 dark:bg-gray-600 h-16 rounded-lg"
+          ></div>
         ))}
       </div>
     )
@@ -222,24 +277,32 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
           <div className="text-sm text-gray-600 dark:text-gray-300">Total</div>
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">{registrations.length}</div>
+          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            {registrations.length}
+          </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
-          <div className="text-sm text-gray-600 dark:text-gray-300">En attente</div>
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            En attente
+          </div>
           <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-            {registrations.filter(r => r.status === 'awaiting').length}
+            {registrations.filter((r) => r.status === 'awaiting').length}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
-          <div className="text-sm text-gray-600 dark:text-gray-300">Approuvés</div>
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            Approuvés
+          </div>
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {registrations.filter(r => r.status === 'approved').length}
+            {registrations.filter((r) => r.status === 'approved').length}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
-          <div className="text-sm text-gray-600 dark:text-gray-300">Refusés</div>
+          <div className="text-sm text-gray-600 dark:text-gray-300">
+            Refusés
+          </div>
           <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {registrations.filter(r => r.status === 'refused').length}
+            {registrations.filter((r) => r.status === 'refused').length}
           </div>
         </div>
       </div>
@@ -258,7 +321,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-200">
         {filteredRegistrations.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 dark:text-gray-400">Aucune inscription trouvée</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              Aucune inscription trouvée
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -298,12 +363,17 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredRegistrations.map((registration) => {
                   const StatusIcon = STATUS_CONFIG[registration.status].icon
-                  
+
                   return (
-                    <tr key={registration.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                      isSelected(registration.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-                    }`}>
-                      <td 
+                    <tr
+                      key={registration.id}
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+                        isSelected(registration.id)
+                          ? 'bg-blue-50 dark:bg-blue-900/20'
+                          : ''
+                      }`}
+                    >
+                      <td
                         className="px-6 py-4 whitespace-nowrap"
                         onClick={(e) => e.stopPropagation()}
                       >
@@ -319,7 +389,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {registration.attendee?.firstName} {registration.attendee?.lastName}
+                            {registration.attendee?.firstName}{' '}
+                            {registration.attendee?.lastName}
                           </div>
                           {registration.attendee?.company && (
                             <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">
@@ -344,7 +415,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_CONFIG[registration.status].color}`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_CONFIG[registration.status].color}`}
+                        >
                           <StatusIcon className="h-3 w-3 mr-1" />
                           {STATUS_CONFIG[registration.status].label}
                         </span>
@@ -357,7 +430,12 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                           {registration.status === 'awaiting' && (
                             <>
                               <button
-                                onClick={() => handleStatusChange(registration.id, 'approved')}
+                                onClick={() =>
+                                  handleStatusChange(
+                                    registration.id,
+                                    'approved'
+                                  )
+                                }
                                 disabled={isUpdating}
                                 className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200 disabled:opacity-50 transition-colors"
                                 title="Approuver"
@@ -365,7 +443,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                                 <CheckCircle className="h-5 w-5" />
                               </button>
                               <button
-                                onClick={() => handleStatusChange(registration.id, 'refused')}
+                                onClick={() =>
+                                  handleStatusChange(registration.id, 'refused')
+                                }
                                 disabled={isUpdating}
                                 className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 transition-colors"
                                 title="Refuser"
@@ -383,7 +463,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                             <Edit2 className="h-5 w-5" />
                           </button>
                           <button
-                            onClick={() => setDeletingRegistration(registration)}
+                            onClick={() =>
+                              setDeletingRegistration(registration)
+                            }
                             disabled={isUpdating}
                             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 transition-colors"
                             title="Supprimer"
@@ -404,7 +486,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       {/* Résultat du filtre */}
       {filteredRegistrations.length < registrations.length && (
         <div className="text-sm text-gray-500 dark:text-gray-400 text-center">
-          {filteredRegistrations.length} résultat{filteredRegistrations.length > 1 ? 's' : ''} sur {registrations.length} inscription{registrations.length > 1 ? 's' : ''}
+          {filteredRegistrations.length} résultat
+          {filteredRegistrations.length > 1 ? 's' : ''} sur{' '}
+          {registrations.length} inscription
+          {registrations.length > 1 ? 's' : ''}
         </div>
       )}
 

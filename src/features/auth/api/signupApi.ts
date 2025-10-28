@@ -1,21 +1,20 @@
 /**
  * 🔐 API RTK QUERY POUR LE SIGNUP SÉCURISÉ
- * 
+ *
  * Endpoints:
  * - validateToken: Valide un token d'invitation
  * - completeSignup: Complète l'inscription et active le compte
  */
 
 import { rootApi } from '@/services/rootApi'
-import type { 
-  TokenValidationResponse, 
-  CompleteSignupRequest, 
-  CompleteSignupResponse 
+import type {
+  TokenValidationResponse,
+  CompleteSignupRequest,
+  CompleteSignupResponse,
 } from '../types/signup.types'
 
 export const signupApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    
     // Valider un token d'invitation
     validateToken: builder.query<TokenValidationResponse, string>({
       query: (token) => ({
@@ -24,9 +23,12 @@ export const signupApi = rootApi.injectEndpoints({
       }),
       providesTags: ['Signup'],
     }),
-    
+
     // Compléter l'inscription
-    completeSignup: builder.mutation<CompleteSignupResponse, CompleteSignupRequest>({
+    completeSignup: builder.mutation<
+      CompleteSignupResponse,
+      CompleteSignupRequest
+    >({
       query: (data) => ({
         url: `/auth/signup/${data.token}`,
         method: 'POST',
@@ -39,12 +41,8 @@ export const signupApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: ['Signup'],
     }),
-    
   }),
   overrideExisting: false,
 })
 
-export const {
-  useValidateTokenQuery,
-  useCompleteSignupMutation,
-} = signupApi
+export const { useValidateTokenQuery, useCompleteSignupMutation } = signupApi

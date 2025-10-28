@@ -14,17 +14,19 @@ export function normalizeUserData(rawUser: any): User {
   return {
     id: rawUser.id,
     email: rawUser.email,
-    
+
     // Support des deux formats de noms
     firstName: rawUser.firstName || rawUser.first_name || '',
     lastName: rawUser.lastName || rawUser.last_name || '',
-    
-    // Support des deux formats d'orgId  
+
+    // Support des deux formats d'orgId
     orgId: rawUser.orgId || rawUser.org_id,
-    
+
     // Rôles (assurer que c'est un tableau)
-    roles: Array.isArray(rawUser.roles) ? rawUser.roles : [rawUser.role].filter(Boolean),
-    
+    roles: Array.isArray(rawUser.roles)
+      ? rawUser.roles
+      : [rawUser.role].filter(Boolean),
+
     // Champs optionnels
     eventIds: rawUser.eventIds || rawUser.event_ids || [],
     isSuperAdmin: rawUser.isSuperAdmin || rawUser.is_super_admin || false,
@@ -36,7 +38,7 @@ export function normalizeUserData(rawUser: any): User {
  */
 export function normalizeOrganizationData(rawOrg: any) {
   if (!rawOrg) return null
-  
+
   return {
     id: rawOrg.id,
     name: rawOrg.name,

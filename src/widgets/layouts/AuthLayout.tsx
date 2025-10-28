@@ -1,23 +1,28 @@
 import React, { useEffect } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { selectIsAuthenticated, selectIsBootstrapping } from '@/features/auth/model/sessionSlice'
+import {
+  selectIsAuthenticated,
+  selectIsBootstrapping,
+} from '@/features/auth/model/sessionSlice'
 
 export const AuthLayout: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const isAuthenticated = useSelector(selectIsAuthenticated)
   const isBootstrapping = useSelector(selectIsBootstrapping)
-  
+
   useEffect(() => {
     // Si l'utilisateur est déjà authentifié et que le bootstrap est terminé,
     // le rediriger vers le dashboard au lieu de rester sur la page de login
     if (isAuthenticated && !isBootstrapping) {
-      console.log('[AUTHLAYOUT] User already authenticated, redirecting to dashboard')
+      console.log(
+        '[AUTHLAYOUT] User already authenticated, redirecting to dashboard'
+      )
       navigate('/dashboard', { replace: true })
     }
   }, [isAuthenticated, isBootstrapping, navigate])
-  
+
   // Afficher un loader pendant le bootstrap pour éviter le flash de la page de login
   if (isBootstrapping) {
     return (

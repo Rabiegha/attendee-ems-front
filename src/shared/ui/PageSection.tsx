@@ -13,12 +13,12 @@ const spacingClasses = {
   sm: 'space-y-3 mb-6',
   md: 'space-y-4 mb-8',
   lg: 'space-y-6 mb-10',
-  xl: 'space-y-8 mb-12'
+  xl: 'space-y-8 mb-12',
 }
 
 /**
  * PageSection - Section de page standardisée
- * 
+ *
  * Usage:
  * ```tsx
  * <PageSection title="Informations" description="Détails de l'événement">
@@ -31,7 +31,7 @@ export const PageSection: React.FC<PageSectionProps> = ({
   title,
   description,
   className,
-  spacing = 'lg'
+  spacing = 'lg',
 }) => {
   return (
     <section className={cn(spacingClasses[spacing], className)}>

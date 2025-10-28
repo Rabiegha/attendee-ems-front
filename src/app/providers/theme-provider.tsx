@@ -44,7 +44,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
       root.classList.remove('light', 'dark')
 
       if (newTheme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)')
+          .matches
           ? 'dark'
           : 'light'
         root.classList.add(systemTheme)
@@ -63,16 +64,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     // Écouter les changements de préférence système si mode system
     if (theme === 'system') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      
+
       const handleChange = () => {
         applyTheme('system')
       }
 
       mediaQuery.addEventListener('change', handleChange)
-      
+
       return () => mediaQuery.removeEventListener('change', handleChange)
     }
-    
+
     // Pas de cleanup nécessaire pour les autres modes
     return undefined
   }, [theme])
@@ -81,9 +82,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     // Ajouter une transition fluide
     const root = document.documentElement
     root.style.transition = 'background-color 0.3s ease, color 0.3s ease'
-    
+
     setTheme(newTheme)
-    
+
     // Retirer la transition après l'animation
     setTimeout(() => {
       root.style.transition = ''
@@ -92,7 +93,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
 
   const getCurrentTheme = () => {
     if (theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light'
     }
     return theme
   }
@@ -105,9 +108,5 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     isSystem: theme === 'system',
   }
 
-  return (
-    <ThemeContext.Provider value={value}>
-      {children}
-    </ThemeContext.Provider>
-  )
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
 }

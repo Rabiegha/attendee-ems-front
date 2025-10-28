@@ -3,7 +3,17 @@
  * Ces champs sont mappés aux bonnes colonnes de la base de données
  */
 
-import { Mail, User, Phone, Building2, Briefcase, Globe, MessageSquare, List, Users } from 'lucide-react'
+import {
+  Mail,
+  User,
+  Phone,
+  Building2,
+  Briefcase,
+  Globe,
+  MessageSquare,
+  List,
+  Users,
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { FormFieldConfig } from '@/features/registrations/config/formFields.config'
 
@@ -62,7 +72,7 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
       message: 'Le nom doit contenir entre 2 et 50 caractères',
     },
   },
-  
+
   // ===== CATÉGORIE : CONTACT =====
   {
     id: 'email',
@@ -100,7 +110,7 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
     visibleInAttendeeTable: true,
     visibleInExport: true,
   },
-  
+
   // ===== CATÉGORIE : PROFESSIONNEL =====
   {
     id: 'company',
@@ -110,7 +120,7 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
     type: 'text',
     icon: Building2,
     category: 'professional',
-    description: 'Nom de l\'entreprise ou organisation',
+    description: "Nom de l'entreprise ou organisation",
     required: false,
     attendeeField: 'company',
     visibleInPublicForm: true,
@@ -150,7 +160,7 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
     visibleInAttendeeTable: true,
     visibleInExport: true,
   },
-  
+
   // ===== CATÉGORIE : ÉVÉNEMENT =====
   {
     id: 'attendee_type',
@@ -160,10 +170,11 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
     type: 'attendee_type',
     icon: Users,
     category: 'event',
-    description: 'Type de participant (Staff, Partenaire, Invité...) - Réservé aux administrateurs',
+    description:
+      'Type de participant (Staff, Partenaire, Invité...) - Réservé aux administrateurs',
     required: false,
     registrationField: 'eventAttendeeTypeId',
-    visibleInPublicForm: false,      // ❌ Jamais visible pour le public
+    visibleInPublicForm: false, // ❌ Jamais visible pour le public
     visibleInAdminForm: true,
     visibleInAttendeeTable: true,
     visibleInExport: true,
@@ -177,7 +188,7 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
     type: 'select',
     icon: Users,
     category: 'event',
-    description: 'Mode de participation à l\'événement',
+    description: "Mode de participation à l'événement",
     required: false,
     registrationField: 'attendanceType',
     visibleInPublicForm: true,
@@ -190,7 +201,7 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
       { value: 'hybrid', label: 'Hybride' },
     ],
   },
-  
+
   // ===== CATÉGORIE : PERSONNALISÉ =====
   {
     id: 'comment',
@@ -235,7 +246,7 @@ export const FIELD_CATEGORIES = [
   {
     id: 'event',
     label: 'Événement',
-    description: 'Champs spécifiques à l\'événement',
+    description: "Champs spécifiques à l'événement",
     icon: Users,
   },
   {
@@ -249,15 +260,17 @@ export const FIELD_CATEGORIES = [
 /**
  * Obtenir les champs par catégorie
  */
-export function getFieldsByCategory(category: string): PredefinedFieldTemplate[] {
-  return PREDEFINED_FIELDS.filter(field => field.category === category)
+export function getFieldsByCategory(
+  category: string
+): PredefinedFieldTemplate[] {
+  return PREDEFINED_FIELDS.filter((field) => field.category === category)
 }
 
 /**
  * Obtenir un champ par son ID
  */
 export function getFieldById(id: string): PredefinedFieldTemplate | undefined {
-  return PREDEFINED_FIELDS.find(field => field.id === id)
+  return PREDEFINED_FIELDS.find((field) => field.id === id)
 }
 
 /**
@@ -268,8 +281,13 @@ export function createCustomField(
   label: string,
   key?: string
 ): PredefinedFieldTemplate {
-  const generatedKey = key || label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
-  
+  const generatedKey =
+    key ||
+    label
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/[^a-z0-9_]/g, '')
+
   const baseField: Partial<PredefinedFieldTemplate> = {
     id: `custom_${Date.now()}`,
     key: generatedKey,
@@ -286,10 +304,10 @@ export function createCustomField(
     visibleInAttendeeTable: false,
     visibleInExport: true,
   }
-  
+
   if (type === 'select') {
     return { ...baseField, options: [] } as PredefinedFieldTemplate
   }
-  
+
   return baseField as PredefinedFieldTemplate
 }

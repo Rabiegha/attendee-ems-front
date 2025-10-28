@@ -18,11 +18,11 @@ export const RestoreAttendeeModal: React.FC<RestoreAttendeeModalProps> = ({
   isOpen,
   onClose,
   onRestore,
-  isLoading = false
+  isLoading = false,
 }) => {
   const handleRestore = async () => {
     if (!attendee) return
-    
+
     try {
       await onRestore(attendee.id)
       onClose()
@@ -34,8 +34,8 @@ export const RestoreAttendeeModal: React.FC<RestoreAttendeeModalProps> = ({
   if (!isOpen || !attendee) return null
 
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       onClose={onClose}
       maxWidth="md"
       showCloseButton={false}
@@ -50,11 +50,11 @@ export const RestoreAttendeeModal: React.FC<RestoreAttendeeModalProps> = ({
           <div className="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 mb-6">
             <RotateCcw className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
-          
+
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
             Restaurer le participant
           </h3>
-          
+
           <div className="text-gray-600 dark:text-gray-300 space-y-2">
             <p className="text-lg">
               <span className="font-semibold text-gray-900 dark:text-white">

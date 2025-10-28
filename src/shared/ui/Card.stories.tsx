@@ -1,7 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
-import { Button } from './Button';
-import { Badge } from 'lucide-react';
+import type { Meta, StoryObj } from '@storybook/react'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from './Card'
+import { Button } from './Button'
+import { Badge } from 'lucide-react'
 
 const meta = {
   title: 'Design System/Card',
@@ -24,10 +31,10 @@ const meta = {
       options: ['none', 'sm', 'md', 'lg', 'full'],
     },
   },
-} satisfies Meta<typeof Card>;
+} satisfies Meta<typeof Card>
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export default meta
+type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
@@ -52,7 +59,7 @@ export const Default: Story = {
       </CardFooter>
     </Card>
   ),
-};
+}
 
 export const Elevated: Story = {
   args: {
@@ -69,11 +76,13 @@ export const Elevated: Story = {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Idéale pour les éléments interactifs ou important à mettre en avant.</p>
+        <p>
+          Idéale pour les éléments interactifs ou important à mettre en avant.
+        </p>
       </CardContent>
     </Card>
   ),
-};
+}
 
 export const Outlined: Story = {
   args: {
@@ -90,11 +99,14 @@ export const Outlined: Story = {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Parfaite pour les contenus secondaires ou les zones de contenu spéciales.</p>
+        <p>
+          Parfaite pour les contenus secondaires ou les zones de contenu
+          spéciales.
+        </p>
       </CardContent>
     </Card>
   ),
-};
+}
 
 export const Ghost: Story = {
   args: {
@@ -111,11 +123,14 @@ export const Ghost: Story = {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Utilisée pour les éléments de support ou les informations contextuelles.</p>
+        <p>
+          Utilisée pour les éléments de support ou les informations
+          contextuelles.
+        </p>
       </CardContent>
     </Card>
   ),
-};
+}
 
 export const AllSizes: Story = {
   render: () => (
@@ -145,7 +160,7 @@ export const AllSizes: Story = {
       </div>
     </div>
   ),
-};
+}
 
 export const DarkMode: Story = {
   parameters: {
@@ -170,12 +185,12 @@ export const DarkMode: Story = {
       </Card>
     </div>
   ),
-};
+}
 
 export const InteractiveCard: Story = {
   render: () => (
-    <Card 
-      variant="elevated" 
+    <Card
+      variant="elevated"
       className="cursor-pointer hover:shadow-xl transition-shadow duration-200"
     >
       <CardHeader>
@@ -188,8 +203,10 @@ export const InteractiveCard: Story = {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p>Cette carte réagit au survol et au clic grâce aux classes Tailwind.</p>
+        <p>
+          Cette carte réagit au survol et au clic grâce aux classes Tailwind.
+        </p>
       </CardContent>
     </Card>
   ),
-};
+}

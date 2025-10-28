@@ -1,9 +1,12 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useGetAttendeeByIdQuery, useGetAttendeeHistoryQuery } from '@/features/attendees/api/attendeesApi'
+import {
+  useGetAttendeeByIdQuery,
+  useGetAttendeeHistoryQuery,
+} from '@/features/attendees/api/attendeesApi'
 import { useSelector } from 'react-redux'
 import { selectUser } from '@/features/auth/model/sessionSlice'
-import { 
+import {
   Button,
   PageContainer,
   PageHeader,
@@ -11,20 +14,20 @@ import {
   Card,
   CardContent,
   LoadingSpinner,
-  ActionGroup
+  ActionGroup,
 } from '@/shared/ui'
-import { 
-  ArrowLeft, 
-  User, 
-  Mail, 
-  Phone, 
-  Building2, 
-  Calendar, 
-  MapPin, 
-  Users, 
+import {
+  ArrowLeft,
+  User,
+  Mail,
+  Phone,
+  Building2,
+  Calendar,
+  MapPin,
+  Users,
   Clock,
   Activity,
-  BarChart3
+  BarChart3,
 } from 'lucide-react'
 import { formatDate } from '@/shared/lib/utils'
 
@@ -32,27 +35,27 @@ export const AttendeeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const user = useSelector(selectUser)
-  
+
   // Vérifier si l'utilisateur est SUPER_ADMIN
   const isSuperAdmin = user?.roles?.[0] === 'SUPER_ADMIN'
-  
+
   // Fonction pour naviguer vers un événement
   const handleEventClick = (eventId: string) => {
     navigate(`/events/${eventId}`)
   }
 
-  const { 
-    data: attendee, 
-    isLoading: attendeeLoading, 
-    error: attendeeError 
+  const {
+    data: attendee,
+    isLoading: attendeeLoading,
+    error: attendeeError,
   } = useGetAttendeeByIdQuery(id!, { skip: !id })
 
-  const { 
-    data: history = [], 
-    isLoading: historyLoading, 
-    error: historyError 
+  const {
+    data: history = [],
+    isLoading: historyLoading,
+    error: historyError,
   } = useGetAttendeeHistoryQuery(
-    { attendeeId: id!, email: attendee?.email || '' }, 
+    { attendeeId: id!, email: attendee?.email || '' },
     { skip: !id || !attendee?.email }
   )
 
@@ -85,8 +88,8 @@ export const AttendeeDetail: React.FC = () => {
             <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               Impossible de charger les détails du participant.
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => navigate('/attendees')}
               leftIcon={<ArrowLeft className="h-4 w-4" />}
             >
@@ -101,21 +104,27 @@ export const AttendeeDetail: React.FC = () => {
   // Calculer les statistiques à partir de l'historique
   const stats = {
     totalEvents: history.length,
-    completedEvents: history.filter(h => h.event.status === 'completed').length,
-    upcomingEvents: history.filter(h => h.event.status === 'active' || h.event.status === 'published').length,
-    lastParticipation: history.length > 0 && history[0]?.event?.startDate ? history[0].event.startDate : null
+    completedEvents: history.filter((h) => h.event.status === 'completed')
+      .length,
+    upcomingEvents: history.filter(
+      (h) => h.event.status === 'active' || h.event.status === 'published'
+    ).length,
+    lastParticipation:
+      history.length > 0 && history[0]?.event?.startDate
+        ? history[0].event.startDate
+        : null,
   }
 
   return (
     <PageContainer maxWidth="7xl" padding="lg">
-      <PageHeader 
+      <PageHeader
         title={`${attendee.displayName}`}
         description={`Profil détaillé et historique de participation`}
         icon={User}
         actions={
           <ActionGroup align="right" spacing="md">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               leftIcon={<ArrowLeft className="h-4 w-4" />}
               onClick={() => navigate('/attendees')}
             >
@@ -136,7 +145,9 @@ export const AttendeeDetail: React.FC = () => {
                   <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Email</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Email
+                  </h3>
                   <p className="text-body-sm text-gray-600 dark:text-gray-300 break-all">
                     {attendee.email}
                   </p>
@@ -153,7 +164,9 @@ export const AttendeeDetail: React.FC = () => {
                   <Building2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Entreprise</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Entreprise
+                  </h3>
                   <p className="text-body-sm text-gray-600 dark:text-gray-300">
                     {attendee.company || 'Non renseigné'}
                   </p>
@@ -170,7 +183,9 @@ export const AttendeeDetail: React.FC = () => {
                   <Phone className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Téléphone</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Téléphone
+                  </h3>
                   <p className="text-body-sm text-gray-600 dark:text-gray-300">
                     {attendee.phone || 'Non renseigné'}
                   </p>
@@ -187,7 +202,9 @@ export const AttendeeDetail: React.FC = () => {
                   <Calendar className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">Inscription</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Inscription
+                  </h3>
                   <p className="text-body-sm text-gray-600 dark:text-gray-300">
                     {formatDate(attendee.registrationDate)}
                   </p>
@@ -257,7 +274,9 @@ export const AttendeeDetail: React.FC = () => {
                     Dernière participation
                   </p>
                   <p className="text-sm font-medium text-gray-900 dark:text-white mt-2">
-                    {stats.lastParticipation ? formatDate(stats.lastParticipation) : 'Aucune'}
+                    {stats.lastParticipation
+                      ? formatDate(stats.lastParticipation)
+                      : 'Aucune'}
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-600 dark:text-orange-400" />
@@ -326,8 +345,8 @@ export const AttendeeDetail: React.FC = () => {
                   </thead>
                   <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {history.map((participation) => (
-                      <tr 
-                        key={`${participation.event.id}-${participation.id}`} 
+                      <tr
+                        key={`${participation.event.id}-${participation.id}`}
                         className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150"
                         onClick={() => handleEventClick(participation.event.id)}
                         title="Cliquer pour voir l'événement"
@@ -337,10 +356,11 @@ export const AttendeeDetail: React.FC = () => {
                             {participation.event.name}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {participation.event.description && participation.event.description.length > 50
+                            {participation.event.description &&
+                            participation.event.description.length > 50
                               ? `${participation.event.description.substring(0, 50)}...`
-                              : participation.event.description || 'Aucune description'
-                            }
+                              : participation.event.description ||
+                                'Aucune description'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
@@ -356,40 +376,48 @@ export const AttendeeDetail: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                             <div className="flex items-center">
                               <Building2 className="h-4 w-4 mr-1 text-gray-400" />
-                              {participation.event.organizationName || 'Organisation inconnue'}
+                              {participation.event.organizationName ||
+                                'Organisation inconnue'}
                             </div>
                           </td>
                         )}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            participation.event.status === 'completed' 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              : participation.event.status === 'active'
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                              : participation.event.status === 'published'
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-                          }`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              participation.event.status === 'completed'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : participation.event.status === 'active'
+                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                  : participation.event.status === 'published'
+                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                            }`}
+                          >
                             {participation.event.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            participation.status === 'confirmed' 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              : participation.status === 'pending'
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              : participation.status === 'checked_in'
-                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-                          }`}>
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              participation.status === 'confirmed'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : participation.status === 'pending'
+                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                  : participation.status === 'checked_in'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
+                            }`}
+                          >
                             {participation.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {participation.displayName !== attendee.displayName ? (
+                          {participation.displayName !==
+                          attendee.displayName ? (
                             <div className="space-y-1">
-                              <div className="font-medium">{participation.displayName}</div>
+                              <div className="font-medium">
+                                {participation.displayName}
+                              </div>
                               <div className="text-xs text-gray-500 dark:text-gray-400">
                                 (Différent du nom actuel)
                               </div>
@@ -417,11 +445,15 @@ export const AttendeeDetail: React.FC = () => {
                 {Object.entries(attendee.metadata).map(([key, value]) => (
                   <div key={key} className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300 capitalize">
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                      {key
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, (str) => str.toUpperCase())}
                     </label>
                     <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                       <p className="text-sm text-gray-900 dark:text-white">
-                        {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
+                        {typeof value === 'object'
+                          ? JSON.stringify(value, null, 2)
+                          : String(value)}
                       </p>
                     </div>
                   </div>

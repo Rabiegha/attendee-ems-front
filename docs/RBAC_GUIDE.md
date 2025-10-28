@@ -5,6 +5,7 @@
 EMS utilise un système RBAC (Role-Based Access Control) avancé basé sur **CASL** pour la gestion granulaire des permissions avec support multi-tenant.
 
 ### Architecture RBAC
+
 ```
 Utilisateur → Rôle → Permissions → Actions sur Ressources
     ↓         ↓         ↓              ↓
@@ -15,20 +16,26 @@ Utilisateur → Rôle → Permissions → Actions sur Ressources
 ## 👥 Rôles Hiérarchiques
 
 ### 🔴 SUPER_ADMIN
+
 **Accès**: Global omniscient
+
 ```typescript
 permissions: [
   { action: 'manage', subject: 'all' }, // Accès total système
 ]
 ```
+
 **Capacités**:
+
 - ✅ Accès à toutes les organisations
 - ✅ Gestion globale du système
 - ✅ Création/suppression organisations
 - ✅ Promotion/rétrogradation utilisateurs
 
 ### 🟠 ADMIN
+
 **Accès**: Gestion complète organisation
+
 ```typescript
 permissions: [
   { action: 'manage', subject: 'Organization', conditions: { id: orgId } },
@@ -38,7 +45,9 @@ permissions: [
   { action: 'manage', subject: 'Role', conditions: { orgId } },
 ]
 ```
+
 **Capacités**:
+
 - ✅ Gestion utilisateurs organisation
 - ✅ Création/modification événements
 - ✅ Envoi invitations
@@ -46,7 +55,9 @@ permissions: [
 - ✅ Configuration organisation
 
 ### 🟡 MANAGER
+
 **Accès**: Gestion événements
+
 ```typescript
 permissions: [
   { action: 'read', subject: 'Organization', conditions: { id: orgId } },
@@ -55,14 +66,18 @@ permissions: [
   { action: 'assign', subject: 'User', conditions: { orgId } },
 ]
 ```
+
 **Capacités**:
+
 - ✅ Création/modification événements
 - ✅ Gestion participants
 - ✅ Assignment partenaires aux événements
 - ❌ Création utilisateurs
 
 ### 🔵 VIEWER
+
 **Accès**: Lecture seule organisation
+
 ```typescript
 permissions: [
   { action: 'read', subject: 'Organization', conditions: { id: orgId } },
@@ -70,35 +85,57 @@ permissions: [
   { action: 'read', subject: 'Attendee', conditions: { orgId } },
 ]
 ```
+
 **Capacités**:
+
 - ✅ Consultation événements organisation
 - ✅ Consultation participants
 - ✅ Export données (lecture)
 - ❌ Modification/suppression
 
 ### 🟣 PARTNER
+
 **Accès**: Événements assignés uniquement
+
 ```typescript
 permissions: [
   { action: 'read', subject: 'Event', conditions: { id: assignedEventIds } },
-  { action: 'read', subject: 'Attendee', conditions: { eventId: assignedEventIds } },
+  {
+    action: 'read',
+    subject: 'Attendee',
+    conditions: { eventId: assignedEventIds },
+  },
 ]
 ```
+
 **Capacités**:
+
 - ✅ Consultation événements assignés
 - ✅ Consultation participants de ses événements
 - ❌ Accès autres événements organisation
 
 ### 🟢 HOSTESS
+
 **Accès**: Check-in et scan QR codes
+
 ```typescript
 permissions: [
   { action: 'read', subject: 'Event', conditions: { id: assignedEventIds } },
-  { action: 'checkin', subject: 'Attendee', conditions: { eventId: assignedEventIds } },
-  { action: 'scan', subject: 'QRCode', conditions: { eventId: assignedEventIds } },
+  {
+    action: 'checkin',
+    subject: 'Attendee',
+    conditions: { eventId: assignedEventIds },
+  },
+  {
+    action: 'scan',
+    subject: 'QRCode',
+    conditions: { eventId: assignedEventIds },
+  },
 ]
 ```
+
 **Capacités**:
+
 - ✅ Check-in participants
 - ✅ Scan QR codes entrée
 - ✅ Consultation liste participants
@@ -107,12 +144,15 @@ permissions: [
 ## 🔧 Implémentation Technique
 
 ### Configuration CASL Factory
+
 ```typescript
 // rbac/casl-ability.factory.ts
 @Injectable()
 export class CaslAbilityFactory {
   createForUser(user: UserWithPermissions): AppAbility {
-    const { can, cannot, build } = new AbilityBuilder<AppAbility>(createMongoAbility)
+    const { can, cannot, build } = new AbilityBuilder<AppAbility>(
+      createMongoAbility
+    )
 
     // Attribution permissions selon le rôle
     user.permissions.forEach((permission: string) => {
@@ -133,15 +173,29 @@ export class CaslAbilityFactory {
 ```
 
 ### Types TypeScript
+
 ```typescript
 // Types pour actions et sujets
-export type Action = 
-  | 'create' | 'read' | 'update' | 'delete' | 'manage'
-  | 'assign' | 'checkin' | 'scan' | 'export'
+export type Action =
+  | 'create'
+  | 'read'
+  | 'update'
+  | 'delete'
+  | 'manage'
+  | 'assign'
+  | 'checkin'
+  | 'scan'
+  | 'export'
 
-export type Subjects = 
-  | 'User' | 'Event' | 'Organization' | 'Attendee' 
-  | 'Role' | 'Permission' | 'Invitation' | 'QRCode'
+export type Subjects =
+  | 'User'
+  | 'Event'
+  | 'Organization'
+  | 'Attendee'
+  | 'Role'
+  | 'Permission'
+  | 'Invitation'
+  | 'QRCode'
   | 'all'
 
 export type AppAbility = Ability<[Action, Subjects]>
@@ -157,6 +211,7 @@ export interface PermissionConditions {
 ## 🎨 Utilisation dans les Composants
 
 ### Guards Déclaratifs
+
 ```tsx
 import { Can } from '@/shared/acl'
 
@@ -177,6 +232,7 @@ import { Can } from '@/shared/acl'
 ```
 
 ### Hooks Programmatiques
+
 ```tsx
 import { useCan } from '@/shared/acl'
 
@@ -196,6 +252,7 @@ const EventActions = ({ event }) => {
 ```
 
 ### Guards sur Routes
+
 ```tsx
 import { GuardedRoute } from '@/shared/acl/guards'
 
@@ -205,9 +262,9 @@ import { GuardedRoute } from '@/shared/acl/guards'
 </GuardedRoute>
 
 // Avec redirection personnalisée
-<GuardedRoute 
-  action="read" 
-  subject="Event" 
+<GuardedRoute
+  action="read"
+  subject="Event"
   fallback={<ForbiddenPage />}
 >
   <EventDetails />
@@ -217,35 +274,39 @@ import { GuardedRoute } from '@/shared/acl/guards'
 ## 🔍 Matrice de Permissions Détaillée
 
 ### Actions Utilisateurs
-| Action | SUPER_ADMIN | ADMIN | MANAGER | VIEWER | PARTNER | HOSTESS |
-|--------|-------------|--------|---------|---------|---------|---------|
-| **Création utilisateur** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Modification utilisateur** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Suppression utilisateur** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Consultation utilisateurs** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Assignment rôles** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+| Action                        | SUPER_ADMIN | ADMIN | MANAGER | VIEWER | PARTNER | HOSTESS |
+| ----------------------------- | ----------- | ----- | ------- | ------ | ------- | ------- |
+| **Création utilisateur**      | ✅          | ✅    | ❌      | ❌     | ❌      | ❌      |
+| **Modification utilisateur**  | ✅          | ✅    | ❌      | ❌     | ❌      | ❌      |
+| **Suppression utilisateur**   | ✅          | ✅    | ❌      | ❌     | ❌      | ❌      |
+| **Consultation utilisateurs** | ✅          | ✅    | ✅      | ✅     | ❌      | ❌      |
+| **Assignment rôles**          | ✅          | ✅    | ❌      | ❌     | ❌      | ❌      |
 
 ### Actions Événements
-| Action | SUPER_ADMIN | ADMIN | MANAGER | VIEWER | PARTNER | HOSTESS |
-|--------|-------------|--------|---------|---------|---------|---------|
-| **Création événement** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Modification événement** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Suppression événement** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Consultation tous événements** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Consultation événements assignés** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+| Action                               | SUPER_ADMIN | ADMIN | MANAGER | VIEWER | PARTNER | HOSTESS |
+| ------------------------------------ | ----------- | ----- | ------- | ------ | ------- | ------- |
+| **Création événement**               | ✅          | ✅    | ✅      | ❌     | ❌      | ❌      |
+| **Modification événement**           | ✅          | ✅    | ✅      | ❌     | ❌      | ❌      |
+| **Suppression événement**            | ✅          | ✅    | ✅      | ❌     | ❌      | ❌      |
+| **Consultation tous événements**     | ✅          | ✅    | ✅      | ✅     | ❌      | ❌      |
+| **Consultation événements assignés** | ✅          | ✅    | ✅      | ✅     | ✅      | ✅      |
 
 ### Actions Participants
-| Action | SUPER_ADMIN | ADMIN | MANAGER | VIEWER | PARTNER | HOSTESS |
-|--------|-------------|--------|---------|---------|---------|---------|
-| **Ajout participant** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Modification participant** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Check-in participant** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
-| **Export données** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| **Scan QR codes** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ |
+
+| Action                       | SUPER_ADMIN | ADMIN | MANAGER | VIEWER | PARTNER | HOSTESS |
+| ---------------------------- | ----------- | ----- | ------- | ------ | ------- | ------- |
+| **Ajout participant**        | ✅          | ✅    | ✅      | ❌     | ❌      | ❌      |
+| **Modification participant** | ✅          | ✅    | ✅      | ❌     | ❌      | ❌      |
+| **Check-in participant**     | ✅          | ✅    | ✅      | ❌     | ❌      | ✅      |
+| **Export données**           | ✅          | ✅    | ✅      | ✅     | ✅      | ❌      |
+| **Scan QR codes**            | ✅          | ✅    | ✅      | ❌     | ❌      | ✅      |
 
 ## 🛠️ Configuration Permissions Backend
 
 ### Modèle Base de Données
+
 ```sql
 -- Table des rôles
 CREATE TABLE roles (
@@ -272,6 +333,7 @@ CREATE TABLE role_permissions (
 ```
 
 ### Seeders Permissions
+
 ```typescript
 // Permissions par rôle
 const rolePermissions = {
@@ -279,19 +341,19 @@ const rolePermissions = {
     'organizations.manage',
     'users.manage',
     'events.manage',
-    'attendees.manage'
+    'attendees.manage',
   ],
   ADMIN: [
     'organizations.read:own',
     'users.manage:org',
     'events.manage:org',
-    'invitations.manage:org'
+    'invitations.manage:org',
   ],
   MANAGER: [
     'organizations.read:own',
     'events.manage:org',
     'attendees.manage:org',
-    'users.assign:org'
+    'users.assign:org',
   ],
   // ... autres rôles
 }
@@ -300,21 +362,23 @@ const rolePermissions = {
 ## 🎯 Cas d'Usage Avancés
 
 ### 1. Permissions Contextuelles
+
 ```tsx
 // Utilisateur peut modifier seulement ses propres événements
-<Can do="update" on="Event" data={{ createdBy: event.createdBy }}>
+;<Can do="update" on="Event" data={{ createdBy: event.createdBy }}>
   <EditButton />
 </Can>
 
 // Partner peut voir seulement événements assignés
 const EventList = () => {
   const events = useGetEventsQuery({
-    filters: user.role === 'PARTNER' ? { assignedTo: user.id } : {}
+    filters: user.role === 'PARTNER' ? { assignedTo: user.id } : {},
   })
 }
 ```
 
 ### 2. Permissions Dynamiques
+
 ```tsx
 // Permissions changent selon l'état de l'événement
 const getEventPermissions = (event: Event, user: User) => {
@@ -328,6 +392,7 @@ const getEventPermissions = (event: Event, user: User) => {
 ```
 
 ### 3. Permissions Temporaires
+
 ```typescript
 // Accès temporaire pour un événement spécifique
 interface TemporaryPermission {
@@ -344,6 +409,7 @@ const hasTemporaryAccess = checkTemporaryPermission(user.id, event.id, 'manage')
 ## 🔒 Sécurité et Validation
 
 ### Validation Côté Serveur
+
 ```typescript
 // Guard NestJS pour protection API
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -355,6 +421,7 @@ async createEvent(@Body() eventData: CreateEventDto) {
 ```
 
 ### Audit et Logging
+
 ```typescript
 // Audit trail des actions
 interface AuditLog {
@@ -377,6 +444,7 @@ async createUser(userData: CreateUserDto) {
 ## 🚀 Évolutions Futures
 
 ### Rôles Personnalisés
+
 ```typescript
 // Interface pour rôles créés par les ADMIN
 interface CustomRole {
@@ -398,6 +466,7 @@ const RoleManagementPage = () => (
 ```
 
 ### Permissions Granulaires
+
 ```typescript
 // Permissions sur champs spécifiques
 interface FieldPermission {
@@ -416,12 +485,14 @@ const permissions = {
 ## 📊 Monitoring et Métriques
 
 ### Tableau de Bord Permissions
+
 - Nombre d'utilisateurs par rôle
 - Actions les plus utilisées
 - Tentatives d'accès refusées
 - Permissions temporaires actives
 
 ### Alertes Sécurité
+
 - Tentatives d'escalade de privilèges
 - Accès inhabituels aux ressources
 - Modifications de permissions critiques

@@ -1,7 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
-import { selectIsAuthenticated, clearSession } from '@/features/auth/model/sessionSlice'
+import {
+  selectIsAuthenticated,
+  clearSession,
+} from '@/features/auth/model/sessionSlice'
 import { useDefaultRoute } from '@/shared/hooks/useDefaultRoute'
 
 /**
@@ -12,22 +15,24 @@ export const SmartRedirect: React.FC = () => {
   const navigate = useNavigate()
   const isAuthenticated = useSelector(selectIsAuthenticated)
   const defaultRoute = useDefaultRoute()
-  
+
   // Protection anti-boucle
   const redirectCountRef = useRef(0)
   const lastRedirectTimeRef = useRef(0)
-  
+
   useEffect(() => {
     const now = Date.now()
-    
+
     // Réinitialiser le compteur si plus de 2 secondes depuis la dernière redirection
     if (now - lastRedirectTimeRef.current > 2000) {
       redirectCountRef.current = 0
     }
-    
+
     // PROTECTION : Si plus de 3 redirections en 2 secondes depuis SmartRedirect
     if (redirectCountRef.current > 3) {
-      console.error('[SMARTREDIRECT] 🚨 REDIRECT LOOP DETECTED! Force logout...')
+      console.error(
+        '[SMARTREDIRECT] 🚨 REDIRECT LOOP DETECTED! Force logout...'
+      )
       dispatch(clearSession())
       try {
         localStorage.clear()
@@ -40,19 +45,22 @@ export const SmartRedirect: React.FC = () => {
       lastRedirectTimeRef.current = now + 3000
       return
     }
-    
+
     redirectCountRef.current++
     lastRedirectTimeRef.current = now
-    
+
     if (isAuthenticated) {
-      console.log('[SMARTREDIRECT] Authenticated, redirecting to:', defaultRoute)
+      console.log(
+        '[SMARTREDIRECT] Authenticated, redirecting to:',
+        defaultRoute
+      )
       navigate(defaultRoute, { replace: true })
     } else {
       console.log('[SMARTREDIRECT] Not authenticated, redirecting to login')
       navigate('/auth/login', { replace: true })
     }
   }, [isAuthenticated, defaultRoute, navigate, dispatch])
-  
+
   // Affichage de loading pendant la redirection
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">

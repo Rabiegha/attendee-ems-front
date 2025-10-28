@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Login Flow', () => {
-  test('should login successfully and navigate to dashboard', async ({ page }) => {
+  test('should login successfully and navigate to dashboard', async ({
+    page,
+  }) => {
     await page.goto('/')
 
     // Should redirect to login page
@@ -11,7 +13,7 @@ test.describe('Login Flow', () => {
     // Fill login form
     await page.fill('input[type="email"]', 'admin@example.com')
     await page.fill('input[type="password"]', 'password')
-    
+
     // Submit form
     await page.click('button[type="submit"]')
 
@@ -28,7 +30,7 @@ test.describe('Login Flow', () => {
 
     await page.fill('input[type="email"]', 'invalid@example.com')
     await page.fill('input[type="password"]', 'wrongpassword')
-    
+
     await page.click('button[type="submit"]')
 
     // Should show error message

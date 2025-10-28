@@ -19,13 +19,13 @@ export const DeleteAttendeeModal: React.FC<DeleteAttendeeModalProps> = ({
   isOpen,
   onClose,
   onDelete,
-  isLoading = false
+  isLoading = false,
 }) => {
   const toast = useToast()
 
   const handleDelete = async () => {
     if (!attendee) return
-    
+
     try {
       await onDelete(attendee.id)
       toast.success(
@@ -45,8 +45,8 @@ export const DeleteAttendeeModal: React.FC<DeleteAttendeeModalProps> = ({
   if (!isOpen || !attendee) return null
 
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       onClose={onClose}
       maxWidth="md"
       showCloseButton={false}
@@ -61,7 +61,9 @@ export const DeleteAttendeeModal: React.FC<DeleteAttendeeModalProps> = ({
           <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-500/25">
             <AlertTriangle className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-red-400 mb-2">Supprimer le participant</h2>
+          <h2 className="text-2xl font-bold text-red-400 mb-2">
+            Supprimer le participant
+          </h2>
           <p className="text-gray-400">Cette action peut être annulée</p>
         </div>
 
@@ -69,14 +71,18 @@ export const DeleteAttendeeModal: React.FC<DeleteAttendeeModalProps> = ({
         <div className="text-center mb-8">
           <p className="text-gray-300 mb-4">
             Êtes-vous sûr de vouloir supprimer{' '}
-            <span className="font-semibold text-white">{attendee.displayName}</span> ?
+            <span className="font-semibold text-white">
+              {attendee.displayName}
+            </span>{' '}
+            ?
           </p>
-          
+
           {/* Information moderne */}
           <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-6">
             <p className="text-sm text-gray-300">
-              <span className="font-medium text-orange-400">Info :</span> Le participant sera marqué comme inactif 
-              et pourra être restauré depuis l'onglet "Participants supprimés".
+              <span className="font-medium text-orange-400">Info :</span> Le
+              participant sera marqué comme inactif et pourra être restauré
+              depuis l'onglet "Participants supprimés".
             </p>
           </div>
         </div>

@@ -16,7 +16,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
   onClose,
   registration,
   onSave,
-  isLoading = false
+  isLoading = false,
 }) => {
   const [formData, setFormData] = useState({
     firstName: registration.attendee?.firstName || '',
@@ -40,17 +40,17 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const updateData: any = {
-      attendee: {}
+      attendee: {},
     }
-    
+
     if (formData.firstName) updateData.attendee.first_name = formData.firstName
     if (formData.lastName) updateData.attendee.last_name = formData.lastName
     if (formData.email) updateData.attendee.email = formData.email
     if (formData.phone) updateData.attendee.phone = formData.phone
     if (formData.company) updateData.attendee.company = formData.company
-    
+
     await onSave(updateData)
   }
 
@@ -70,7 +70,9 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
             <input
               type="text"
               value={formData.firstName}
-              onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, firstName: e.target.value })
+              }
               className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
             />
           </div>
@@ -81,7 +83,9 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
             <input
               type="text"
               value={formData.lastName}
-              onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, lastName: e.target.value })
+              }
               className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
             />
           </div>
@@ -95,7 +99,9 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
             type="email"
             required
             value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, email: e.target.value })
+            }
             className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
           />
         </div>
@@ -107,7 +113,9 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
           <input
             type="tel"
             value={formData.phone}
-            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, phone: e.target.value })
+            }
             className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
           />
         </div>
@@ -119,7 +127,9 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
           <input
             type="text"
             value={formData.company}
-            onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, company: e.target.value })
+            }
             className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
           />
         </div>
@@ -133,10 +143,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
           >
             Annuler
           </Button>
-          <Button
-            type="submit"
-            disabled={isLoading}
-          >
+          <Button type="submit" disabled={isLoading}>
             {isLoading ? 'Enregistrement...' : 'Enregistrer'}
           </Button>
         </div>

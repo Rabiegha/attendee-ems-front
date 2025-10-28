@@ -9,23 +9,22 @@ import { useChangePasswordMutation } from '@/features/users/api/usersApi'
 import { useToast } from '@/shared/ui/useToast'
 
 // 📝 Schéma de validation
-const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, 'Mot de passe actuel requis'),
-  newPassword: z
-    .string()
-    .min(8, 'Le nouveau mot de passe doit contenir au moins 8 caractères')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-      'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial'
-    ),
-  confirmPassword: z.string().min(1, 'Confirmez votre nouveau mot de passe'),
-}).refine(
-  (data) => data.newPassword === data.confirmPassword,
-  {
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Mot de passe actuel requis'),
+    newPassword: z
+      .string()
+      .min(8, 'Le nouveau mot de passe doit contenir au moins 8 caractères')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+        'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial'
+      ),
+    confirmPassword: z.string().min(1, 'Confirmez votre nouveau mot de passe'),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
     message: 'Les mots de passe ne correspondent pas',
     path: ['confirmPassword'],
-  }
-)
+  })
 
 type ChangePasswordFormData = z.infer<typeof changePasswordSchema>
 
@@ -42,7 +41,7 @@ export function ChangePasswordPage() {
     register,
     handleSubmit,
     watch,
-    formState: { errors }
+    formState: { errors },
   } = useForm<ChangePasswordFormData>({
     resolver: zodResolver(changePasswordSchema),
   })
@@ -68,18 +67,26 @@ export function ChangePasswordPage() {
       }).unwrap()
 
       setIsSuccess(true)
-      success('Mot de passe mis à jour !', 'Vous allez être redirigé vers le tableau de bord.')
+      success(
+        'Mot de passe mis à jour !',
+        'Vous allez être redirigé vers le tableau de bord.'
+      )
 
       // Redirection après 2 secondes
       setTimeout(() => {
         window.location.href = '/dashboard'
       }, 2000)
-      
     } catch (error: any) {
       if (error?.status === 401) {
-        showError('Mot de passe incorrect', 'Le mot de passe actuel que vous avez saisi est incorrect.')
+        showError(
+          'Mot de passe incorrect',
+          'Le mot de passe actuel que vous avez saisi est incorrect.'
+        )
       } else {
-        showError('Erreur', 'Impossible de mettre à jour le mot de passe. Veuillez réessayer.')
+        showError(
+          'Erreur',
+          'Impossible de mettre à jour le mot de passe. Veuillez réessayer.'
+        )
       }
     }
   }
@@ -118,7 +125,8 @@ export function ChangePasswordPage() {
               Changement de mot de passe requis
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Pour des raisons de sécurité, vous devez changer votre mot de passe temporaire.
+              Pour des raisons de sécurité, vous devez changer votre mot de
+              passe temporaire.
             </p>
           </div>
 
@@ -126,7 +134,10 @@ export function ChangePasswordPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Mot de passe actuel */}
             <div>
-              <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              <label
+                htmlFor="currentPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
+              >
                 Mot de passe actuel
               </label>
               <div className="relative">
@@ -139,10 +150,16 @@ export function ChangePasswordPage() {
                   rightIcon={
                     <button
                       type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      {showCurrentPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      {showCurrentPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
                     </button>
                   }
                 />
@@ -151,7 +168,10 @@ export function ChangePasswordPage() {
 
             {/* Nouveau mot de passe */}
             <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
+              >
                 Nouveau mot de passe
               </label>
               <div className="relative">
@@ -167,7 +187,11 @@ export function ChangePasswordPage() {
                       onClick={() => setShowNewPassword(!showNewPassword)}
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      {showNewPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
                     </button>
                   }
                 />
@@ -185,7 +209,8 @@ export function ChangePasswordPage() {
                       'Une majuscule': passwordValidation.uppercase,
                       'Une minuscule': passwordValidation.lowercase,
                       'Un chiffre': passwordValidation.number,
-                      'Un caractère spécial (@$!%*?&)': passwordValidation.special,
+                      'Un caractère spécial (@$!%*?&)':
+                        passwordValidation.special,
                     }).map(([rule, valid]) => (
                       <div key={rule} className="flex items-center gap-2">
                         {valid ? (
@@ -193,11 +218,13 @@ export function ChangePasswordPage() {
                         ) : (
                           <AlertCircle className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                         )}
-                        <span className={`text-sm ${
-                          valid 
-                            ? 'text-green-600 dark:text-green-400' 
-                            : 'text-gray-600 dark:text-gray-300'
-                        }`}>
+                        <span
+                          className={`text-sm ${
+                            valid
+                              ? 'text-green-600 dark:text-green-400'
+                              : 'text-gray-600 dark:text-gray-300'
+                          }`}
+                        >
                           {rule}
                         </span>
                       </div>
@@ -209,7 +236,10 @@ export function ChangePasswordPage() {
 
             {/* Confirmation nouveau mot de passe */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
+              >
                 Confirmer le nouveau mot de passe
               </label>
               <div className="relative">
@@ -222,10 +252,16 @@ export function ChangePasswordPage() {
                   rightIcon={
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     >
-                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
                     </button>
                   }
                 />
@@ -239,14 +275,17 @@ export function ChangePasswordPage() {
               loading={isLoading}
               disabled={isLoading || !isPasswordValid}
             >
-              {isLoading ? 'Mise à jour en cours...' : 'Mettre à jour le mot de passe'}
+              {isLoading
+                ? 'Mise à jour en cours...'
+                : 'Mettre à jour le mot de passe'}
             </Button>
           </form>
 
           {/* 💡 Info de sécurité */}
           <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg transition-colors duration-200">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              💡 Conseil : Utilisez un gestionnaire de mots de passe pour créer et stocker un mot de passe fort et unique.
+              💡 Conseil : Utilisez un gestionnaire de mots de passe pour créer
+              et stocker un mot de passe fort et unique.
             </p>
           </div>
         </div>

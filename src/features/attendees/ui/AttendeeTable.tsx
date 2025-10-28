@@ -6,7 +6,14 @@ import { formatDate } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/Button'
 import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
 import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
-import { useBulkDeleteAttendeesMutation, useBulkExportAttendeesMutation, useUpdateAttendeeMutation, useDeleteAttendeeMutation, useRestoreAttendeeMutation, usePermanentDeleteAttendeeMutation } from '../api/attendeesApi'
+import {
+  useBulkDeleteAttendeesMutation,
+  useBulkExportAttendeesMutation,
+  useUpdateAttendeeMutation,
+  useDeleteAttendeeMutation,
+  useRestoreAttendeeMutation,
+  usePermanentDeleteAttendeeMutation,
+} from '../api/attendeesApi'
 import { EditAttendeeModal } from './EditAttendeeModal'
 import { DeleteAttendeeModal } from './DeleteAttendeeModal'
 import { RestoreAttendeeModal } from './RestoreAttendeeModal'
@@ -16,16 +23,22 @@ interface AttendeeTableProps {
   attendees: AttendeeDPO[]
   isLoading: boolean
   isDeletedTab?: boolean // Indique si on est dans l'onglet des supprimés
-  onBulkDelete?: (selectedIds: Set<string>, selectedItems: AttendeeDPO[]) => Promise<void>
-  onBulkExport?: (selectedIds: Set<string>, selectedItems: AttendeeDPO[]) => Promise<void>
+  onBulkDelete?: (
+    selectedIds: Set<string>,
+    selectedItems: AttendeeDPO[]
+  ) => Promise<void>
+  onBulkExport?: (
+    selectedIds: Set<string>,
+    selectedItems: AttendeeDPO[]
+  ) => Promise<void>
 }
 
-export const AttendeeTable: React.FC<AttendeeTableProps> = ({ 
-  attendees, 
-  isLoading, 
+export const AttendeeTable: React.FC<AttendeeTableProps> = ({
+  attendees,
+  isLoading,
   isDeletedTab = false,
   onBulkDelete,
-  onBulkExport 
+  onBulkExport,
 }) => {
   // const { t } = useTranslation('attendees')
   const navigate = useNavigate()
@@ -33,7 +46,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   // Bulk mutations
   const [bulkDeleteAttendees] = useBulkDeleteAttendeesMutation()
   const [bulkExportAttendees] = useBulkExportAttendeesMutation()
-  
+
   // Individual mutations
   const [updateAttendee] = useUpdateAttendeeMutation()
   const [deleteAttendee] = useDeleteAttendeeMutation()
@@ -41,10 +54,16 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   const [permanentDeleteAttendee] = usePermanentDeleteAttendeeMutation()
 
   // Modal states
-  const [editingAttendee, setEditingAttendee] = useState<AttendeeDPO | null>(null)
-  const [deletingAttendee, setDeletingAttendee] = useState<AttendeeDPO | null>(null)
-  const [restoringAttendee, setRestoringAttendee] = useState<AttendeeDPO | null>(null)
-  const [permanentDeletingAttendee, setPermanentDeletingAttendee] = useState<AttendeeDPO | null>(null)
+  const [editingAttendee, setEditingAttendee] = useState<AttendeeDPO | null>(
+    null
+  )
+  const [deletingAttendee, setDeletingAttendee] = useState<AttendeeDPO | null>(
+    null
+  )
+  const [restoringAttendee, setRestoringAttendee] =
+    useState<AttendeeDPO | null>(null)
+  const [permanentDeletingAttendee, setPermanentDeletingAttendee] =
+    useState<AttendeeDPO | null>(null)
 
   // Multi-select logic
   const {
@@ -56,16 +75,18 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
     toggleAll,
     unselectAll,
     selectedCount,
-    selectedItems
+    selectedItems,
   } = useMultiSelect({
     items: attendees,
-    getItemId: (attendee) => attendee.id
+    getItemId: (attendee) => attendee.id,
   })
 
   const handleRowClick = (attendee: AttendeeDPO, e: React.MouseEvent) => {
     // Don't navigate if clicking on checkbox or action buttons
-    if ((e.target as HTMLElement).closest('input[type="checkbox"]') || 
-        (e.target as HTMLElement).closest('button')) {
+    if (
+      (e.target as HTMLElement).closest('input[type="checkbox"]') ||
+      (e.target as HTMLElement).closest('button')
+    ) {
       return
     }
     // Navigate to attendee detail page when clicking on row
@@ -82,12 +103,12 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
 
   const handleSaveAttendee = async (data: any) => {
     if (!editingAttendee) return
-    
+
     await updateAttendee({
       id: editingAttendee.id,
-      data
+      data,
     }).unwrap()
-    
+
     setEditingAttendee(null)
   }
 
@@ -118,53 +139,63 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   // Bulk actions
   const bulkActions = useMemo(() => {
     const actions = []
-    
+
     // Default export action using API mutation
-    actions.push(createBulkActions.export(async (selectedIds) => {
-      try {
-        const response = await bulkExportAttendees({ 
-          ids: Array.from(selectedIds),
-          format: 'csv' 
-        }).unwrap()
-        
-        // Download the file using the URL provided by the API
-        const a = document.createElement('a')
-        a.style.display = 'none'
-        a.href = response.downloadUrl
-        a.download = response.filename || 'attendees.csv'
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        
-        unselectAll()
-      } catch (error) {
-        console.error('Erreur lors de l\'export:', error)
-        throw error
-      }
-    }))
-    
+    actions.push(
+      createBulkActions.export(async (selectedIds) => {
+        try {
+          const response = await bulkExportAttendees({
+            ids: Array.from(selectedIds),
+            format: 'csv',
+          }).unwrap()
+
+          // Download the file using the URL provided by the API
+          const a = document.createElement('a')
+          a.style.display = 'none'
+          a.href = response.downloadUrl
+          a.download = response.filename || 'attendees.csv'
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+
+          unselectAll()
+        } catch (error) {
+          console.error("Erreur lors de l'export:", error)
+          throw error
+        }
+      })
+    )
+
     // Default delete action using API mutation
-    actions.push(createBulkActions.delete(async (selectedIds) => {
-      try {
-        await bulkDeleteAttendees(Array.from(selectedIds)).unwrap()
-        unselectAll()
-      } catch (error) {
-        console.error('Erreur lors de la suppression:', error)
-        throw error
-      }
-    }))
-    
+    actions.push(
+      createBulkActions.delete(async (selectedIds) => {
+        try {
+          await bulkDeleteAttendees(Array.from(selectedIds)).unwrap()
+          unselectAll()
+        } catch (error) {
+          console.error('Erreur lors de la suppression:', error)
+          throw error
+        }
+      })
+    )
+
     // Add custom actions if provided
     if (onBulkExport) {
       actions.push(createBulkActions.export(onBulkExport))
     }
-    
+
     if (onBulkDelete) {
       actions.push(createBulkActions.delete(onBulkDelete))
     }
-    
+
     return actions
-  }, [onBulkDelete, onBulkExport, bulkDeleteAttendees, bulkExportAttendees, unselectAll])
+  }, [
+    onBulkDelete,
+    onBulkExport,
+    bulkDeleteAttendees,
+    bulkExportAttendees,
+    unselectAll,
+  ])
 
   if (isLoading) {
     return (
@@ -223,129 +254,135 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Participant
               </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              Contact
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              Entreprise
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              Inscription
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors duration-200">
-          {attendees.map((attendee) => (
-            <tr 
-              key={attendee.id} 
-              className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer ${
-                isSelected(attendee.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-              }`}
-              onClick={(e) => handleRowClick(attendee, e)}
-            >
-              <td 
-                className="px-6 py-4 whitespace-nowrap"
-                onClick={(e) => e.stopPropagation()}
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Contact
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Entreprise
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Inscription
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors duration-200">
+            {attendees.map((attendee) => (
+              <tr
+                key={attendee.id}
+                className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer ${
+                  isSelected(attendee.id)
+                    ? 'bg-blue-50 dark:bg-blue-900/20'
+                    : ''
+                }`}
+                onClick={(e) => handleRowClick(attendee, e)}
               >
-                <label className="flex items-center justify-center w-full h-full cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={isSelected(attendee.id)}
-                    onChange={() => toggleItem(attendee.id)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                </label>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {attendee.displayName}
-                    </div>
-                    {attendee.jobTitle && (
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {attendee.jobTitle}
+                <td
+                  className="px-6 py-4 whitespace-nowrap"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <label className="flex items-center justify-center w-full h-full cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={isSelected(attendee.id)}
+                      onChange={() => toggleItem(attendee.id)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                  </label>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {attendee.displayName}
                       </div>
+                      {attendee.jobTitle && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {attendee.jobTitle}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900 dark:text-white">
+                    {attendee.email}
+                  </div>
+                  {attendee.phone && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {attendee.phone}
+                    </div>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                  {attendee.company || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  {formatDate(attendee.registrationDate)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div className="flex items-center justify-end space-x-2">
+                    {isDeletedTab ? (
+                      // Actions pour les attendees supprimés
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRestoreAttendee(attendee)
+                          }}
+                          title="Restaurer"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handlePermanentDeleteAttendee(attendee)
+                          }}
+                          title="Supprimer définitivement"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      // Actions pour les attendees actifs
+                      <>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEditAttendee(attendee)
+                          }}
+                          title="Modifier"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteAttendee(attendee)
+                          }}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                   </div>
-                </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900 dark:text-white">{attendee.email}</div>
-                {attendee.phone && (
-                  <div className="text-sm text-gray-500 dark:text-gray-400">{attendee.phone}</div>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                {attendee.company || '-'}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {formatDate(attendee.registrationDate)}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="flex items-center justify-end space-x-2">
-                  {isDeletedTab ? (
-                    // Actions pour les attendees supprimés
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleRestoreAttendee(attendee)
-                        }}
-                        title="Restaurer"
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handlePermanentDeleteAttendee(attendee)
-                        }}
-                        title="Supprimer définitivement"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    // Actions pour les attendees actifs
-                    <>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEditAttendee(attendee)
-                        }}
-                        title="Modifier"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteAttendee(attendee)
-                        }}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Modals */}

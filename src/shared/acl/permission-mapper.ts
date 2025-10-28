@@ -15,29 +15,35 @@ import type { AppRule, Actions, Subjects } from './app-ability'
 export function mapPermissionsToCASlRules(
   permissions: string[],
   userId: string,
-  orgId: string,
+  orgId: string
 ): AppRule[] {
   const rules: AppRule[] = []
 
-  permissions.forEach(permission => {
+  permissions.forEach((permission) => {
     // Parse permission format: "resource.action:scope"
     const parts = permission.split(':')
     if (parts.length !== 2) {
-      console.warn(`[PermissionMapper] Invalid permission format: ${permission}`)
+      console.warn(
+        `[PermissionMapper] Invalid permission format: ${permission}`
+      )
       return
     }
 
     const [codeWithAction, scope] = parts
-    
+
     if (!codeWithAction || !scope) {
-      console.warn(`[PermissionMapper] Invalid permission format: ${permission}`)
+      console.warn(
+        `[PermissionMapper] Invalid permission format: ${permission}`
+      )
       return
     }
-    
+
     const [resource, action] = codeWithAction.split('.')
 
     if (!resource || !action) {
-      console.warn(`[PermissionMapper] Invalid permission code: ${codeWithAction}`)
+      console.warn(
+        `[PermissionMapper] Invalid permission code: ${codeWithAction}`
+      )
       return
     }
 
@@ -101,7 +107,7 @@ export function mapPermissionsToCASlRules(
 
     // Build conditions based on scope
     let conditions: any = {}
-    
+
     switch (scope) {
       case 'own':
         // Access limited to user's own resources
@@ -130,7 +136,7 @@ export function mapPermissionsToCASlRules(
     }
 
     // Create rules for each action
-    caslActions.forEach(caslAction => {
+    caslActions.forEach((caslAction) => {
       const rule: AppRule = {
         action: caslAction as Actions,
         subject: subject as Subjects,

@@ -16,7 +16,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   onClose,
   onConfirm,
   isLoading = false,
-  attendeeName
+  attendeeName,
 }) => {
   return (
     <Modal
@@ -29,11 +29,11 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-500/10 mb-4">
           <AlertTriangle className="h-8 w-8 text-red-500" />
         </div>
-        
+
         <h3 className="text-xl font-semibold text-white mb-2">
           Supprimer l'inscription
         </h3>
-        
+
         <p className="text-gray-400 mb-6">
           Êtes-vous sûr de vouloir supprimer l'inscription de{' '}
           <span className="font-medium text-white">{attendeeName}</span> ?
@@ -42,11 +42,7 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         </p>
 
         <div className="flex justify-center space-x-3">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Annuler
           </Button>
           <Button

@@ -16,10 +16,10 @@ interface PageHeaderProps {
 
 /**
  * PageHeader - En-tête de page standardisé
- * 
+ *
  * Usage:
  * ```tsx
- * <PageHeader 
+ * <PageHeader
  *   title="Gestion des événements"
  *   description="Créez et gérez vos événements"
  *   icon={Calendar}
@@ -33,21 +33,25 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   icon: Icon,
   actions,
   badge,
-  className
+  className,
 }) => {
   const badgeColors = {
-    purple: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+    purple:
+      'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
     blue: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
     green: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
     red: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    yellow: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+    yellow:
+      'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   }
 
   return (
-    <div className={cn(
-      'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 mb-6 border-b border-gray-200 dark:border-gray-700',
-      className
-    )}>
+    <div
+      className={cn(
+        'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 mb-6 border-b border-gray-200 dark:border-gray-700',
+        className
+      )}
+    >
       <div className="flex items-start gap-3">
         {Icon && (
           <div className="flex-shrink-0 mt-1">
@@ -60,10 +64,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               {title}
             </h1>
             {badge && (
-              <span className={cn(
-                'px-3 py-1 text-xs font-medium rounded-full',
-                badgeColors[badge.variant || 'blue']
-              )}>
+              <span
+                className={cn(
+                  'px-3 py-1 text-xs font-medium rounded-full',
+                  badgeColors[badge.variant || 'blue']
+                )}
+              >
                 {badge.text}
               </span>
             )}
@@ -75,12 +81,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           )}
         </div>
       </div>
-      
-      {actions && (
-        <div className="flex items-center gap-3">
-          {actions}
-        </div>
-      )}
+
+      {actions && <div className="flex items-center gap-3">{actions}</div>}
     </div>
   )
 }

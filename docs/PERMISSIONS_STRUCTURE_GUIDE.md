@@ -19,50 +19,53 @@ src/shared/acl/
 
 ```typescript
 // ✅ Actions possibles - Verbes d'action
-export type Actions = 
-  | 'create'      // Créer une ressource
-  | 'read'        // Lire/voir une ressource  
-  | 'update'      // Modifier une ressource
-  | 'delete'      // Supprimer une ressource
-  | 'manage'      // Tous droits sur une ressource (create+read+update+delete)
-  | 'assign'      // Assigner des ressources (users, roles)
-  | 'view-all'    // Voir toutes les ressources vs seulement les siennes
-  | 'export'      // Exporter des données
-  | 'scan'        // Scanner des QR codes (HOTESSE)
-  | 'checkin'     // Faire le check-in des participants
+export type Actions =
+  | 'create' // Créer une ressource
+  | 'read' // Lire/voir une ressource
+  | 'update' // Modifier une ressource
+  | 'delete' // Supprimer une ressource
+  | 'manage' // Tous droits sur une ressource (create+read+update+delete)
+  | 'assign' // Assigner des ressources (users, roles)
+  | 'view-all' // Voir toutes les ressources vs seulement les siennes
+  | 'export' // Exporter des données
+  | 'scan' // Scanner des QR codes (HOTESSE)
+  | 'checkin' // Faire le check-in des participants
 
 // ✅ Sujets/Ressources - Noms des entités
 export type Subjects =
-  | 'Event'           // Événements
-  | 'User'            // Utilisateurs
-  | 'Attendee'        // Participants
-  | 'Organization'    // Organisations
-  | 'Role'            // Rôles (pour gestion future)
-  | 'Permission'      // Permissions (pour gestion future)
-  | 'Invitation'      // Invitations
-  | 'all'            // Toutes ressources (pour SUPER_ADMIN)
+  | 'Event' // Événements
+  | 'User' // Utilisateurs
+  | 'Attendee' // Participants
+  | 'Organization' // Organisations
+  | 'Role' // Rôles (pour gestion future)
+  | 'Permission' // Permissions (pour gestion future)
+  | 'Invitation' // Invitations
+  | 'all' // Toutes ressources (pour SUPER_ADMIN)
 
 // ✅ Type principal CASL
-export type AppAbility = PureAbility<[Actions, Subjects | InferSubjects<any>], MongoQuery>
+export type AppAbility = PureAbility<
+  [Actions, Subjects | InferSubjects<any>],
+  MongoQuery
+>
 ```
 
 ### 🎨 Convention de Nommage
 
 ```typescript
 // ✅ BONNE pratique - Actions génériques et réutilisables
-'create' | 'read' | 'update' | 'delete' | 'manage'
+;'create' | 'read' | 'update' | 'delete' | 'manage'
 
-// ✅ BONNE pratique - Actions spécialisées courtes  
-'assign' | 'scan' | 'checkin' | 'export' | 'view-all'
+// ✅ BONNE pratique - Actions spécialisées courtes
+;'assign' | 'scan' | 'checkin' | 'export' | 'view-all'
 
 // ❌ MAUVAISE pratique - Actions trop spécifiques
 'create-event-for-organization' | 'update-user-profile-only'
 
 // ✅ BONNE pratique - Sujets au singulier et clairs
-'Event' | 'User' | 'Organization' | 'Role'
+;'Event' | 'User' | 'Organization' | 'Role'
 
 // ❌ MAUVAISE pratique - Sujets flous ou pluriels
-'Events' | 'Data' | 'AdminStuff' | 'Things'
+;'Events' | 'Data' | 'AdminStuff' | 'Things'
 ```
 
 ## 🛠️ 2. Définir les Règles de Permissions (rbac-presets.ts)
@@ -72,7 +75,6 @@ export type AppAbility = PureAbility<[Actions, Subjects | InferSubjects<any>], M
 ```typescript
 // ✅ Structure des permissions par rôle
 export const rolePermissions: Record<Role, Permission[]> = {
-  
   // 👑 SUPER_ADMIN - Accès total sans restrictions d'organisation
   SUPER_ADMIN: [
     { action: 'manage', subject: 'all' }, // Tous droits sur tout
@@ -81,61 +83,165 @@ export const rolePermissions: Record<Role, Permission[]> = {
   // 🏢 ADMIN - Gestion complète de son organisation
   ADMIN: [
     // Gestion organisation
-    { action: 'manage', subject: 'Organization', conditions: { id: '${user.orgId}' } },
-    
+    {
+      action: 'manage',
+      subject: 'Organization',
+      conditions: { id: '${user.orgId}' },
+    },
+
     // Gestion événements
-    { action: 'manage', subject: 'Event', conditions: { orgId: '${user.orgId}' } },
-    { action: 'view-all', subject: 'Event', conditions: { orgId: '${user.orgId}' } },
-    
+    {
+      action: 'manage',
+      subject: 'Event',
+      conditions: { orgId: '${user.orgId}' },
+    },
+    {
+      action: 'view-all',
+      subject: 'Event',
+      conditions: { orgId: '${user.orgId}' },
+    },
+
     // Gestion utilisateurs
-    { action: 'create', subject: 'User', conditions: { orgId: '${user.orgId}' } },
-    { action: 'assign', subject: 'User', conditions: { orgId: '${user.orgId}' } },
-    { action: 'manage', subject: 'Invitation', conditions: { orgId: '${user.orgId}' } },
-    
+    {
+      action: 'create',
+      subject: 'User',
+      conditions: { orgId: '${user.orgId}' },
+    },
+    {
+      action: 'assign',
+      subject: 'User',
+      conditions: { orgId: '${user.orgId}' },
+    },
+    {
+      action: 'manage',
+      subject: 'Invitation',
+      conditions: { orgId: '${user.orgId}' },
+    },
+
     // Gestion rôles et permissions (FUTUR)
-    { action: 'create', subject: 'Role', conditions: { orgId: '${user.orgId}' } },
-    { action: 'manage', subject: 'Permission', conditions: { orgId: '${user.orgId}' } },
-    
+    {
+      action: 'create',
+      subject: 'Role',
+      conditions: { orgId: '${user.orgId}' },
+    },
+    {
+      action: 'manage',
+      subject: 'Permission',
+      conditions: { orgId: '${user.orgId}' },
+    },
+
     // Participants
-    { action: 'manage', subject: 'Attendee', conditions: { 'event.orgId': '${user.orgId}' } },
-    { action: 'export', subject: 'Attendee', conditions: { 'event.orgId': '${user.orgId}' } },
+    {
+      action: 'manage',
+      subject: 'Attendee',
+      conditions: { 'event.orgId': '${user.orgId}' },
+    },
+    {
+      action: 'export',
+      subject: 'Attendee',
+      conditions: { 'event.orgId': '${user.orgId}' },
+    },
   ],
 
   // 📋 MANAGER - Gestion des événements assignés
   MANAGER: [
     // Événements assignés
-    { action: 'read', subject: 'Event', conditions: { assignedManagers: { $in: ['${user.id}'] } } },
-    { action: 'update', subject: 'Event', conditions: { assignedManagers: { $in: ['${user.id}'] } } },
-    { action: 'view-all', subject: 'Event', conditions: { orgId: '${user.orgId}' } },
-    
+    {
+      action: 'read',
+      subject: 'Event',
+      conditions: { assignedManagers: { $in: ['${user.id}'] } },
+    },
+    {
+      action: 'update',
+      subject: 'Event',
+      conditions: { assignedManagers: { $in: ['${user.id}'] } },
+    },
+    {
+      action: 'view-all',
+      subject: 'Event',
+      conditions: { orgId: '${user.orgId}' },
+    },
+
     // Participants des événements assignés
-    { action: 'manage', subject: 'Attendee', conditions: { 'event.assignedManagers': { $in: ['${user.id}'] } } },
-    { action: 'checkin', subject: 'Attendee', conditions: { 'event.assignedManagers': { $in: ['${user.id}'] } } },
-    { action: 'export', subject: 'Attendee', conditions: { 'event.assignedManagers': { $in: ['${user.id}'] } } },
-    
+    {
+      action: 'manage',
+      subject: 'Attendee',
+      conditions: { 'event.assignedManagers': { $in: ['${user.id}'] } },
+    },
+    {
+      action: 'checkin',
+      subject: 'Attendee',
+      conditions: { 'event.assignedManagers': { $in: ['${user.id}'] } },
+    },
+    {
+      action: 'export',
+      subject: 'Attendee',
+      conditions: { 'event.assignedManagers': { $in: ['${user.id}'] } },
+    },
+
     // Assignment de partenaires
-    { action: 'assign', subject: 'User', conditions: { role: 'PARTNER', orgId: '${user.orgId}' } },
+    {
+      action: 'assign',
+      subject: 'User',
+      conditions: { role: 'PARTNER', orgId: '${user.orgId}' },
+    },
   ],
 
   // 👁️ VIEWER - Lecture seule
   VIEWER: [
-    { action: 'read', subject: 'Event', conditions: { orgId: '${user.orgId}' } },
-    { action: 'read', subject: 'Attendee', conditions: { 'event.orgId': '${user.orgId}' } },
-    { action: 'read', subject: 'Organization', conditions: { id: '${user.orgId}' } },
+    {
+      action: 'read',
+      subject: 'Event',
+      conditions: { orgId: '${user.orgId}' },
+    },
+    {
+      action: 'read',
+      subject: 'Attendee',
+      conditions: { 'event.orgId': '${user.orgId}' },
+    },
+    {
+      action: 'read',
+      subject: 'Organization',
+      conditions: { id: '${user.orgId}' },
+    },
   ],
 
   // 🤝 PARTNER - Événements assignés en lecture + check-in
   PARTNER: [
-    { action: 'read', subject: 'Event', conditions: { assignedPartners: { $in: ['${user.id}'] } } },
-    { action: 'read', subject: 'Attendee', conditions: { 'event.assignedPartners': { $in: ['${user.id}'] } } },
-    { action: 'checkin', subject: 'Attendee', conditions: { 'event.assignedPartners': { $in: ['${user.id}'] } } },
+    {
+      action: 'read',
+      subject: 'Event',
+      conditions: { assignedPartners: { $in: ['${user.id}'] } },
+    },
+    {
+      action: 'read',
+      subject: 'Attendee',
+      conditions: { 'event.assignedPartners': { $in: ['${user.id}'] } },
+    },
+    {
+      action: 'checkin',
+      subject: 'Attendee',
+      conditions: { 'event.assignedPartners': { $in: ['${user.id}'] } },
+    },
   ],
 
   // 📱 HOTESSE - Scanner QR codes
   HOTESSE: [
-    { action: 'scan', subject: 'Attendee', conditions: { 'event.orgId': '${user.orgId}' } },
-    { action: 'checkin', subject: 'Attendee', conditions: { 'event.orgId': '${user.orgId}' } },
-    { action: 'read', subject: 'Event', conditions: { orgId: '${user.orgId}' } },
+    {
+      action: 'scan',
+      subject: 'Attendee',
+      conditions: { 'event.orgId': '${user.orgId}' },
+    },
+    {
+      action: 'checkin',
+      subject: 'Attendee',
+      conditions: { 'event.orgId': '${user.orgId}' },
+    },
+    {
+      action: 'read',
+      subject: 'Event',
+      conditions: { orgId: '${user.orgId}' },
+    },
   ],
 }
 ```
@@ -181,22 +287,18 @@ export const EventsPage = () => {
       </Can>
 
       {/* Liste des événements */}
-      {events.map(event => (
+      {events.map((event) => (
         <div key={event.id}>
           <h3>{event.name}</h3>
-          
+
           {/* Actions par événement - avec contexte */}
           <div className="actions">
             <Can do="update" on="Event" data={event}>
-              <Button onClick={() => handleEdit(event)}>
-                Modifier
-              </Button>
+              <Button onClick={() => handleEdit(event)}>Modifier</Button>
             </Can>
-            
+
             <Can do="delete" on="Event" data={event}>
-              <Button onClick={() => handleDelete(event)}>
-                Supprimer  
-              </Button>
+              <Button onClick={() => handleDelete(event)}>Supprimer</Button>
             </Can>
           </div>
         </div>
@@ -216,10 +318,10 @@ export const InviteUserModal = () => {
   const canAssignRoles = useCan('assign', 'User')
 
   // ✅ Filtrage des rôles disponibles selon permissions
-  const availableRoles = allRoles.filter(role => {
-    if (role === 'SUPER_ADMIN') return false           // Jamais disponible
+  const availableRoles = allRoles.filter((role) => {
+    if (role === 'SUPER_ADMIN') return false // Jamais disponible
     if (role === 'ADMIN' && !canInviteAdmins) return false // Seulement si manage org
-    if (!canCreateUsers) return false                  // Besoin create user
+    if (!canCreateUsers) return false // Besoin create user
     return true
   })
 
@@ -229,12 +331,12 @@ export const InviteUserModal = () => {
       toast.error("Vous n'avez pas la permission de créer des utilisateurs")
       return
     }
-    
+
     if (data.role === 'ADMIN' && !canInviteAdmins) {
       toast.error("Vous ne pouvez pas inviter d'administrateurs")
-      return  
+      return
     }
-    
+
     // Continuer...
   }
 
@@ -242,11 +344,9 @@ export const InviteUserModal = () => {
   return (
     <Modal>
       <Can do="create" on="User">
-        <form onSubmit={handleSubmit}>
-          {/* Formulaire */}
-        </form>
+        <form onSubmit={handleSubmit}>{/* Formulaire */}</form>
       </Can>
-      
+
       <Can not do="create" on="User">
         <div>Vous n'avez pas la permission de créer des utilisateurs</div>
       </Can>
@@ -260,7 +360,7 @@ export const InviteUserModal = () => {
 ```tsx
 export const DashboardPage = () => {
   const canViewOrganization = useCan('read', 'Organization')
-  const canViewAllEvents = useCan('view-all', 'Event') 
+  const canViewAllEvents = useCan('view-all', 'Event')
   const canManageUsers = useCan('manage', 'User')
 
   // ✅ Redirection si pas de permissions de base
@@ -298,23 +398,23 @@ export const DashboardPage = () => {
 ```typescript
 // Dans rbac-presets.ts - Permissions pour ADMIN
 {
-  action: 'create', 
-  subject: 'Role', 
+  action: 'create',
+  subject: 'Role',
   conditions: { orgId: '${user.orgId}' }
 },
 {
-  action: 'update', 
-  subject: 'Role', 
+  action: 'update',
+  subject: 'Role',
   conditions: { orgId: '${user.orgId}', isSystemRole: false } // Pas les rôles système
 },
 {
-  action: 'delete', 
-  subject: 'Role', 
+  action: 'delete',
+  subject: 'Role',
   conditions: { orgId: '${user.orgId}', isSystemRole: false }
 },
 {
-  action: 'manage', 
-  subject: 'Permission', 
+  action: 'manage',
+  subject: 'Permission',
   conditions: { orgId: '${user.orgId}' }
 }
 ```
@@ -326,27 +426,21 @@ export const RoleManagementPage = () => {
     <Can do="manage" on="Role">
       <div>
         <h1>Gestion des Rôles</h1>
-        
+
         <Can do="create" on="Role">
-          <Button onClick={handleCreateRole}>
-            Créer un rôle personnalisé
-          </Button>
+          <Button onClick={handleCreateRole}>Créer un rôle personnalisé</Button>
         </Can>
-        
-        {customRoles.map(role => (
+
+        {customRoles.map((role) => (
           <div key={role.id}>
             <h3>{role.name}</h3>
-            
+
             <Can do="update" on="Role" data={role}>
-              <Button onClick={() => handleEdit(role)}>
-                Modifier
-              </Button>
+              <Button onClick={() => handleEdit(role)}>Modifier</Button>
             </Can>
-            
+
             <Can do="delete" on="Role" data={role}>
-              <Button onClick={() => handleDelete(role)}>
-                Supprimer
-              </Button>
+              <Button onClick={() => handleDelete(role)}>Supprimer</Button>
             </Can>
           </div>
         ))}
@@ -381,7 +475,7 @@ useCan('manage', 'Organization')           // Sans objet pour général
 ### ❌ DON'T - À Éviter
 
 ```tsx
-// ❌ Vérifications de rôles directes  
+// ❌ Vérifications de rôles directes
 {user.role === 'ADMIN' && <AdminPanel />}
 
 // ❌ Permissions trop spécifiques
@@ -396,19 +490,19 @@ useCan('read', 'Event', { orgId: 'org-123' })      // Pas flexible
 
 ## 📊 6. Récapitulatif par Fichier
 
-| Fichier | Responsabilité | Exemple |
-|---------|---------------|---------|
-| `app-ability.ts` | **Types CASL** | `Actions`, `Subjects`, `AppAbility` |
-| `rbac-presets.ts` | **Règles métier** | `rolePermissions[ADMIN] = [...]` |
-| `Can.tsx` | **Guard UI** | `<Can do="create" on="Event">` |
-| `useCan.ts` | **Hook logique** | `useCan('update', 'Event', event)` |
+| Fichier               | Responsabilité      | Exemple                             |
+| --------------------- | ------------------- | ----------------------------------- |
+| `app-ability.ts`      | **Types CASL**      | `Actions`, `Subjects`, `AppAbility` |
+| `rbac-presets.ts`     | **Règles métier**   | `rolePermissions[ADMIN] = [...]`    |
+| `Can.tsx`             | **Guard UI**        | `<Can do="create" on="Event">`      |
+| `useCan.ts`           | **Hook logique**    | `useCan('update', 'Event', event)`  |
 | `AbilityProvider.tsx` | **Contexte global** | Fournit les permissions au contexte |
-| Pages/Composants | **Utilisation** | Guards et hooks selon besoins |
+| Pages/Composants      | **Utilisation**     | Guards et hooks selon besoins       |
 
 ## 🎯 Résumé : Où Mettre Quoi ?
 
 1. **Types de permissions** → `app-ability.ts`
-2. **Règles par rôle** → `rbac-presets.ts`  
+2. **Règles par rôle** → `rbac-presets.ts`
 3. **Guards dans l'UI** → `<Can do="..." on="...">` dans les composants
 4. **Logique conditionnelle** → `useCan(...)` dans les hooks/fonctions
 5. **Pages futures admin** → Nouveaux composants avec guards appropriés

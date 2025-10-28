@@ -1,6 +1,6 @@
 /**
  * Utilitaires de récupération en cas d'état d'authentification corrompu
- * 
+ *
  * Ces fonctions sont utilisées pour nettoyer complètement l'état de l'application
  * en cas de boucle de redirection ou d'état incohérent.
  */
@@ -14,7 +14,7 @@
  */
 export function forceAuthCleanup(): void {
   console.warn('[AUTH RECOVERY] 🧹 Force cleaning all auth state...')
-  
+
   // 1. Nettoyer localStorage
   try {
     const keysToRemove = []
@@ -22,14 +22,14 @@ export function forceAuthCleanup(): void {
       const key = localStorage.key(i)
       if (key) keysToRemove.push(key)
     }
-    keysToRemove.forEach(key => {
+    keysToRemove.forEach((key) => {
       console.log(`[AUTH RECOVERY] Removing localStorage key: ${key}`)
       localStorage.removeItem(key)
     })
   } catch (e) {
     console.error('[AUTH RECOVERY] Failed to clear localStorage:', e)
   }
-  
+
   // 2. Nettoyer sessionStorage
   try {
     sessionStorage.clear()
@@ -37,19 +37,19 @@ export function forceAuthCleanup(): void {
   } catch (e) {
     console.error('[AUTH RECOVERY] Failed to clear sessionStorage:', e)
   }
-  
+
   // 3. Tenter de nettoyer les cookies côté client (limité, les HttpOnly ne sont pas accessibles)
   try {
-    document.cookie.split(";").forEach(c => {
+    document.cookie.split(';').forEach((c) => {
       document.cookie = c
-        .replace(/^ +/, "")
-        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/")
+        .replace(/^ +/, '')
+        .replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/')
     })
     console.log('[AUTH RECOVERY] Client-side cookies cleared')
   } catch (e) {
     console.error('[AUTH RECOVERY] Failed to clear cookies:', e)
   }
-  
+
   console.warn('[AUTH RECOVERY] ✅ Cleanup complete. Reloading page...')
 }
 
@@ -61,27 +61,29 @@ export function detectRedirectLoop(): boolean {
   const LOOP_DETECTION_KEY = '__ems_redirect_log'
   const MAX_REDIRECTS = 10
   const TIME_WINDOW = 5000 // 5 secondes
-  
+
   try {
     const now = Date.now()
     const logStr = sessionStorage.getItem(LOOP_DETECTION_KEY)
     const log: number[] = logStr ? JSON.parse(logStr) : []
-    
+
     // Ajouter le timestamp actuel
     log.push(now)
-    
+
     // Garder seulement les redirections dans la fenêtre de temps
-    const recentRedirects = log.filter(t => now - t < TIME_WINDOW)
-    
+    const recentRedirects = log.filter((t) => now - t < TIME_WINDOW)
+
     // Sauvegarder le log mis à jour
     sessionStorage.setItem(LOOP_DETECTION_KEY, JSON.stringify(recentRedirects))
-    
+
     // Détecter la boucle
     if (recentRedirects.length > MAX_REDIRECTS) {
-      console.error(`[AUTH RECOVERY] 🚨 Redirect loop detected: ${recentRedirects.length} redirects in ${TIME_WINDOW}ms`)
+      console.error(
+        `[AUTH RECOVERY] 🚨 Redirect loop detected: ${recentRedirects.length} redirects in ${TIME_WINDOW}ms`
+      )
       return true
     }
-    
+
     return false
   } catch (e) {
     console.error('[AUTH RECOVERY] Failed to detect redirect loop:', e)

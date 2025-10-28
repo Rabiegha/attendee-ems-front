@@ -94,8 +94,8 @@ export const RequiredSection: Story = {
 export const MultiSectionForm: Story = {
   render: () => (
     <form className="space-y-8">
-      <FormSection 
-        title="Informations de base" 
+      <FormSection
+        title="Informations de base"
         description="Informations principales de l'événement"
         required
       >
@@ -111,10 +111,7 @@ export const MultiSectionForm: Story = {
         </FormField>
       </FormSection>
 
-      <FormSection 
-        title="Description" 
-        description="Décrivez votre événement"
-      >
+      <FormSection title="Description" description="Décrivez votre événement">
         <FormField label="Description courte">
           <Input placeholder="Une ligne de description" />
         </FormField>
@@ -123,9 +120,7 @@ export const MultiSectionForm: Story = {
         </FormField>
       </FormSection>
 
-      <FormSection 
-        title="Paramètres avancés"
-      >
+      <FormSection title="Paramètres avancés">
         <FormField label="Capacité maximale">
           <Input type="number" placeholder="100" />
         </FormField>

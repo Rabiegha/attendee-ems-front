@@ -15,9 +15,7 @@ const I18nFallback: React.FC = () => (
 export const I18nProvider: React.FC<I18nProviderProps> = ({ children }) => {
   return (
     <I18nextProvider i18n={i18n}>
-      <Suspense fallback={<I18nFallback />}>
-        {children}
-      </Suspense>
+      <Suspense fallback={<I18nFallback />}>{children}</Suspense>
     </I18nextProvider>
   )
 }

@@ -9,12 +9,16 @@ interface StatsCardsProps {
   isLoading: boolean
 }
 
-export const StatsCards: React.FC<StatsCardsProps> = ({ events, attendees, isLoading }) => {
+export const StatsCards: React.FC<StatsCardsProps> = ({
+  events,
+  attendees,
+  isLoading,
+}) => {
   const stats = React.useMemo(() => {
-    const activeEvents = events.filter(e => e.isActive).length
+    const activeEvents = events.filter((e) => e.isActive).length
     const totalAttendees = attendees.length
-    const checkedInAttendees = attendees.filter(a => a.isCheckedIn).length
-    const pendingAttendees = attendees.filter(a => a.isPending).length
+    const checkedInAttendees = attendees.filter((a) => a.isCheckedIn).length
+    const pendingAttendees = attendees.filter((a) => a.isPending).length
 
     return [
       {
@@ -52,7 +56,10 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ events, attendees, isLoa
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 animate-pulse transition-colors duration-200">
+          <div
+            key={i}
+            className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 animate-pulse transition-colors duration-200"
+          >
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg"></div>
               <div className="ml-4 flex-1">
@@ -69,14 +76,21 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ events, attendees, isLoa
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
-        <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+        <div
+          key={index}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200"
+        >
           <div className="flex items-center">
             <div className={`p-3 rounded-lg ${stat.bgColor}`}>
               <stat.icon className={`h-6 w-6 ${stat.color}`} />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{stat.title}</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                {stat.title}
+              </p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {stat.value}
+              </p>
             </div>
           </div>
         </div>

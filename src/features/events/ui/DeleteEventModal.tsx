@@ -16,14 +16,14 @@ interface DeleteEventModalProps {
 export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
   event,
   isOpen,
-  onClose
+  onClose,
 }) => {
   const [deleteEvent, { isLoading }] = useDeleteEventMutation()
   const toast = useToast()
 
   const handleDelete = async () => {
     if (!event) return
-    
+
     try {
       await deleteEvent(event.id).unwrap()
       toast.success(
@@ -35,7 +35,7 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
       console.error('Erreur lors de la suppression:', error)
       toast.error(
         'Erreur de suppression',
-        'Une erreur est survenue lors de la suppression de l\'événement. Veuillez réessayer.'
+        "Une erreur est survenue lors de la suppression de l'événement. Veuillez réessayer."
       )
     }
   }
@@ -43,8 +43,8 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
   if (!isOpen || !event) return null
 
   return (
-    <Modal 
-      isOpen={isOpen} 
+    <Modal
+      isOpen={isOpen}
       onClose={onClose}
       maxWidth="md"
       showCloseButton={false}
@@ -59,7 +59,9 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
           <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-500/25">
             <AlertTriangle className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-red-400 mb-2">Supprimer l'événement</h2>
+          <h2 className="text-2xl font-bold text-red-400 mb-2">
+            Supprimer l'événement
+          </h2>
           <p className="text-gray-400">Cette action est irréversible</p>
         </div>
 
@@ -69,12 +71,13 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
             Êtes-vous sûr de vouloir supprimer l'événement{' '}
             <span className="font-semibold text-white">"{event.name}"</span> ?
           </p>
-          
+
           {/* Avertissement moderne */}
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
             <p className="text-sm text-gray-300">
-              <span className="font-medium text-red-400">Attention :</span> Tous les participants 
-              associés à cet événement seront également supprimés.
+              <span className="font-medium text-red-400">Attention :</span> Tous
+              les participants associés à cet événement seront également
+              supprimés.
             </p>
           </div>
         </div>

@@ -37,24 +37,24 @@ i18n
     lng: DEFAULT_LANGUAGE,
     fallbackLng: DEFAULT_LANGUAGE,
     supportedLngs: [...SUPPORTED_LANGUAGES],
-    
+
     // Namespace configuration
     defaultNS: 'common',
     ns: ['common', 'auth', 'events', 'attendees'],
-    
+
     // Lazy loading configuration
     load: 'languageOnly',
-    
+
     interpolation: {
       escapeValue: false, // React already escapes values
     },
-    
+
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],
       lookupLocalStorage: 'language',
     },
-    
+
     react: {
       useSuspense: true,
     },

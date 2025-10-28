@@ -1,30 +1,38 @@
 ﻿import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useGetEventByIdQuery, useUpdateRegistrationFieldsMutation, useUpdateEventMutation } from '@/features/events/api/eventsApi'
+import {
+  useGetEventByIdQuery,
+  useUpdateRegistrationFieldsMutation,
+  useUpdateEventMutation,
+} from '@/features/events/api/eventsApi'
 import { useGetRegistrationsQuery } from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import type { RegistrationDPO } from '@/features/registrations/dpo/registration.dpo'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
-import { 
-  Edit, 
-  Download, 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  Users, 
+import {
+  Edit,
+  Download,
+  Calendar,
+  MapPin,
+  Clock,
+  Users,
   FileText,
   Upload,
   ArrowLeft,
   Settings,
   FormInput,
-  ChevronDown
+  ChevronDown,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
-import { FormBuilder, type FormField, getFieldById } from '@/features/events/components/FormBuilder'
+import {
+  FormBuilder,
+  type FormField,
+  getFieldById,
+} from '@/features/events/components/FormBuilder'
 import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 
@@ -32,49 +40,58 @@ type TabType = 'details' | 'registrations' | 'form' | 'settings'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
-  
+
   const [activeTab, setActiveTab] = useState<TabType>('details')
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  
-  const { data: event, isLoading: eventLoading, error } = useGetEventByIdQuery(id!)
+
+  const {
+    data: event,
+    isLoading: eventLoading,
+    error,
+  } = useGetEventByIdQuery(id!)
   const [updateRegistrationFields] = useUpdateRegistrationFieldsMutation()
   const [updateEvent] = useUpdateEventMutation()
-  
+
   // State pour le menu dropdown de statut
   const [showStatusMenu, setShowStatusMenu] = useState(false)
-  
+
   // State pour les champs du formulaire - chargé depuis la BDD ou valeurs par défaut
   const [formFields, setFormFields] = useState<FormField[]>([])
-  
+
   // State pour la configuration du bouton submit
   const [submitButtonText, setSubmitButtonText] = useState<string>("S'inscrire")
   const [submitButtonColor, setSubmitButtonColor] = useState<string>('#4F46E5')
   const [showTitle, setShowTitle] = useState<boolean>(true)
   const [showDescription, setShowDescription] = useState<boolean>(true)
-  
+
   // Charger les champs depuis event.settings.registration_fields quand l'événement est chargé
   useEffect(() => {
-    if (event?.settings?.registration_fields && Array.isArray(event.settings.registration_fields)) {
+    if (
+      event?.settings?.registration_fields &&
+      Array.isArray(event.settings.registration_fields)
+    ) {
       // Reconstituer les champs avec leurs icônes depuis PREDEFINED_FIELDS
-      const fieldsWithIcons = event.settings.registration_fields.map((savedField: any) => {
-        const predefinedField = getFieldById(savedField.key)
-        if (predefinedField) {
-          // Fusionner le champ sauvegardé avec l'icône du champ prédéfini
-          return {
-            ...savedField,
-            icon: predefinedField.icon
+      const fieldsWithIcons = event.settings.registration_fields.map(
+        (savedField: any) => {
+          const predefinedField = getFieldById(savedField.key)
+          if (predefinedField) {
+            // Fusionner le champ sauvegardé avec l'icône du champ prédéfini
+            return {
+              ...savedField,
+              icon: predefinedField.icon,
+            }
           }
+          return savedField
         }
-        return savedField
-      })
+      )
       setFormFields(fieldsWithIcons)
     } else {
       // Valeurs par défaut si aucun champ n'est configuré
       const firstName = getFieldById('first_name')
       const lastName = getFieldById('last_name')
       const email = getFieldById('email')
-      
+
       if (firstName && lastName && email) {
         setFormFields([
           { ...firstName, id: `field_${Date.now()}_1`, order: 0 },
@@ -83,7 +100,7 @@ export const EventDetails: React.FC = () => {
         ])
       }
     }
-    
+
     // Charger la configuration du bouton submit
     if (event?.settings?.submitButtonText) {
       setSubmitButtonText(event.settings.submitButtonText)
@@ -98,20 +115,20 @@ export const EventDetails: React.FC = () => {
       setShowDescription(event.settings.showDescription)
     }
   }, [event])
-  
+
   // Fonction pour sauvegarder les champs
   const handleSaveFormFields = async (fields: FormField[]) => {
     if (!id) return
-    
+
     try {
       // Nettoyer les champs en retirant les icônes (composants React non sérialisables)
-      const cleanedFields = fields.map(field => {
+      const cleanedFields = fields.map((field) => {
         const { icon, ...rest } = field as any
         return rest
       })
-      
-      await updateRegistrationFields({ 
-        id, 
+
+      await updateRegistrationFields({
+        id,
         fields: cleanedFields,
         submitButtonText,
         submitButtonColor,
@@ -123,28 +140,31 @@ export const EventDetails: React.FC = () => {
       console.error('Erreur lors de la sauvegarde des champs:', error)
       // Log plus de détails
       if (error && typeof error === 'object' && 'data' in error) {
-        console.error('Détails de l\'erreur:', JSON.stringify(error.data, null, 2))
+        console.error(
+          "Détails de l'erreur:",
+          JSON.stringify(error.data, null, 2)
+        )
       }
     }
   }
-  
+
   // Fonction pour changer le statut de l'événement
   const handleStatusChange = async (newStatus: string) => {
     if (!id || !event) return
-    
+
     try {
       await updateEvent({
         id,
-        data: { status: newStatus as any }
+        data: { status: newStatus as any },
       }).unwrap()
       setShowStatusMenu(false)
     } catch (err) {
       console.error('Erreur lors du changement de statut:', err)
     }
   }
-  
+
   // Fonction pour sauvegarder la configuration du bouton
-  const handleConfigChange = (config: { 
+  const handleConfigChange = (config: {
     submitButtonText?: string
     submitButtonColor?: string
     showTitle?: boolean
@@ -162,13 +182,13 @@ export const EventDetails: React.FC = () => {
     if (config.showDescription !== undefined) {
       setShowDescription(config.showDescription)
     }
-    
+
     // Sauvegarder immédiatement
     if (!id) return
-    
+
     updateRegistrationFields({
       id,
-      fields: formFields.map(field => {
+      fields: formFields.map((field) => {
         const { icon, ...rest } = field as any
         return rest
       }),
@@ -178,13 +198,12 @@ export const EventDetails: React.FC = () => {
       showDescription: config.showDescription ?? showDescription,
     })
   }
-  
+
   // Mode test pour le formulaire (permet de tester les inscriptions)
   const [isFormTestMode, setIsFormTestMode] = useState(false)
-  
-  const { data: apiRegistrations = [], isLoading: registrationsLoading } = useGetRegistrationsQuery(
-    id ? { eventId: id } : skipToken
-  )
+
+  const { data: apiRegistrations = [], isLoading: registrationsLoading } =
+    useGetRegistrationsQuery(id ? { eventId: id } : skipToken)
 
   // Les inscriptions sont récupérées via l'API RTK Query
   const allRegistrations = apiRegistrations
@@ -222,12 +241,20 @@ export const EventDetails: React.FC = () => {
     )
   }
 
-  const approvedCount = allRegistrations.filter((r: RegistrationDPO) => r.status === 'approved').length
-  const awaitingCount = allRegistrations.filter((r: RegistrationDPO) => r.status === 'awaiting').length
+  const approvedCount = allRegistrations.filter(
+    (r: RegistrationDPO) => r.status === 'approved'
+  ).length
+  const awaitingCount = allRegistrations.filter(
+    (r: RegistrationDPO) => r.status === 'awaiting'
+  ).length
 
   const tabs = [
     { id: 'details' as TabType, label: 'Détails', icon: FileText },
-    { id: 'registrations' as TabType, label: `Inscriptions (${allRegistrations.length})`, icon: Users },
+    {
+      id: 'registrations' as TabType,
+      label: `Inscriptions (${allRegistrations.length})`,
+      icon: Users,
+    },
     { id: 'form' as TabType, label: 'Formulaire', icon: FormInput },
     { id: 'settings' as TabType, label: 'Paramètres', icon: Settings },
   ]
@@ -238,36 +265,44 @@ export const EventDetails: React.FC = () => {
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-2">
-            <Link 
+            <Link
               to="/events"
               className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{event.name}</h1>
-            
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {event.name}
+            </h1>
+
             {/* Status Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setShowStatusMenu(!showStatusMenu)}
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
-                  event.status === 'active' 
+                  event.status === 'active'
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50'
                     : event.status === 'draft'
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    : event.status === 'published'
-                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-900/50'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      : event.status === 'published'
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-900/50'
+                        : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-900/50'
                 }`}
               >
                 {event.status}
                 <ChevronDown className="ml-1 h-3 w-3" />
               </button>
-              
+
               {showStatusMenu && (
                 <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
                   <div className="py-1">
-                    {['draft', 'published', 'active', 'completed', 'cancelled'].map((status) => (
+                    {[
+                      'draft',
+                      'published',
+                      'active',
+                      'completed',
+                      'cancelled',
+                    ].map((status) => (
                       <button
                         key={status}
                         onClick={() => handleStatusChange(status)}
@@ -296,15 +331,17 @@ export const EventDetails: React.FC = () => {
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
-              {approvedCount}/{event.maxAttendees > 100000 ? '∞' : event.maxAttendees} participants
+              {approvedCount}/
+              {event.maxAttendees > 100000 ? '∞' : event.maxAttendees}{' '}
+              participants
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center space-x-3">
           <Can do="update" on="Event" data={event}>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsEditModalOpen(true)}
               className="flex items-center space-x-2"
             >
@@ -332,9 +369,10 @@ export const EventDetails: React.FC = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`
                   flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  ${activeTab === tab.id
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  ${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }
                 `}
               >
@@ -368,14 +406,18 @@ export const EventDetails: React.FC = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Date de début</label>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Date de début
+                      </label>
                       <p className="mt-1 text-gray-900 dark:text-white flex items-center">
                         <Clock className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                         {formatDateTime(event.startDate)}
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Date de fin</label>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Date de fin
+                      </label>
                       <p className="mt-1 text-gray-900 dark:text-white flex items-center">
                         <Clock className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                         {formatDateTime(event.endDate)}
@@ -383,7 +425,9 @@ export const EventDetails: React.FC = () => {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Lieu</label>
+                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Lieu
+                    </label>
                     <p className="mt-1 text-gray-900 dark:text-white flex items-center">
                       <MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                       {event.location}
@@ -391,7 +435,9 @@ export const EventDetails: React.FC = () => {
                   </div>
                   {event.tags.length > 0 && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">Tags</label>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">
+                        Tags
+                      </label>
                       <div className="flex flex-wrap gap-2">
                         {event.tags.map((tag) => (
                           <span
@@ -411,28 +457,43 @@ export const EventDetails: React.FC = () => {
             {/* Statistiques Sidebar */}
             <div className="space-y-6">
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Statistiques</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Statistiques
+                </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-300">Inscriptions totales</span>
-                    <span className="text-2xl font-bold text-gray-900 dark:text-white">{allRegistrations.length}</span>
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Inscriptions totales
+                    </span>
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {allRegistrations.length}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-300">Approuvées</span>
-                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">{approvedCount}</span>
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Approuvées
+                    </span>
+                    <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {approvedCount}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-300">En attente</span>
-                    <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{awaitingCount}</span>
+                    <span className="text-gray-600 dark:text-gray-300">
+                      En attente
+                    </span>
+                    <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                      {awaitingCount}
+                    </span>
                   </div>
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-300">Places restantes</span>
+                      <span className="text-gray-600 dark:text-gray-300">
+                        Places restantes
+                      </span>
                       <span className="font-medium text-gray-900 dark:text-white">
-                        {event.maxAttendees > 100000 
-                          ? "Illimité" 
-                          : event.maxAttendees - approvedCount
-                        }
+                        {event.maxAttendees > 100000
+                          ? 'Illimité'
+                          : event.maxAttendees - approvedCount}
                       </span>
                     </div>
                   </div>
@@ -440,21 +501,35 @@ export const EventDetails: React.FC = () => {
               </div>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Informations</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Informations
+                </h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Durée</span>
-                    <span className="text-gray-900 dark:text-white">{event.duration}h</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Jours restants</span>
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Durée
+                    </span>
                     <span className="text-gray-900 dark:text-white">
-                      {event.daysUntilStart > 0 ? `${event.daysUntilStart} jours` : 'Commencé'}
+                      {event.duration}h
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Créé le</span>
-                    <span className="text-gray-900 dark:text-white">{formatDate(event.createdAt)}</span>
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Jours restants
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      {event.daysUntilStart > 0
+                        ? `${event.daysUntilStart} jours`
+                        : 'Commencé'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Créé le
+                    </span>
+                    <span className="text-gray-900 dark:text-white">
+                      {formatDate(event.createdAt)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -491,7 +566,7 @@ export const EventDetails: React.FC = () => {
                 </Button>
               </div>
             </div>
-            
+
             <RegistrationsTable
               registrations={allRegistrations}
               isLoading={registrationsLoading}
@@ -516,11 +591,8 @@ export const EventDetails: React.FC = () => {
                 showDescription={showDescription}
                 onConfigChange={handleConfigChange}
               />
-              
-              <EmbedCodeGenerator
-                eventId={event.id}
-                publicToken={event.id}
-              />
+
+              <EmbedCodeGenerator eventId={event.id} publicToken={event.id} />
             </div>
 
             {/* Right: Preview */}
@@ -536,7 +608,9 @@ export const EventDetails: React.FC = () => {
                     onChange={(e) => setIsFormTestMode(e.target.checked)}
                     className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Mode Test</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Mode Test
+                  </span>
                 </label>
               </div>
               <div className="sticky top-6">
@@ -560,7 +634,8 @@ export const EventDetails: React.FC = () => {
               Paramètres de l'événement
             </h2>
             <p className="text-gray-600 dark:text-gray-300">
-              Fonctionnalité à venir : configuration des formulaires, notifications, etc.
+              Fonctionnalité à venir : configuration des formulaires,
+              notifications, etc.
             </p>
           </div>
         )}

@@ -1,6 +1,6 @@
 /**
  * RoleSelector - Composant pour assigner un rôle à un utilisateur
- * 
+ *
  * Fonctionnalités:
  * - Affiche un select avec tous les rôles disponibles
  * - Visible seulement pour les utilisateurs avec permission "roles.assign"
@@ -22,10 +22,10 @@ interface RoleSelectorProps {
   currentUserId?: string | undefined // Pour éviter l'auto-assignation
 }
 
-export const RoleSelector: React.FC<RoleSelectorProps> = ({ 
-  user, 
+export const RoleSelector: React.FC<RoleSelectorProps> = ({
+  user,
   disabled = false,
-  currentUserId
+  currentUserId,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
@@ -33,7 +33,7 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
 
   // Récupérer les rôles disponibles
   const { data: roles = [], isLoading: rolesLoading } = useGetRolesQuery({})
-  
+
   // Mutation pour mettre à jour l'utilisateur
   const [updateUser] = useUpdateUserMutation()
 
@@ -42,7 +42,10 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
 
     // Empêcher l'auto-assignation
     if (currentUserId && user.id === currentUserId) {
-      error('Action non autorisée', 'Vous ne pouvez pas modifier votre propre rôle')
+      error(
+        'Action non autorisée',
+        'Vous ne pouvez pas modifier votre propre rôle'
+      )
       setIsOpen(false)
       return
     }
@@ -50,32 +53,34 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
     // Fermer le dropdown immédiatement pour une meilleure UX
     setIsOpen(false)
     setIsUpdating(true)
-    
+
     try {
       await updateUser({
         id: user.id,
-        data: { role_id: newRoleId }
+        data: { role_id: newRoleId },
       }).unwrap()
 
-      const newRole = roles.find(r => r.id === newRoleId)
+      const newRole = roles.find((r) => r.id === newRoleId)
       success(
         'Rôle mis à jour',
         `${user.first_name || user.email} est maintenant ${newRole?.name}`
       )
     } catch (err: any) {
       console.error('Erreur lors de la mise à jour du rôle:', err)
-      
+
       // Messages d'erreur plus spécifiques
       let errorMessage = 'Impossible de mettre à jour le rôle'
       if (err?.status === 403) {
-        errorMessage = 'Vous n\'avez pas les permissions nécessaires pour assigner ce rôle'
+        errorMessage =
+          "Vous n'avez pas les permissions nécessaires pour assigner ce rôle"
       } else if (err?.status === 400) {
-        errorMessage = err?.data?.message || 'Données invalides pour l\'assignation de rôle'
+        errorMessage =
+          err?.data?.message || "Données invalides pour l'assignation de rôle"
       } else if (err?.data?.message) {
         errorMessage = err.data.message
       }
-      
-      error('Erreur d\'assignation', errorMessage)
+
+      error("Erreur d'assignation", errorMessage)
     } finally {
       setIsUpdating(false)
     }
@@ -105,14 +110,19 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
       <button
         onClick={() => !isDisabled && setIsOpen(!isOpen)}
         disabled={isDisabled || isUpdating}
-        title={isCurrentUser ? "Vous ne pouvez pas modifier votre propre rôle" : undefined}
+        title={
+          isCurrentUser
+            ? 'Vous ne pouvez pas modifier votre propre rôle'
+            : undefined
+        }
         className={cn(
-          "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium transition-all",
-          "bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200",
-          !isDisabled && "hover:bg-blue-200 dark:hover:bg-blue-900/40 cursor-pointer",
-          isDisabled && "opacity-50 cursor-not-allowed",
-          isUpdating && "animate-pulse",
-          isCurrentUser && "ring-1 ring-blue-300 dark:ring-blue-600" // Indication visuelle pour l'utilisateur courant
+          'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium transition-all',
+          'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200',
+          !isDisabled &&
+            'hover:bg-blue-200 dark:hover:bg-blue-900/40 cursor-pointer',
+          isDisabled && 'opacity-50 cursor-not-allowed',
+          isUpdating && 'animate-pulse',
+          isCurrentUser && 'ring-1 ring-blue-300 dark:ring-blue-600' // Indication visuelle pour l'utilisateur courant
         )}
       >
         <span>
@@ -120,21 +130,23 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
           {isCurrentUser && ' (Vous)'}
         </span>
         {!isDisabled && (
-          <ChevronDown className={cn(
-            "h-3 w-3 transition-transform",
-            isOpen && "rotate-180"
-          )} />
+          <ChevronDown
+            className={cn(
+              'h-3 w-3 transition-transform',
+              isOpen && 'rotate-180'
+            )}
+          />
         )}
       </button>
 
       {isOpen && !isDisabled && (
         <>
           {/* Overlay pour fermer le dropdown */}
-          <div 
-            className="fixed inset-0 z-10" 
+          <div
+            className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          
+
           {/* Menu dropdown */}
           <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20">
             <div className="py-1 max-h-48 overflow-y-auto">
@@ -143,15 +155,17 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
                   key={role.id}
                   onClick={() => handleRoleChange(role.id)}
                   className={cn(
-                    "w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between gap-2",
-                    role.id === user.role?.id && "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                    'w-full px-3 py-1.5 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between gap-2',
+                    role.id === user.role?.id &&
+                      'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                   )}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="font-medium truncate">{role.name}</div>
                     {role.description && (
                       <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {role.description.substring(0, 30)}{role.description.length > 30 ? '...' : ''}
+                        {role.description.substring(0, 30)}
+                        {role.description.length > 30 ? '...' : ''}
                       </div>
                     )}
                   </div>

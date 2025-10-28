@@ -1,6 +1,6 @@
 /**
  * Mock Data - Events
- * 
+ *
  * Événements réalistes pour tests et développement
  * Inclut public_tokens, settings avec registration_fields JSONB
  */
@@ -17,7 +17,7 @@ const DEFAULT_REGISTRATION_FIELDS: any = {
       required: true,
       enabled: true,
       placeholder: 'Votre prénom',
-      validation: { minLength: 2, maxLength: 50 }
+      validation: { minLength: 2, maxLength: 50 },
     },
     {
       name: 'last_name',
@@ -26,7 +26,7 @@ const DEFAULT_REGISTRATION_FIELDS: any = {
       required: true,
       enabled: true,
       placeholder: 'Votre nom',
-      validation: { minLength: 2, maxLength: 50 }
+      validation: { minLength: 2, maxLength: 50 },
     },
     {
       name: 'email',
@@ -34,7 +34,7 @@ const DEFAULT_REGISTRATION_FIELDS: any = {
       label: 'Email',
       required: true,
       enabled: true,
-      placeholder: 'votre@email.com'
+      placeholder: 'votre@email.com',
     },
     {
       name: 'phone',
@@ -42,7 +42,7 @@ const DEFAULT_REGISTRATION_FIELDS: any = {
       label: 'Téléphone',
       required: false,
       enabled: true,
-      placeholder: '+33 6 XX XX XX XX'
+      placeholder: '+33 6 XX XX XX XX',
     },
     {
       name: 'company',
@@ -50,7 +50,7 @@ const DEFAULT_REGISTRATION_FIELDS: any = {
       label: 'Entreprise',
       required: false,
       enabled: true,
-      placeholder: 'Nom de votre entreprise'
+      placeholder: 'Nom de votre entreprise',
     },
     {
       name: 'job_title',
@@ -58,7 +58,7 @@ const DEFAULT_REGISTRATION_FIELDS: any = {
       label: 'Fonction',
       required: false,
       enabled: true,
-      placeholder: 'Votre fonction'
+      placeholder: 'Votre fonction',
     },
     {
       name: 'country',
@@ -66,9 +66,9 @@ const DEFAULT_REGISTRATION_FIELDS: any = {
       label: 'Pays',
       required: false,
       enabled: true,
-      placeholder: 'France'
-    }
-  ]
+      placeholder: 'France',
+    },
+  ],
 }
 
 // Configuration avec champs custom
@@ -82,7 +82,7 @@ const CONFERENCE_REGISTRATION_FIELDS: any = {
       required: false,
       enabled: true,
       custom: true,
-      placeholder: 'Végétarien, allergies, etc.'
+      placeholder: 'Végétarien, allergies, etc.',
     },
     {
       name: 'tshirt_size',
@@ -91,7 +91,7 @@ const CONFERENCE_REGISTRATION_FIELDS: any = {
       required: false,
       enabled: true,
       custom: true,
-      options: ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+      options: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
     },
     {
       name: 'workshops',
@@ -104,10 +104,10 @@ const CONFERENCE_REGISTRATION_FIELDS: any = {
         'React Advanced',
         'TypeScript Deep Dive',
         'Node.js Performance',
-        'GraphQL Masterclass'
-      ]
-    }
-  ]
+        'GraphQL Masterclass',
+      ],
+    },
+  ],
 }
 
 const WEBINAR_REGISTRATION_FIELDS: any = {
@@ -117,28 +117,28 @@ const WEBINAR_REGISTRATION_FIELDS: any = {
       type: 'text',
       label: 'Prénom',
       required: true,
-      enabled: true
+      enabled: true,
     },
     {
       name: 'last_name',
       type: 'text',
       label: 'Nom',
       required: true,
-      enabled: true
+      enabled: true,
     },
     {
       name: 'email',
       type: 'email',
       label: 'Email',
       required: true,
-      enabled: true
+      enabled: true,
     },
     {
       name: 'company',
       type: 'text',
       label: 'Entreprise',
       required: true,
-      enabled: true
+      enabled: true,
     },
     {
       name: 'role',
@@ -147,9 +147,15 @@ const WEBINAR_REGISTRATION_FIELDS: any = {
       required: true,
       enabled: true,
       custom: true,
-      options: ['Développeur', 'CTO/Tech Lead', 'Product Manager', 'Designer', 'Autre']
-    }
-  ]
+      options: [
+        'Développeur',
+        'CTO/Tech Lead',
+        'Product Manager',
+        'Designer',
+        'Autre',
+      ],
+    },
+  ],
 }
 
 // Mock Events avec diversité de statuts, dates, types
@@ -160,14 +166,16 @@ export const mockEvents: Event[] = [
     org_id: 'org-tech-corp',
     code: 'TECH2025',
     name: 'Tech Conference 2025',
-    description: 'La plus grande conférence technologique de l\'année. Découvrez les dernières innovations en IA, Cloud et Web3.',
+    description:
+      "La plus grande conférence technologique de l'année. Découvrez les dernières innovations en IA, Cloud et Web3.",
     start_at: '2025-11-15T09:00:00Z',
     end_at: '2025-11-15T18:00:00Z',
     timezone: 'Europe/Paris',
     status: 'published',
     capacity: 500,
     location_type: 'physical',
-    address_formatted: 'Paris Convention Center, 2 Place de la Porte de Versailles, 75015 Paris',
+    address_formatted:
+      'Paris Convention Center, 2 Place de la Porte de Versailles, 75015 Paris',
     address_city: 'Paris',
     address_country: 'France',
     latitude: 48.8324,
@@ -182,7 +190,7 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: CONFERENCE_REGISTRATION_FIELDS
+      registration_fields: CONFERENCE_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 342,
@@ -190,15 +198,15 @@ export const mockEvents: Event[] = [
       awaiting: 22,
       refused: 5,
       cancelled: 0,
-      checked_in: 0
-    }
+      checked_in: 0,
+    },
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440002',
     org_id: 'org-tech-corp',
     code: 'WEBSUMMIT2025',
     name: 'Web Summit France 2025',
-    description: 'Le plus grand événement tech d\'Europe débarque en France !',
+    description: "Le plus grand événement tech d'Europe débarque en France !",
     start_at: '2025-12-10T08:00:00Z',
     end_at: '2025-12-12T20:00:00Z',
     timezone: 'Europe/Paris',
@@ -208,7 +216,7 @@ export const mockEvents: Event[] = [
     address_formatted: 'Palais des Congrès, Lyon',
     address_city: 'Lyon',
     address_country: 'France',
-    latitude: 45.7640,
+    latitude: 45.764,
     longitude: 4.8357,
     created_at: '2025-08-15T09:00:00Z',
     updated_at: '2025-10-20T11:00:00Z',
@@ -220,22 +228,22 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: CONFERENCE_REGISTRATION_FIELDS
+      registration_fields: CONFERENCE_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 856,
       approved: 720,
       awaiting: 136,
       refused: 12,
-      cancelled: 8
-    }
+      cancelled: 8,
+    },
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440003',
     org_id: 'org-tech-corp',
     code: 'REACT2026',
     name: 'React Paris 2026',
-    description: 'Conférence dédiée à React et l\'écosystème JavaScript moderne',
+    description: "Conférence dédiée à React et l'écosystème JavaScript moderne",
     start_at: '2026-03-20T09:00:00Z',
     end_at: '2026-03-20T18:00:00Z',
     timezone: 'Europe/Paris',
@@ -254,15 +262,15 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: DEFAULT_REGISTRATION_FIELDS
+      registration_fields: DEFAULT_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 45,
       approved: 45,
       awaiting: 0,
       refused: 0,
-      cancelled: 0
-    }
+      cancelled: 0,
+    },
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440004',
@@ -288,15 +296,15 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: DEFAULT_REGISTRATION_FIELDS
+      registration_fields: DEFAULT_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 98,
       approved: 98,
       awaiting: 0,
       refused: 0,
-      cancelled: 2
-    }
+      cancelled: 2,
+    },
   },
 
   // ========== WEBINAIRES ONLINE ==========
@@ -304,8 +312,9 @@ export const mockEvents: Event[] = [
     id: '550e8400-e29b-41d4-a716-446655440005',
     org_id: 'org-tech-corp',
     code: 'WEBINAR-AI-NOV',
-    name: 'Introduction à l\'IA Générative',
-    description: 'Webinaire gratuit : Découvrez ChatGPT, Midjourney et leurs applications business',
+    name: "Introduction à l'IA Générative",
+    description:
+      'Webinaire gratuit : Découvrez ChatGPT, Midjourney et leurs applications business',
     start_at: '2025-11-05T14:00:00Z',
     end_at: '2025-11-05T15:30:00Z',
     timezone: 'Europe/Paris',
@@ -322,22 +331,23 @@ export const mockEvents: Event[] = [
       allow_checkin_out: false,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: WEBINAR_REGISTRATION_FIELDS
+      registration_fields: WEBINAR_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 1245,
       approved: 1245,
       awaiting: 0,
       refused: 0,
-      cancelled: 38
-    }
+      cancelled: 38,
+    },
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440006',
     org_id: 'org-startup-hub',
     code: 'WEBINAR-GROWTH',
     name: 'Growth Hacking 101',
-    description: 'Les techniques de croissance des startups qui fonctionnent vraiment',
+    description:
+      'Les techniques de croissance des startups qui fonctionnent vraiment',
     start_at: '2025-11-12T10:00:00Z',
     end_at: '2025-11-12T11:30:00Z',
     timezone: 'Europe/Paris',
@@ -353,15 +363,15 @@ export const mockEvents: Event[] = [
       allow_checkin_out: false,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: WEBINAR_REGISTRATION_FIELDS
+      registration_fields: WEBINAR_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 567,
       approved: 567,
       awaiting: 0,
       refused: 0,
-      cancelled: 12
-    }
+      cancelled: 12,
+    },
   },
 
   // ========== ÉVÉNEMENTS ACTIFS (EN COURS) ==========
@@ -390,7 +400,7 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: CONFERENCE_REGISTRATION_FIELDS
+      registration_fields: CONFERENCE_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 752,
@@ -398,8 +408,8 @@ export const mockEvents: Event[] = [
       awaiting: 0,
       refused: 8,
       cancelled: 15,
-      checked_in: 620
-    }
+      checked_in: 620,
+    },
   },
 
   // ========== ÉVÉNEMENTS TERMINÉS (COMPLETED) ==========
@@ -428,7 +438,7 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: CONFERENCE_REGISTRATION_FIELDS
+      registration_fields: CONFERENCE_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 387,
@@ -436,8 +446,8 @@ export const mockEvents: Event[] = [
       awaiting: 0,
       refused: 22,
       cancelled: 12,
-      checked_in: 342
-    }
+      checked_in: 342,
+    },
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440009',
@@ -463,7 +473,7 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: DEFAULT_REGISTRATION_FIELDS
+      registration_fields: DEFAULT_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 92,
@@ -471,8 +481,8 @@ export const mockEvents: Event[] = [
       awaiting: 0,
       refused: 7,
       cancelled: 3,
-      checked_in: 78
-    }
+      checked_in: 78,
+    },
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440010',
@@ -498,7 +508,7 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: CONFERENCE_REGISTRATION_FIELDS
+      registration_fields: CONFERENCE_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 118,
@@ -506,8 +516,8 @@ export const mockEvents: Event[] = [
       awaiting: 0,
       refused: 0,
       cancelled: 8,
-      checked_in: 110
-    }
+      checked_in: 110,
+    },
   },
 
   // ========== ÉVÉNEMENTS ANNULÉS ==========
@@ -516,7 +526,7 @@ export const mockEvents: Event[] = [
     org_id: 'org-startup-hub',
     code: 'CANCELLED-EVENT',
     name: 'Blockchain Summit (ANNULÉ)',
-    description: 'Événement annulé suite à problèmes d\'organisation',
+    description: "Événement annulé suite à problèmes d'organisation",
     start_at: '2025-10-30T09:00:00Z',
     end_at: '2025-10-30T18:00:00Z',
     timezone: 'Europe/Paris',
@@ -535,15 +545,15 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: false,
       auto_transition_to_completed: false,
-      registration_fields: DEFAULT_REGISTRATION_FIELDS
+      registration_fields: DEFAULT_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 45,
       approved: 45,
       awaiting: 0,
       refused: 0,
-      cancelled: 45
-    }
+      cancelled: 45,
+    },
   },
 
   // ========== BROUILLONS (DRAFT) ==========
@@ -570,15 +580,15 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: DEFAULT_REGISTRATION_FIELDS
+      registration_fields: DEFAULT_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 0,
       approved: 0,
       awaiting: 0,
       refused: 0,
-      cancelled: 0
-    }
+      cancelled: 0,
+    },
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440013',
@@ -603,15 +613,15 @@ export const mockEvents: Event[] = [
       allow_checkin_out: false,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: DEFAULT_REGISTRATION_FIELDS
+      registration_fields: DEFAULT_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 0,
       approved: 0,
       awaiting: 0,
       refused: 0,
-      cancelled: 0
-    }
+      cancelled: 0,
+    },
   },
 
   // ========== ÉVÉNEMENTS AUTRES ORGANISATIONS ==========
@@ -640,15 +650,15 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: DEFAULT_REGISTRATION_FIELDS
+      registration_fields: DEFAULT_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 178,
       approved: 150,
       awaiting: 28,
       refused: 5,
-      cancelled: 2
-    }
+      cancelled: 2,
+    },
   },
   {
     id: '550e8400-e29b-41d4-a716-446655440015',
@@ -674,31 +684,31 @@ export const mockEvents: Event[] = [
       allow_checkin_out: true,
       auto_transition_to_active: true,
       auto_transition_to_completed: true,
-      registration_fields: DEFAULT_REGISTRATION_FIELDS
+      registration_fields: DEFAULT_REGISTRATION_FIELDS,
     },
     statistics: {
       total_registrations: 92,
       approved: 92,
       awaiting: 0,
       refused: 0,
-      cancelled: 3
-    }
-  }
+      cancelled: 3,
+    },
+  },
 ]
 
 // Helper pour récupérer un event par public_token
 export const getEventByPublicToken = (token: string): Event | undefined => {
-  return mockEvents.find(event => event.settings?.public_token === token)
+  return mockEvents.find((event) => event.settings?.public_token === token)
 }
 
 // Helper pour récupérer events par org_id
 export const getEventsByOrgId = (orgId: string): Event[] => {
-  return mockEvents.filter(event => event.org_id === orgId)
+  return mockEvents.filter((event) => event.org_id === orgId)
 }
 
 // Helper pour récupérer events par statut
 export const getEventsByStatus = (status: string): Event[] => {
-  return mockEvents.filter(event => event.status === status)
+  return mockEvents.filter((event) => event.status === status)
 }
 
 // Export du nombre total

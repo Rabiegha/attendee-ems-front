@@ -39,37 +39,37 @@ Chaque champ possède trois options de stockage :
 
 ### Identity (Identité)
 
-| Champ | Label | Type | Mapping | Obligatoire |
-|-------|-------|------|---------|-------------|
-| `first_name` | Prénom | text | `attendees.first_name` | ✓ |
-| `last_name` | Nom | text | `attendees.last_name` | ✓ |
+| Champ        | Label  | Type | Mapping                | Obligatoire |
+| ------------ | ------ | ---- | ---------------------- | ----------- |
+| `first_name` | Prénom | text | `attendees.first_name` | ✓           |
+| `last_name`  | Nom    | text | `attendees.last_name`  | ✓           |
 
 ### Contact
 
-| Champ | Label | Type | Mapping | Validation |
-|-------|-------|------|---------|------------|
-| `email` | Email | email | `attendees.email` | Email valide |
-| `phone` | Téléphone | tel | `attendees.phone` | - |
+| Champ   | Label     | Type  | Mapping           | Validation   |
+| ------- | --------- | ----- | ----------------- | ------------ |
+| `email` | Email     | email | `attendees.email` | Email valide |
+| `phone` | Téléphone | tel   | `attendees.phone` | -            |
 
 ### Professional (Professionnel)
 
-| Champ | Label | Type | Mapping |
-|-------|-------|------|---------|
-| `company` | Organisation | text | `attendees.company` |
-| `job_title` | Poste | text | `attendees.job_title` |
-| `country` | Pays | text | `attendees.country` |
+| Champ       | Label        | Type | Mapping               |
+| ----------- | ------------ | ---- | --------------------- |
+| `company`   | Organisation | text | `attendees.company`   |
+| `job_title` | Poste        | text | `attendees.job_title` |
+| `country`   | Pays         | text | `attendees.country`   |
 
 ### Event (Événement)
 
-| Champ | Label | Type | Mapping | Visibilité |
-|-------|-------|------|---------|------------|
-| `attendee_type` | Type de participant | select | `registrations.attendee_type` | Admin uniquement |
-| `attendance_type` | Mode de participation | select | `registrations.attendance_type` | Public |
+| Champ             | Label                 | Type   | Mapping                         | Visibilité       |
+| ----------------- | --------------------- | ------ | ------------------------------- | ---------------- |
+| `attendee_type`   | Type de participant   | select | `registrations.attendee_type`   | Admin uniquement |
+| `attendance_type` | Mode de participation | select | `registrations.attendance_type` | Public           |
 
 ### Custom (Personnalisé)
 
-| Champ | Label | Type | Mapping |
-|-------|-------|------|---------|
+| Champ     | Label       | Type     | Mapping                 |
+| --------- | ----------- | -------- | ----------------------- |
 | `comment` | Commentaire | textarea | `registrations.answers` |
 
 ## 🎯 Utilisation
@@ -77,23 +77,22 @@ Chaque champ possède trois options de stockage :
 ### 1. Importer le FormBuilder
 
 ```tsx
-import { FormBuilder, type FormField } from '@/features/events/components/FormBuilder'
+import {
+  FormBuilder,
+  type FormField,
+} from '@/features/events/components/FormBuilder'
 
 function EventSettingsPage() {
   const [formFields, setFormFields] = useState<FormField[]>([])
-  
-  return (
-    <FormBuilder
-      fields={formFields}
-      onChange={setFormFields}
-    />
-  )
+
+  return <FormBuilder fields={formFields} onChange={setFormFields} />
 }
 ```
 
 ### 2. Ajouter des champs
 
 L'interface propose un bouton **"Ajouter un champ"** qui ouvre une modal avec :
+
 - 10 champs prédéfinis organisés par catégorie
 - Recherche par nom, clé ou description
 - Filtrage par catégorie
@@ -102,6 +101,7 @@ L'interface propose un bouton **"Ajouter un champ"** qui ouvre une modal avec :
 ### 3. Configurer les champs
 
 Pour chaque champ ajouté, vous pouvez :
+
 - **Réorganiser** : Glisser-déposer pour changer l'ordre
 - **Rendre obligatoire/optionnel** : Icône Settings
 - **Masquer/Afficher** : Icône Eye/EyeOff
@@ -115,8 +115,8 @@ const saveFormConfiguration = async () => {
   await updateEventSetting({
     eventId,
     data: {
-      registration_fields: formFields
-    }
+      registration_fields: formFields,
+    },
   })
 }
 ```
@@ -182,6 +182,7 @@ pays: ['country', 'Pays', 'pays']
 ### FormBuilder
 
 Affiche la liste des champs configurés avec :
+
 - Icône représentative du type de champ
 - Nom et propriétés du champ
 - Badges de statut (Obligatoire, Masqué)
@@ -192,6 +193,7 @@ Affiche la liste des champs configurés avec :
 ### FieldPickerModal
 
 Modal en plein écran avec :
+
 - Barre de recherche
 - Onglets de catégories avec compteurs
 - Grille de champs avec icônes et descriptions
@@ -201,6 +203,7 @@ Modal en plein écran avec :
 ### FormPreview
 
 Aperçu en temps réel du formulaire public avec :
+
 - Header avec détails de l'événement
 - Champs dynamiques générés à partir de la configuration
 - Mode test pour tester la soumission
@@ -255,11 +258,11 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
 
 Les badges colorés indiquent où chaque champ est stocké :
 
-| Badge | Couleur | Signification |
-|-------|---------|---------------|
-| **Participant** | Bleu | Stocké dans `attendees` (réutilisable) |
-| **Inscription** | Violet | Stocké dans `registrations` (événement) |
-| **Personnalisé** | Gris | Stocké dans `answers` JSON (flexible) |
+| Badge            | Couleur | Signification                           |
+| ---------------- | ------- | --------------------------------------- |
+| **Participant**  | Bleu    | Stocké dans `attendees` (réutilisable)  |
+| **Inscription**  | Violet  | Stocké dans `registrations` (événement) |
+| **Personnalisé** | Gris    | Stocké dans `answers` JSON (flexible)   |
 
 ## 🚀 Prochaines étapes
 

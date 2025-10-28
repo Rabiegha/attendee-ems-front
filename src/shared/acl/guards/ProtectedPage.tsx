@@ -22,7 +22,7 @@ export const ProtectedPage: React.FC<ProtectedPageProps> = ({
   data,
   children,
   deniedTitle,
-  deniedMessage
+  deniedMessage,
 }) => {
   return (
     <Can

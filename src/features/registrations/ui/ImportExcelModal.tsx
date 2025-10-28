@@ -1,5 +1,11 @@
 import React, { useState, useRef } from 'react'
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Download } from 'lucide-react'
+import {
+  Upload,
+  FileSpreadsheet,
+  AlertCircle,
+  CheckCircle2,
+  Download,
+} from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import * as XLSX from 'xlsx'
@@ -24,31 +30,49 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   email: ['email', 'e-mail', 'mail', 'courriel'],
   phone: ['téléphone', 'telephone', 'phone', 'tel', 'mobile', 'portable'],
   company: ['entreprise', 'company', 'société', 'societe', 'organization'],
-  jobTitle: ['poste', 'job_title', 'jobtitle', 'job title', 'fonction', 'titre'],
+  jobTitle: [
+    'poste',
+    'job_title',
+    'jobtitle',
+    'job title',
+    'fonction',
+    'titre',
+  ],
 }
 
 function normalizeColumnName(colName: string): string {
-  return colName.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return colName
+    .toLowerCase()
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 }
 
 function detectColumnMapping(headers: string[]): Record<string, string> {
   const mapping: Record<string, string> = {}
-  
-  headers.forEach(header => {
+
+  headers.forEach((header) => {
     const normalized = normalizeColumnName(header)
-    
+
     for (const [targetField, variants] of Object.entries(COLUMN_MAPPINGS)) {
-      if (variants.some(variant => normalizeColumnName(variant) === normalized)) {
+      if (
+        variants.some((variant) => normalizeColumnName(variant) === normalized)
+      ) {
         mapping[header] = targetField
         break
       }
     }
   })
-  
+
   return mapping
 }
 
-export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onClose, eventId, onImportSuccess }) => {
+export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
+  isOpen,
+  onClose,
+  eventId,
+  onImportSuccess,
+}) => {
   const [preview, setPreview] = useState<ParsedRow[]>([])
   const [allData, setAllData] = useState<ParsedRow[]>([]) // Toutes les données du fichier
   const [headers, setHeaders] = useState<string[]>([])
@@ -59,9 +83,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
   const [selectedFile, setSelectedFile] = useState<File | null>(null) // ← Stocker le fichier
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
-  
+
   // Mutation API pour l'import Excel
-  const [importExcelRegistrations, { isLoading: isImporting }] = useImportExcelRegistrationsMutation()
+  const [importExcelRegistrations, { isLoading: isImporting }] =
+    useImportExcelRegistrationsMutation()
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -85,7 +110,9 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
         toast.error('Erreur', 'Impossible de lire la feuille Excel')
         return
       }
-      const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][]
+      const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
+        header: 1,
+      }) as any[][]
 
       if (jsonData.length === 0) {
         toast.error('Erreur', 'Le fichier Excel est vide')
@@ -101,8 +128,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
 
       // Conversion en objets
       const parsedData: ParsedRow[] = dataRows
-        .filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
-        .map(row => {
+        .filter((row) =>
+          row.some((cell) => cell !== null && cell !== undefined && cell !== '')
+        )
+        .map((row) => {
           const obj: ParsedRow = {}
           headerRow.forEach((header, index) => {
             const value = row[index]
@@ -135,33 +164,35 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
       const result = await importExcelRegistrations({
         eventId,
         file: selectedFile,
-        autoApprove: true // Vous pouvez ajouter une option dans l'UI pour cela
+        autoApprove: true, // Vous pouvez ajouter une option dans l'UI pour cela
       }).unwrap()
 
       setImportResult(result)
       setStep('success')
-      
+
       // Callback pour rafraîchir la liste (invalidation RTK Query automatique)
       if (onImportSuccess) {
         onImportSuccess(result)
       }
 
       toast.success(
-        'Import réussi !', 
+        'Import réussi !',
         `${result.summary.created} créées, ${result.summary.updated} mises à jour, ${result.summary.skipped} ignorées`
       )
-      
     } catch (error: any) {
       console.error('Import error:', error)
-      
+
       // Erreur 404 = endpoint non implémenté
       if (error?.status === 404) {
         toast.error(
-          'Fonctionnalité en cours de développement', 
-          'L\'endpoint d\'import Excel backend n\'est pas encore activé. Contactez l\'administrateur.'
+          'Fonctionnalité en cours de développement',
+          "L'endpoint d'import Excel backend n'est pas encore activé. Contactez l'administrateur."
         )
       } else {
-        const errorMessage = error?.data?.message || error?.message || 'Échec de l\'import des inscriptions'
+        const errorMessage =
+          error?.data?.message ||
+          error?.message ||
+          "Échec de l'import des inscriptions"
         toast.error('Erreur', errorMessage)
       }
     } finally {
@@ -184,8 +215,22 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
     // Créer un fichier Excel template
     const templateData = [
       ['prénom', 'nom', 'email', 'téléphone', 'entreprise', 'poste'],
-      ['Jean', 'Dupont', 'jean.dupont@example.com', '0612345678', 'ACME Corp', 'Directeur'],
-      ['Marie', 'Martin', 'marie.martin@example.com', '0698765432', 'TechStart', 'Manager'],
+      [
+        'Jean',
+        'Dupont',
+        'jean.dupont@example.com',
+        '0612345678',
+        'ACME Corp',
+        'Directeur',
+      ],
+      [
+        'Marie',
+        'Martin',
+        'marie.martin@example.com',
+        '0698765432',
+        'TechStart',
+        'Manager',
+      ],
     ]
 
     const ws = XLSX.utils.aoa_to_sheet(templateData)
@@ -212,9 +257,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                 Sélectionnez un fichier Excel
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Format accepté : .xlsx, .xls. La première ligne doit contenir les noms des colonnes.
+                Format accepté : .xlsx, .xls. La première ligne doit contenir
+                les noms des colonnes.
               </p>
-              
+
               <Button
                 onClick={downloadTemplate}
                 variant="outline"
@@ -250,15 +296,29 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                 Colonnes reconnues automatiquement :
               </h4>
               <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
-                <li>• <strong>Nom</strong> : nom, last_name, lastname</li>
-                <li>• <strong>Prénom</strong> : prénom, prenom, first_name, firstname</li>
-                <li>• <strong>Email</strong> : email, e-mail, mail</li>
-                <li>• <strong>Téléphone</strong> : téléphone, phone, tel, mobile</li>
-                <li>• <strong>Entreprise</strong> : entreprise, company, société</li>
-                <li>• <strong>Poste</strong> : poste, job_title, fonction</li>
+                <li>
+                  • <strong>Nom</strong> : nom, last_name, lastname
+                </li>
+                <li>
+                  • <strong>Prénom</strong> : prénom, prenom, first_name,
+                  firstname
+                </li>
+                <li>
+                  • <strong>Email</strong> : email, e-mail, mail
+                </li>
+                <li>
+                  • <strong>Téléphone</strong> : téléphone, phone, tel, mobile
+                </li>
+                <li>
+                  • <strong>Entreprise</strong> : entreprise, company, société
+                </li>
+                <li>
+                  • <strong>Poste</strong> : poste, job_title, fonction
+                </li>
               </ul>
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                Les colonnes non reconnues seront sauvegardées comme données supplémentaires
+                Les colonnes non reconnues seront sauvegardées comme données
+                supplémentaires
               </p>
             </div>
           </>
@@ -274,7 +334,9 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                     Fichier analysé avec succès
                   </h4>
                   <p className="text-sm text-green-800 dark:text-green-300 mt-1">
-                    {allData.length} inscriptions détectées • {Object.keys(columnMapping).length} colonnes reconnues automatiquement
+                    {allData.length} inscriptions détectées •{' '}
+                    {Object.keys(columnMapping).length} colonnes reconnues
+                    automatiquement
                   </p>
                 </div>
               </div>
@@ -311,7 +373,11 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                             key={colIndex}
                             className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap"
                           >
-                            {row[header]?.toString() || <span className="text-gray-400 dark:text-gray-500">null</span>}
+                            {row[header]?.toString() || (
+                              <span className="text-gray-400 dark:text-gray-500">
+                                null
+                              </span>
+                            )}
                           </td>
                         ))}
                       </tr>
@@ -330,7 +396,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                       Aucune colonne standard détectée
                     </h4>
                     <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
-                      Les données seront importées telles quelles. Assurez-vous que les noms de colonnes sont corrects.
+                      Les données seront importées telles quelles. Assurez-vous
+                      que les noms de colonnes sont corrects.
                     </p>
                   </div>
                 </div>
@@ -338,17 +405,16 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
             )}
 
             <div className="flex justify-end space-x-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setStep('upload')}
-              >
+              <Button variant="outline" onClick={() => setStep('upload')}>
                 Retour
               </Button>
               <Button
                 onClick={handleImport}
                 disabled={isProcessing || isImporting}
               >
-                {isProcessing || isImporting ? 'Import en cours...' : `Importer ${allData.length} inscriptions`}
+                {isProcessing || isImporting
+                  ? 'Import en cours...'
+                  : `Importer ${allData.length} inscriptions`}
               </Button>
             </div>
           </>
@@ -364,27 +430,32 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({ isOpen, onCl
                 Import terminé !
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                {importResult.summary.created} créées • {importResult.summary.updated} mises à jour • {importResult.summary.skipped} ignorées
+                {importResult.summary.created} créées •{' '}
+                {importResult.summary.updated} mises à jour •{' '}
+                {importResult.summary.skipped} ignorées
               </p>
             </div>
 
-            {importResult.summary.errors && importResult.summary.errors.length > 0 && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-2">
-                  Erreurs rencontrées ({importResult.summary.errors.length}) :
-                </h4>
-                <ul className="text-sm text-red-800 dark:text-red-300 space-y-1 max-h-48 overflow-y-auto">
-                  {importResult.summary.errors.map((error: any, index: number) => (
-                    <li key={index}>• Ligne {error.row}: {error.error}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {importResult.summary.errors &&
+              importResult.summary.errors.length > 0 && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-2">
+                    Erreurs rencontrées ({importResult.summary.errors.length}) :
+                  </h4>
+                  <ul className="text-sm text-red-800 dark:text-red-300 space-y-1 max-h-48 overflow-y-auto">
+                    {importResult.summary.errors.map(
+                      (error: any, index: number) => (
+                        <li key={index}>
+                          • Ligne {error.row}: {error.error}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
 
             <div className="flex justify-end">
-              <Button onClick={handleClose}>
-                Fermer
-              </Button>
+              <Button onClick={handleClose}>Fermer</Button>
             </div>
           </>
         )}

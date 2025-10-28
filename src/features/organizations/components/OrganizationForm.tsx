@@ -9,7 +9,8 @@ import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
 import type { CreateOrganizationRequest } from '../types'
 
 const organizationSchema = z.object({
-  name: z.string()
+  name: z
+    .string()
     .min(2, 'Le nom doit contenir au moins 2 caractères')
     .max(100, 'Le nom ne peut pas dépasser 100 caractères')
     .trim(),
@@ -30,7 +31,7 @@ export const OrganizationForm: React.FC<OrganizationFormProps> = ({
   isLoading = false,
   onCancel,
   submitLabel = "Créer l'organisation",
-  cancelLabel = "Annuler"
+  cancelLabel = 'Annuler',
 }) => {
   const {
     register,
@@ -52,13 +53,13 @@ export const OrganizationForm: React.FC<OrganizationFormProps> = ({
 
   const handleFormSubmit = async (data: OrganizationFormData) => {
     const slug = generateSlug(data.name)
-    
+
     await onSubmit({
       name: data.name,
       slug: slug,
-      timezone: 'Europe/Paris'
+      timezone: 'Europe/Paris',
     })
-    
+
     reset()
   }
 

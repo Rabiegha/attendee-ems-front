@@ -23,7 +23,7 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
   if (result.error && (result.error as any).status === 401) {
     const url = typeof args === 'string' ? args : args.url
     // console.log('[AUTH] 401 error on:', url)
-    
+
     // Si le refresh lui-même échoue, c'est terminé
     if (url === '/auth/refresh') {
       // console.log('[AUTH] Refresh failed, clearing session')
@@ -38,23 +38,35 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
 
     if (!refreshPromise) {
       refreshPromise = (async () => {
-        const res = await rawBaseQuery({ url: '/auth/refresh', method: 'POST' }, api, extra)
+        const res = await rawBaseQuery(
+          { url: '/auth/refresh', method: 'POST' },
+          api,
+          extra
+        )
         if (!res.error && res.data) {
           const { access_token, expires_in } = res.data as any
           const state = api.getState() as RootState
           // console.log('[AUTH] Token refreshed successfully')
-          api.dispatch(setSession({
-            token: access_token,
-            ...(state.session.user && { user: state.session.user }),
-            ...(state.session.organization && { organization: state.session.organization }),
-            ...(typeof expires_in === 'number' && { expiresInSec: expires_in }),
-          }))
+          api.dispatch(
+            setSession({
+              token: access_token,
+              ...(state.session.user && { user: state.session.user }),
+              ...(state.session.organization && {
+                organization: state.session.organization,
+              }),
+              ...(typeof expires_in === 'number' && {
+                expiresInSec: expires_in,
+              }),
+            })
+          )
         } else {
           // console.log('[AUTH] Refresh failed, clearing session')
           api.dispatch(clearSession())
         }
         return res
-      })().finally(() => { refreshPromise = null })
+      })().finally(() => {
+        refreshPromise = null
+      })
     }
 
     const refreshRes = await refreshPromise
@@ -72,14 +84,22 @@ export const rootApi = createApi({
   baseQuery: baseQueryWithReauth,
   // Tous les tags utilisés par les différentes features
   tagTypes: [
-    'Attendees', 'Attendee',
-    'Events', 'Event',
-    'Users', 'User', 
-    'Roles', 'Role',
-    'Permissions', 'Permission',
-    'Invitations', 'Invitation',
-    'Auth', 'Policy', 'Signup',
-    'Organizations'
+    'Attendees',
+    'Attendee',
+    'Events',
+    'Event',
+    'Users',
+    'User',
+    'Roles',
+    'Role',
+    'Permissions',
+    'Permission',
+    'Invitations',
+    'Invitation',
+    'Auth',
+    'Policy',
+    'Signup',
+    'Organizations',
   ],
   // Pas d'endpoints ici, ils seront injectés par chaque feature
   endpoints: () => ({}),

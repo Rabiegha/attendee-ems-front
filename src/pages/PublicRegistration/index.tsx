@@ -20,7 +20,7 @@ interface EventSettings {
 const PublicRegistration: React.FC = () => {
   const { token } = useParams<{ token: string }>()
   const toast = useToast()
-  
+
   const [event, setEvent] = useState<EventSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -34,7 +34,7 @@ const PublicRegistration: React.FC = () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
         const response = await fetch(`${apiUrl}/public/events/${token}`)
-        
+
         if (!response.ok) {
           const contentType = response.headers.get('content-type')
           if (contentType && contentType.includes('application/json')) {
@@ -44,7 +44,7 @@ const PublicRegistration: React.FC = () => {
             throw new Error(`Erreur ${response.status}: ${response.statusText}`)
           }
         }
-        
+
         const data = await response.json()
         setEvent(data)
       } catch (err) {
@@ -72,7 +72,7 @@ const PublicRegistration: React.FC = () => {
   }, [event, isSubmitted])
 
   const handleInputChange = (fieldId: string, value: string) => {
-    setFormData(prev => ({ ...prev, [fieldId]: value }))
+    setFormData((prev) => ({ ...prev, [fieldId]: value }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,16 +84,16 @@ const PublicRegistration: React.FC = () => {
       const attendee: any = {}
       const registrationData: any = {}
       const answers: any = {}
-      
+
       // Helper pour convertir camelCase en snake_case
       const toSnakeCase = (str: string) => {
-        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+        return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
       }
-      
+
       event?.registration_fields?.forEach((field: any) => {
         const value = formData[field.id]
         if (!value) return
-        
+
         if (field.attendeeField) {
           // Convertir de camelCase à snake_case pour le backend
           const backendFieldName = toSnakeCase(field.attendeeField)
@@ -107,7 +107,7 @@ const PublicRegistration: React.FC = () => {
 
       // Email est requis
       if (!attendee.email) {
-        toast.error('Email requis', 'L\'adresse email est obligatoire')
+        toast.error('Email requis', "L'adresse email est obligatoire")
         setIsSubmitting(false)
         return
       }
@@ -122,34 +122,55 @@ const PublicRegistration: React.FC = () => {
       console.log('📤 Payload envoyé:', payload)
 
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-      const response = await fetch(`${apiUrl}/public/events/${token}/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
+      const response = await fetch(
+        `${apiUrl}/public/events/${token}/register`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        }
+      )
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Erreur inconnue' }))
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: 'Erreur inconnue' }))
         console.error('❌ Erreur backend:', errorData)
-        
+
         // Messages d'erreur personnalisés
-        let userMessage = errorData.detail || errorData.message || 'Erreur lors de l\'inscription'
-        
-        if (errorData.status === 403 || userMessage.includes('not open for registration')) {
-          userMessage = 'Les inscriptions pour cet événement ne sont pas encore ouvertes ou sont clôturées.'
+        let userMessage =
+          errorData.detail ||
+          errorData.message ||
+          "Erreur lors de l'inscription"
+
+        if (
+          errorData.status === 403 ||
+          userMessage.includes('not open for registration')
+        ) {
+          userMessage =
+            'Les inscriptions pour cet événement ne sont pas encore ouvertes ou sont clôturées.'
         } else if (errorData.status === 409 || userMessage.includes('full')) {
-          userMessage = 'L\'événement est complet. Aucune nouvelle inscription n\'est possible.'
+          userMessage =
+            "L'événement est complet. Aucune nouvelle inscription n'est possible."
         }
-        
+
         throw new Error(userMessage)
       }
 
       setIsSubmitted(true)
-      toast.success('Inscription réussie !', 'Votre inscription a été enregistrée avec succès')
+      toast.success(
+        'Inscription réussie !',
+        'Votre inscription a été enregistrée avec succès'
+      )
     } catch (err) {
-      toast.error('Erreur', err instanceof Error ? err.message : 'Impossible de soumettre le formulaire')
+      toast.error(
+        'Erreur',
+        err instanceof Error
+          ? err.message
+          : 'Impossible de soumettre le formulaire'
+      )
     } finally {
       setIsSubmitting(false)
     }
@@ -187,11 +208,13 @@ const PublicRegistration: React.FC = () => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Sélectionnez une option</option>
-            {field.options?.map((option: { value: string; label: string }, idx: number) => (
-              <option key={idx} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            {field.options?.map(
+              (option: { value: string; label: string }, idx: number) => (
+                <option key={idx} value={option.value}>
+                  {option.label}
+                </option>
+              )
+            )}
           </select>
         )
       default:
@@ -226,7 +249,8 @@ const PublicRegistration: React.FC = () => {
             Événement non trouvé
           </h2>
           <p className="text-gray-600">
-            {error || 'L\'événement que vous recherchez n\'existe pas ou n\'est plus disponible.'}
+            {error ||
+              "L'événement que vous recherchez n'existe pas ou n'est plus disponible."}
           </p>
         </div>
       </div>
@@ -308,7 +332,9 @@ const PublicRegistration: React.FC = () => {
                     {field.label && (
                       <label className="block text-sm font-medium text-gray-700 mb-1">
                         {field.label}
-                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                        {field.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
                       </label>
                     )}
                     {renderField(field)}
@@ -322,7 +348,9 @@ const PublicRegistration: React.FC = () => {
                     className="w-full px-4 py-2 rounded-md text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
                     style={{ backgroundColor: submitButtonColor }}
                   >
-                    {isSubmitting ? 'Inscription en cours...' : submitButtonText}
+                    {isSubmitting
+                      ? 'Inscription en cours...'
+                      : submitButtonText}
                   </button>
                 </div>
               </>

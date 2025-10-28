@@ -25,13 +25,29 @@ export const EventGuard: React.FC<EventGuardProps> = ({
   const organization = useSelector(selectOrganization)
   
   // Pour les admins et super admins, accès direct
-  // ADMIN, MANAGER peuvent voir tous les événements de leur org
-  if (user?.isSuperAdmin || user?.roles?.includes('ADMIN') || user?.roles?.includes('MANAGER')) {
-    console.log(`Admin access granted for user ${user?.email} to event ${eventId}`)
+  // SUPER_ADMIN peut voir tous les événements cross-tenant
+  if (user?.isSuperAdmin) {
+    console.log(`Super admin access granted for user ${user?.email} to event ${eventId}`)
     return <>{children}</>
   }
   
-  // Pour les autres rôles, vérifier les eventIds
+  // ADMIN, MANAGER peuvent voir tous les événements de leur org
+  if (user?.roles?.includes('ADMIN') || user?.roles?.includes('MANAGER')) {
+    console.log(`Admin/Manager access granted for user ${user?.email} to event ${eventId}`)
+    return <>{children}</>
+  }
+  
+  // Pour les rôles avec scope assigned (PARTNER, HOSTESS), vérifier les permissions JWT
+  const userRole = user?.roles?.[0]
+  if (userRole === 'PARTNER' || userRole === 'HOSTESS') {
+    // Si l'utilisateur a la permission events.read:assigned, cela signifie qu'il peut voir
+    // les événements qui lui sont assignés. Le backend se charge de filtrer automatiquement.
+    // Si l'événement apparaît dans la liste côté client, c'est qu'il y a accès.
+    console.log(`Assigned role (${userRole}) access granted for user ${user?.email} to event ${eventId} - backend filtering handles assignment`)
+    return <>{children}</>
+  }
+  
+  // Legacy: Pour les autres rôles, vérifier les eventIds explicites (si présents)
   if (user?.eventIds?.includes(eventId)) {
     console.log(`Event access granted for user ${user?.email} to event ${eventId} (in authorized list)`)
     return <>{children}</>

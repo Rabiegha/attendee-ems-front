@@ -1,12 +1,20 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { Search, Filter, Download, CheckCircle, XCircle, Clock, Ban, Mail, Phone, Building2, Edit2, Trash2 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button } from '@/shared/ui/Button'
 import { formatDateTime } from '@/shared/lib/utils'
-import { useUpdateRegistrationStatusMutation, useUpdateRegistrationMutation, useDeleteRegistrationMutation } from '../api/registrationsApi'
+import { 
+  useUpdateRegistrationStatusMutation, 
+  useUpdateRegistrationMutation, 
+  useDeleteRegistrationMutation,
+  useBulkDeleteRegistrationsMutation,
+  useBulkExportRegistrationsMutation
+} from '../api/registrationsApi'
 import { useToast } from '@/shared/hooks/useToast'
 import { EditRegistrationModal } from './EditRegistrationModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
+import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
+import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
 
 interface RegistrationsTableProps {
   registrations: RegistrationDPO[]
@@ -37,6 +45,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [updateStatus] = useUpdateRegistrationStatusMutation()
   const [updateRegistration, { isLoading: isUpdating }] = useUpdateRegistrationMutation()
   const [deleteRegistration] = useDeleteRegistrationMutation()
+  const [bulkDeleteRegistrations] = useBulkDeleteRegistrationsMutation()
+  const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
+
+
 
   const handleStatusChange = async (registrationId: string, newStatus: string) => {
     try {
@@ -93,6 +105,64 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
     return matchesSearch && matchesStatus
   })
+
+  // Multi-select functionality
+  const {
+    selectedIds,
+    selectedItems,
+    selectedCount,
+    isSelected,
+    isAllSelected,
+    isIndeterminate,
+    toggleItem,
+    toggleAll,
+    unselectAll,
+  } = useMultiSelect({
+    items: filteredRegistrations,
+    getItemId: (registration) => registration.id,
+  })
+
+  // Bulk actions
+  const bulkActions = useMemo(() => {
+    const actions = []
+    
+    // Default export action using API mutation
+    actions.push(createBulkActions.export(async (selectedIds) => {
+      try {
+        const response = await bulkExportRegistrations({ 
+          ids: Array.from(selectedIds),
+          format: 'csv' 
+        }).unwrap()
+        
+        // Download the file using the URL provided by the API
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = response.downloadUrl
+        a.download = response.filename || 'inscriptions.csv'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        
+        unselectAll()
+      } catch (error) {
+        console.error('Erreur lors de l\'export:', error)
+        throw error
+      }
+    }))
+    
+    // Default delete action using API mutation
+    actions.push(createBulkActions.delete(async (selectedIds) => {
+      try {
+        await bulkDeleteRegistrations(Array.from(selectedIds)).unwrap()
+        unselectAll()
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error)
+        throw error
+      }
+    }))
+    
+    return actions
+  }, [bulkDeleteRegistrations, bulkExportRegistrations, unselectAll])
 
   if (isLoading) {
     return (
@@ -174,6 +244,16 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         </div>
       </div>
 
+      {/* Bulk Actions */}
+      <BulkActions
+        selectedCount={selectedCount}
+        selectedIds={selectedIds}
+        selectedItems={selectedItems}
+        actions={bulkActions}
+        onClearSelection={unselectAll}
+        itemType="inscriptions"
+      />
+
       {/* Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-200">
         {filteredRegistrations.length === 0 ? (
@@ -185,6 +265,19 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
+                  <th className="px-6 py-3 text-left">
+                    <label className="flex items-center justify-center cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = isIndeterminate
+                        }}
+                        onChange={toggleAll}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </label>
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Participant
                   </th>
@@ -207,7 +300,22 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                   const StatusIcon = STATUS_CONFIG[registration.status].icon
                   
                   return (
-                    <tr key={registration.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <tr key={registration.id} className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+                      isSelected(registration.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                    }`}>
+                      <td 
+                        className="px-6 py-4 whitespace-nowrap"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <label className="flex items-center justify-center w-full h-full cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={isSelected(registration.id)}
+                            onChange={() => toggleItem(registration.id)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </label>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900 dark:text-white">

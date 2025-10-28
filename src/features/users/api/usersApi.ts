@@ -105,7 +105,10 @@ export const usersApi = rootApi.injectEndpoints({
         method: 'PATCH',
         body: data,
       }),
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Users', id }],
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Users', id },
+        { type: 'Users', id: 'LIST' } // Invalider aussi la liste pour rafraîchir immédiatement
+      ],
     }),
 
     // Supprimer un utilisateur

@@ -28,6 +28,7 @@ export interface User {
   country?: string
   metadata?: any
   roles: string[]
+  permissions?: string[] // JWT permissions in "code:scope" format
   orgId?: string
   org_id?: string      // Support backend format
   eventIds?: string[]

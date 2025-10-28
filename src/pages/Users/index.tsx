@@ -21,11 +21,15 @@ import {
   LoadingSpinner
 } from '@/shared/ui'
 import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { useGetUsersQuery } from '@/features/users/api/usersApi'
 import { Can } from '@/shared/acl/guards/Can'
+import { RoleSelector } from '@/features/users/ui/RoleSelector'
+import { selectUser } from '@/features/auth/model/sessionSlice'
 
 export function UsersPage() {
   const navigate = useNavigate()
+  const currentUser = useSelector(selectUser)
   const { data: usersData, isLoading, refetch } = useGetUsersQuery({})
 
   const handleRefresh = () => {
@@ -226,9 +230,13 @@ export function UsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200">
-                          {user.role?.name || 'Non défini'}
-                        </span>
+                        <Can do="assign" on="Role" fallback={
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200">
+                            {user.role?.name || 'Non défini'}
+                          </span>
+                        }>
+                          <RoleSelector user={user} currentUserId={currentUser?.id} />
+                        </Can>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">

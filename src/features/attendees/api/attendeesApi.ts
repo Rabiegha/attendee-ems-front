@@ -4,17 +4,39 @@ import type {
   AttendeeDTO,
   ExportAttendeesResponse,
 } from '../dpo/attendee.dto'
+
+// Types pour l'historique d'un attendee
+export interface AttendeeHistoryItem {
+  id: string
+  attendeeId: string
+  eventId: string
+  status: string
+  displayName: string
+  email: string
+  registrationDate: string
+  checkedInAt?: string
+  customData?: Record<string, any>
+  event: {
+    id: string
+    name: string
+    description?: string
+    startDate: string
+    endDate: string
+    location?: string
+    status: string
+    organizationId: string
+    organizationName?: string
+  }
+}
 import type { 
   AttendeeDPO, 
   CreateAttendeeDPO, 
-  UpdateAttendeeDPO, 
-  UpdateAttendeeStatusDPO 
+  UpdateAttendeeDPO
 } from '../dpo/attendee.dpo'
 import { 
   mapAttendeeDTOtoDPO, 
   mapCreateAttendeeDPOtoDTO, 
-  mapUpdateAttendeeDPOtoDTO,
-  mapUpdateAttendeeStatusDPOtoDTO 
+  mapUpdateAttendeeDPOtoDTO
 } from '../dpo/attendee.mappers'
 
 export interface AttendeesListParams {
@@ -23,6 +45,7 @@ export interface AttendeesListParams {
   limit?: number
   pageSize?: number
   status?: string
+  isActive?: boolean
   search?: string
   q?: string
   tags?: string[]
@@ -100,11 +123,11 @@ export const attendeesApi = rootApi.injectEndpoints({
       },
     }),
 
-    updateAttendeeStatus: builder.mutation<AttendeeDPO, { id: string; data: UpdateAttendeeStatusDPO }>({
-      query: ({ id, data }) => ({
-        url: API_ENDPOINTS.ATTENDEES.UPDATE_STATUS(id),
+    toggleAttendeeStatus: builder.mutation<AttendeeDPO, { id: string; isActive: boolean }>({
+      query: ({ id, isActive }) => ({
+        url: API_ENDPOINTS.ATTENDEES.BY_ID(id),
         method: 'PATCH',
-        body: mapUpdateAttendeeStatusDPOtoDTO(data),
+        body: { is_active: isActive },
       }),
       transformResponse: (response: AttendeeDTO) => mapAttendeeDTOtoDPO(response),
       invalidatesTags: (_result, _error, { id }) => [
@@ -112,16 +135,11 @@ export const attendeesApi = rootApi.injectEndpoints({
         { type: 'Attendees', id: 'LIST' },
       ],
       // Optimistic update for status changes
-      async onQueryStarted({ id, data }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ id, isActive }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
           attendeesApi.util.updateQueryData('getAttendeeById', id, (draft) => {
-            draft.status = data.status
-            if (data.status === 'checked_in') {
-              draft.checkedInAt = new Date().toISOString()
-              if (data.checkedInBy) draft.checkedInBy = data.checkedInBy
-              draft.isCheckedIn = true
-              draft.canCheckIn = false
-            }
+            draft.isActive = isActive
+            draft.canCheckIn = isActive
           })
         )
         try {
@@ -142,6 +160,17 @@ export const attendeesApi = rootApi.injectEndpoints({
       }),
     }),
 
+    getAttendeeHistory: builder.query<AttendeeHistoryItem[], { attendeeId: string; email: string }>({
+      query: ({ attendeeId, email }) => {
+        const searchParams = new URLSearchParams()
+        searchParams.append('email', email)
+        return `${API_ENDPOINTS.ATTENDEES.HISTORY(attendeeId)}?${searchParams.toString()}`
+      },
+      providesTags: (_result, _error, { attendeeId }) => [
+        { type: 'Attendee', id: `history-${attendeeId}` }
+      ],
+    }),
+
     deleteAttendee: builder.mutation<void, string>({
       query: (id) => ({
         url: API_ENDPOINTS.ATTENDEES.BY_ID(id),
@@ -152,6 +181,77 @@ export const attendeesApi = rootApi.injectEndpoints({
         { type: 'Attendees', id: 'LIST' },
       ],
     }),
+
+    bulkDeleteAttendees: builder.mutation<{ deletedCount: number }, string[]>({
+      query: (ids) => ({
+        url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-delete`,
+        method: 'DELETE',
+        body: { ids },
+      }),
+      invalidatesTags: (_result, _error, ids) => [
+        ...ids.map(id => ({ type: 'Attendee' as const, id })),
+        { type: 'Attendees', id: 'LIST' },
+      ],
+    }),
+
+    bulkExportAttendees: builder.mutation<ExportAttendeesResponse, { ids: string[]; format?: 'csv' | 'xlsx' }>({
+      query: ({ ids, format = 'csv' }) => ({
+        url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-export`,
+        method: 'POST',
+        body: { ids, format },
+      }),
+    }),
+
+    // Restaurer un attendee supprimé
+    restoreAttendee: builder.mutation<AttendeeDPO, string>({
+      query: (id) => ({
+        url: `${API_ENDPOINTS.ATTENDEES.BY_ID(id)}/restore`,
+        method: 'POST',
+      }),
+      transformResponse: (response: AttendeeDTO) => mapAttendeeDTOtoDPO(response),
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Attendee', id },
+        { type: 'Attendees', id: 'LIST' },
+      ],
+    }),
+
+    // Supprimer définitivement un attendee
+    permanentDeleteAttendee: builder.mutation<void, string>({
+      query: (id) => ({
+        url: `${API_ENDPOINTS.ATTENDEES.BY_ID(id)}/permanent-delete`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Attendee', id },
+        { type: 'Attendees', id: 'LIST' },
+      ],
+    }),
+
+    // Restaurer plusieurs attendees
+    bulkRestoreAttendees: builder.mutation<{ restoredCount: number }, string[]>({
+      query: (ids) => ({
+        url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-restore`,
+        method: 'POST',
+        body: { ids },
+      }),
+      invalidatesTags: (_result, _error, ids) => [
+        ...ids.map(id => ({ type: 'Attendee' as const, id })),
+        { type: 'Attendees', id: 'LIST' },
+      ],
+    }),
+
+    // Supprimer définitivement plusieurs attendees
+    bulkPermanentDeleteAttendees: builder.mutation<{ deletedCount: number }, string[]>({
+      query: (ids) => ({
+        url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-permanent-delete`,
+        method: 'DELETE',
+        body: { ids },
+      }),
+      invalidatesTags: (_result, _error, ids) => [
+        ...ids.map(id => ({ type: 'Attendee' as const, id })),
+        { type: 'Attendees', id: 'LIST' },
+      ],
+    }),
   }),
   overrideExisting: false,
 })
@@ -159,9 +259,16 @@ export const attendeesApi = rootApi.injectEndpoints({
 export const {
   useGetAttendeesQuery,
   useGetAttendeeByIdQuery,
+  useGetAttendeeHistoryQuery,
   useCreateAttendeeMutation,
   useUpdateAttendeeMutation,
-  useUpdateAttendeeStatusMutation,
+  useToggleAttendeeStatusMutation,
   useExportAttendeesMutation,
   useDeleteAttendeeMutation,
+  useBulkDeleteAttendeesMutation,
+  useBulkExportAttendeesMutation,
+  useRestoreAttendeeMutation,
+  usePermanentDeleteAttendeeMutation,
+  useBulkRestoreAttendeesMutation,
+  useBulkPermanentDeleteAttendeesMutation,
 } = attendeesApi

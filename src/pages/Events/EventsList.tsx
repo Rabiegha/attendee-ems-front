@@ -9,17 +9,27 @@
  * - Dark mode support
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus, Search, Filter, Calendar, MapPin, Users, Edit, Trash2, Eye } from 'lucide-react'
 import { useToast } from '@/shared/hooks/useToast'
+import { useSelector } from 'react-redux'
+import { selectUser, selectOrgId } from '@/features/auth/model/sessionSlice'
 
-// Mock data import (temporary)
-import { mockEvents } from '@/mocks/data/events.mock'
-import type { Event, EventStatus } from '@/features/events/types'
+// Real API calls
+import { useGetEventsQuery, useDeleteEventMutation, useBulkDeleteEventsMutation, useBulkExportEventsMutation } from '@/features/events/api/eventsApi'
+import type { EventStatus } from '@/features/events/types'
+
+// Multi-select components
+import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
+import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
 
 const EventsList = () => {
-  const { toast } = useToast()
+  const toast = useToast()
+  
+  // Get user from Redux
+  const user = useSelector(selectUser)
+  const orgId = useSelector(selectOrgId)
   
   // Filters state
   const [search, setSearch] = useState('')
@@ -27,48 +37,114 @@ const EventsList = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
-  // Mock user org (TODO: get from Redux sessionSlice)
-  const userOrgId = 'org-tech-corp'
-  const userRole = 'ADMIN' // TODO: get from Redux
+  // API calls - Real data instead of mocks
+  const { data: events = [], isLoading, error } = useGetEventsQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+    ...(search && { search }),
+    ...(statusFilter !== 'all' && { status: statusFilter }),
+  })
+  
+  const [deleteEvent] = useDeleteEventMutation()
+  const [bulkDeleteEvents] = useBulkDeleteEventsMutation()
+  const [bulkExportEvents] = useBulkExportEventsMutation()
 
-  // Filter events
-  const filteredEvents = mockEvents.filter(event => {
-    // RBAC: Non-SUPER_ADMIN see only their org
-    if (userRole !== 'SUPER_ADMIN' && event.org_id !== userOrgId) {
+  // Get user role for RBAC
+  const userRole = user?.roles?.[0] || 'VIEWER'
+  const isSuperAdmin = userRole === 'SUPER_ADMIN'
+
+  // Filter events based on user role (additional client-side filtering if needed)
+  const filteredEvents = events.filter(event => {
+    // RBAC: SUPER_ADMIN sees all events, others see only their org events
+    if (!isSuperAdmin && event.orgId !== orgId) {
       return false
     }
-
-    // Search filter
-    if (search) {
-      const searchLower = search.toLowerCase()
-      const matchesSearch =
-        event.name?.toLowerCase().includes(searchLower) ||
-        event.code?.toLowerCase().includes(searchLower) ||
-        event.description?.toLowerCase().includes(searchLower)
-      if (!matchesSearch) return false
-    }
-
-    // Status filter
-    if (statusFilter !== 'all' && event.status !== statusFilter) {
-      return false
-    }
-
     return true
   })
 
-  // Pagination
+  // Pagination (if not handled by API)
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const paginatedEvents = filteredEvents.slice(startIndex, startIndex + itemsPerPage)
+  const paginatedEvents = filteredEvents
+
+  // Multi-select logic
+  const {
+    selectedIds,
+    isSelected,
+    isAllSelected,
+    isIndeterminate,
+    toggleItem,
+    toggleAll,
+    unselectAll,
+    selectedCount,
+    selectedItems
+  } = useMultiSelect({
+    items: paginatedEvents,
+    getItemId: (event) => event.id
+  })
+
+  // Bulk actions configuration
+  const bulkActions = useMemo(() => {
+    const actions = []
+    
+    // Default export action using API mutation
+    actions.push(createBulkActions.export(async (selectedIds) => {
+      try {
+        const response = await bulkExportEvents({ 
+          ids: Array.from(selectedIds),
+          format: 'csv' 
+        }).unwrap()
+        
+        // Download the file using the URL provided by the API
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = response.downloadUrl
+        a.download = response.filename || 'events.csv'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        
+        unselectAll()
+      } catch (error) {
+        console.error('Erreur lors de l\'export:', error)
+        throw error
+      }
+    }))
+    
+    // Default delete action using API mutation
+    actions.push(createBulkActions.delete(async (selectedIds) => {
+      try {
+        await bulkDeleteEvents(Array.from(selectedIds)).unwrap()
+        toast.success('Événements supprimés', `${selectedIds.size} événement(s) supprimé(s) avec succès`)
+        unselectAll()
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error)
+        toast.error('Erreur', 'Impossible de supprimer les événements')
+        throw error
+      }
+    }))
+    
+    return actions
+  }, [bulkDeleteEvents, bulkExportEvents, unselectAll, toast])
 
   // Handlers
-  const handleDelete = (eventId: string) => {
-    // TODO: Call API
-    toast.success('Événement supprimé', 'L\'événement a été supprimé avec succès')
+  const handleDelete = async (eventId: string) => {
+    try {
+      await deleteEvent(eventId).unwrap()
+      toast.success('Événement supprimé', 'L\'événement a été supprimé avec succès')
+    } catch (err) {
+      toast.error('Erreur', 'Impossible de supprimer l\'événement')
+    }
   }
 
-  const handleDuplicate = (eventId: string) => {
-    toast.info('Fonctionnalité à venir', 'La duplication d\'événement sera disponible prochainement')
+  const handleRowClick = (eventId: string, e: React.MouseEvent) => {
+    // Don't navigate if clicking on checkbox or action buttons
+    if ((e.target as HTMLElement).closest('input[type="checkbox"]') || 
+        (e.target as HTMLElement).closest('button') ||
+        (e.target as HTMLElement).closest('a')) {
+      return
+    }
+    // Toggle selection on row click
+    toggleItem(eventId)
   }
 
   // Status badge styles
@@ -162,10 +238,54 @@ const EventsList = () => {
 
         {/* Events Table */}
         <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-200">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          {/* Bulk Actions */}
+          <BulkActions
+            selectedCount={selectedCount}
+            selectedIds={selectedIds}
+            selectedItems={selectedItems}
+            actions={bulkActions}
+            onClearSelection={unselectAll}
+            itemType="événements"
+          />
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-300">Chargement des événements...</span>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-center">
+                <div className="text-red-600 dark:text-red-400 mb-2">❌ Erreur lors du chargement</div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Impossible de charger les événements. Veuillez réessayer.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Table Content */}
+          {!isLoading && !error && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                 <tr>
+                  <th className="px-6 py-3 w-12">
+                    <label className="flex items-center justify-center cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        ref={(el) => {
+                          if (el) el.indeterminate = isIndeterminate
+                        }}
+                        onChange={toggleAll}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </label>
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Événement
                   </th>
@@ -189,7 +309,7 @@ const EventsList = () => {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {paginatedEvents.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
+                    <td colSpan={7} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center">
                         <Calendar className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" />
                         <p className="text-gray-600 dark:text-gray-300 font-medium">Aucun événement trouvé</p>
@@ -203,25 +323,41 @@ const EventsList = () => {
                   paginatedEvents.map((event) => (
                     <tr
                       key={event.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150"
+                      className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer ${
+                        isSelected(event.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                      }`}
+                      onClick={(e) => handleRowClick(event.id, e)}
                     >
+                      <td 
+                        className="px-6 py-4" 
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <label className="flex items-center justify-center w-full h-full cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={isSelected(event.id)}
+                            onChange={() => toggleItem(event.id)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </label>
+                      </td>
                       <td className="px-6 py-4">
                         <div>
                           <div className="font-medium text-gray-900 dark:text-white">{event.name}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{event.code}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{event.id}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm">
                           <div className="text-gray-900 dark:text-white">
-                            {new Date(event.start_at).toLocaleDateString('fr-FR', {
+                            {new Date(event.startDate).toLocaleDateString('fr-FR', {
                               day: 'numeric',
                               month: 'short',
                               year: 'numeric'
                             })}
                           </div>
                           <div className="text-gray-500 dark:text-gray-400">
-                            {new Date(event.start_at).toLocaleTimeString('fr-FR', {
+                            {new Date(event.startDate).toLocaleTimeString('fr-FR', {
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
@@ -231,18 +367,18 @@ const EventsList = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                           <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                          {event.location.city || 'En ligne'}
+                          {event.location || 'En ligne'}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center text-sm">
                           <Users className="w-4 h-4 mr-1 text-gray-400" />
                           <span className="text-gray-900 dark:text-white font-medium">
-                            {event.statistics.registered_count}
+                            {event.currentAttendees || 0}
                           </span>
-                          {event.settings.max_attendees && (
+                          {event.maxAttendees && (
                             <span className="text-gray-500 dark:text-gray-400 ml-1">
-                              / {event.settings.max_attendees}
+                              / {event.maxAttendees}
                             </span>
                           )}
                         </div>
@@ -281,9 +417,10 @@ const EventsList = () => {
               </tbody>
             </table>
           </div>
+          )}
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {!isLoading && !error && totalPages > 1 && (
             <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-600 dark:text-gray-300">

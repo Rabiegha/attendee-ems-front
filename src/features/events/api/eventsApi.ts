@@ -9,8 +9,9 @@ export interface EventsListParams {
   limit?: number
   status?: string
   search?: string
-  tags?: string[]
-  sortBy?: 'name' | 'startDate' | 'createdAt'
+  startAfter?: string
+  startBefore?: string
+  sortBy?: 'name' | 'start_at' | 'created_at'
   sortOrder?: 'asc' | 'desc'
 }
 
@@ -129,6 +130,26 @@ export const eventsApi = rootApi.injectEndpoints({
       ],
     }),
 
+    bulkDeleteEvents: builder.mutation<{ deletedCount: number }, string[]>({
+      query: (ids) => ({
+        url: `${API_ENDPOINTS.EVENTS.LIST}/bulk-delete`,
+        method: 'DELETE',
+        body: { ids },
+      }),
+      invalidatesTags: (_result, _error, ids) => [
+        ...ids.map(id => ({ type: 'Event' as const, id })),
+        { type: 'Events', id: 'LIST' },
+      ],
+    }),
+
+    bulkExportEvents: builder.mutation<{ downloadUrl: string; filename: string; expiresAt: string }, { ids: string[]; format?: 'csv' | 'xlsx' }>({
+      query: ({ ids, format = 'csv' }) => ({
+        url: `${API_ENDPOINTS.EVENTS.LIST}/bulk-export`,
+        method: 'POST',
+        body: { ids, format },
+      }),
+    }),
+
     changeEventStatus: builder.mutation<EventDPO, { id: string; status: string }>({
       query: ({ id, status }) => ({
         url: API_ENDPOINTS.EVENTS.CHANGE_STATUS(id),
@@ -153,4 +174,6 @@ export const {
   useUpdateRegistrationFieldsMutation,
   useDeleteEventMutation,
   useChangeEventStatusMutation,
+  useBulkDeleteEventsMutation,
+  useBulkExportEventsMutation,
 } = eventsApi

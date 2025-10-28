@@ -1,20 +1,19 @@
 // Data Transfer Object - Raw API response structure
 export interface AttendeeDTO {
   id: string
+  org_id: string
+  default_type_id?: string
+  email: string
   first_name: string
   last_name: string
-  email: string
   phone?: string
   company?: string
   job_title?: string
-  status: 'pending' | 'confirmed' | 'checked_in' | 'cancelled' | 'no_show'
-  event_id: string
-  org_id: string
-  registration_date: string
-  checked_in_at?: string
-  checked_in_by?: string
+  country?: string
   metadata?: Record<string, any>
-  tags?: string[]
+  labels?: string[]
+  notes?: string
+  is_active: boolean
   created_at: string
   updated_at: string
 }
@@ -26,18 +25,17 @@ export interface CreateAttendeeDTO {
   phone?: string
   company?: string
   job_title?: string
-  event_id: string
+  country?: string
   metadata?: Record<string, any>
-  tags?: string[]
+  labels?: string[]
 }
 
 export interface UpdateAttendeeDTO extends Partial<CreateAttendeeDTO> {
-  status?: AttendeeDTO['status']
+  is_active?: boolean
 }
 
 export interface UpdateAttendeeStatusDTO {
-  status: AttendeeDTO['status']
-  checked_in_by?: string
+  is_active: boolean
 }
 
 export interface AttendeesListResponse {

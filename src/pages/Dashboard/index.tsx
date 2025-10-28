@@ -35,15 +35,17 @@ export const Dashboard: React.FC = () => {
   
   const { data: events = [], isLoading: eventsLoading } = useGetEventsQuery({
     limit: 5,
-    sortBy: 'startDate',
+    sortBy: 'start_at',
     sortOrder: 'asc',
   })
   
   const { data: attendees = [], isLoading: attendeesLoading } = useGetAttendeesQuery({
-    limit: 10,
-    sortBy: 'email',
+    pageSize: 10,
+    sortBy: 'created_at',
     sortDir: 'desc',
   })
+
+
 
   const handleCreateEvent = () => {
     setIsCreateModalOpen(true)

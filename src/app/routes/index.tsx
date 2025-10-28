@@ -12,6 +12,7 @@ import { Dashboard } from '@/pages/Dashboard'
 import { EventsPage } from '@/pages/Events'
 import { EventDetails } from '@/pages/EventDetails'
 import { Attendees } from '@/pages/Attendees'
+import { AttendeeDetail } from '@/pages/AttendeeDetail'
 import { UsersPage } from '@/pages/Users'
 import { RolePermissionsAdmin } from '@/pages/RolePermissionsAdmin'
 import { ChangePasswordPage } from '@/pages/ChangePassword'
@@ -74,11 +75,24 @@ export const router = createBrowserRouter([
       },
       {
         path: 'attendees',
-        element: (
-          <GuardedRoute action="read" subject="Attendee">
-            <Attendees />
-          </GuardedRoute>
-        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <GuardedRoute action="read" subject="Attendee">
+                <Attendees />
+              </GuardedRoute>
+            ),
+          },
+          {
+            path: ':id',
+            element: (
+              <GuardedRoute action="read" subject="Attendee">
+                <AttendeeDetail />
+              </GuardedRoute>
+            ),
+          },
+        ],
       },
       {
         path: 'users',

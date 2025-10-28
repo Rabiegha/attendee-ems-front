@@ -87,6 +87,7 @@ export const { setSession, setRules, updateUser, clearSession, setBootstrapCompl
 
 // Selectors
 export const selectSession = (state: RootState) => state.session
+export const selectToken = (state: RootState) => state.session.token
 export const selectUser = (state: RootState) => state.session.user
 export const selectOrganization = (state: RootState) => state.session.organization
 export const selectIsAuthenticated = (state: RootState) => state.session.isAuthenticated

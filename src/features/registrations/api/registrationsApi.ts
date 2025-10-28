@@ -177,6 +177,30 @@ export const registrationsApi = rootApi.injectEndpoints({
         { type: 'Event', id: eventId },
       ],
     }),
+
+    bulkDeleteRegistrations: builder.mutation<{ deletedCount: number }, string[]>({
+      query: (ids) => ({
+        url: '/registrations/bulk-delete',
+        method: 'DELETE',
+        body: { ids },
+      }),
+      invalidatesTags: ['Attendee'],
+    }),
+
+    bulkExportRegistrations: builder.mutation<{ downloadUrl: string; filename: string }, { ids: string[]; format?: string }>({
+      query: ({ ids, format = 'csv' }) => ({
+        url: '/registrations/bulk-export',
+        method: 'POST',
+        body: { ids, format },
+        responseHandler: async (response) => {
+          const blob = await response.blob()
+          const downloadUrl = URL.createObjectURL(blob)
+          const contentDisposition = response.headers.get('content-disposition')
+          const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || `inscriptions_export_${new Date().toISOString().split('T')[0]}.csv`
+          return { downloadUrl, filename }
+        },
+      }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -190,4 +214,6 @@ export const {
   useCreateRegistrationMutation,
   useUpdateRegistrationMutation,
   useDeleteRegistrationMutation,
+  useBulkDeleteRegistrationsMutation,
+  useBulkExportRegistrationsMutation,
 } = registrationsApi

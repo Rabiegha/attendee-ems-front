@@ -8,6 +8,7 @@ export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 export { Modal } from './Modal'
 export { FormField } from './FormField'
 export { CloseButton } from './CloseButton'
+export { Tabs, type TabItem } from './Tabs'
 
 // Layout Components
 export { PageContainer } from './PageContainer'
@@ -26,7 +27,7 @@ export { useUniversalModal } from './useUniversalModal'
 
 // Development Tools
 export { TestAccountsModal } from './TestAccountsModal'
-export { DemoLoginPanel } from './DemoLoginPanel'
+// DemoLoginPanel removed - no longer using mock data
 
 // Hooks
 export { useToast } from './useToast'

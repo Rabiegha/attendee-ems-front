@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
   ATTENDEES: {
     LIST: '/attendees',
     BY_ID: (id: string) => `/attendees/${id}`,
+    HISTORY: (id: string) => `/attendees/${id}/history`,
     UPDATE_STATUS: (id: string) => `/attendees/${id}/status`,
     EXPORT: '/attendees/export',
   },

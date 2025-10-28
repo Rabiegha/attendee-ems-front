@@ -15,11 +15,8 @@ import { Button } from '@/shared/ui/Button'
 
 const statusOptions = [
   { value: '', label: 'Tous' },
-  { value: 'pending', label: 'En attente' },
-  { value: 'confirmed', label: 'Confirmé' },
-  { value: 'checked_in', label: 'Enregistré' },
-  { value: 'cancelled', label: 'Annulé' },
-  { value: 'no_show', label: 'Absent' },
+  { value: 'true', label: 'Actifs' },
+  { value: 'false', label: 'Inactifs' },
 ]
 
 export const AttendeeFilters: React.FC = () => {

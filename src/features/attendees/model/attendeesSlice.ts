@@ -11,6 +11,7 @@ export interface AttendeesUIState {
   
   // View state
   viewMode: 'table' | 'cards'
+  activeTab: 'active' | 'deleted'
   selectedAttendeeIds: string[]
   
   // UI state
@@ -32,6 +33,7 @@ const initialState: AttendeesUIState = {
   selectedTags: [],
   selectedStatus: null,
   viewMode: 'table',
+  activeTab: 'active',
   selectedAttendeeIds: [],
   isFiltersOpen: false,
   isCreateModalOpen: false,
@@ -63,9 +65,10 @@ export const attendeesSlice = createSlice({
     setSelectedStatus: (state, action: PayloadAction<string | null>) => {
       state.selectedStatus = action.payload
       if (action.payload) {
-        state.filters.status = action.payload
+        // Map status to isActive for attendees API
+        state.filters.isActive = action.payload === 'true'
       } else {
-        delete state.filters.status
+        delete state.filters.isActive
       }
       state.filters.page = 1
     },
@@ -84,6 +87,17 @@ export const attendeesSlice = createSlice({
     
     setViewMode: (state, action: PayloadAction<'table' | 'cards'>) => {
       state.viewMode = action.payload
+    },
+    
+    setActiveTab: (state, action: PayloadAction<'active' | 'deleted'>) => {
+      state.activeTab = action.payload
+      // Update filters based on selected tab
+      if (action.payload === 'active') {
+        state.filters.isActive = true
+      } else {
+        state.filters.isActive = false
+      }
+      state.filters.page = 1
     },
     
     setSelectedAttendeeIds: (state, action: PayloadAction<string[]>) => {
@@ -156,6 +170,7 @@ export const {
   setSelectedStatus,
   toggleTag,
   setViewMode,
+  setActiveTab,
   setSelectedAttendeeIds,
   toggleAttendeeSelection,
   selectAllAttendees,
@@ -178,6 +193,7 @@ export const selectAttendeesSearchQuery = (state: RootState) => state.attendees.
 export const selectAttendeesSelectedTags = (state: RootState) => state.attendees.selectedTags
 export const selectAttendeesSelectedStatus = (state: RootState) => state.attendees.selectedStatus
 export const selectAttendeesViewMode = (state: RootState) => state.attendees.viewMode
+export const selectAttendeesActiveTab = (state: RootState) => state.attendees.activeTab
 export const selectSelectedAttendeeIds = (state: RootState) => state.attendees.selectedAttendeeIds
 export const selectIsAttendeesFiltersOpen = (state: RootState) => state.attendees.isFiltersOpen
 export const selectIsCreateAttendeeModalOpen = (state: RootState) => state.attendees.isCreateModalOpen

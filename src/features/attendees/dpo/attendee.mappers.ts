@@ -1,5 +1,5 @@
-import type { AttendeeDTO, CreateAttendeeDTO, UpdateAttendeeDTO, UpdateAttendeeStatusDTO } from './attendee.dto'
-import type { AttendeeDPO, CreateAttendeeDPO, UpdateAttendeeDPO, UpdateAttendeeStatusDPO } from './attendee.dpo'
+import type { AttendeeDTO, CreateAttendeeDTO, UpdateAttendeeDTO } from './attendee.dto'
+import type { AttendeeDPO, CreateAttendeeDPO, UpdateAttendeeDPO } from './attendee.dpo'
 
 /**
  * Maps AttendeeDTO from API to AttendeeDPO for client use
@@ -10,28 +10,23 @@ export const mapAttendeeDTOtoDPO = (dto: AttendeeDTO): AttendeeDPO => {
     firstName: dto.first_name,
     lastName: dto.last_name,
     email: dto.email,
-    status: dto.status,
-    eventId: dto.event_id,
     orgId: dto.org_id,
-    registrationDate: dto.registration_date, // Keep as ISO string
-    createdAt: dto.created_at,               // Keep as ISO string
-    updatedAt: dto.updated_at,               // Keep as ISO string
+    registrationDate: dto.created_at, // Use created_at as registration date
+    isActive: dto.is_active,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
     
     // Computed properties
-    displayName: `${dto.first_name} ${dto.last_name}`,
-    isCheckedIn: dto.status === 'checked_in',
-    isConfirmed: dto.status === 'confirmed',
-    isPending: dto.status === 'pending',
-    canCheckIn: dto.status === 'confirmed',
+    displayName: `${dto.first_name} ${dto.last_name}`.trim() || dto.email,
+    canCheckIn: dto.is_active, // Active users can check in
   }
   
-  if (dto.checked_in_at) dpo.checkedInAt = dto.checked_in_at // Keep as ISO string
-  if (dto.checked_in_by) dpo.checkedInBy = dto.checked_in_by
   if (dto.phone) dpo.phone = dto.phone
   if (dto.company) dpo.company = dto.company
   if (dto.job_title) dpo.jobTitle = dto.job_title
+  if (dto.country) dpo.country = dto.country
   if (dto.metadata) dpo.metadata = dto.metadata
-  if (dto.tags) dpo.tags = dto.tags
+  if (dto.labels) dpo.labels = dto.labels
   
   return dpo
 }
@@ -44,14 +39,14 @@ export const mapCreateAttendeeDPOtoDTO = (dpo: CreateAttendeeDPO): CreateAttende
     first_name: dpo.firstName,
     last_name: dpo.lastName,
     email: dpo.email,
-    event_id: dpo.eventId,
   }
   
   if (dpo.phone) dto.phone = dpo.phone
   if (dpo.company) dto.company = dpo.company
   if (dpo.jobTitle) dto.job_title = dpo.jobTitle
+  if (dpo.country) dto.country = dpo.country
   if (dpo.metadata) dto.metadata = dpo.metadata
-  if (dpo.tags) dto.tags = dpo.tags
+  if (dpo.labels) dto.labels = dpo.labels
   
   return dto
 }
@@ -66,21 +61,8 @@ export const mapUpdateAttendeeDPOtoDTO = (dpo: UpdateAttendeeDPO): UpdateAttende
   ...(dpo.phone !== undefined && { phone: dpo.phone }),
   ...(dpo.company !== undefined && { company: dpo.company }),
   ...(dpo.jobTitle !== undefined && { job_title: dpo.jobTitle }),
-  ...(dpo.eventId && { event_id: dpo.eventId }),
+  ...(dpo.country !== undefined && { country: dpo.country }),
   ...(dpo.metadata && { metadata: dpo.metadata }),
-  ...(dpo.tags && { tags: dpo.tags }),
-  ...(dpo.status && { status: dpo.status }),
+  ...(dpo.labels && { labels: dpo.labels }),
+  ...(dpo.isActive !== undefined && { is_active: dpo.isActive }),
 })
-
-/**
- * Maps UpdateAttendeeStatusDPO to UpdateAttendeeStatusDTO for API
- */
-export const mapUpdateAttendeeStatusDPOtoDTO = (dpo: UpdateAttendeeStatusDPO): UpdateAttendeeStatusDTO => {
-  const dto: UpdateAttendeeStatusDTO = {
-    status: dpo.status,
-  }
-  
-  if (dpo.checkedInBy) dto.checked_in_by = dpo.checkedInBy
-  
-  return dto
-}

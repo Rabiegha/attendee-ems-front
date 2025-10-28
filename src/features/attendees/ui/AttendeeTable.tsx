@@ -1,52 +1,170 @@
-import React from 'react'
-import { CheckCircle, Clock, XCircle, Edit, Trash2 } from 'lucide-react'
+import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Edit, Trash2, RotateCcw, Trash } from 'lucide-react'
 import type { AttendeeDPO } from '../dpo/attendee.dpo'
 import { formatDate } from '@/shared/lib/utils'
-import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
+import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
+import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
+import { useBulkDeleteAttendeesMutation, useBulkExportAttendeesMutation, useUpdateAttendeeMutation, useDeleteAttendeeMutation, useRestoreAttendeeMutation, usePermanentDeleteAttendeeMutation } from '../api/attendeesApi'
+import { EditAttendeeModal } from './EditAttendeeModal'
+import { DeleteAttendeeModal } from './DeleteAttendeeModal'
+import { RestoreAttendeeModal } from './RestoreAttendeeModal'
+import { PermanentDeleteAttendeeModal } from './PermanentDeleteAttendeeModal'
 
 interface AttendeeTableProps {
   attendees: AttendeeDPO[]
   isLoading: boolean
+  isDeletedTab?: boolean // Indique si on est dans l'onglet des supprimés
+  onBulkDelete?: (selectedIds: Set<string>, selectedItems: AttendeeDPO[]) => Promise<void>
+  onBulkExport?: (selectedIds: Set<string>, selectedItems: AttendeeDPO[]) => Promise<void>
 }
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'checked_in':
-      return <CheckCircle className="h-4 w-4 text-green-600" />
-    case 'confirmed':
-      return <CheckCircle className="h-4 w-4 text-blue-600" />
-    case 'pending':
-      return <Clock className="h-4 w-4 text-yellow-600" />
-    case 'cancelled':
-    case 'no_show':
-      return <XCircle className="h-4 w-4 text-red-600" />
-    default:
-      return <Clock className="h-4 w-4 text-gray-600" />
-  }
-}
-
-const getStatusBadge = (status: string) => {
-  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium'
-  
-  switch (status) {
-    case 'checked_in':
-      return `${baseClasses} bg-green-100 text-green-800`
-    case 'confirmed':
-      return `${baseClasses} bg-blue-100 text-blue-800`
-    case 'pending':
-      return `${baseClasses} bg-yellow-100 text-yellow-800`
-    case 'cancelled':
-      return `${baseClasses} bg-red-100 text-red-800`
-    case 'no_show':
-      return `${baseClasses} bg-gray-100 text-gray-800`
-    default:
-      return `${baseClasses} bg-gray-100 text-gray-800`
-  }
-}
-
-export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoading }) => {
+export const AttendeeTable: React.FC<AttendeeTableProps> = ({ 
+  attendees, 
+  isLoading, 
+  isDeletedTab = false,
+  onBulkDelete,
+  onBulkExport 
+}) => {
   // const { t } = useTranslation('attendees')
+  const navigate = useNavigate()
+
+  // Bulk mutations
+  const [bulkDeleteAttendees] = useBulkDeleteAttendeesMutation()
+  const [bulkExportAttendees] = useBulkExportAttendeesMutation()
+  
+  // Individual mutations
+  const [updateAttendee] = useUpdateAttendeeMutation()
+  const [deleteAttendee] = useDeleteAttendeeMutation()
+  const [restoreAttendee] = useRestoreAttendeeMutation()
+  const [permanentDeleteAttendee] = usePermanentDeleteAttendeeMutation()
+
+  // Modal states
+  const [editingAttendee, setEditingAttendee] = useState<AttendeeDPO | null>(null)
+  const [deletingAttendee, setDeletingAttendee] = useState<AttendeeDPO | null>(null)
+  const [restoringAttendee, setRestoringAttendee] = useState<AttendeeDPO | null>(null)
+  const [permanentDeletingAttendee, setPermanentDeletingAttendee] = useState<AttendeeDPO | null>(null)
+
+  // Multi-select logic
+  const {
+    selectedIds,
+    isSelected,
+    isAllSelected,
+    isIndeterminate,
+    toggleItem,
+    toggleAll,
+    unselectAll,
+    selectedCount,
+    selectedItems
+  } = useMultiSelect({
+    items: attendees,
+    getItemId: (attendee) => attendee.id
+  })
+
+  const handleRowClick = (attendee: AttendeeDPO, e: React.MouseEvent) => {
+    // Don't navigate if clicking on checkbox or action buttons
+    if ((e.target as HTMLElement).closest('input[type="checkbox"]') || 
+        (e.target as HTMLElement).closest('button')) {
+      return
+    }
+    // Navigate to attendee detail page when clicking on row
+    navigate(`/attendees/${attendee.id}`)
+  }
+
+  const handleEditAttendee = (attendee: AttendeeDPO) => {
+    setEditingAttendee(attendee)
+  }
+
+  const handleDeleteAttendee = (attendee: AttendeeDPO) => {
+    setDeletingAttendee(attendee)
+  }
+
+  const handleSaveAttendee = async (data: any) => {
+    if (!editingAttendee) return
+    
+    await updateAttendee({
+      id: editingAttendee.id,
+      data
+    }).unwrap()
+    
+    setEditingAttendee(null)
+  }
+
+  const handleConfirmDelete = async (attendeeId: string) => {
+    await deleteAttendee(attendeeId).unwrap()
+    setDeletingAttendee(null)
+  }
+
+  // Handlers pour les actions sur les attendees supprimés
+  const handleRestoreAttendee = (attendee: AttendeeDPO) => {
+    setRestoringAttendee(attendee)
+  }
+
+  const handlePermanentDeleteAttendee = (attendee: AttendeeDPO) => {
+    setPermanentDeletingAttendee(attendee)
+  }
+
+  const handleConfirmRestore = async (attendeeId: string) => {
+    await restoreAttendee(attendeeId).unwrap()
+    setRestoringAttendee(null)
+  }
+
+  const handleConfirmPermanentDelete = async (attendeeId: string) => {
+    await permanentDeleteAttendee(attendeeId).unwrap()
+    setPermanentDeletingAttendee(null)
+  }
+
+  // Bulk actions
+  const bulkActions = useMemo(() => {
+    const actions = []
+    
+    // Default export action using API mutation
+    actions.push(createBulkActions.export(async (selectedIds) => {
+      try {
+        const response = await bulkExportAttendees({ 
+          ids: Array.from(selectedIds),
+          format: 'csv' 
+        }).unwrap()
+        
+        // Download the file using the URL provided by the API
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = response.downloadUrl
+        a.download = response.filename || 'attendees.csv'
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        
+        unselectAll()
+      } catch (error) {
+        console.error('Erreur lors de l\'export:', error)
+        throw error
+      }
+    }))
+    
+    // Default delete action using API mutation
+    actions.push(createBulkActions.delete(async (selectedIds) => {
+      try {
+        await bulkDeleteAttendees(Array.from(selectedIds)).unwrap()
+        unselectAll()
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error)
+        throw error
+      }
+    }))
+    
+    // Add custom actions if provided
+    if (onBulkExport) {
+      actions.push(createBulkActions.export(onBulkExport))
+    }
+    
+    if (onBulkDelete) {
+      actions.push(createBulkActions.delete(onBulkDelete))
+    }
+    
+    return actions
+  }, [onBulkDelete, onBulkExport, bulkDeleteAttendees, bulkExportAttendees, unselectAll])
 
   if (isLoading) {
     return (
@@ -74,21 +192,42 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoadi
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200">
-          <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              Participant
-            </th>
+    <div>
+      {/* Bulk Actions */}
+      <BulkActions
+        selectedCount={selectedCount}
+        selectedIds={selectedIds}
+        selectedItems={selectedItems}
+        actions={bulkActions}
+        onClearSelection={unselectAll}
+        itemType="participants"
+      />
+
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200">
+            <tr>
+              <th className="px-6 py-3 text-left">
+                <label className="flex items-center justify-center cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isIndeterminate
+                    }}
+                    onChange={toggleAll}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </label>
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Participant
+              </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Contact
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Entreprise
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-              Statut
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
               Inscription
@@ -100,7 +239,26 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoadi
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700 transition-colors duration-200">
           {attendees.map((attendee) => (
-            <tr key={attendee.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150">
+            <tr 
+              key={attendee.id} 
+              className={`hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150 cursor-pointer ${
+                isSelected(attendee.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+              }`}
+              onClick={(e) => handleRowClick(attendee, e)}
+            >
+              <td 
+                className="px-6 py-4 whitespace-nowrap"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <label className="flex items-center justify-center w-full h-full cursor-pointer p-2 -m-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={isSelected(attendee.id)}
+                    onChange={() => toggleItem(attendee.id)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </label>
+              </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center">
                   <div>
@@ -124,42 +282,100 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({ attendees, isLoadi
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                 {attendee.company || '-'}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  {getStatusIcon(attendee.status)}
-                  <span className={`ml-2 ${getStatusBadge(attendee.status)}`}>
-                    {attendee.status}
-                  </span>
-                </div>
-              </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {formatDate(attendee.registrationDate)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex items-center justify-end space-x-2">
-                  {attendee.canCheckIn && (
-                    <Can do="checkin" on="Attendee" data={attendee}>
-                      <Button size="sm" variant="outline">
-                        Check-in
+                  {isDeletedTab ? (
+                    // Actions pour les attendees supprimés
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRestoreAttendee(attendee)
+                        }}
+                        title="Restaurer"
+                      >
+                        <RotateCcw className="h-4 w-4" />
                       </Button>
-                    </Can>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handlePermanentDeleteAttendee(attendee)
+                        }}
+                        title="Supprimer définitivement"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    // Actions pour les attendees actifs
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditAttendee(attendee)
+                        }}
+                        title="Modifier"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteAttendee(attendee)
+                        }}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
                   )}
-                  <Can do="update" on="Attendee" data={attendee}>
-                    <Button size="sm" variant="ghost">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  </Can>
-                  <Can do="delete" on="Attendee" data={attendee}>
-                    <Button size="sm" variant="ghost">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </Can>
                 </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      </div>
+
+      {/* Modals */}
+      <EditAttendeeModal
+        isOpen={!!editingAttendee}
+        onClose={() => setEditingAttendee(null)}
+        attendee={editingAttendee}
+        onSave={handleSaveAttendee}
+      />
+
+      <DeleteAttendeeModal
+        isOpen={!!deletingAttendee}
+        onClose={() => setDeletingAttendee(null)}
+        attendee={deletingAttendee}
+        onDelete={handleConfirmDelete}
+      />
+
+      <RestoreAttendeeModal
+        isOpen={!!restoringAttendee}
+        onClose={() => setRestoringAttendee(null)}
+        attendee={restoringAttendee}
+        onRestore={handleConfirmRestore}
+      />
+
+      <PermanentDeleteAttendeeModal
+        isOpen={!!permanentDeletingAttendee}
+        onClose={() => setPermanentDeletingAttendee(null)}
+        attendee={permanentDeletingAttendee}
+        onPermanentDelete={handleConfirmPermanentDelete}
+      />
     </div>
   )
 }

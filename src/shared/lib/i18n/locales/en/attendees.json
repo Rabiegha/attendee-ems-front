@@ -4,6 +4,7 @@
     "create": "Add Attendee",
     "edit": "Edit Attendee",
     "delete": "Delete Attendee",
+    "empty": "No recent attendees",
     "first_name": "First Name",
     "last_name": "Last Name",
     "email": "Email",

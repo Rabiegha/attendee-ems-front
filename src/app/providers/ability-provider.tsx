@@ -1,11 +1,13 @@
 import React, { createContext, useMemo, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { selectAbilityRules, selectUser, selectOrgId } from '@/features/auth/model/sessionSlice'
+import { selectAbilityRules, selectUser, selectOrgId, selectToken } from '@/features/auth/model/sessionSlice'
 import { useGetPolicyQuery } from '@/features/auth/api/authApi'
 import { setRules } from '@/features/auth/model/sessionSlice'
 import { createAbilityFromRules } from '@/shared/acl/ability-factory'
-import { rulesFor, fallbackRules } from '@/shared/acl/policies/rbac-presets'
+import { rulesFor } from '@/shared/acl/policies/rbac-presets'
 import { mapBackendRolesToCASQL } from '@/shared/acl/role-mapping'
+import { mapPermissionsToCASlRules, createSuperAdminRules, createFallbackRules } from '@/shared/acl/permission-mapper'
+import { decodeJWT } from '@/shared/lib/jwt-utils'
 import type { AppAbility } from '@/shared/acl/app-ability'
 
 export const AbilityContext = createContext<AppAbility | null>(null)
@@ -19,6 +21,7 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
   const rules = useSelector(selectAbilityRules)
   const user = useSelector(selectUser)
   const orgId = useSelector(selectOrgId)
+  const token = useSelector(selectToken)
 
   // Vérifier si l'utilisateur est SUPER_ADMIN
   const isSuperAdmin = user?.roles?.[0] === 'SUPER_ADMIN' || user?.roles?.includes('SUPER_ADMIN')
@@ -65,14 +68,44 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
   }, [policyData, dispatch])
 
   const ability = useMemo(() => {
-    // If we have rules from the API, use them
+    // PRIORITY 1: Use API rules if available (for compatibility/fallback)
     if (rules.length > 0) {
-      const ability = createAbilityFromRules(rules)
-      return ability
+      console.log('[AbilityProvider] Using API rules:', rules.length)
+      return createAbilityFromRules(rules)
     }
 
-    // If we have user info but no rules yet, use preset rules based on roles
+    // PRIORITY 2: Use JWT permissions directly (new scope-based system)
+    if (user && token && (orgId || isSuperAdmin)) {
+      console.log('[AbilityProvider] Using JWT permissions')
+      
+      // SUPER_ADMIN gets full access
+      if (isSuperAdmin) {
+        console.log('[AbilityProvider] SUPER_ADMIN detected - granting full access')
+        return createAbilityFromRules(createSuperAdminRules())
+      }
+
+      // Extract permissions from JWT
+      const payload = decodeJWT(token)
+      
+      if (payload?.permissions && payload.permissions.length > 0) {
+        console.log('[AbilityProvider] JWT permissions found:', payload.permissions.length)
+        
+        // Map JWT permissions to CASL rules using new mapper
+        const caslRules = mapPermissionsToCASlRules(
+          payload.permissions,
+          user.id,
+          orgId || ''
+        )
+        
+        console.log('[AbilityProvider] Generated CASL rules:', caslRules.length)
+        return createAbilityFromRules(caslRules)
+      }
+    }
+
+    // PRIORITY 3: Use legacy preset rules based on roles (fallback)
     if (user && (orgId || isSuperAdmin)) {
+      console.log('[AbilityProvider] Using legacy role-based rules')
+      
       // Map backend roles to CASL roles 
       const backendRoles = user.roles || []
       const caslRoles = mapBackendRolesToCASQL(backendRoles)
@@ -86,19 +119,20 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({ children }) =>
         rulesFor(role, { orgId: orgId || '', userId: user.id, eventIds })
       )
       
-      console.log('[RBAC] Generated rules:', combinedRules)
-      
+      console.log('[RBAC] Generated rules:', combinedRules)      
       return createAbilityFromRules(combinedRules)
     }
 
-    // Fallback: minimal rules for unauthenticated users
+    // PRIORITY 4: Fallback rules for authenticated users without proper setup
     if (user) {
-      return createAbilityFromRules(fallbackRules(user.id))
+      console.log('[AbilityProvider] Using fallback rules')
+      return createAbilityFromRules(createFallbackRules())
     }
 
-    // No permissions for anonymous users
+    // PRIORITY 5: No permissions for anonymous users
+    console.log('[AbilityProvider] Anonymous user - no permissions')
     return createAbilityFromRules([])
-  }, [rules, user, orgId])
+  }, [rules, user, orgId, token, isSuperAdmin])
 
   return (
     <AbilityContext.Provider value={ability}>

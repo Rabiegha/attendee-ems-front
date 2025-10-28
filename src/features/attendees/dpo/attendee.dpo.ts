@@ -7,26 +7,19 @@ export interface AttendeeDPO {
   phone?: string
   company?: string
   jobTitle?: string
-  status: AttendeeStatus
-  eventId: string
+  country?: string
   orgId: string
-  registrationDate: string // ISO string for Redux serialization
-  checkedInAt?: string     // ISO string for Redux serialization
-  checkedInBy?: string
+  registrationDate: string // ISO string for Redux serialization (created_at)
   metadata?: Record<string, any>
-  tags?: string[]
+  labels?: string[]
+  isActive: boolean
   createdAt: string        // ISO string for Redux serialization
   updatedAt: string        // ISO string for Redux serialization
   
   // Computed properties
   displayName: string
-  isCheckedIn: boolean
-  isConfirmed: boolean
-  isPending: boolean
   canCheckIn: boolean
 }
-
-export type AttendeeStatus = 'pending' | 'confirmed' | 'checked_in' | 'cancelled' | 'no_show'
 
 export interface CreateAttendeeDPO {
   firstName: string
@@ -35,16 +28,11 @@ export interface CreateAttendeeDPO {
   phone?: string
   company?: string
   jobTitle?: string
-  eventId: string
+  country?: string
   metadata?: Record<string, any>
-  tags?: string[]
+  labels?: string[]
 }
 
 export interface UpdateAttendeeDPO extends Partial<CreateAttendeeDPO> {
-  status?: AttendeeStatus
-}
-
-export interface UpdateAttendeeStatusDPO {
-  status: AttendeeStatus
-  checkedInBy?: string
+  isActive?: boolean
 }

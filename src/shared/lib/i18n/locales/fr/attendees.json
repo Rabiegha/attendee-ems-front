@@ -4,6 +4,7 @@
     "create": "Ajouter un participant",
     "edit": "Modifier le participant",
     "delete": "Supprimer le participant",
+    "empty": "Aucun participant récent",
     "first_name": "Prénom",
     "last_name": "Nom",
     "email": "Email",

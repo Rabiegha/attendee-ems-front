@@ -41,6 +41,18 @@ Les tokens de design sont définis dans `src/styles/tokens.css` et fournissent d
 --font-size-2xl: 1.5rem; /* 24px */
 --font-size-3xl: 1.875rem; /* 30px */
 
+/* Font Weights */
+--font-weight-normal: 400;
+--font-weight-medium: 500;
+--font-weight-semibold: 600;
+--font-weight-bold: 700;
+
+/* Line Heights */
+--line-height-tight: 1.25;
+--line-height-snug: 1.375;
+--line-height-normal: 1.5;
+--line-height-relaxed: 1.625;
+
 /* Border Radius */
 --border-radius-sm: 0.375rem; /* 6px */
 --border-radius-md: 0.5rem; /* 8px */
@@ -85,7 +97,7 @@ import { Button } from '@/shared/ui'
 **Usage:**
 
 ```tsx
-<Button variant="default" size="md">
+<Button variant="default" size="default">
   Enregistrer
 </Button>
 

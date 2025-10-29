@@ -109,7 +109,6 @@ export const InvitationsPage: React.FC = () => {
     data: rolesDataRaw,
     isLoading: isLoadingRoles,
     error: rolesError,
-    refetch: refetchRoles,
   } = useGetRolesFilteredQuery(
     rolesQueryParams ?? { templatesOnly: false }, // 🔥 FIX: Toujours passer un objet, jamais undefined
     {
@@ -363,8 +362,8 @@ export const InvitationsPage: React.FC = () => {
 
       <PageSection spacing="lg">
         <div className="max-w-2xl mx-auto">
-          <Card className="p-8 shadow-xl">
-            <div className="flex items-center gap-3 mb-8">
+          <Card variant="default" padding="xl" className="shadow-xl">
+            <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
                 <Send className="h-6 w-6 text-white" />
               </div>
@@ -376,7 +375,7 @@ export const InvitationsPage: React.FC = () => {
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-form">{/* space-y-8 */}
               {/* Email */}
               <FormField
                 label="Adresse email"

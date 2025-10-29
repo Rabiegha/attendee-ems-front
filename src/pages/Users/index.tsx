@@ -27,9 +27,11 @@ import {
   PageSection,
   ActionGroup,
   LoadingSpinner,
+  ActionButtons,
 } from '@/shared/ui'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
+import { useState } from 'react'
 import { useGetUsersQuery } from '@/features/users/api/usersApi'
 import { Can } from '@/shared/acl/guards/Can'
 import { RoleSelector } from '@/features/users/ui/RoleSelector'
@@ -39,6 +41,10 @@ export function UsersPage() {
   const navigate = useNavigate()
   const currentUser = useSelector(selectUser)
   const { data: usersData, isLoading, refetch } = useGetUsersQuery({})
+  
+  // États pour les modals (à implémenter si nécessaire)
+  const [editingUser, setEditingUser] = useState<any>(null)
+  const [deletingUser, setDeletingUser] = useState<any>(null)
 
   const handleRefresh = () => {
     refetch()
@@ -288,11 +294,14 @@ export function UsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <Can do="update" on="User" data={user}>
-                          <Button variant="outline" size="sm">
-                            Modifier
-                          </Button>
-                        </Can>
+                        <ActionButtons
+                          onEdit={() => setEditingUser(user)}
+                          onDelete={() => setDeletingUser(user)}
+                          canEdit={{ do: 'update', on: 'User', data: user }}
+                          canDelete={{ do: 'delete', on: 'User', data: user }}
+                          size="sm"
+                          iconOnly
+                        />
                       </td>
                     </tr>
                   ))}

@@ -10,11 +10,10 @@ import {
   Mail,
   Phone,
   Building2,
-  Edit2,
-  Trash2,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button } from '@/shared/ui/Button'
+import { ActionButtons } from '@/shared/ui'
 import { formatDateTime } from '@/shared/lib/utils'
 import {
   useUpdateRegistrationStatusMutation,
@@ -425,11 +424,13 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {formatDateTime(registration.createdAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1">
                           {registration.status === 'awaiting' && (
                             <>
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() =>
                                   handleStatusChange(
                                     registration.id,
@@ -437,41 +438,31 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                                   )
                                 }
                                 disabled={isUpdating}
-                                className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200 disabled:opacity-50 transition-colors"
+                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
                                 title="Approuver"
                               >
-                                <CheckCircle className="h-5 w-5" />
-                              </button>
-                              <button
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() =>
                                   handleStatusChange(registration.id, 'refused')
                                 }
                                 disabled={isUpdating}
-                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 transition-colors"
+                                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                                 title="Refuser"
                               >
-                                <XCircle className="h-5 w-5" />
-                              </button>
+                                <XCircle className="h-4 w-4" />
+                              </Button>
                             </>
                           )}
-                          <button
-                            onClick={() => setEditingRegistration(registration)}
-                            disabled={isUpdating}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200 disabled:opacity-50 transition-colors"
-                            title="Modifier"
-                          >
-                            <Edit2 className="h-5 w-5" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              setDeletingRegistration(registration)
-                            }
-                            disabled={isUpdating}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 disabled:opacity-50 transition-colors"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="h-5 w-5" />
-                          </button>
+                          <ActionButtons
+                            onEdit={() => setEditingRegistration(registration)}
+                            onDelete={() => setDeletingRegistration(registration)}
+                            size="sm"
+                            iconOnly
+                          />
                         </div>
                       </td>
                     </tr>

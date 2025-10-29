@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Edit, Trash2, RotateCcw, Trash } from 'lucide-react'
+import { RotateCcw, Trash } from 'lucide-react'
 import type { AttendeeDPO } from '../dpo/attendee.dpo'
 import { formatDate } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/Button'
+import { ActionButtons } from '@/shared/ui'
 import {
   Table,
   TableHeader,
@@ -333,7 +334,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
                 {formatDate(attendee.registrationDate)}
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end space-x-2">
+                <div className="flex items-center justify-end gap-2">
                   {isDeletedTab ? (
                     // Actions pour les attendees supprimés
                     <>
@@ -345,47 +346,31 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
                           handleRestoreAttendee(attendee)
                         }}
                         title="Restaurer"
+                        className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
                       >
                         <RotateCcw className="h-4 w-4" />
                       </Button>
                       <Button
                         size="sm"
-                        variant="destructive"
+                        variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation()
                           handlePermanentDeleteAttendee(attendee)
                         }}
                         title="Supprimer définitivement"
+                        className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <Trash className="h-4 w-4" />
                       </Button>
                     </>
                   ) : (
                     // Actions pour les attendees actifs
-                    <>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleEditAttendee(attendee)
-                        }}
-                        title="Modifier"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleDeleteAttendee(attendee)
-                        }}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
+                    <ActionButtons
+                      onEdit={() => handleEditAttendee(attendee)}
+                      onDelete={() => handleDeleteAttendee(attendee)}
+                      size="sm"
+                      iconOnly
+                    />
                   )}
                 </div>
               </TableCell>

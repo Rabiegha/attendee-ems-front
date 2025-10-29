@@ -26,6 +26,7 @@ export {
   TableEmptyState,
   TableLoadingState,
 } from './Table'
+export { ActionButtons, type ActionButtonsProps } from './ActionButtons'
 
 // Layout Components
 export { PageContainer } from './PageContainer'

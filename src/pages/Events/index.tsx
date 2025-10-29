@@ -6,6 +6,7 @@ import { Can } from '@/shared/acl/guards/Can'
 import {
   Button,
   Input,
+  Select,
   PageContainer,
   PageHeader,
   PageSection,
@@ -132,7 +133,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       <PageSection spacing="lg">
         <Card variant="default" padding="lg">
           <CardContent>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
               <div className="flex-1">
                 <Input
                   type="text"
@@ -143,10 +144,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 />
               </div>
 
-              <select
+              <Select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className="w-48"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="draft">Brouillon</option>
@@ -154,23 +155,23 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 <option value="active">Actif</option>
                 <option value="completed">Terminé</option>
                 <option value="cancelled">Annulé</option>
-              </select>
+              </Select>
 
-              <select
+              <Select
                 value={`${sortBy}-${sortOrder}`}
                 onChange={(e) => {
                   const [field, order] = e.target.value.split('-')
                   setSortBy(field as any)
                   setSortOrder(order as any)
                 }}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className="w-56"
               >
                 <option value="startDate-asc">Date (plus ancien)</option>
                 <option value="startDate-desc">Date (plus récent)</option>
                 <option value="name-asc">Nom (A-Z)</option>
                 <option value="name-desc">Nom (Z-A)</option>
                 <option value="createdAt-desc">Créé récemment</option>
-              </select>
+              </Select>
             </div>
           </CardContent>
         </Card>

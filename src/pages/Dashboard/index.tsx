@@ -50,12 +50,14 @@ export const Dashboard: React.FC = () => {
     sortOrder: 'asc',
   })
 
-  const { data: attendees = [], isLoading: attendeesLoading } =
+  const { data: attendeesResponse, isLoading: attendeesLoading } =
     useGetAttendeesQuery({
+      page: 1,
       pageSize: 10,
-      sortBy: 'created_at',
-      sortDir: 'desc',
     })
+
+  // Extraire les attendees du format paginé { data, meta }
+  const attendees = attendeesResponse?.data || []
 
   const handleCreateEvent = () => {
     setIsCreateModalOpen(true)

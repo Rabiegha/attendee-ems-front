@@ -28,9 +28,10 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
     location: location,
     locationType: dto.location_type,
     maxAttendees: dto.capacity || 999999, // Si null, considérer comme illimité
-    currentAttendees: 0, // TODO: À calculer depuis les registrations si disponible
+    currentAttendees: dto._count?.registrations || 0, // Utiliser le compteur du backend
     status: dto.status === 'archived' ? 'completed' : (dto.status as any), // Map archived -> completed
     orgId: dto.org_id,
+    publicToken: dto.settings?.public_token || dto.public_token || '', // From settings or root
     createdAt: dto.created_at, // Keep as ISO string
     updatedAt: dto.updated_at, // Keep as ISO string
     createdBy: dto.created_by || '',
@@ -43,7 +44,9 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
     isActive: dto.status === 'published',
     isDraft: dto.status === 'draft',
     isCompleted: dto.status === 'archived',
-    isFull: false, // TODO: Calculer quand currentAttendees sera disponible
+    isFull: dto.capacity
+      ? (dto._count?.registrations || 0) >= dto.capacity
+      : false,
     daysUntilStart: Math.ceil(
       (startDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
     ),

@@ -59,7 +59,7 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
                 </div>
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
-                  {event.currentAttendees}/{event.maxAttendees} participants
+                  {event.currentAttendees} participants
                 </div>
               </div>
             </div>

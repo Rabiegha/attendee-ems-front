@@ -42,6 +42,7 @@ export { ThemeToggle } from './ThemeToggle'
 export { LoadingSpinner } from './LoadingSpinner'
 export { UniversalModal } from './UniversalModal'
 export { useUniversalModal } from './useUniversalModal'
+export { Pagination, type PaginationProps } from './Pagination'
 
 // Development Tools
 export { TestAccountsModal } from './TestAccountsModal'

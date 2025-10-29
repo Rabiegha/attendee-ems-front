@@ -5,11 +5,14 @@ import {
   useUpdateRegistrationFieldsMutation,
   useUpdateEventMutation,
 } from '@/features/events/api/eventsApi'
-import { useGetRegistrationsQuery } from '@/features/registrations/api/registrationsApi'
+import {
+  useGetRegistrationsQuery,
+  useBulkExportRegistrationsMutation,
+} from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
-import type { RegistrationDPO } from '@/features/registrations/dpo/registration.dpo'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
+import { Pagination } from '@/shared/ui/Pagination'
 import {
   Edit,
   Download,
@@ -45,6 +48,10 @@ export const EventDetails: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
 
+  // State pour la pagination des inscriptions
+  const [registrationsPage, setRegistrationsPage] = useState(1)
+  const [registrationsPageSize, setRegistrationsPageSize] = useState(50)
+
   const {
     data: event,
     isLoading: eventLoading,
@@ -52,6 +59,7 @@ export const EventDetails: React.FC = () => {
   } = useGetEventByIdQuery(id!)
   const [updateRegistrationFields] = useUpdateRegistrationFieldsMutation()
   const [updateEvent] = useUpdateEventMutation()
+  const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
 
   // State pour le menu dropdown de statut
   const [showStatusMenu, setShowStatusMenu] = useState(false)
@@ -202,16 +210,80 @@ export const EventDetails: React.FC = () => {
   // Mode test pour le formulaire (permet de tester les inscriptions)
   const [isFormTestMode, setIsFormTestMode] = useState(false)
 
-  const { data: apiRegistrations = [], isLoading: registrationsLoading } =
-    useGetRegistrationsQuery(id ? { eventId: id } : skipToken)
+  const {
+    data: registrationsResponse,
+    isLoading: registrationsLoading,
+    refetch: refetchRegistrations,
+  } = useGetRegistrationsQuery(
+    id
+      ? {
+          eventId: id,
+          page: registrationsPage,
+          limit: registrationsPageSize,
+        }
+      : skipToken
+  )
+
+  // Hook séparé pour récupérer tous les IDs lors de l'export (avec limite haute)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { data: allRegistrationsForExport } = useGetRegistrationsQuery(
+    id
+      ? {
+          eventId: id,
+          page: 1,
+          limit: 10000, // Limite haute pour récupérer tous les IDs
+        }
+      : skipToken,
+    {
+      skip: !id, // Ne pas exécuter si pas d'ID
+    }
+  )
 
   // Les inscriptions sont récupérées via l'API RTK Query
-  const allRegistrations = apiRegistrations
+  const allRegistrations = registrationsResponse?.data || []
+  const registrationsMeta = registrationsResponse?.meta || {
+    page: 1,
+    limit: 50,
+    total: 0,
+    totalPages: 0,
+    statusCounts: {
+      awaiting: 0,
+      approved: 0,
+      refused: 0,
+    },
+  }
 
   // Callback pour l'import Excel - plus besoin du mode local
   const handleImportSuccess = (result: any) => {
     console.log('Import terminé:', result)
     // La liste sera automatiquement rafraîchie par RTK Query invalidation
+  }
+
+  // Fonction pour exporter toutes les inscriptions
+  const handleExportAll = async () => {
+    if (!id || !allRegistrationsForExport?.data) return
+
+    try {
+      // Utiliser tous les IDs récupérés par le hook dédié
+      const allIds = allRegistrationsForExport.data.map((reg) => reg.id)
+
+      const response = await bulkExportRegistrations({
+        ids: allIds,
+        format: 'excel',
+      }).unwrap()
+
+      // Télécharger le fichier
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = response.downloadUrl
+      a.download = response.filename || 'inscriptions.xlsx'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(response.downloadUrl)
+    } catch (error) {
+      console.error("Erreur lors de l'export:", error)
+    }
   }
 
   if (eventLoading) {
@@ -241,18 +313,16 @@ export const EventDetails: React.FC = () => {
     )
   }
 
-  const approvedCount = allRegistrations.filter(
-    (r: RegistrationDPO) => r.status === 'approved'
-  ).length
-  const awaitingCount = allRegistrations.filter(
-    (r: RegistrationDPO) => r.status === 'awaiting'
-  ).length
+  // Utiliser les compteurs depuis les métadonnées backend (total cross-pages)
+  const approvedCount = registrationsMeta.statusCounts.approved
+  const awaitingCount = registrationsMeta.statusCounts.awaiting
+  const refusedCount = registrationsMeta.statusCounts.refused
 
   const tabs = [
     { id: 'details' as TabType, label: 'Détails', icon: FileText },
     {
       id: 'registrations' as TabType,
-      label: `Inscriptions (${allRegistrations.length})`,
+      label: `Inscriptions (${registrationsMeta.total})`,
       icon: Users,
     },
     { id: 'form' as TabType, label: 'Formulaire', icon: FormInput },
@@ -331,9 +401,7 @@ export const EventDetails: React.FC = () => {
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
-              {approvedCount}/
-              {event.maxAttendees > 100000 ? '∞' : event.maxAttendees}{' '}
-              participants
+              {approvedCount} participants
             </div>
           </div>
         </div>
@@ -466,7 +534,7 @@ export const EventDetails: React.FC = () => {
                       Inscriptions totales
                     </span>
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {allRegistrations.length}
+                      {registrationsMeta.total}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -483,6 +551,14 @@ export const EventDetails: React.FC = () => {
                     </span>
                     <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                       {awaitingCount}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-300">
+                      Refusées
+                    </span>
+                    <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+                      {refusedCount}
                     </span>
                   </div>
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -542,7 +618,7 @@ export const EventDetails: React.FC = () => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Inscriptions ({allRegistrations.length})
+                  Inscriptions ({registrationsMeta.total})
                 </h2>
               </div>
               <div className="flex items-center space-x-3">
@@ -556,10 +632,7 @@ export const EventDetails: React.FC = () => {
                 <Button
                   variant="outline"
                   className="flex items-center space-x-2"
-                  onClick={() => {
-                    // TODO: Implement export
-                    console.log('Export registrations')
-                  }}
+                  onClick={handleExportAll}
                 >
                   <Download className="h-4 w-4" />
                   <span>Exporter</span>
@@ -571,7 +644,24 @@ export const EventDetails: React.FC = () => {
               registrations={allRegistrations}
               isLoading={registrationsLoading}
               eventId={id!}
+              onRefresh={() => refetchRegistrations()}
+              meta={registrationsMeta}
             />
+
+            {/* Pagination */}
+            {!registrationsLoading && registrationsMeta.totalPages > 1 && (
+              <Pagination
+                currentPage={registrationsMeta.page}
+                totalPages={registrationsMeta.totalPages}
+                pageSize={registrationsMeta.limit}
+                total={registrationsMeta.total}
+                onPageChange={(page) => setRegistrationsPage(page)}
+                onPageSizeChange={(pageSize) => {
+                  setRegistrationsPageSize(pageSize)
+                  setRegistrationsPage(1) // Reset to first page when changing page size
+                }}
+              />
+            )}
           </div>
         )}
 

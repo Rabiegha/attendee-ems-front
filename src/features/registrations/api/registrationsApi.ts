@@ -9,19 +9,42 @@ interface RegistrationsListResponse {
     limit: number
     total: number
     totalPages: number
+    statusCounts: {
+      awaiting: number
+      approved: number
+      refused: number
+    }
   }
+}
+
+export interface RegistrationsQueryParams {
+  eventId: string
+  page?: number
+  limit?: number
+  status?: string
+  search?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 export const registrationsApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    getRegistrations: builder.query<RegistrationDPO[], { eventId: string }>({
-      query: ({ eventId }) => `/events/${eventId}/registrations`,
-      transformResponse: (response: RegistrationsListResponse) =>
-        response.data.map(mapRegistrationDTOtoDPO),
+    getRegistrations: builder.query<
+      { data: RegistrationDPO[]; meta: RegistrationsListResponse['meta'] },
+      RegistrationsQueryParams
+    >({
+      query: ({ eventId, ...params }) => ({
+        url: `/events/${eventId}/registrations`,
+        params,
+      }),
+      transformResponse: (response: RegistrationsListResponse) => ({
+        data: response.data.map(mapRegistrationDTOtoDPO),
+        meta: response.meta,
+      }),
       providesTags: (result, _error, { eventId }) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'Attendee' as const, id })),
+              ...result.data.map(({ id }) => ({ type: 'Attendee' as const, id })),
               { type: 'Attendee', id: `EVENT-${eventId}` },
             ]
           : [{ type: 'Attendee', id: `EVENT-${eventId}` }],
@@ -80,19 +103,37 @@ export const registrationsApi = rootApi.injectEndpoints({
         eventId: string
         file: File
         autoApprove?: boolean
+        replaceExisting?: boolean
       }
     >({
-      query: ({ eventId, file, autoApprove }) => {
+      query: ({ eventId, file, autoApprove, replaceExisting }) => {
         const formData = new FormData()
         formData.append('file', file)
         if (autoApprove !== undefined) {
           formData.append('autoApprove', autoApprove.toString())
+        }
+        if (replaceExisting !== undefined) {
+          formData.append('replaceExisting', replaceExisting.toString())
         }
 
         return {
           url: `/events/${eventId}/registrations/bulk-import`,
           method: 'POST',
           body: formData,
+        }
+      },
+      transformResponse: (response: any) => {
+        // Backend renvoie directement les stats, on les wrappe dans summary
+        return {
+          success: true,
+          summary: {
+            total_rows: response.total_rows || 0,
+            created: response.created || 0,
+            updated: response.updated || 0,
+            skipped: response.skipped || 0,
+            errors: response.errors || [],
+          },
+          details: [], // Le backend ne renvoie pas de détails pour l'instant
         }
       },
       invalidatesTags: (_result, _error, { eventId }) => [
@@ -194,14 +235,17 @@ export const registrationsApi = rootApi.injectEndpoints({
 
     bulkDeleteRegistrations: builder.mutation<
       { deletedCount: number },
-      string[]
+      { ids: string[]; eventId: string }
     >({
-      query: (ids) => ({
+      query: ({ ids }) => ({
         url: '/registrations/bulk-delete',
         method: 'DELETE',
         body: { ids },
       }),
-      invalidatesTags: ['Attendee'],
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'Event', id: eventId },
+      ],
     }),
 
     bulkExportRegistrations: builder.mutation<

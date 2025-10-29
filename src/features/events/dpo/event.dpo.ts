@@ -11,6 +11,7 @@ export interface EventDPO {
   currentAttendees: number
   status: EventStatus
   orgId: string
+  publicToken: string // Token for public registration forms
   createdAt: string // ISO string for Redux serialization
   updatedAt: string // ISO string for Redux serialization
   createdBy: string
@@ -20,7 +21,7 @@ export interface EventDPO {
   settings?: {
     registration_fields?: any[]
     [key: string]: any
-  }
+  } | undefined
   // Computed properties
   isActive: boolean
   isDraft: boolean

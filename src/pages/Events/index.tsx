@@ -246,10 +246,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                       <div className="flex items-center">
                         <Users className="h-4 w-4 mr-2" />
                         <span>
-                          {formatAttendeesCount(
-                            event.currentAttendees,
-                            event.maxAttendees
-                          )}
+                          {formatAttendeesCount(event.currentAttendees)}
                         </span>
                       </div>
                     </div>

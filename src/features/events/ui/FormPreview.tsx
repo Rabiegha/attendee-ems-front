@@ -5,7 +5,7 @@ import type { EventDPO } from '../dpo/event.dpo'
 import { formatDate } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/hooks/useToast'
-import { useCreateRegistrationMutation } from '@/features/registrations/api/registrationsApi'
+import { useCreatePublicRegistrationMutation } from '../api/publicEventsApi'
 
 interface FormPreviewProps {
   event: EventDPO
@@ -30,7 +30,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const toast = useToast()
-  const [createRegistration] = useCreateRegistrationMutation()
+  const [createPublicRegistration] = useCreatePublicRegistrationMutation()
 
   const handleInputChange = (fieldId: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }))
@@ -103,9 +103,16 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
         requestData.answers = answers
       }
 
-      await createRegistration({
-        eventId: event.id,
+      // Utiliser le public_token de l'événement pour la route publique
+      if (!event.publicToken) {
+        toast.error('Erreur configuration', "L'événement n'a pas de token public")
+        return
+      }
+
+      await createPublicRegistration({
+        publicToken: event.publicToken,
         data: requestData,
+        eventId: event.id, // Passer l'eventId pour invalider les bons tags
       }).unwrap()
 
       setIsSubmitted(true)
@@ -121,6 +128,8 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
 
       if (error?.status === 409) {
         errorMessage = 'Cet email est déjà inscrit à cet événement'
+      } else if (error?.status === 403) {
+        errorMessage = "L'événement n'accepte plus d'inscriptions"
       } else if (error?.data?.message) {
         errorMessage = error.data.message
       }

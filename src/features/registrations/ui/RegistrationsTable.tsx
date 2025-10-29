@@ -10,6 +10,7 @@ import {
   Mail,
   Phone,
   Building2,
+  RefreshCw,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button } from '@/shared/ui/Button'
@@ -33,6 +34,15 @@ interface RegistrationsTableProps {
   isLoading: boolean
   eventId: string
   onExport?: () => void
+  onRefresh?: () => void
+  meta?: {
+    total: number
+    statusCounts: {
+      awaiting: number
+      approved: number
+      refused: number
+    }
+  }
 }
 
 const STATUS_CONFIG = {
@@ -65,6 +75,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   isLoading,
   eventId,
   onExport,
+  onRefresh,
+  meta,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -179,14 +191,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         try {
           const response = await bulkExportRegistrations({
             ids: Array.from(selectedIds),
-            format: 'csv',
+            format: 'excel', // Utiliser Excel au lieu de CSV pour une meilleure compatibilité
           }).unwrap()
 
           // Download the file using the URL provided by the API
           const a = document.createElement('a')
           a.style.display = 'none'
           a.href = response.downloadUrl
-          a.download = response.filename || 'inscriptions.csv'
+          a.download = response.filename || 'inscriptions.xlsx'
           document.body.appendChild(a)
           a.click()
           document.body.removeChild(a)
@@ -203,7 +215,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     actions.push(
       createBulkActions.delete(async (selectedIds) => {
         try {
-          await bulkDeleteRegistrations(Array.from(selectedIds)).unwrap()
+          await bulkDeleteRegistrations({
+            ids: Array.from(selectedIds),
+            eventId,
+          }).unwrap()
           unselectAll()
         } catch (error) {
           console.error('Erreur lors de la suppression:', error)
@@ -213,7 +228,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     )
 
     return actions
-  }, [bulkDeleteRegistrations, bulkExportRegistrations, unselectAll])
+  }, [bulkDeleteRegistrations, bulkExportRegistrations, unselectAll, eventId])
 
   if (isLoading) {
     return (
@@ -259,6 +274,18 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             </select>
           </div>
 
+          {onRefresh && (
+            <Button
+              variant="outline"
+              onClick={onRefresh}
+              className="flex items-center space-x-2"
+              title="Rafraîchir la liste"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">Rafraîchir</span>
+            </Button>
+          )}
+
           {onExport && (
             <Button
               variant="outline"
@@ -277,7 +304,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
           <div className="text-sm text-gray-600 dark:text-gray-300">Total</div>
           <div className="text-2xl font-bold text-gray-900 dark:text-white">
-            {registrations.length}
+            {meta?.total || registrations.length}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
@@ -285,7 +312,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             En attente
           </div>
           <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-            {registrations.filter((r) => r.status === 'awaiting').length}
+            {meta?.statusCounts.awaiting ||
+              registrations.filter((r) => r.status === 'awaiting').length}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
@@ -293,7 +321,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             Approuvés
           </div>
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {registrations.filter((r) => r.status === 'approved').length}
+            {meta?.statusCounts.approved ||
+              registrations.filter((r) => r.status === 'approved').length}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
@@ -301,7 +330,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             Refusés
           </div>
           <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {registrations.filter((r) => r.status === 'refused').length}
+            {meta?.statusCounts.refused ||
+              registrations.filter((r) => r.status === 'refused').length}
           </div>
         </div>
       </div>

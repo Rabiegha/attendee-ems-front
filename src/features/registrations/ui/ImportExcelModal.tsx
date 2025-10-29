@@ -77,10 +77,12 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const [allData, setAllData] = useState<ParsedRow[]>([]) // Toutes les données du fichier
   const [headers, setHeaders] = useState<string[]>([])
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
-  const [step, setStep] = useState<'upload' | 'preview' | 'success'>('upload')
+  const [step, setStep] = useState<'upload' | 'preview' | 'conflicts' | 'success'>('upload')
   const [importResult, setImportResult] = useState<any | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null) // ← Stocker le fichier
+  const [conflicts, setConflicts] = useState<any[]>([]) // ← Doublons détectés
+  const [selectedConflicts, setSelectedConflicts] = useState<Set<number>>(new Set()) // ← Lignes à remplacer
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
@@ -160,25 +162,50 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     setIsProcessing(true)
 
     try {
-      // Appel API avec le fichier Excel
+      // Premier import SANS remplacer les doublons pour détecter les conflits
       const result = await importExcelRegistrations({
         eventId,
         file: selectedFile,
-        autoApprove: true, // Vous pouvez ajouter une option dans l'UI pour cela
+        autoApprove: true,
+        replaceExisting: false, // ← Ne pas remplacer au premier passage
       }).unwrap()
 
-      setImportResult(result)
-      setStep('success')
+      // Vérifier s'il y a des doublons détectés
+      const duplicateErrors = result.summary.errors?.filter(
+        (e: any) => e.error?.includes('already registered')
+      ) || []
 
-      // Callback pour rafraîchir la liste (invalidation RTK Query automatique)
-      if (onImportSuccess) {
-        onImportSuccess(result)
+      if (duplicateErrors.length > 0) {
+        // Il y a des doublons → Afficher l'étape de résolution de conflits
+        setConflicts(duplicateErrors)
+        setStep('conflicts')
+        toast.info(
+          'Doublons détectés',
+          `${duplicateErrors.length} inscription(s) existent déjà. Choisissez lesquelles remplacer.`
+        )
+      } else {
+        // Pas de doublons → Succès direct
+        setImportResult(result)
+        setStep('success')
+
+        if (onImportSuccess) {
+          onImportSuccess(result)
+        }
+
+        const { created, updated, skipped, errors } = result.summary
+        
+        if (errors && errors.length > 0) {
+          toast.warning(
+            'Import terminé avec des erreurs',
+            `${created} créées, ${updated} mises à jour, ${skipped} ignorées. ${errors.length} erreur(s) détectée(s).`
+          )
+        } else {
+          toast.success(
+            'Import réussi !',
+            `${created} créées, ${updated} mises à jour, ${skipped} ignorées`
+          )
+        }
       }
-
-      toast.success(
-        'Import réussi !',
-        `${result.summary.created} créées, ${result.summary.updated} mises à jour, ${result.summary.skipped} ignorées`
-      )
     } catch (error: any) {
       console.error('Import error:', error)
 
@@ -206,9 +233,92 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     setHeaders([])
     setColumnMapping({})
     setSelectedFile(null)
+    setConflicts([])
+    setSelectedConflicts(new Set())
     setStep('upload')
     setImportResult(null)
     onClose()
+  }
+
+  const handleApplyReplacements = async () => {
+    if (selectedConflicts.size === 0) {
+      // Aucune ligne sélectionnée → Terminer sans remplacer
+      toast.info('Import terminé', 'Aucun doublon remplacé')
+      setStep('success')
+      return
+    }
+
+    setIsProcessing(true)
+
+    try {
+      // Récupérer les emails des conflits sélectionnés
+      const emailsToReplace = Array.from(selectedConflicts).map(
+        (index) => conflicts[index].email
+      )
+
+      // Filtrer allData pour ne garder que les lignes sélectionnées
+      const filteredData = allData.filter((row) => {
+        const rowEmail = Object.keys(row).find((key) =>
+          ['email', 'Email', 'E-mail', 'e-mail', 'mail'].includes(key)
+        )
+        return rowEmail && emailsToReplace.includes(String(row[rowEmail]).toLowerCase().trim())
+      })
+
+      // Créer un nouveau fichier Excel avec seulement ces lignes
+      const ws = XLSX.utils.json_to_sheet(filteredData)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Replacements')
+      const excelBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const replacementFile = new File([blob], 'replacements.xlsx', {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+
+      // Import avec replaceExisting=true
+      const result = await importExcelRegistrations({
+        eventId,
+        file: replacementFile,
+        autoApprove: true,
+        replaceExisting: true,
+      }).unwrap()
+
+      setImportResult(result)
+      setStep('success')
+
+      if (onImportSuccess) {
+        onImportSuccess(result)
+      }
+
+      toast.success(
+        'Remplacements appliqués !',
+        `${selectedConflicts.size} inscription(s) mise(s) à jour`
+      )
+    } catch (error: any) {
+      console.error('Replacement error:', error)
+      toast.error('Erreur', 'Échec du remplacement des doublons')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const toggleConflictSelection = (index: number) => {
+    const newSelection = new Set(selectedConflicts)
+    if (newSelection.has(index)) {
+      newSelection.delete(index)
+    } else {
+      newSelection.add(index)
+    }
+    setSelectedConflicts(newSelection)
+  }
+
+  const selectAllConflicts = () => {
+    setSelectedConflicts(new Set(conflicts.map((_, i) => i)))
+  }
+
+  const deselectAllConflicts = () => {
+    setSelectedConflicts(new Set())
   }
 
   const downloadTemplate = () => {
@@ -420,6 +530,106 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
           </>
         )}
 
+        {/* Nouvelle étape : Résolution des conflits */}
+        {step === 'conflicts' && (
+          <>
+            <div className="space-y-4">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
+                      {conflicts.length} doublon(s) détecté(s)
+                    </h4>
+                    <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
+                      Les inscriptions suivantes existent déjà dans le système. Sélectionnez celles que vous souhaitez remplacer par les nouvelles données.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions groupées */}
+              <div className="flex justify-between items-center">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedConflicts.size} / {conflicts.length} sélectionné(s)
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={selectAllConflicts}
+                  >
+                    Tout sélectionner
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={deselectAllConflicts}
+                  >
+                    Tout désélectionner
+                  </Button>
+                </div>
+              </div>
+
+              {/* Liste des conflits */}
+              <div className="max-h-96 overflow-y-auto space-y-3">
+                {conflicts.map((conflict: any, index: number) => (
+                  <div
+                    key={index}
+                    className={`border rounded-lg p-4 transition-colors ${
+                      selectedConflicts.has(index)
+                        ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+                    }`}
+                  >
+                    <label className="flex items-start cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedConflicts.has(index)}
+                        onChange={() => toggleConflictSelection(index)}
+                        className="mt-1 h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
+                      />
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {conflict.email}
+                          </span>
+                          <span className="text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                            Ligne {conflict.row}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                          {conflict.error}
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setStep('success')
+                  toast.info('Import terminé', 'Doublons ignorés')
+                }}
+              >
+                Ignorer les doublons
+              </Button>
+              <Button
+                onClick={handleApplyReplacements}
+                disabled={isProcessing || selectedConflicts.size === 0}
+              >
+                {isProcessing
+                  ? 'Remplacement en cours...'
+                  : `Remplacer ${selectedConflicts.size} inscription(s)`}
+              </Button>
+            </div>
+          </>
+        )}
+
         {step === 'success' && importResult && (
           <>
             <div className="text-center py-6">
@@ -438,19 +648,63 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
             {importResult.summary.errors &&
               importResult.summary.errors.length > 0 && (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-2">
-                    Erreurs rencontrées ({importResult.summary.errors.length}) :
-                  </h4>
-                  <ul className="text-sm text-red-800 dark:text-red-300 space-y-1 max-h-48 overflow-y-auto">
-                    {importResult.summary.errors.map(
-                      (error: any, index: number) => (
-                        <li key={index}>
-                          • Ligne {error.row}: {error.error}
-                        </li>
-                      )
-                    )}
-                  </ul>
+                <div className="space-y-4">
+                  {/* Compteur d'erreurs par type */}
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200 mb-2 flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      Résumé des problèmes ({importResult.summary.errors.length})
+                    </h4>
+                    <div className="text-sm text-yellow-800 dark:text-yellow-300 space-y-1">
+                      {(() => {
+                        const duplicates = importResult.summary.errors.filter(
+                          (e: any) => e.error?.includes('already registered')
+                        ).length
+                        const refused = importResult.summary.errors.filter(
+                          (e: any) => e.error?.includes('declined')
+                        ).length
+                        const other = importResult.summary.errors.length - duplicates - refused
+
+                        return (
+                          <>
+                            {duplicates > 0 && (
+                              <p>• {duplicates} doublon(s) : déjà inscrits à cet événement</p>
+                            )}
+                            {refused > 0 && (
+                              <p>• {refused} refusé(s) : précédemment déclinés</p>
+                            )}
+                            {other > 0 && (
+                              <p>• {other} autre(s) erreur(s)</p>
+                            )}
+                          </>
+                        )
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Liste détaillée des erreurs */}
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-2">
+                      Détail des erreurs :
+                    </h4>
+                    <ul className="text-sm text-red-800 dark:text-red-300 space-y-1 max-h-48 overflow-y-auto">
+                      {importResult.summary.errors.map(
+                        (error: any, index: number) => (
+                          <li key={index} className="flex items-start">
+                            <span className="font-mono text-xs bg-red-100 dark:bg-red-900/50 px-2 py-0.5 rounded mr-2">
+                              L{error.row}
+                            </span>
+                            <span className="flex-1">
+                              {error.email && (
+                                <span className="font-medium">{error.email} : </span>
+                              )}
+                              {error.error}
+                            </span>
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
                 </div>
               )}
 

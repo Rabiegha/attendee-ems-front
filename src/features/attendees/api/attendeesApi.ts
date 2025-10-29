@@ -51,9 +51,19 @@ export interface AttendeesListParams {
   sortOrder?: 'asc' | 'desc'
 }
 
+export interface AttendeesListResponse {
+  data: AttendeeDPO[]
+  meta: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+
 export const attendeesApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAttendees: builder.query<AttendeeDPO[], AttendeesListParams>({
+    getAttendees: builder.query<AttendeesListResponse, AttendeesListParams>({
       query: (params) => {
         const searchParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
@@ -67,12 +77,14 @@ export const attendeesApi = rootApi.injectEndpoints({
         })
         return `${API_ENDPOINTS.ATTENDEES.LIST}?${searchParams.toString()}`
       },
-      transformResponse: (response: { data: AttendeeDTO[] }) =>
-        response.data.map(mapAttendeeDTOtoDPO),
+      transformResponse: (response: { data: AttendeeDTO[]; meta: any }): AttendeesListResponse => ({
+        data: response.data.map(mapAttendeeDTOtoDPO),
+        meta: response.meta,
+      }),
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'Attendee' as const, id })),
+              ...result.data.map(({ id }) => ({ type: 'Attendee' as const, id })),
               { type: 'Attendees', id: 'LIST' },
             ]
           : [{ type: 'Attendees', id: 'LIST' }],

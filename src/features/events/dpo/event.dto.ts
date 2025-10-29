@@ -10,6 +10,7 @@ export interface EventDTO {
   status: 'draft' | 'published' | 'archived'
   capacity: number | null
   location_type: 'physical' | 'online' | 'hybrid'
+  public_token: string // For public registration forms
   address_formatted: string | null
   address_street: string | null
   address_city: string | null
@@ -26,9 +27,16 @@ export interface EventDTO {
   org_activity_sector_id: string | null
   org_event_type_id: string | null
   // Relations (optionnelles selon l'include)
-  settings?: any
+  settings?: {
+    public_token?: string
+    registration_fields?: any[]
+    [key: string]: any
+  }
   activitySector?: any
   eventType?: any
+  _count?: {
+    registrations: number
+  }
 }
 
 export interface CreateEventDTO {

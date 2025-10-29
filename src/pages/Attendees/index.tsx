@@ -6,6 +6,7 @@ import {
   selectAttendeesFilters,
   selectAttendeesActiveTab,
   setActiveTab,
+  setFilters,
 } from '@/features/attendees/model/attendeesSlice'
 import { AttendeeTable } from '@/features/attendees/ui/AttendeeTable'
 import { AttendeeFilters } from '@/features/attendees/ui/AttendeeFilters'
@@ -19,6 +20,7 @@ import {
   CardContent,
   ActionGroup,
   Tabs,
+  Pagination,
   type TabItem,
 } from '@/shared/ui'
 import { Plus, Download, Users } from 'lucide-react'
@@ -30,27 +32,43 @@ export const Attendees: React.FC = () => {
   const activeTab = useSelector(selectAttendeesActiveTab)
 
   const {
-    data: attendees = [],
+    data: attendeesResponse,
     isLoading,
     error,
   } = useGetAttendeesQuery(filters)
+
+  const attendees = attendeesResponse?.data || []
+  const meta = attendeesResponse?.meta || {
+    page: 1,
+    pageSize: 50,
+    total: 0,
+    totalPages: 0,
+  }
 
   // Configure tabs
   const tabs: TabItem[] = [
     {
       id: 'active',
       label: 'Participants actifs',
-      ...(activeTab === 'active' && { count: attendees.length }),
+      ...(activeTab === 'active' && { count: meta.total }),
     },
     {
       id: 'deleted',
       label: 'Participants supprimés',
-      ...(activeTab === 'deleted' && { count: attendees.length }),
+      ...(activeTab === 'deleted' && { count: meta.total }),
     },
   ]
 
   const handleTabChange = (tabId: string) => {
     dispatch(setActiveTab(tabId as 'active' | 'deleted'))
+  }
+
+  const handlePageChange = (page: number) => {
+    dispatch(setFilters({ page }))
+  }
+
+  const handlePageSizeChange = (pageSize: number) => {
+    dispatch(setFilters({ pageSize, page: 1 }))
   }
 
   return (
@@ -98,11 +116,23 @@ export const Attendees: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <AttendeeTable
-                attendees={attendees}
-                isLoading={isLoading}
-                isDeletedTab={activeTab === 'deleted'}
-              />
+              <>
+                <AttendeeTable
+                  attendees={attendees}
+                  isLoading={isLoading}
+                  isDeletedTab={activeTab === 'deleted'}
+                />
+                {!isLoading && meta.totalPages > 1 && (
+                  <Pagination
+                    currentPage={meta.page}
+                    totalPages={meta.totalPages}
+                    pageSize={meta.pageSize}
+                    total={meta.total}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                  />
+                )}
+              </>
             )}
           </CardContent>
         </Card>

@@ -33,6 +33,7 @@ import {
   useBulkDeleteEventsMutation,
   useBulkExportEventsMutation,
 } from '@/features/events/api/eventsApi'
+import { useGetTagsQuery, type Tag } from '@/features/tags'
 import type { EventStatus } from '@/features/events/types'
 
 // Multi-select components
@@ -49,6 +50,7 @@ const EventsList = () => {
   // Filters state
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<EventStatus | 'all'>('all')
+  const [tagFilter, setTagFilter] = useState<string>('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -64,6 +66,9 @@ const EventsList = () => {
     ...(statusFilter !== 'all' && { status: statusFilter }),
   })
 
+  // Get all tags for filtering (no search needed here, will show all org tags)
+  const { data: allTags = [] } = useGetTagsQuery(undefined)
+
   const [deleteEvent] = useDeleteEventMutation()
   const [bulkDeleteEvents] = useBulkDeleteEventsMutation()
   const [bulkExportEvents] = useBulkExportEventsMutation()
@@ -78,6 +83,12 @@ const EventsList = () => {
     if (!isSuperAdmin && event.orgId !== orgId) {
       return false
     }
+    
+    // Filter by tag if selected
+    if (tagFilter && !event.tags.includes(tagFilter)) {
+      return false
+    }
+    
     return true
   })
 
@@ -184,19 +195,22 @@ const EventsList = () => {
       draft: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
       published:
         'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
-      active:
-        'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
-      completed:
-        'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
+      registration_closed:
+        'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300',
       cancelled: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
+      postponed:
+        'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
+      archived:
+        'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
     }
 
     const labels = {
       draft: 'Brouillon',
       published: 'Publié',
-      active: 'En cours',
-      completed: 'Terminé',
+      registration_closed: 'Inscriptions closes',
       cancelled: 'Annulé',
+      postponed: 'Reporté',
+      archived: 'Archivé',
     }
 
     return (
@@ -236,7 +250,7 @@ const EventsList = () => {
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -262,9 +276,27 @@ const EventsList = () => {
                 <option value="all">Tous les statuts</option>
                 <option value="draft">Brouillon</option>
                 <option value="published">Publié</option>
-                <option value="active">En cours</option>
-                <option value="completed">Terminé</option>
+                <option value="registration_closed">Inscriptions closes</option>
                 <option value="cancelled">Annulé</option>
+                <option value="postponed">Reporté</option>
+                <option value="archived">Archivé</option>
+              </select>
+            </div>
+
+            {/* Tag Filter */}
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <select
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 appearance-none"
+              >
+                <option value="">Tous les tags</option>
+                {allTags.map((tag: Tag) => (
+                  <option key={tag.id} value={tag.name}>
+                    {tag.name} ({tag.usage_count})
+                  </option>
+                ))}
               </select>
             </div>
 

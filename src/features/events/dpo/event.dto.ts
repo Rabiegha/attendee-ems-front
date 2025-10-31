@@ -23,6 +23,7 @@ export interface EventDTO {
   org_id: string
   created_at: string
   updated_at: string
+  deleted_at: string | null
   created_by: string | null
   org_activity_sector_id: string | null
   org_event_type_id: string | null
@@ -34,6 +35,13 @@ export interface EventDTO {
   }
   activitySector?: any
   eventType?: any
+  eventTags?: Array<{
+    tag: {
+      id: string
+      name: string
+      color?: string | null
+    }
+  }>
   _count?: {
     registrations: number
   }
@@ -52,6 +60,7 @@ export interface CreateEventDTO {
   org_activity_sector_id?: string
   org_event_type_id?: string
   assigned_user_ids?: string[]
+  tags?: string[]
 }
 
 export interface UpdateEventDTO extends Partial<CreateEventDTO> {

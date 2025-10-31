@@ -79,7 +79,7 @@ export function detectRedirectLoop(): boolean {
     // Détecter la boucle
     if (recentRedirects.length > MAX_REDIRECTS) {
       console.error(
-        `[AUTH RECOVERY] 🚨 Redirect loop detected: ${recentRedirects.length} redirects in ${TIME_WINDOW}ms`
+        `[AUTH RECOVERY] Redirect loop detected: ${recentRedirects.length} redirects in ${TIME_WINDOW}ms`
       )
       return true
     }

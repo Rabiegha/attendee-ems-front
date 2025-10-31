@@ -147,7 +147,7 @@ export const EmbedCodeGenerator: React.FC<EmbedCodeGeneratorProps> = ({
       {!publicToken && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-            <strong>⚠️ Token public temporaire :</strong> Le token affiché est
+            <strong>Token public temporaire :</strong> Le token affiché est
             temporaire. Enregistrez les modifications de l'événement pour
             générer un token permanent.
           </p>

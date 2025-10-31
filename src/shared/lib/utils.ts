@@ -80,9 +80,16 @@ export function isEmpty(value: any): boolean {
 
 /**
  * Format attendees count display
- * Shows only the number of current participants (approved registrations)
+ * Shows current/max if there's a limit, otherwise just current count
  */
-export function formatAttendeesCount(current: number): string {
+export function formatAttendeesCount(current: number, max?: number): string {
   const currentCount = current || 0
+  
+  // Si maxAttendees existe et est une vraie limite (< 999999)
+  if (max && max > 0 && max < 999999) {
+    return `${currentCount}/${max} participants`
+  }
+  
+  // Sinon, juste le nombre actuel
   return `${currentCount} participant${currentCount !== 1 ? 's' : ''}`
 }

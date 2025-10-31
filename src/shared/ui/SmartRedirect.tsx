@@ -31,7 +31,7 @@ export const SmartRedirect: React.FC = () => {
     // PROTECTION : Si plus de 3 redirections en 2 secondes depuis SmartRedirect
     if (redirectCountRef.current > 3) {
       console.error(
-        '[SMARTREDIRECT] 🚨 REDIRECT LOOP DETECTED! Force logout...'
+        '[SMARTREDIRECT] REDIRECT LOOP DETECTED! Force logout...'
       )
       dispatch(clearSession())
       try {

@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import {
   useGetEventByIdQuery,
   useUpdateRegistrationFieldsMutation,
@@ -25,9 +25,10 @@ import {
   ArrowLeft,
   Settings,
   FormInput,
-  ChevronDown,
+  Zap,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
+import { EventSettingsTab } from './EventSettingsTab'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
@@ -38,15 +39,33 @@ import {
 } from '@/features/events/components/FormBuilder'
 import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
+import { EventActionsModal } from './EventActionsModal'
 
 type TabType = 'details' | 'registrations' | 'form' | 'settings'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [activeTab, setActiveTab] = useState<TabType>('details')
+  // Récupérer l'onglet depuis l'URL, ou 'details' par défaut
+  const tabFromUrl = searchParams.get('tab') as TabType | null
+  const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl || 'details')
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
+  // Synchroniser l'onglet actif avec l'URL
+  useEffect(() => {
+    const currentTab = searchParams.get('tab') as TabType | null
+    if (currentTab && ['details', 'registrations', 'form', 'settings'].includes(currentTab)) {
+      setActiveTab(currentTab)
+    }
+  }, [searchParams])
+
+  // Fonction pour changer d'onglet et mettre à jour l'URL
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab)
+    setSearchParams({ tab })
+  }
 
   // State pour la pagination des inscriptions
   const [registrationsPage, setRegistrationsPage] = useState(1)
@@ -61,8 +80,8 @@ export const EventDetails: React.FC = () => {
   const [updateEvent] = useUpdateEventMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
 
-  // State pour le menu dropdown de statut
-  const [showStatusMenu, setShowStatusMenu] = useState(false)
+  // State pour le modal d'actions
+  const [showActionsModal, setShowActionsModal] = useState(false)
 
   // State pour les champs du formulaire - chargé depuis la BDD ou valeurs par défaut
   const [formFields, setFormFields] = useState<FormField[]>([])
@@ -72,6 +91,7 @@ export const EventDetails: React.FC = () => {
   const [submitButtonColor, setSubmitButtonColor] = useState<string>('#4F46E5')
   const [showTitle, setShowTitle] = useState<boolean>(true)
   const [showDescription, setShowDescription] = useState<boolean>(true)
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
 
   // Charger les champs depuis event.settings.registration_fields quand l'événement est chargé
   useEffect(() => {
@@ -110,17 +130,20 @@ export const EventDetails: React.FC = () => {
     }
 
     // Charger la configuration du bouton submit
-    if (event?.settings?.submitButtonText) {
-      setSubmitButtonText(event.settings.submitButtonText)
+    if (event?.settings?.submit_button_text) {
+      setSubmitButtonText(event.settings.submit_button_text)
     }
-    if (event?.settings?.submitButtonColor) {
-      setSubmitButtonColor(event.settings.submitButtonColor)
+    if (event?.settings?.submit_button_color) {
+      setSubmitButtonColor(event.settings.submit_button_color)
     }
-    if (event?.settings?.showTitle !== undefined) {
-      setShowTitle(event.settings.showTitle)
+    if (event?.settings?.show_title !== undefined) {
+      setShowTitle(event.settings.show_title)
     }
-    if (event?.settings?.showDescription !== undefined) {
-      setShowDescription(event.settings.showDescription)
+    if (event?.settings?.show_description !== undefined) {
+      setShowDescription(event.settings.show_description)
+    }
+    if (event?.settings?.is_dark_mode !== undefined) {
+      setIsDarkMode(event.settings.is_dark_mode)
     }
   }, [event])
 
@@ -142,6 +165,7 @@ export const EventDetails: React.FC = () => {
         submitButtonColor,
         showTitle,
         showDescription,
+        isDarkMode,
       }).unwrap()
       console.log('Champs sauvegardés avec succès')
     } catch (error) {
@@ -157,17 +181,43 @@ export const EventDetails: React.FC = () => {
   }
 
   // Fonction pour changer le statut de l'événement
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (
+    newStatus: string,
+    options?: {
+      notifyUsers?: boolean
+      newStartDate?: string
+      newEndDate?: string
+    }
+  ) => {
     if (!id || !event) return
 
     try {
+      const updateData: any = {
+        status: newStatus,
+      }
+
+      // Si on reporte l'événement, mettre à jour les dates
+      if (options?.newStartDate && options?.newEndDate) {
+        updateData.startDate = options.newStartDate
+        updateData.endDate = options.newEndDate
+      }
+
       await updateEvent({
         id,
-        data: { status: newStatus as any },
+        data: updateData,
       }).unwrap()
-      setShowStatusMenu(false)
+
+      // TODO: Implémenter la logique d'envoi d'email
+      if (options?.notifyUsers) {
+        console.log('TODO: Envoyer email de notification aux participants')
+        if (options?.newStartDate) {
+          console.log('Nouvelle date de début:', options.newStartDate)
+          console.log('Nouvelle date de fin:', options.newEndDate)
+        }
+      }
     } catch (err) {
       console.error('Erreur lors du changement de statut:', err)
+      throw err
     }
   }
 
@@ -177,6 +227,7 @@ export const EventDetails: React.FC = () => {
     submitButtonColor?: string
     showTitle?: boolean
     showDescription?: boolean
+    isDarkMode?: boolean
   }) => {
     if (config.submitButtonText !== undefined) {
       setSubmitButtonText(config.submitButtonText)
@@ -190,9 +241,21 @@ export const EventDetails: React.FC = () => {
     if (config.showDescription !== undefined) {
       setShowDescription(config.showDescription)
     }
+    if (config.isDarkMode !== undefined) {
+      setIsDarkMode(config.isDarkMode)
+    }
 
     // Sauvegarder immédiatement
     if (!id) return
+
+    // Utiliser les nouvelles valeurs de config en priorité, puis les states actuels
+    const finalConfig = {
+      submitButtonText: config.submitButtonText ?? submitButtonText,
+      submitButtonColor: config.submitButtonColor ?? submitButtonColor,
+      showTitle: config.showTitle !== undefined ? config.showTitle : showTitle,
+      showDescription: config.showDescription !== undefined ? config.showDescription : showDescription,
+      isDarkMode: config.isDarkMode !== undefined ? config.isDarkMode : isDarkMode,
+    }
 
     updateRegistrationFields({
       id,
@@ -200,10 +263,7 @@ export const EventDetails: React.FC = () => {
         const { icon, ...rest } = field as any
         return rest
       }),
-      submitButtonText: config.submitButtonText ?? submitButtonText,
-      submitButtonColor: config.submitButtonColor ?? submitButtonColor,
-      showTitle: config.showTitle ?? showTitle,
-      showDescription: config.showDescription ?? showDescription,
+      ...finalConfig,
     })
   }
 
@@ -318,19 +378,46 @@ export const EventDetails: React.FC = () => {
   const awaitingCount = registrationsMeta.statusCounts.awaiting
   const refusedCount = registrationsMeta.statusCounts.refused
 
-  const tabs = [
+  // Filtrer les onglets si l'événement est supprimé
+  const allTabs = [
     { id: 'details' as TabType, label: 'Détails', icon: FileText },
     {
       id: 'registrations' as TabType,
       label: `Inscriptions (${registrationsMeta.total})`,
       icon: Users,
     },
-    { id: 'form' as TabType, label: 'Formulaire', icon: FormInput },
-    { id: 'settings' as TabType, label: 'Paramètres', icon: Settings },
+    { id: 'form' as TabType, label: 'Formulaire', icon: FormInput, disabledIfDeleted: true },
+    { id: 'settings' as TabType, label: 'Paramètres', icon: Settings, disabledIfDeleted: true },
   ]
+
+  const tabs = event.isDeleted 
+    ? allTabs.filter(tab => !tab.disabledIfDeleted)
+    : allTabs
 
   return (
     <div className="space-y-6">
+      {/* Banner événement supprimé */}
+      {event.isDeleted && (
+        <div className="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-600 dark:border-red-500 p-4 rounded-r-lg">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-600 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                CET ÉVÉNEMENT A ÉTÉ SUPPRIMÉ
+              </p>
+              <p className="text-xs text-red-700 dark:text-red-400 mt-1">
+                Cet événement est conservé dans l'historique des participants mais n'est plus accessible publiquement.
+                Les onglets Formulaire et Paramètres sont désactivés.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
@@ -345,50 +432,38 @@ export const EventDetails: React.FC = () => {
               {event.name}
             </h1>
 
-            {/* Status Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowStatusMenu(!showStatusMenu)}
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition-all ${
-                  event.status === 'active'
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-900/50'
-                    : event.status === 'draft'
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+            {/* Status Badge (read-only) */}
+            <span
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                event.status === 'published'
+                  ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+                  : event.status === 'draft'
+                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                    : event.status === 'registration_closed'
+                      ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200'
+                      : event.status === 'cancelled'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+                        : event.status === 'postponed'
+                          ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+                          : event.status === 'archived'
+                            ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+              }`}
+            >
+              {event.status === 'registration_closed'
+                ? 'Inscriptions closes'
+                : event.status === 'cancelled'
+                  ? 'Annulé'
+                  : event.status === 'postponed'
+                    ? 'Reporté'
+                    : event.status === 'archived'
+                      ? 'Archivé'
                       : event.status === 'published'
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                        : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-900/50'
-                }`}
-              >
-                {event.status}
-                <ChevronDown className="ml-1 h-3 w-3" />
-              </button>
-
-              {showStatusMenu && (
-                <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10">
-                  <div className="py-1">
-                    {[
-                      'draft',
-                      'published',
-                      'active',
-                      'completed',
-                      'cancelled',
-                    ].map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => handleStatusChange(status)}
-                        className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                          event.status === status
-                            ? 'font-medium text-blue-600 dark:text-blue-400'
-                            : 'text-gray-700 dark:text-gray-300'
-                        }`}
-                      >
-                        {status}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+                        ? 'Publié'
+                        : event.status === 'draft'
+                          ? 'Brouillon'
+                          : event.status}
+            </span>
           </div>
           <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
             <div className="flex items-center">
@@ -401,12 +476,22 @@ export const EventDetails: React.FC = () => {
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
-              {approvedCount} participants
+              {event.maxAttendees && event.maxAttendees > 0 && event.maxAttendees < 999999
+                ? `${approvedCount}/${event.maxAttendees} participants`
+                : `${approvedCount} participants`}
             </div>
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowActionsModal(true)}
+            className="flex items-center space-x-2"
+          >
+            <Zap className="h-4 w-4" />
+            <span>Actions</span>
+          </Button>
           <Can do="update" on="Event" data={event}>
             <Button
               variant="outline"
@@ -434,7 +519,7 @@ export const EventDetails: React.FC = () => {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`
                   flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors
                   ${
@@ -679,6 +764,7 @@ export const EventDetails: React.FC = () => {
                 submitButtonColor={submitButtonColor}
                 showTitle={showTitle}
                 showDescription={showDescription}
+                isDarkMode={isDarkMode}
                 onConfigChange={handleConfigChange}
               />
 
@@ -712,6 +798,7 @@ export const EventDetails: React.FC = () => {
                   submitButtonColor={submitButtonColor}
                   showTitle={showTitle}
                   showDescription={showDescription}
+                  isDarkMode={isDarkMode}
                 />
               </div>
             </div>
@@ -719,15 +806,7 @@ export const EventDetails: React.FC = () => {
         )}
 
         {activeTab === 'settings' && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Paramètres de l'événement
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300">
-              Fonctionnalité à venir : configuration des formulaires,
-              notifications, etc.
-            </p>
-          </div>
+          <EventSettingsTab event={event} />
         )}
       </div>
 
@@ -743,6 +822,15 @@ export const EventDetails: React.FC = () => {
         event={event}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
+      />
+
+      <EventActionsModal
+        isOpen={showActionsModal}
+        onClose={() => setShowActionsModal(false)}
+        currentStatus={event.status}
+        currentStartDate={event.startDate}
+        currentEndDate={event.endDate}
+        onStatusChange={handleStatusChange}
       />
     </div>
   )

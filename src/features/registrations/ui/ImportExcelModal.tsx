@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
+import { ModalSteps } from '@/shared/ui/ModalSteps'
 import * as XLSX from 'xlsx'
 import { useToast } from '@/shared/hooks/useToast'
 import { useImportExcelRegistrationsMutation } from '../api/registrationsApi'
@@ -85,6 +86,12 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const [selectedConflicts, setSelectedConflicts] = useState<Set<number>>(new Set()) // ← Lignes à remplacer
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
+
+  // Mapper les étapes à des numéros pour l'animation
+  const getStepNumber = (stepName: 'upload' | 'preview' | 'conflicts' | 'success'): number => {
+    const stepMap = { upload: 0, preview: 1, conflicts: 2, success: 3 }
+    return stepMap[stepName]
+  }
 
   // Mutation API pour l'import Excel
   const [importExcelRegistrations, { isLoading: isImporting }] =
@@ -356,7 +363,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       title="Importer des inscriptions (Excel)"
       maxWidth="4xl"
     >
-      <div className="space-y-6">
+      <ModalSteps currentStep={getStepNumber(step)}>
+        <div className="space-y-6">
         {step === 'upload' && (
           <>
             <div className="text-center">
@@ -713,7 +721,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
             </div>
           </>
         )}
-      </div>
+        </div>
+      </ModalSteps>
     </Modal>
   )
 }

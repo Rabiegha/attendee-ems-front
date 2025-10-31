@@ -7,6 +7,7 @@
  * - PageSection pour les sections de contenu
  * - Card pour les cartes de statistiques
  * - ActionGroup pour grouper les boutons
+ * - Tabs pour afficher les utilisateurs actifs/supprimés
  */
 
 import {
@@ -17,6 +18,9 @@ import {
   UserX,
   User as UserIcon,
   RefreshCw,
+  Edit2,
+  Trash2,
+  RotateCcw,
 } from 'lucide-react'
 import {
   Button,
@@ -27,42 +31,156 @@ import {
   PageSection,
   ActionGroup,
   LoadingSpinner,
-  ActionButtons,
+  Tabs,
 } from '@/shared/ui'
 import { useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
-import { useState } from 'react'
-import { useGetUsersQuery } from '@/features/users/api/usersApi'
+import { useSelector, useDispatch } from 'react-redux'
+import { useState, useEffect } from 'react'
+import {
+  useGetUsersQuery,
+  useUpdateUserMutation,
+  useBulkDeleteUsersMutation,
+  usersApi,
+} from '@/features/users/api/usersApi'
 import { Can } from '@/shared/acl/guards/Can'
 import { RoleSelector } from '@/features/users/ui/RoleSelector'
 import { selectUser } from '@/features/auth/model/sessionSlice'
+import { EditUserModal } from '@/features/users/ui/EditUserModal'
+import { DeleteUserModal } from '@/features/users/ui/DeleteUserModal'
+import { RestoreUserModal } from '@/features/users/ui/RestoreUserModal'
+import { PermanentDeleteUserModal } from '@/features/users/ui/PermanentDeleteUserModal'
+import {
+  selectUsersFilters,
+  selectUsersActiveTab,
+  setActiveTab,
+  type UsersTab,
+} from '@/features/users/model/usersSlice'
 
 export function UsersPage() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const currentUser = useSelector(selectUser)
-  const { data: usersData, isLoading, refetch } = useGetUsersQuery({})
+
+  // Redux state
+  const filters = useSelector(selectUsersFilters)
+  const activeTab = useSelector(selectUsersActiveTab)
+
+  // Debug: afficher les filtres
+  console.log('🔍 Users filters:', filters, 'activeTab:', activeTab)
+
+  // API queries
+  const { data: usersData, isLoading, refetch } = useGetUsersQuery(filters)
   
-  // États pour les modals (à implémenter si nécessaire)
+  // Query for global stats (without isActive filter)
+  const { data: allUsersData } = useGetUsersQuery({
+    page: 1,
+    pageSize: 1000, // Large enough to get all users for stats
+  })
+
+  // Debug: afficher les données reçues
+  console.log('📊 Users data received:', usersData?.users?.length, 'users, total:', usersData?.total)
+  console.log('👥 Users list:', usersData?.users?.map(u => ({ email: u.email, is_active: u.is_active })))
+
+  // Force refetch when filters change
+  useEffect(() => {
+    console.log('🔄 Filters changed, refetching...')
+    refetch()
+  }, [filters.isActive, refetch])
+
+  // Mutations
+  const [updateUser] = useUpdateUserMutation()
+  const [bulkDeleteUsers] = useBulkDeleteUsersMutation()
+
+  // Modal states
   const [editingUser, setEditingUser] = useState<any>(null)
   const [deletingUser, setDeletingUser] = useState<any>(null)
+  const [restoringUser, setRestoringUser] = useState<any>(null)
+  const [permanentDeletingUser, setPermanentDeletingUser] = useState<any>(null)
+
+  // Tabs configuration
+  const isDeletedTab = activeTab === 'deleted'
 
   const handleRefresh = () => {
     refetch()
   }
 
   const handleInviteUser = () => {
-    navigate('/invitations')
+    navigate('/users/invite')
+  }
+
+  const handleTabChange = (tabId: string) => {
+    console.log('🔄 Tab changing to:', tabId)
+    // Invalider le cache RTK Query pour forcer un refetch
+    dispatch(usersApi.util.invalidateTags(['Users']))
+    // Changer l'onglet actif (qui change aussi isActive dans les filtres)
+    dispatch(setActiveTab(tabId as UsersTab))
+  }
+
+  // Actions pour utilisateurs actifs
+  const handleEditUser = (user: any) => {
+    setEditingUser(user)
+  }
+
+  const handleDeleteUser = (user: any) => {
+    setDeletingUser(user)
+  }
+
+  const handleSaveUser = async (userId: string, data: any) => {
+    await updateUser({ id: userId, data }).unwrap()
+    setEditingUser(null)
+    refetch()
+  }
+
+  const handleConfirmDelete = async (userId: string, data: any) => {
+    await updateUser({ id: userId, data }).unwrap()
+    setDeletingUser(null)
+    refetch()
+  }
+
+  // Actions pour utilisateurs supprimés
+  const handleRestoreUser = (user: any) => {
+    setRestoringUser(user)
+  }
+
+  const handlePermanentDelete = (user: any) => {
+    setPermanentDeletingUser(user)
+  }
+
+  const handleConfirmRestore = async (userId: string, data: any) => {
+    await updateUser({ id: userId, data }).unwrap()
+    setRestoringUser(null)
+    refetch()
+  }
+
+  const handleConfirmPermanentDelete = async (userIds: string[]) => {
+    await bulkDeleteUsers(userIds).unwrap()
+    setPermanentDeletingUser(null)
+    refetch()
   }
 
   // Calcul des statistiques
   const stats = {
-    total: usersData?.total || 0,
-    active: usersData?.users?.filter((u) => u.is_active).length || 0,
+    total: allUsersData?.total || 0,
+    active: allUsersData?.users?.filter((u) => u.is_active).length || 0,
     pending:
-      usersData?.users?.filter((u) => (u as any).mustChangePassword).length ||
+      allUsersData?.users?.filter((u) => (u as any).mustChangePassword).length ||
       0,
-    inactive: usersData?.users?.filter((u) => !u.is_active).length || 0,
+    inactive: allUsersData?.users?.filter((u) => !u.is_active).length || 0,
   }
+
+  // Tabs data
+  const tabs = [
+    {
+      id: 'active',
+      label: 'Utilisateurs actifs',
+      count: stats.active,
+    },
+    {
+      id: 'deleted',
+      label: 'Utilisateurs supprimés',
+      count: stats.inactive,
+    },
+  ]
 
   return (
     <PageContainer maxWidth="7xl" padding="lg">
@@ -171,6 +289,15 @@ export function UsersPage() {
       {/* Section liste des utilisateurs */}
       <PageSection title="Liste des utilisateurs" spacing="lg">
         <Card variant="default" padding="none">
+          {/* Tabs */}
+          <div className="px-6 pt-6">
+            <Tabs
+              items={tabs}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+            />
+          </div>
+
           {/* Loading state */}
           {isLoading && (
             <div className="p-8 text-center">
@@ -186,18 +313,26 @@ export function UsersPage() {
             (!usersData?.users || usersData.users.length === 0) && (
               <div className="p-12 text-center">
                 <Users className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-                <h3 className="text-heading-sm mb-2">Aucun utilisateur</h3>
+                <h3 className="text-heading-sm mb-2">
+                  {isDeletedTab
+                    ? 'Aucun utilisateur supprimé'
+                    : 'Aucun utilisateur'}
+                </h3>
                 <p className="text-body text-gray-500 dark:text-gray-400 mb-6">
-                  Commencez par créer votre premier utilisateur.
+                  {isDeletedTab
+                    ? 'Les utilisateurs désactivés apparaîtront ici.'
+                    : 'Commencez par créer votre premier utilisateur.'}
                 </p>
-                <Can do="create" on="User">
-                  <Button
-                    onClick={handleInviteUser}
-                    leftIcon={<Mail className="h-4 w-4" />}
-                  >
-                    Inviter un utilisateur
-                  </Button>
-                </Can>
+                {!isDeletedTab && (
+                  <Can do="create" on="User">
+                    <Button
+                      onClick={handleInviteUser}
+                      leftIcon={<Mail className="h-4 w-4" />}
+                    >
+                      Inviter un utilisateur
+                    </Button>
+                  </Can>
+                )}
               </div>
             )}
 
@@ -294,14 +429,63 @@ export function UsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <ActionButtons
-                          onEdit={() => setEditingUser(user)}
-                          onDelete={() => setDeletingUser(user)}
-                          canEdit={{ do: 'update', on: 'User', data: user }}
-                          canDelete={{ do: 'delete', on: 'User', data: user }}
-                          size="sm"
-                          iconOnly
-                        />
+                        {isDeletedTab ? (
+                          // Actions pour utilisateurs supprimés
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleRestoreUser(user)
+                              }}
+                              title="Restaurer"
+                              className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handlePermanentDelete(user)
+                              }}
+                              title="Supprimer définitivement"
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          // Actions pour utilisateurs actifs
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleEditUser(user)
+                              }}
+                              title="Modifier"
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDeleteUser(user)
+                              }}
+                              title="Désactiver"
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -311,6 +495,33 @@ export function UsersPage() {
           )}
         </Card>
       </PageSection>
+
+      {/* Modals */}
+      <EditUserModal
+        isOpen={!!editingUser}
+        onClose={() => setEditingUser(null)}
+        user={editingUser}
+        onSave={handleSaveUser}
+      />
+
+      <DeleteUserModal
+        isOpen={!!deletingUser}
+        onClose={() => setDeletingUser(null)}
+        user={deletingUser}
+        onDelete={handleConfirmDelete}
+      />
+
+      <RestoreUserModal
+        user={restoringUser}
+        onClose={() => setRestoringUser(null)}
+        onRestore={handleConfirmRestore}
+      />
+
+      <PermanentDeleteUserModal
+        user={permanentDeletingUser}
+        onClose={() => setPermanentDeletingUser(null)}
+        onDelete={handleConfirmPermanentDelete}
+      />
     </PageContainer>
   )
 }

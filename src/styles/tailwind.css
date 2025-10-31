@@ -149,4 +149,101 @@
   .animate-bounce-gentle {
     animation: bounce-gentle 1s ease-in-out infinite;
   }
+
+  /* Page Transitions - Subtle Slide Effect */
+  .page-transition-wrapper {
+    animation: pageSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes pageSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Optionnel : ajouter un effet sur le survol des liens pour indiquer la navigation */
+  a[href]:not(.no-transition):hover {
+    transform: translateX(2px);
+    transition: transform 0.2s ease;
+  }
+
+  /* Modal Steps Animations - Swipe Effect */
+  .modal-steps-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .modal-step-content {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .modal-step-enter-right {
+    animation: slideInFromRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .modal-step-enter-left {
+    animation: slideInFromLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .modal-step-exit-left {
+    animation: slideOutToLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .modal-step-exit-right {
+    animation: slideOutToRight 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  .modal-step-visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  @keyframes slideInFromRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideInFromLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOutToLeft {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+  }
+
+  @keyframes slideOutToRight {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
 }

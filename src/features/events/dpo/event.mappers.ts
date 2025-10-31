@@ -34,8 +34,9 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
     publicToken: dto.settings?.public_token || dto.public_token || '', // From settings or root
     createdAt: dto.created_at, // Keep as ISO string
     updatedAt: dto.updated_at, // Keep as ISO string
+    deletedAt: dto.deleted_at || null, // Keep as ISO string or null
     createdBy: dto.created_by || '',
-    tags: [], // TODO: À implémenter si le backend ajoute des tags
+    tags: dto.eventTags?.map((et) => et.tag.name) || [],
     partnerIds: [], // TODO: À implémenter
     metadata: {}, // TODO: À implémenter si le backend ajoute metadata
     settings: dto.settings, // Pass through settings including registration_fields
@@ -44,6 +45,7 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
     isActive: dto.status === 'published',
     isDraft: dto.status === 'draft',
     isCompleted: dto.status === 'archived',
+    isDeleted: !!dto.deleted_at,
     isFull: dto.capacity
       ? (dto._count?.registrations || 0) >= dto.capacity
       : false,
@@ -78,6 +80,11 @@ export const mapCreateEventDPOtoDTO = (dpo: CreateEventDPO): CreateEventDTO => {
     dto.assigned_user_ids = dpo.partnerIds
   }
 
+  // Map tags
+  if (dpo.tags && dpo.tags.length > 0) {
+    dto.tags = dpo.tags
+  }
+
   return dto
 }
 
@@ -99,14 +106,9 @@ export const mapUpdateEventDPOtoDTO = (dpo: UpdateEventDPO): UpdateEventDTO => {
     dto.assigned_user_ids = dpo.partnerIds
   }
 
-  // Map status: completed -> archived pour le backend
+  // Map status
   if (dpo.status) {
-    dto.status =
-      dpo.status === 'completed'
-        ? 'archived'
-        : dpo.status === 'active'
-          ? 'published'
-          : (dpo.status as any)
+    dto.status = dpo.status as any
   }
 
   return dto

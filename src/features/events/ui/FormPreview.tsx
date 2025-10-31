@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Calendar, MapPin, Users, CheckCircle } from 'lucide-react'
+import { Calendar, MapPin, Users, CheckCircle, AlertTriangle, XCircle, Clock } from 'lucide-react'
 import type { FormField } from '../components/FormBuilder'
 import type { EventDPO } from '../dpo/event.dpo'
 import { formatDate } from '@/shared/lib/utils'
@@ -15,6 +15,7 @@ interface FormPreviewProps {
   submitButtonColor?: string
   showTitle?: boolean
   showDescription?: boolean
+  isDarkMode?: boolean
 }
 
 export const FormPreview: React.FC<FormPreviewProps> = ({
@@ -25,6 +26,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
   submitButtonColor = '#4F46E5',
   showTitle = true,
   showDescription = true,
+  isDarkMode = false,
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -103,6 +105,11 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
         requestData.answers = answers
       }
 
+      // Add source tracking (test_form when in test mode, public_form otherwise)
+      if (testMode) {
+        requestData.source = 'test_form'
+      }
+
       // Utiliser le public_token de l'événement pour la route publique
       if (!event.publicToken) {
         toast.error('Erreur configuration', "L'événement n'a pas de token public")
@@ -173,10 +180,10 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             required={field.required}
             disabled={disabled}
           >
-            <option value="">Sélectionnez une option</option>
+            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez une option</option>
             {field.options?.map(
               (option: { value: string; label: string }, idx: number) => (
-                <option key={idx} value={option.value}>
+                <option key={idx} value={option.value} className="dark:bg-gray-700 dark:text-white">
                   {option.label}
                 </option>
               )
@@ -199,7 +206,57 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg transition-colors duration-200">
+    <div className={isDarkMode ? 'dark' : ''}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg transition-colors duration-200">
+        {/* Status Banner */}
+        {event.status === 'cancelled' && (
+          <div className="bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 p-4">
+            <div className="flex items-center">
+              <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 mr-3 flex-shrink-0" />
+              <div>
+                <p className="font-semibold text-red-800 dark:text-red-200">
+                  Événement annulé
+                </p>
+                <p className="text-sm text-red-700 dark:text-red-300">
+                  Cet événement a été annulé. Les inscriptions ne sont plus possibles.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {event.status === 'postponed' && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 p-4">
+          <div className="flex items-center">
+            <Clock className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-3 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-yellow-800 dark:text-yellow-200">
+                Événement reporté
+              </p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Cet événement a été reporté. Veuillez consulter les nouvelles dates ci-dessous.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {event.status === 'registration_closed' && (
+        <div className="bg-orange-50 dark:bg-orange-900/20 border-b border-orange-200 dark:border-orange-800 p-4">
+          <div className="flex items-center">
+            <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400 mr-3 flex-shrink-0" />
+            <div>
+              <p className="font-semibold text-orange-800 dark:text-orange-200">
+                Inscriptions closes
+              </p>
+              <p className="text-sm text-orange-700 dark:text-orange-300">
+                Les inscriptions pour cet événement sont closes. Il n'est plus possible de s'inscrire.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Header */}
       {showTitle && (
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -273,46 +330,66 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
                 </p>
               </div>
             ) : (
-              <>
-                {fields.map((field) => (
-                  <div key={field.id}>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      {field.label}
-                      {field.required && (
-                        <span className="text-red-500 ml-1">*</span>
-                      )}
-                    </label>
-                    {renderField(field)}
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {fields.map((field) => {
+                  // Determine if this field should be full width or half
+                  const isFullWidth = field.width !== 'half'
+                  
+                  return (
+                    <div
+                      key={field.id}
+                      className={isFullWidth ? 'md:col-span-2' : 'md:col-span-1'}
+                    >
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        {field.label}
+                        {field.required && (
+                          <span className="text-red-500 ml-1">*</span>
+                        )}
+                      </label>
+                      {renderField(field)}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
-                <div className="pt-4">
-                  <button
-                    type="submit"
-                    disabled={!testMode || isSubmitting}
-                    className="w-full px-4 py-2 rounded-md text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
-                    style={{ backgroundColor: submitButtonColor }}
-                  >
-                    {isSubmitting
-                      ? 'Inscription en cours...'
-                      : submitButtonText}
-                  </button>
-                </div>
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={
+                  !testMode ||
+                  isSubmitting ||
+                  event.status === 'cancelled' ||
+                  event.status === 'registration_closed' ||
+                  event.status === 'archived'
+                }
+                className="w-full px-4 py-2 rounded-md text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
+                style={{ backgroundColor: submitButtonColor }}
+              >
+                {event.status === 'cancelled'
+                  ? 'Événement annulé'
+                  : event.status === 'registration_closed'
+                    ? 'Inscriptions closes'
+                    : event.status === 'archived'
+                      ? 'Événement terminé'
+                      : isSubmitting
+                        ? 'Inscription en cours...'
+                        : submitButtonText}
+              </button>
+            </div>
 
-                {testMode && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    * Ce formulaire est en mode test - Les inscriptions ne
-                    seront pas réellement enregistrées
-                  </p>
-                )}
+            {testMode && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                * Ce formulaire est en mode test - Les inscriptions ne
+                seront pas réellement enregistrées
+              </p>
+            )}
 
-                {!testMode && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                    * Champs obligatoires - Activez le mode test pour essayer le
-                    formulaire
-                  </p>
-                )}
-              </>
+            {!testMode && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                * Champs obligatoires - Activez le mode test pour essayer le
+                formulaire
+              </p>
             )}
           </>
         )}
@@ -323,6 +400,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
         <p className="text-xs text-gray-500 dark:text-gray-400">
           Propulsé par Attendee EMS
         </p>
+      </div>
       </div>
     </div>
   )

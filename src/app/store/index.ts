@@ -16,6 +16,7 @@ import { rootApi } from '@/services/rootApi'
 import { sessionSlice } from '@/features/auth/model/sessionSlice'
 import { eventsSlice } from '@/features/events/model/eventsSlice'
 import { attendeesSlice } from '@/features/attendees/model/attendeesSlice'
+import usersSlice from '@/features/users/model/usersSlice'
 import { toastReducer } from '@/shared/ui/toast-slice'
 
 // Combiner tous les reducers
@@ -24,6 +25,7 @@ const rootReducer = combineReducers({
   session: sessionSlice.reducer,
   events: eventsSlice.reducer,
   attendees: attendeesSlice.reducer,
+  users: usersSlice,
   toast: toastReducer,
 })
 
@@ -32,7 +34,7 @@ const persistConfig = {
   key: 'root',
   storage,
   whitelist: ['session'], // Persister UNIQUEMENT session
-  blacklist: [rootApi.reducerPath, 'events', 'attendees', 'toast'], // Exclure le reste
+  blacklist: [rootApi.reducerPath, 'events', 'attendees', 'users', 'toast'], // Exclure le reste
 }
 
 // Wrap le root reducer avec persistReducer

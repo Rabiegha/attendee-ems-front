@@ -6,7 +6,7 @@
  * 2. Un utilisateur peut modifier uniquement des utilisateurs de niveau STRICTEMENT INFÉRIEUR
  * 3. Un utilisateur peut assigner uniquement des rôles de niveau STRICTEMENT INFÉRIEUR au sien
  *
- * ⚠️ ATTENTION : Hiérarchie inversée dans la DB
+ * ATTENTION : Hiérarchie inversée dans la DB
  * (niveau plus BAS numériquement = plus de pouvoir) :
  * - SUPER_ADMIN : 1
  * - ADMIN : 2
@@ -57,7 +57,7 @@ export function canModifyUser(
   const targetLevel = ROLE_LEVELS[targetUserRoleCode] || 0
 
   // Règle 2 : Peut modifier uniquement des utilisateurs de niveau STRICTEMENT INFÉRIEUR
-  // ⚠️ Niveau plus HAUT numériquement = moins de pouvoir
+  // Niveau plus HAUT numériquement = moins de pouvoir
   // Un ADMIN (2) peut modifier : MANAGER (3), VIEWER (4), PARTNER (5), HOSTESS (6)
   // Un ADMIN ne peut PAS modifier : SUPER_ADMIN (1) ou autre ADMIN (2)
   if (targetLevel <= currentLevel) {
@@ -87,7 +87,7 @@ export function canAssignRole(
   const targetLevel = ROLE_LEVELS[targetRoleCode] || 0
 
   // Règle 3 : Peut assigner uniquement des rôles de niveau STRICTEMENT INFÉRIEUR
-  // ⚠️ Niveau plus HAUT numériquement = moins de pouvoir
+  // Niveau plus HAUT numériquement = moins de pouvoir
   if (targetLevel <= currentLevel) {
     return {
       canAssign: false,
@@ -111,7 +111,7 @@ export function filterAssignableRoles<
   return roles.filter((role) => {
     const roleLevel = role.level || ROLE_LEVELS[role.code] || 0
     // Ne garder que les rôles de niveau STRICTEMENT INFÉRIEUR
-    // ⚠️ Niveau plus HAUT numériquement = moins de pouvoir
+    // Niveau plus HAUT numériquement = moins de pouvoir
     return roleLevel > currentLevel
   })
 }
@@ -130,6 +130,6 @@ export function getRoleLevel(roleCode: string): number {
 export function isRoleHigher(roleCode1: string, roleCode2: string): boolean {
   const level1 = ROLE_LEVELS[roleCode1] || 0
   const level2 = ROLE_LEVELS[roleCode2] || 0
-  // ⚠️ Niveau plus BAS numériquement = plus de pouvoir
+  // Niveau plus BAS numériquement = plus de pouvoir
   return level1 < level2
 }

@@ -8,7 +8,7 @@ import {
 } from '@/features/auth/model/sessionSlice'
 import { Header } from '@/widgets/Header'
 import { Sidebar } from '@/widgets/Sidebar'
-import { PermissionsDebug } from '@/shared/acl/components/PermissionsDebug'
+import { PageTransition } from '@/shared/ui/PageTransition'
 
 export const RootLayout: React.FC = () => {
   const dispatch = useDispatch()
@@ -42,7 +42,7 @@ export const RootLayout: React.FC = () => {
     // PROTECTION ANTI-BOUCLE : Si plus de 5 redirections en 2 secondes
     if (redirectCountRef.current > 5) {
       console.error(
-        '[ROOTLAYOUT] 🚨 REDIRECT LOOP DETECTED! Force clearing session...'
+        '[ROOTLAYOUT] REDIRECT LOOP DETECTED! Force clearing session...'
       )
       // Forcer le nettoyage complet de la session
       dispatch(clearSession())
@@ -74,7 +74,7 @@ export const RootLayout: React.FC = () => {
     // Cela ne devrait jamais arriver, mais protège contre un état incohérent
     if (!isBootstrapping && isAuthenticated && (!user || !token)) {
       console.error(
-        '[ROOTLAYOUT] ⚠️ CRITICAL: Authenticated but no user/token! Forcing logout...'
+        '[ROOTLAYOUT] CRITICAL: Authenticated but no user/token! Forcing logout...'
       )
       redirectCountRef.current++
       lastRedirectTimeRef.current = now
@@ -128,11 +128,11 @@ export const RootLayout: React.FC = () => {
       <div className="flex">
         <Sidebar />
         <main className="flex-1 ml-64 pt-20 p-6">
-          <Outlet />
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </main>
       </div>
-      {/* Debug des permissions en développement */}
-      <PermissionsDebug />
     </div>
   )
 }

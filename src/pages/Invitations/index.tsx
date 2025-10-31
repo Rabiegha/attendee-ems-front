@@ -362,13 +362,13 @@ export const InvitationsPage: React.FC = () => {
 
       <PageSection spacing="lg">
         <div className="max-w-2xl mx-auto">
-          <Card variant="default" padding="xl" className="shadow-xl">
+          <Card variant="default" padding="xl" className="shadow-xl my-12">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
                 <Send className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="section-title">Nouvelle invitation</h2>
+                <h2 className="section-title mb-0">Nouvelle invitation</h2>
                 <p className="text-body-sm text-gray-500 dark:text-gray-400">
                   Remplissez les informations ci-dessous
                 </p>

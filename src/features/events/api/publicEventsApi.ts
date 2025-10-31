@@ -36,6 +36,7 @@ interface PublicRegistrationData {
   attendance_type?: 'onsite' | 'online' | 'hybrid'
   event_attendee_type_id?: string
   answers?: Record<string, any>
+  source?: 'public_form' | 'test_form'
 }
 
 interface PublicRegistrationResponse {

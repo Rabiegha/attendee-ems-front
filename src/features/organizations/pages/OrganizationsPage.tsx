@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ChevronDown, ChevronUp, Users, Plus, Building2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, Plus, Building2 } from 'lucide-react'
 import {
   Button,
   Card,
@@ -44,6 +44,39 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
 
   const shouldShowUsers = isSuperAdmin ? isExpanded : true
   const shouldShowToggle = isSuperAdmin
+
+  // Hiérarchie des rôles pour le tri (du plus important au moins important)
+  const roleHierarchy: Record<string, number> = {
+    SUPER_ADMIN: 0,
+    ADMIN: 1,
+    MANAGER: 2,
+    PARTNER: 3,
+    VIEWER: 4,
+    STAFF: 5,
+  }
+
+  // Fonction pour obtenir le niveau hiérarchique d'un rôle
+  const getRoleLevel = (roleCode: string): number => {
+    return roleHierarchy[roleCode] ?? 999 // Si rôle inconnu, mettre à la fin
+  }
+
+  // Trier les utilisateurs par hiérarchie de rôle
+  const sortedUsers = usersData?.users
+    ? [...usersData.users].sort((a, b) => {
+        const levelA = getRoleLevel(a.role.code)
+        const levelB = getRoleLevel(b.role.code)
+        
+        // Tri par niveau de rôle (0 = plus haut)
+        if (levelA !== levelB) {
+          return levelA - levelB
+        }
+        
+        // Si même niveau, trier par nom
+        const nameA = `${a.first_name || ''} ${a.last_name || ''}`.trim().toLowerCase()
+        const nameB = `${b.first_name || ''} ${b.last_name || ''}`.trim().toLowerCase()
+        return nameA.localeCompare(nameB)
+      })
+    : []
 
   return (
     <Card variant="default" padding="none" className="mb-4">
@@ -91,11 +124,11 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
             <div>
               <h4 className="text-body font-semibold text-gray-900 dark:text-white mb-4">
                 {isSuperAdmin
-                  ? `Utilisateurs (${usersData?.users.length || 0})`
+                  ? `Utilisateurs (${sortedUsers.length || 0})`
                   : 'Équipe'}
               </h4>
               <div className="space-y-2">
-                {usersData?.users.map((user: any) => (
+                {sortedUsers.map((user: any) => (
                   <div
                     key={user.id}
                     className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"

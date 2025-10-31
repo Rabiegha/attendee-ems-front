@@ -10,11 +10,13 @@ interface EventSettings {
   start_at: string
   address_formatted: string
   capacity?: number
+  status?: string
   registration_fields: any[]
   submit_button_text?: string
   submit_button_color?: string
   show_title?: boolean
   show_description?: boolean
+  is_dark_mode?: boolean
 }
 
 const PublicRegistration: React.FC = () => {
@@ -70,6 +72,15 @@ const PublicRegistration: React.FC = () => {
     window.addEventListener('resize', updateHeight)
     return () => window.removeEventListener('resize', updateHeight)
   }, [event, isSubmitted])
+
+  // Contrôler le mode dark sur l'élément HTML
+  useEffect(() => {
+    if (event?.is_dark_mode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [event?.is_dark_mode])
 
   const handleInputChange = (fieldId: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }))
@@ -181,9 +192,9 @@ const PublicRegistration: React.FC = () => {
     setFormData({})
   }
 
-  const renderField = (field: any) => {
+  const renderField = (field: any, disabled = false) => {
     const value = formData[field.id] || ''
-    const disabled = false
+    const baseClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
 
     switch (field.type) {
       case 'textarea':
@@ -195,7 +206,7 @@ const PublicRegistration: React.FC = () => {
             required={field.required}
             disabled={disabled}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={baseClasses}
           />
         )
       case 'select':
@@ -205,12 +216,12 @@ const PublicRegistration: React.FC = () => {
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             required={field.required}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={baseClasses}
           >
-            <option value="">Sélectionnez une option</option>
+            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez une option</option>
             {field.options?.map(
               (option: { value: string; label: string }, idx: number) => (
-                <option key={idx} value={option.value}>
+                <option key={idx} value={option.value} className="dark:bg-gray-700 dark:text-white">
                   {option.label}
                 </option>
               )
@@ -226,7 +237,7 @@ const PublicRegistration: React.FC = () => {
             placeholder={field.placeholder}
             required={field.required}
             disabled={disabled}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={baseClasses}
           />
         )
     }
@@ -261,23 +272,25 @@ const PublicRegistration: React.FC = () => {
   const showDescription = event.show_description !== false
   const submitButtonText = event.submit_button_text || "S'inscrire"
   const submitButtonColor = event.submit_button_color || '#4F46E5'
+  const isDarkMode = event.is_dark_mode === true
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg">
-          {/* Header */}
-          {showTitle && (
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                {event.name}
-              </h2>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  {formatDate(event.start_at)}
-                </div>
-                <div className="flex items-center">
+    <div className={isDarkMode ? 'dark' : ''} style={{ colorScheme: isDarkMode ? 'dark' : 'light' }}>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+            {/* Header */}
+            {showTitle && (
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                  {event.name}
+                </h2>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {formatDate(event.start_at)}
+                  </div>
+                  <div className="flex items-center">
                   <MapPin className="h-4 w-4 mr-2" />
                   {event.address_formatted}
                 </div>
@@ -293,69 +306,154 @@ const PublicRegistration: React.FC = () => {
 
           {/* Description */}
           {showDescription && event.description && (
-            <div className="p-6 border-b border-gray-200">
-              <p className="text-gray-700 whitespace-pre-wrap">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
                 {event.description}
               </p>
             </div>
           )}
 
-          {/* Form */}
-          <form className="p-6 space-y-4" onSubmit={handleSubmit}>
-            {isSubmitted ? (
-              <div className="text-center py-8">
-                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Inscription confirmée !
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  Votre inscription a été enregistrée avec succès
-                </p>
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Nouvelle inscription
-                </button>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Inscription à l'événement
+          {/* Form avec overlay si nécessaire */}
+          <div className="relative">
+            <form className="p-6 space-y-4" onSubmit={handleSubmit}>
+              {isSubmitted ? (
+                <div className="text-center py-8">
+                  <CheckCircle className="h-16 w-16 text-green-500 dark:text-green-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                    Inscription confirmée !
                   </h3>
-                </div>
-
-                {event.registration_fields?.map((field: any) => (
-                  <div key={field.id}>
-                    {field.label && (
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {field.label}
-                        {field.required && (
-                          <span className="text-red-500 ml-1">*</span>
-                        )}
-                      </label>
-                    )}
-                    {renderField(field)}
-                  </div>
-                ))}
-
-                <div className="pt-4">
+                  <p className="text-gray-600 dark:text-gray-300 mb-6">
+                    Votre inscription a été enregistrée avec succès
+                  </p>
                   <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full px-4 py-2 rounded-md text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
-                    style={{ backgroundColor: submitButtonColor }}
+                    type="button"
+                    onClick={resetForm}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
-                    {isSubmitting
-                      ? 'Inscription en cours...'
-                      : submitButtonText}
+                    Nouvelle inscription
                   </button>
                 </div>
-              </>
-            )}
-          </form>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Inscription à l'événement
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {event.registration_fields?.map((field: any) => {
+                      // Determine if this field should be full width or half
+                      const isFullWidth = field.width !== 'half'
+                      const isDisabled =
+                        event.status === 'draft' ||
+                        event.status === 'cancelled' ||
+                        event.status === 'registration_closed' ||
+                        event.status === 'archived'
+
+                      return (
+                        <div
+                          key={field.id}
+                          className={isFullWidth ? 'md:col-span-2' : 'md:col-span-1'}
+                        >
+                          {field.label && (
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              {field.label}
+                              {field.required && (
+                                <span className="text-red-500 ml-1">*</span>
+                              )}
+                            </label>
+                          )}
+                          {renderField(field, isDisabled)}
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <div className="pt-4">
+                    <button
+                      type="submit"
+                      disabled={
+                        isSubmitting ||
+                        event.status === 'draft' ||
+                        event.status === 'cancelled' ||
+                        event.status === 'registration_closed' ||
+                        event.status === 'archived'
+                      }
+                      className="w-full px-4 py-2 rounded-md text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110"
+                      style={{ backgroundColor: submitButtonColor }}
+                    >
+                      {isSubmitting
+                        ? 'Inscription en cours...'
+                        : submitButtonText}
+                    </button>
+                  </div>
+                </>
+              )}
+            </form>
+
+            {/* Overlay avec message selon le statut */}
+            {!isSubmitted &&
+              (event.status === 'draft' ||
+                event.status === 'cancelled' ||
+                event.status === 'registration_closed' ||
+                event.status === 'postponed') && (
+                <div className="absolute inset-0 backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 flex items-center justify-center rounded-b-lg">
+                  <div className="text-center px-6 py-8 max-w-md">
+                    <AlertCircle
+                      className={`h-16 w-16 mx-auto mb-4 ${
+                        event.status === 'cancelled'
+                          ? 'text-red-500 dark:text-red-400'
+                          : event.status === 'registration_closed'
+                            ? 'text-orange-500 dark:text-orange-400'
+                            : event.status === 'postponed'
+                              ? 'text-yellow-500 dark:text-yellow-400'
+                              : 'text-gray-400 dark:text-gray-500'
+                      }`}
+                    />
+                    <h3
+                      className={`text-xl font-bold mb-2 ${
+                        event.status === 'cancelled'
+                          ? 'text-red-800 dark:text-red-200'
+                          : event.status === 'registration_closed'
+                            ? 'text-orange-800 dark:text-orange-200'
+                            : event.status === 'postponed'
+                              ? 'text-yellow-800 dark:text-yellow-200'
+                              : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {event.status === 'cancelled'
+                        ? 'Événement annulé'
+                        : event.status === 'registration_closed'
+                          ? 'Inscriptions clôturées'
+                          : event.status === 'postponed'
+                            ? 'Événement reporté'
+                            : 'Événement en cours de préparation'}
+                    </h3>
+                    <p
+                      className={`text-sm ${
+                        event.status === 'cancelled'
+                          ? 'text-red-700 dark:text-red-300'
+                          : event.status === 'registration_closed'
+                            ? 'text-orange-700 dark:text-orange-300'
+                            : event.status === 'postponed'
+                              ? 'text-yellow-700 dark:text-yellow-300'
+                              : 'text-gray-600 dark:text-gray-400'
+                      }`}
+                    >
+                      {event.status === 'cancelled'
+                        ? 'Cet événement a été annulé. Les inscriptions ne sont plus acceptées.'
+                        : event.status === 'registration_closed'
+                          ? 'Les inscriptions pour cet événement sont fermées.'
+                          : event.status === 'postponed'
+                            ? 'Cet événement a été reporté. Veuillez consulter les nouvelles dates ci-dessus.'
+                            : 'Cet événement est en cours de préparation. Les inscriptions ne sont pas encore ouvertes.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

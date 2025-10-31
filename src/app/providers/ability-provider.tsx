@@ -56,7 +56,7 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
 
   // console.log('[AbilityProvider] Should skip policy?', shouldSkipPolicy)
 
-  // ⚠️ POLLING DÉSACTIVÉ : Les permissions sont chargées une seule fois au login
+  // POLLING DÉSACTIVÉ : Les permissions sont chargées une seule fois au login
   // et rafraîchies manuellement lors d'actions spécifiques (changement de rôle, etc.)
   // Polling toutes les 5s = requêtes inutiles et logs pollués
   const { data: policyData } = useGetPolicyQuery(undefined, {

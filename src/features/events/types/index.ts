@@ -8,9 +8,10 @@
 export type EventStatus =
   | 'draft'
   | 'published'
-  | 'active'
-  | 'completed'
+  | 'registration_closed'
   | 'cancelled'
+  | 'postponed'
+  | 'archived'
 export type LocationType = 'physical' | 'online' | 'hybrid'
 export type AttendanceMode = 'onsite' | 'online' | 'hybrid'
 
@@ -54,6 +55,11 @@ export interface EventSettings {
   auto_transition_to_active?: boolean
   auto_transition_to_completed?: boolean
   registration_fields?: RegistrationFieldsConfig
+  submit_button_text?: string
+  submit_button_color?: string
+  show_title?: boolean
+  show_description?: boolean
+  is_dark_mode?: boolean
 }
 
 // Statistiques d'un événement

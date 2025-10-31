@@ -69,7 +69,7 @@ export const PermanentDeleteAttendeeModal: React.FC<
             <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
             <div className="text-red-800 dark:text-red-200">
               <p className="font-bold mb-2">
-                ⚠️ ATTENTION : Cette action est irréversible !
+                ATTENTION : Cette action est irréversible !
               </p>
               <p className="font-medium mb-2">
                 Cette suppression définitive va :

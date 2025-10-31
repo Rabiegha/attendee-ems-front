@@ -14,6 +14,7 @@ export interface EventDPO {
   publicToken: string // Token for public registration forms
   createdAt: string // ISO string for Redux serialization
   updatedAt: string // ISO string for Redux serialization
+  deletedAt: string | null // ISO string for soft delete
   createdBy: string
   tags: string[]
   partnerIds: string[]
@@ -26,6 +27,7 @@ export interface EventDPO {
   isActive: boolean
   isDraft: boolean
   isCompleted: boolean
+  isDeleted: boolean
   isFull: boolean
   daysUntilStart: number
   duration: number // in hours
@@ -34,9 +36,10 @@ export interface EventDPO {
 export type EventStatus =
   | 'draft'
   | 'published'
-  | 'active'
-  | 'completed'
+  | 'registration_closed'
   | 'cancelled'
+  | 'postponed'
+  | 'archived'
 
 export interface CreateEventDPO {
   name: string

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
+import { TagFilterInput } from '@/features/tags'
 import { Can } from '@/shared/acl/guards/Can'
 import {
   Button,
@@ -34,10 +35,11 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   // Filtres et recherche
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [tagFilter, setTagFilter] = useState<string>('')
   const [sortBy, setSortBy] = useState<'name' | 'startDate' | 'createdAt'>(
-    'startDate'
+    'createdAt'
   )
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   // Récupération des événements avec filtres
   const queryParams = useMemo(() => {
@@ -60,8 +62,13 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
   const { data: events = [], isLoading, error } = useGetEventsQuery(queryParams)
 
-  // Pas de filtrage côté client - l'API fait déjà le bon filtrage selon les permissions
-  const filteredEvents = events
+  // Filtrage côté client pour les tags (car l'API ne supporte pas encore le filtre par tag)
+  const filteredEvents = useMemo(() => {
+    if (!tagFilter) return events
+    return events.filter((event) => 
+      event.tags && Array.isArray(event.tags) && event.tags.includes(tagFilter)
+    )
+  }, [events, tagFilter])
 
   const handleCreateEvent = () => {
     setIsCreateModalOpen(true)
@@ -134,6 +141,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
         <Card variant="default" padding="lg">
           <CardContent>
             <div className="flex items-center gap-4">
+              {/* Search */}
               <div className="flex-1">
                 <Input
                   type="text"
@@ -144,6 +152,16 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 />
               </div>
 
+              {/* Tag Filter */}
+              <div className="w-64">
+                <TagFilterInput
+                  value={tagFilter}
+                  onChange={setTagFilter}
+                  placeholder="Filtrer par tag..."
+                />
+              </div>
+
+              {/* Status Filter */}
               <Select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
@@ -157,6 +175,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 <option value="cancelled">Annulé</option>
               </Select>
 
+              {/* Sort */}
               <Select
                 value={`${sortBy}-${sortOrder}`}
                 onChange={(e) => {
@@ -166,11 +185,12 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 }}
                 className="w-56"
               >
+                <option value="createdAt-desc">Créé (plus récent)</option>
+                <option value="createdAt-asc">Créé (plus ancien)</option>
                 <option value="startDate-asc">Date (plus ancien)</option>
                 <option value="startDate-desc">Date (plus récent)</option>
                 <option value="name-asc">Nom (A-Z)</option>
                 <option value="name-desc">Nom (Z-A)</option>
-                <option value="createdAt-desc">Créé récemment</option>
               </Select>
             </div>
           </CardContent>
@@ -246,7 +266,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                       <div className="flex items-center">
                         <Users className="h-4 w-4 mr-2" />
                         <span>
-                          {formatAttendeesCount(event.currentAttendees)}
+                          {formatAttendeesCount(event.currentAttendees, event.maxAttendees)}
                         </span>
                       </div>
                     </div>

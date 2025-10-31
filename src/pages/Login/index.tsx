@@ -20,7 +20,6 @@ import { FormField } from '@/shared/ui/FormField'
 import { Alert } from '@/shared/ui/Alert'
 import { AnimatedContainer } from '@/shared/ui/AnimatedContainer'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
-import { TestAccountsHelper } from '@/shared/ui/TestAccountsModal'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -393,11 +392,7 @@ export const LoginPage: React.FC = () => {
       </AnimatedContainer>
 
       {/* Panneau de démo en développement */}
-      {import.meta.env.DEV && (
-        <AnimatedContainer animation="fade-in" delay={900}>
-          <TestAccountsHelper />
-        </AnimatedContainer>
-      )}
+      {/* Test accounts helper removed for production/staging builds */}
     </>
   )
 }

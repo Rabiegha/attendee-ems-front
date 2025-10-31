@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Search,
   Filter,
@@ -28,6 +29,12 @@ import { EditRegistrationModal } from './EditRegistrationModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
 import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
+import {
+  getRegistrationFullName,
+  getRegistrationEmail,
+  getRegistrationPhone,
+  getRegistrationCompany,
+} from '../utils/registration-helpers'
 
 interface RegistrationsTableProps {
   registrations: RegistrationDPO[]
@@ -85,6 +92,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [deletingRegistration, setDeletingRegistration] =
     useState<RegistrationDPO | null>(null)
   const toast = useToast()
+  const navigate = useNavigate()
 
   const [updateStatus] = useUpdateRegistrationStatusMutation()
   const [updateRegistration, { isLoading: isUpdating }] =
@@ -92,6 +100,19 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [deleteRegistration] = useDeleteRegistrationMutation()
   const [bulkDeleteRegistrations] = useBulkDeleteRegistrationsMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
+
+  const handleRowClick = (registration: RegistrationDPO, e: React.MouseEvent) => {
+    // Don't navigate if clicking on checkbox or action buttons
+    if (
+      (e.target as HTMLElement).closest('input[type="checkbox"]') ||
+      (e.target as HTMLElement).closest('button') ||
+      (e.target as HTMLElement).closest('select')
+    ) {
+      return
+    }
+    // Navigate to attendee detail page
+    navigate(`/attendees/${registration.attendeeId}`)
+  }
 
   const handleStatusChange = async (
     registrationId: string,
@@ -396,7 +417,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                   return (
                     <tr
                       key={registration.id}
-                      className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
+                      onClick={(e) => handleRowClick(registration, e)}
+                      className={`cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
                         isSelected(registration.id)
                           ? 'bg-blue-50 dark:bg-blue-900/20'
                           : ''
@@ -418,13 +440,12 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {registration.attendee?.firstName}{' '}
-                            {registration.attendee?.lastName}
+                            {getRegistrationFullName(registration)}
                           </div>
-                          {registration.attendee?.company && (
+                          {getRegistrationCompany(registration) && (
                             <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center mt-1">
                               <Building2 className="h-3 w-3 mr-1" />
-                              {registration.attendee.company}
+                              {getRegistrationCompany(registration)}
                             </div>
                           )}
                         </div>
@@ -433,12 +454,12 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                         <div className="space-y-1">
                           <div className="text-sm text-gray-900 dark:text-white flex items-center">
                             <Mail className="h-3 w-3 mr-1 text-gray-400 dark:text-gray-500" />
-                            {registration.attendee?.email}
+                            {getRegistrationEmail(registration)}
                           </div>
-                          {registration.attendee?.phone && (
+                          {getRegistrationPhone(registration) && (
                             <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                               <Phone className="h-3 w-3 mr-1" />
-                              {registration.attendee.phone}
+                              {getRegistrationPhone(registration)}
                             </div>
                           )}
                         </div>

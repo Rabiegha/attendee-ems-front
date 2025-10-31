@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
+import {
+  getRegistrationFirstName,
+  getRegistrationLastName,
+  getRegistrationEmail,
+  getRegistrationPhone,
+  getRegistrationCompany,
+} from '../utils/registration-helpers'
 
 interface EditRegistrationModalProps {
   isOpen: boolean
@@ -19,23 +26,21 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
   isLoading = false,
 }) => {
   const [formData, setFormData] = useState({
-    firstName: registration.attendee?.firstName || '',
-    lastName: registration.attendee?.lastName || '',
-    email: registration.attendee?.email || '',
-    phone: registration.attendee?.phone || '',
-    company: registration.attendee?.company || '',
+    firstName: getRegistrationFirstName(registration),
+    lastName: getRegistrationLastName(registration),
+    email: getRegistrationEmail(registration),
+    phone: getRegistrationPhone(registration),
+    company: getRegistrationCompany(registration),
   })
 
   useEffect(() => {
-    if (registration.attendee) {
-      setFormData({
-        firstName: registration.attendee.firstName || '',
-        lastName: registration.attendee.lastName || '',
-        email: registration.attendee.email || '',
-        phone: registration.attendee.phone || '',
-        company: registration.attendee.company || '',
-      })
-    }
+    setFormData({
+      firstName: getRegistrationFirstName(registration),
+      lastName: getRegistrationLastName(registration),
+      email: getRegistrationEmail(registration),
+      phone: getRegistrationPhone(registration),
+      company: getRegistrationCompany(registration),
+    })
   }, [registration])
 
   const handleSubmit = async (e: React.FormEvent) => {

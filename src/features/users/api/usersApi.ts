@@ -80,19 +80,32 @@ export const usersApi = rootApi.injectEndpoints({
       },
       {
         page?: number
-        limit?: number
+        pageSize?: number
         search?: string
+        isActive?: boolean
       }
     >({
-      query: ({ page = 1, limit = 10, search }) => ({
-        url: API_ENDPOINTS.USERS.LIST,
-        params: {
-          page: page.toString(),
-          limit: limit.toString(),
-          ...(search && { q: search }),
-        },
-      }),
-      providesTags: ['Users'],
+      query: ({ page = 1, pageSize = 10, search, isActive }) => {
+        console.log('🚀 RTK Query - Building request with:', { page, pageSize, search, isActive })
+        return {
+          url: API_ENDPOINTS.USERS.LIST,
+          params: {
+            page: page.toString(),
+            limit: pageSize.toString(),
+            ...(search && { q: search }),
+            ...(isActive !== undefined && { isActive: isActive.toString() }),
+          },
+        }
+      },
+      providesTags: (_result, _error, arg) => [
+        'Users',
+        { type: 'Users', id: `LIST-${arg.isActive}` }, // Tag unique par filtre isActive
+      ],
+      keepUnusedDataFor: 0, // Désactiver complètement le cache
+      // Force RTK Query à considérer chaque combinaison de paramètres comme unique
+      serializeQueryArgs: ({ queryArgs }) => {
+        return `users-${queryArgs.isActive}-${queryArgs.page}-${queryArgs.pageSize}-${queryArgs.search || ''}`
+      },
     }),
 
     // Récupérer un utilisateur par ID
@@ -122,6 +135,16 @@ export const usersApi = rootApi.injectEndpoints({
       query: (id) => ({
         url: API_ENDPOINTS.USERS.BY_ID(id),
         method: 'DELETE',
+      }),
+      invalidatesTags: ['Users'],
+    }),
+
+    // Suppression définitive en masse
+    bulkDeleteUsers: builder.mutation<void, string[]>({
+      query: (userIds) => ({
+        url: '/users/bulk-delete',
+        method: 'POST',
+        body: { userIds },
       }),
       invalidatesTags: ['Users'],
     }),
@@ -216,6 +239,7 @@ export const {
   useGetUserByIdQuery,
   useUpdateUserMutation,
   useDeleteUserMutation,
+  useBulkDeleteUsersMutation, // 🆕 Hook pour suppression en masse
   useGetRolesQuery,
   useGetOrganizationsQuery, // 🆕 Hook pour les organisations
   useGetOrganizationQuery, // 🆕 Hook pour une organisation spécifique

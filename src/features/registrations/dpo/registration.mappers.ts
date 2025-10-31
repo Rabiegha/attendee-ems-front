@@ -16,6 +16,16 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     confirmedAt: dto.confirmed_at || null,
     createdAt: dto.created_at, // Date d'inscription réelle
     updatedAt: dto.updated_at,
+    source: dto.source,
+    
+    // Snapshot fields
+    snapshot_first_name: dto.snapshot_first_name,
+    snapshot_last_name: dto.snapshot_last_name,
+    snapshot_email: dto.snapshot_email,
+    snapshot_phone: dto.snapshot_phone,
+    snapshot_company: dto.snapshot_company,
+    snapshot_job_title: dto.snapshot_job_title,
+    snapshot_country: dto.snapshot_country,
   }
 
   if (dto.attendee) {

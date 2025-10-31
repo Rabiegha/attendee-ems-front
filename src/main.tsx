@@ -4,7 +4,7 @@ import { App } from './app'
 import './styles/tailwind.css'
 
 // ❌ MSW DISABLED - Using real backend API
-// ⚠️ Selon les instructions : "supprimer tous les mock et utiliser la vrai api avec la vrai db"
+// Selon les instructions : "supprimer tous les mock et utiliser la vrai api avec la vrai db"
 // async function enableMocking() {
 //   if (process.env.NODE_ENV === 'development') {
 //     const { worker } = await import('./mocks/browser')

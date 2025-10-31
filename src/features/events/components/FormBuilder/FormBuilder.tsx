@@ -2,18 +2,38 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   GripVertical,
   Trash2,
-  Lock,
   Plus,
   X,
   Undo2,
   Redo2,
   RotateCcw,
+  Columns,
 } from 'lucide-react'
+import {
+  DndContext,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { PredefinedFieldTemplate, PREDEFINED_FIELDS } from './FormFieldLibrary'
 
 export interface FormField extends Omit<PredefinedFieldTemplate, 'id'> {
   id: string
   order: number
+  width?: 'full' | 'half'
 }
 
 export interface FormConfig {
@@ -31,13 +51,111 @@ interface FormBuilderProps {
   submitButtonColor?: string
   showTitle?: boolean
   showDescription?: boolean
+  isDarkMode?: boolean
   onConfigChange?: (config: {
     submitButtonText?: string
     submitButtonColor?: string
     showTitle?: boolean
     showDescription?: boolean
+    isDarkMode?: boolean
   }) => void
   className?: string
+}
+
+// Composant pour un champ draggable et sortable
+interface SortableFieldItemProps {
+  field: FormField
+  onRemove: () => void
+  onToggleWidth: () => void
+  children: React.ReactNode
+}
+
+const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
+  field,
+  onRemove,
+  onToggleWidth,
+  children,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0 : 1,
+    pointerEvents: isDragging ? 'none' : 'auto',
+  } as React.CSSProperties
+
+  const Icon = field.icon
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group relative bg-white dark:bg-gray-800 border-2 rounded-lg p-3 transition-all ${
+        isDragging
+          ? 'border-dashed border-gray-300 dark:border-gray-600'
+          : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+      } ${field.width === 'half' ? 'col-span-1' : 'col-span-2'}`}
+    >
+      <div className="flex items-start gap-3">
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing mt-1 text-gray-400 hover:text-blue-500 transition-colors"
+        >
+          <GripVertical className="h-5 w-5" />
+        </div>
+
+        {/* Field Icon & Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            {Icon && <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />}
+            <span className="font-medium text-gray-900 dark:text-white text-sm truncate">
+              {field.label}
+            </span>
+            {field.required && (
+              <span className="text-red-500 text-xs">*</span>
+            )}
+          </div>
+          {children}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            type="button"
+            onClick={onToggleWidth}
+            className={`p-1.5 rounded transition-colors ${
+              field.width === 'half'
+                ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                : 'text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30'
+            }`}
+            title={field.width === 'half' ? 'Pleine largeur' : 'Split 50%'}
+          >
+            <Columns className="h-4 w-4" />
+          </button>
+          {!field.required && (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+              title="Supprimer"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export const FormBuilder: React.FC<FormBuilderProps> = ({
@@ -47,14 +165,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   submitButtonColor = '#4F46E5',
   showTitle = true,
   showDescription = true,
+  isDarkMode = false,
   onConfigChange,
   className = '',
 }) => {
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
   const [newOptions, setNewOptions] = useState<Record<string, string>>({})
   const [customColor, setCustomColor] = useState<string>(submitButtonColor)
-  const [isDragEnabled, setIsDragEnabled] = useState<boolean>(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [activeId, setActiveId] = useState<string | null>(null)
 
   // Undo/Redo History
   const [history, setHistory] = useState<FormField[][]>([fields])
@@ -145,18 +263,54 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     onChange(updatedFields)
   }
 
-  const handleToggleRequired = (fieldId: string) => {
-    const updatedFields = fields.map((f) =>
-      f.id === fieldId ? { ...f, required: !f.required } : f
-    )
-    onChange(updatedFields)
-  }
-
   const handleUpdateField = (fieldId: string, updates: Partial<FormField>) => {
     const updatedFields = fields.map((f) =>
       f.id === fieldId ? { ...f, ...updates } : f
     )
     onChange(updatedFields)
+  }
+
+  // Toggle field width between full and half
+  const handleToggleWidth = (fieldId: string) => {
+    const field = fields.find((f) => f.id === fieldId)
+    if (!field) return
+
+    const newWidth = field.width === 'half' ? 'full' : 'half'
+    handleUpdateField(fieldId, { width: newWidth })
+  }
+
+  // Sensors for drag and drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // 5px pour éviter les drags accidentels
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  // Handle drag start
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = fields.findIndex((f) => f.id === active.id)
+      const newIndex = fields.findIndex((f) => f.id === over.id)
+
+      const reorderedFields = arrayMove(fields, oldIndex, newIndex).map(
+        (f, index) => ({ ...f, order: index })
+      )
+      onChange(reorderedFields)
+    }
+    
+    setActiveId(null)
   }
 
   const handleAddOption = (fieldId: string) => {
@@ -196,33 +350,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       idx === optionIndex ? { value: newLabel, label: newLabel } : opt
     )
     handleUpdateField(fieldId, { options: updatedOptions })
-  }
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index)
-  }
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault()
-    if (draggedIndex === null || draggedIndex === index) return
-
-    const updatedFields = [...fields]
-    const [draggedItem] = updatedFields.splice(draggedIndex, 1)
-    if (!draggedItem) return
-
-    updatedFields.splice(index, 0, draggedItem)
-
-    const reorderedFields = updatedFields.map((f, idx) => ({
-      ...f,
-      order: idx,
-    }))
-    onChange(reorderedFields)
-    setDraggedIndex(index)
-  }
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null)
-    setIsDragEnabled(false)
   }
 
   // Reset to default fields
@@ -265,24 +392,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
     onChange(defaultFields)
     setShowResetConfirm(false)
-  }
-
-  const getFieldIcon = (field: FormField) => {
-    // Si l'icône est un composant, l'utiliser directement
-    if (typeof field.icon === 'function') {
-      const Icon = field.icon
-      return <Icon className="w-4 h-4" />
-    }
-
-    // Sinon, chercher le champ dans PREDEFINED_FIELDS par sa clé
-    const predefinedField = PREDEFINED_FIELDS.find((f) => f.key === field.key)
-    if (predefinedField?.icon) {
-      const Icon = predefinedField.icon
-      return <Icon className="w-4 h-4" />
-    }
-
-    // Fallback: pas d'icône
-    return null
   }
 
   return (
@@ -367,133 +476,127 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {fields.map((field, index) => (
-            <div
-              key={field.id}
-              draggable={isDragEnabled}
-              onDragStart={() => handleDragStart(index)}
-              onDragOver={(e) => handleDragOver(e, index)}
-              onDragEnd={handleDragEnd}
-              className={`
-                bg-white dark:bg-gray-800 border-2 rounded-xl p-4 transition-all
-                ${draggedIndex === index ? 'opacity-50 border-indigo-400 shadow-lg' : 'border-gray-200 dark:border-gray-700'}
-                hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md
-              `}
-            >
-              <div className="flex items-start gap-4">
-                {/* Drag Handle + Icon */}
-                <div className="flex items-center gap-2">
-                  <div
-                    onMouseDown={() => setIsDragEnabled(true)}
-                    onMouseUp={() => setIsDragEnabled(false)}
-                    className="text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-grab active:cursor-grabbing"
-                  >
-                    <GripVertical className="w-5 h-5" />
-                  </div>
-                  <div className="text-indigo-600 dark:text-indigo-400">
-                    {getFieldIcon(field)}
-                  </div>
-                </div>
-
-                {/* Field Content */}
-                <div className="flex-1 space-y-3">
-                  {/* Label & Placeholder */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                        Label <span className="text-gray-400">(optionnel)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={field.label}
-                        onChange={(e) =>
-                          handleUpdateField(field.id, { label: e.target.value })
-                        }
-                        placeholder="Laisser vide si non utilisé"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                        Placeholder
-                      </label>
-                      <input
-                        type="text"
-                        value={field.placeholder || ''}
-                        onChange={(e) =>
-                          handleUpdateField(field.id, {
-                            placeholder: e.target.value,
-                          })
-                        }
-                        placeholder="Ex: Votre nom"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="capitalize font-medium">{field.type}</span>
-                    <span>•</span>
-                    <span className="font-mono">{field.key}</span>
-                    {field.required && (
-                      <>
-                        <span>•</span>
-                        <span className="text-red-600 dark:text-red-400 font-medium">
-                          Obligatoire
-                        </span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Options for Select Fields */}
-                  {field.type === 'select' && (
-                    <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Options de choix
-                      </label>
-                      {field.options && field.options.length > 0 && (
-                        <div className="space-y-1.5">
-                          {field.options.map((option, optIdx) => (
-                            <div
-                              key={optIdx}
-                              className="flex items-center gap-2"
-                            >
-                              <span className="text-xs text-gray-400">
-                                {optIdx + 1}.
-                              </span>
-                              <input
-                                type="text"
-                                value={option.label}
-                                onChange={(e) =>
-                                  handleUpdateOption(
-                                    field.id,
-                                    optIdx,
-                                    e.target.value
-                                  )
-                                }
-                                className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
-                              />
-                              <button
-                                onClick={() =>
-                                  handleRemoveOption(field.id, optIdx)
-                                }
-                                className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                title="Supprimer"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={fields.map((f) => f.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-2 gap-3 auto-rows-min">
+              {fields.map((field) => (
+                <SortableFieldItem
+                  key={field.id}
+                  field={field}
+                  onRemove={() => handleRemoveField(field.id)}
+                  onToggleWidth={() => handleToggleWidth(field.id)}
+                >
+                  {/* Field Content */}
+                  <div className="space-y-3">
+                    {/* Label & Placeholder */}
+                    <div className={field.width === 'full' ? 'grid grid-cols-2 gap-3' : 'space-y-3'}>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          Label{' '}
+                          <span className="text-gray-400">(optionnel)</span>
+                        </label>
                         <input
                           type="text"
-                          value={newOptions[field.id] || ''}
+                          value={field.label}
                           onChange={(e) =>
-                            setNewOptions((prev) => ({
+                            handleUpdateField(field.id, {
+                              label: e.target.value,
+                            })
+                          }
+                          placeholder="Laisser vide si non utilisé"
+                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                          Placeholder
+                        </label>
+                        <input
+                          type="text"
+                          value={field.placeholder || ''}
+                          onChange={(e) =>
+                            handleUpdateField(field.id, {
+                              placeholder: e.target.value,
+                            })
+                          }
+                          placeholder="Ex: Votre nom"
+                          className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="capitalize font-medium">
+                        {field.type}
+                      </span>
+                      <span>•</span>
+                      <span className="font-mono">{field.key}</span>
+                      {field.required && (
+                        <>
+                          <span>•</span>
+                          <span className="text-red-600 dark:text-red-400 font-medium">
+                            Obligatoire
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Options for Select Fields */}
+                    {field.type === 'select' && (
+                      <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
+                          Options de choix
+                        </label>
+                        {field.options && field.options.length > 0 && (
+                          <div className="space-y-1.5">
+                            {field.options.map((option, optIdx) => (
+                              <div
+                                key={optIdx}
+                                className="flex items-center gap-2"
+                              >
+                                <span className="text-xs text-gray-400">
+                                  {optIdx + 1}.
+                                </span>
+                                <input
+                                  type="text"
+                                  value={option.label}
+                                  onChange={(e) =>
+                                    handleUpdateOption(
+                                      field.id,
+                                      optIdx,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <button
+                                  onClick={() =>
+                                    handleRemoveOption(field.id, optIdx)
+                                  }
+                                  className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                  title="Supprimer"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={newOptions[field.id] || ''}
+                            onChange={(e) =>
+                              setNewOptions((prev) => ({
                               ...prev,
                               [field.id]: e.target.value,
                             }))
@@ -514,39 +617,35 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       </div>
                     </div>
                   )}
-                </div>
-
-                {/* Actions */}
+                  </div>
+                </SortableFieldItem>
+              ))}
+            </div>
+          </SortableContext>
+          
+          <DragOverlay>
+            {activeId ? (
+              <div className="bg-white dark:bg-gray-800 border-2 border-blue-400 rounded-lg p-3 shadow-2xl opacity-90">
                 <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleToggleRequired(field.id)}
-                    className={`
-                      p-2 rounded-lg transition-all
-                      ${
-                        field.required
-                          ? 'text-white bg-red-500 hover:bg-red-600 shadow-sm'
-                          : 'text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                      }
-                    `}
-                    title={
-                      field.required ? 'Rendre optionnel' : 'Rendre obligatoire'
-                    }
-                  >
-                    <Lock className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => handleRemoveField(field.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <GripVertical className="h-5 w-5 text-blue-500" />
+                  {(() => {
+                    const field = fields.find((f) => f.id === activeId)
+                    const Icon = field?.icon
+                    return Icon ? <Icon className="h-4 w-4 text-blue-600" /> : null
+                  })()}
+                  <span className="font-medium text-gray-900 dark:text-white text-sm">
+                    {fields.find((f) => f.id === activeId)?.label || 'Champ'}
+                  </span>
+                  {fields.find((f) => f.id === activeId)?.width === 'half' && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                      50%
+                    </span>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {/* Preview Controls */}
@@ -565,6 +664,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   submitButtonColor,
                   showTitle: e.target.checked,
                   showDescription,
+                  isDarkMode,
                 })
               }
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
@@ -583,12 +683,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   submitButtonColor,
                   showTitle,
                   showDescription: e.target.checked,
+                  isDarkMode,
                 })
               }
               className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
             />
             <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
               Afficher la description de l'événement
+            </span>
+          </label>
+          
+          <label className="flex items-center gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={isDarkMode}
+              onChange={(e) =>
+                onConfigChange?.({
+                  submitButtonText,
+                  submitButtonColor,
+                  showTitle,
+                  showDescription,
+                  isDarkMode: e.target.checked,
+                })
+              }
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+              Mode sombre du formulaire
             </span>
           </label>
         </div>
@@ -611,6 +732,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 onConfigChange?.({
                   submitButtonText: e.target.value,
                   submitButtonColor,
+                  showTitle,
+                  showDescription,
+                  isDarkMode,
                 })
               }
               placeholder="Ex: S'inscrire maintenant"
@@ -630,6 +754,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   onConfigChange?.({
                     submitButtonText,
                     submitButtonColor: e.target.value,
+                    showTitle,
+                    showDescription,
+                    isDarkMode,
                   })
                 }}
                 className="w-12 h-9 rounded-lg border border-purple-300 dark:border-purple-600 cursor-pointer"
@@ -646,6 +773,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     onConfigChange?.({
                       submitButtonText,
                       submitButtonColor: value,
+                      showTitle,
+                      showDescription,
+                      isDarkMode,
                     })
                   }
                 }}
@@ -675,7 +805,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   formulaire par défaut (Prénom, Nom, Email).
                 </p>
                 <p className="text-sm text-orange-600 dark:text-orange-400 font-medium">
-                  ⚠️ Cette action est irréversible.
+                  Cette action est irréversible.
                 </p>
               </div>
             </div>

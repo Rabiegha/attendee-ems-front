@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { X, Plus, Calendar, MapPin, Users, Tag } from 'lucide-react'
+import { Calendar, MapPin, Users } from 'lucide-react'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { Textarea } from '@/shared/ui/Textarea'
@@ -9,6 +9,7 @@ import { FormField } from '@/shared/ui/FormField'
 import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
 import { createEventSchema, type CreateEventFormData } from '../lib/validation'
 import { PartnerSelect } from './PartnerSelect'
+import { TagInput } from '@/features/tags'
 
 interface EventFormProps {
   initialData?: Partial<CreateEventFormData>
@@ -26,7 +27,6 @@ export const EventForm: React.FC<EventFormProps> = ({
   mode = 'create',
 }) => {
   const [tags, setTags] = useState<string[]>(initialData?.tags || [])
-  const [newTag, setNewTag] = useState('')
   const [partnerIds, setPartnerIds] = useState<string[]>(
     initialData?.partnerIds || []
   )
@@ -53,20 +53,10 @@ export const EventForm: React.FC<EventFormProps> = ({
 
   const watchStartDate = watch('startDate')
 
-  // Gestion des tags
-  const addTag = () => {
-    if (newTag.trim() && !tags.includes(newTag.trim()) && tags.length < 10) {
-      const updatedTags = [...tags, newTag.trim()]
-      setTags(updatedTags)
-      setValue('tags', updatedTags)
-      setNewTag('')
-    }
-  }
-
-  const removeTag = (tagToRemove: string) => {
-    const updatedTags = tags.filter((tag) => tag !== tagToRemove)
-    setTags(updatedTags)
-    setValue('tags', updatedTags)
+  // Gestion des tags via le composant TagInput
+  const handleTagsChange = (newTags: string[]) => {
+    setTags(newTags)
+    setValue('tags', newTags)
   }
 
   const onFormSubmit = async (data: CreateEventFormData) => {
@@ -171,59 +161,14 @@ export const EventForm: React.FC<EventFormProps> = ({
       {/* Tags */}
       <FormField
         label="Tags (optionnel)"
-        hint="Ajoutez des mots-clés pour catégoriser votre événement"
+        hint="Recherchez et sélectionnez des tags existants ou créez-en de nouveaux"
       >
-        <div className="space-y-3">
-          {/* Tags existants */}
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-                >
-                  <Tag className="h-3 w-3 mr-1" />
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => removeTag(tag)}
-                    className="ml-2 text-blue-600 hover:text-blue-800"
-                    disabled={isLoading}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Ajouter un nouveau tag */}
-          {tags.length < 10 && (
-            <div className="flex gap-2">
-              <Input
-                value={newTag}
-                onChange={(e) => setNewTag(e.target.value)}
-                placeholder="Ajouter un tag..."
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addTag()
-                  }
-                }}
-                disabled={isLoading}
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addTag}
-                disabled={!newTag.trim() || isLoading}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
+        <TagInput
+          value={tags}
+          onChange={handleTagsChange}
+          disabled={isLoading}
+          maxTags={10}
+        />
       </FormField>
 
       {/* Partenaires autorisés */}

@@ -41,7 +41,7 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
         <Link
           key={event.id}
           to={`/events/${event.id}`}
-          className="block border-l-4 border-blue-500 dark:border-blue-400 pl-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
+          className="block border-l-4 border-blue-500 dark:border-blue-400 pl-4 pr-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -59,21 +59,41 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
                 </div>
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
-                  {event.currentAttendees} participants
+                  {event.maxAttendees && event.maxAttendees > 0 && event.maxAttendees < 999999
+                    ? `${event.currentAttendees}/${event.maxAttendees} participants`
+                    : `${event.currentAttendees} participants`}
                 </div>
               </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center ml-4">
               <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  event.status === 'active'
+                  event.status === 'published'
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
                     : event.status === 'draft'
                       ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                      : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+                      : event.status === 'cancelled'
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+                        : event.status === 'postponed'
+                          ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+                          : event.status === 'registration_closed'
+                            ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200'
+                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
                 }`}
               >
-                {event.status}
+                {event.status === 'published'
+                  ? 'Publié'
+                  : event.status === 'draft'
+                    ? 'Brouillon'
+                    : event.status === 'cancelled'
+                      ? 'Annulé'
+                      : event.status === 'postponed'
+                        ? 'Reporté'
+                        : event.status === 'registration_closed'
+                          ? 'Inscriptions clôturées'
+                          : event.status === 'archived'
+                            ? 'Archivé'
+                            : event.status}
               </span>
             </div>
           </div>

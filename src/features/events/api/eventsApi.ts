@@ -110,6 +110,7 @@ export const eventsApi = rootApi.injectEndpoints({
         submitButtonColor?: string
         showTitle?: boolean
         showDescription?: boolean
+        isDarkMode?: boolean
       }
     >({
       query: ({
@@ -119,6 +120,7 @@ export const eventsApi = rootApi.injectEndpoints({
         submitButtonColor,
         showTitle,
         showDescription,
+        isDarkMode,
       }) => ({
         url: API_ENDPOINTS.EVENTS.UPDATE(id),
         method: 'PUT',
@@ -134,6 +136,7 @@ export const eventsApi = rootApi.injectEndpoints({
           ...(showDescription !== undefined && {
             show_description: showDescription,
           }),
+          ...(isDarkMode !== undefined && { is_dark_mode: isDarkMode }),
         },
       }),
       transformResponse: (response: EventDTO) => mapEventDTOtoDPO(response),

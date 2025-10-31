@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
 import { useGetAttendeesQuery } from '@/features/attendees/api/attendeesApi'
 import { useSelector } from 'react-redux'
@@ -9,6 +10,7 @@ import {
 } from '@/features/auth/model/sessionSlice'
 import { StatsCards } from '@/widgets/StatsCards'
 import { EventList } from '@/features/events/ui/EventList'
+import { formatDateForDisplay } from '@/shared/lib/date-utils'
 
 import { Can } from '@/shared/acl/guards/Can'
 import { useCan } from '@/shared/acl/hooks/useCan'
@@ -29,6 +31,7 @@ import {
   Mail,
   Shield,
   LayoutDashboard,
+  User,
 } from 'lucide-react'
 
 export const Dashboard: React.FC = () => {
@@ -53,7 +56,9 @@ export const Dashboard: React.FC = () => {
   const { data: attendeesResponse, isLoading: attendeesLoading } =
     useGetAttendeesQuery({
       page: 1,
-      pageSize: 10,
+      pageSize: 5,
+      sortBy: 'created_at',
+      sortDir: 'desc',
     })
 
   // Extraire les attendees du format paginé { data, meta }
@@ -67,59 +72,9 @@ export const Dashboard: React.FC = () => {
   if (canReadOrganization) {
     return (
       <PageContainer maxWidth="7xl" padding="lg">
-        {/* User & Organization Info Card */}
-        <Card variant="default" padding="lg" className="mb-6">
-          <CardContent>
-            <div className="flex items-start justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="bg-blue-100 dark:bg-blue-900/30 p-3 rounded-full">
-                  <Building2 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {organization?.name || 'Organisation inconnue'}
-                  </h2>
-                  <p className="text-body-sm text-gray-600 dark:text-gray-300">
-                    Organisation ID: {organization?.id || 'N/A'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <div className="flex items-center space-x-2 text-body-sm">
-                  <Shield className="h-4 w-4" />
-                  <span>Rôle: {currentUser?.roles?.[0] || 'Inconnu'}</span>
-                </div>
-                {currentUser?.email && (
-                  <div className="flex items-center space-x-2 text-body-sm mt-1">
-                    <Mail className="h-4 w-4" />
-                    <span>{currentUser.email}</span>
-                  </div>
-                )}
-                <p className="text-caption mt-2">
-                  Utilisateur ID: {currentUser?.id || 'N/A'}
-                </p>
-              </div>
-            </div>
-
-            {/* Welcome message */}
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <p className="text-body">
-                Bienvenue
-                {currentUser?.firstName ? ` ${currentUser.firstName}` : ''} !
-                Vous êtes connecté en tant que{' '}
-                <span className="font-medium">{currentUser?.roles?.[0]}</span>
-                {organization?.name &&
-                  ` dans l'organisation ${organization.name}`}
-                .
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
         <PageHeader
           title={t('navigation.dashboard')}
-          description="Vue d'ensemble de votre organisation"
+          description={`Bienvenue ${currentUser?.firstName || ''} ! Vous êtes connecté en tant que ${currentUser?.roles?.[0] || 'Utilisateur'}${organization?.name ? ` dans l'organisation ${organization.name}` : ''}.`}
           icon={LayoutDashboard}
           actions={
             <Can do="create" on="Event">
@@ -150,38 +105,63 @@ export const Dashboard: React.FC = () => {
 
             <div className="space-y-4">
               <h2 className="section-title">Participants récents</h2>
-              <Card variant="default" padding="md">
-                <CardContent>
-                  {attendeesLoading ? (
-                    <div className="animate-pulse space-y-2">
-                      {[...Array(3)].map((_, i) => (
-                        <div
-                          key={i}
-                          className="h-4 bg-gray-200 dark:bg-gray-600 rounded"
-                        ></div>
-                      ))}
+              {attendeesLoading ? (
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mb-1"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/3"></div>
                     </div>
-                  ) : attendees.length > 0 ? (
-                    <div className="space-y-2">
-                      {attendees.slice(0, 5).map((attendee) => (
-                        <div
-                          key={attendee.id}
-                          className="flex items-center justify-between"
-                        >
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  ))}
+                </div>
+              ) : attendees.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <User className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
+                  <p>{t('attendees:attendees.empty')}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {attendees.map((attendee) => (
+                    <Link
+                      key={attendee.id}
+                      to={`/attendees/${attendee.id}`}
+                      className="block border-l-4 border-blue-500 dark:border-blue-400 pl-4 pr-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                             {attendee.firstName} {attendee.lastName}
-                          </span>
-                          <span className="text-caption">{attendee.email}</span>
+                          </h3>
+                          <div className="mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center">
+                              <Mail className="h-4 w-4 mr-1" />
+                              {attendee.email}
+                            </div>
+                            {attendee.company && (
+                              <div className="flex items-center">
+                                <Building2 className="h-4 w-4 mr-1" />
+                                {attendee.company}
+                              </div>
+                            )}
+                            {attendee.createdAt && (
+                              <div className="flex items-center">
+                                <Calendar className="h-4 w-4 mr-1" />
+                                {formatDateForDisplay(attendee.createdAt)}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-body-sm text-gray-500 dark:text-gray-400">
-                      {t('attendees:attendees.empty')}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                        <div className="flex items-center ml-4">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
+                            Actif
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </PageSection>

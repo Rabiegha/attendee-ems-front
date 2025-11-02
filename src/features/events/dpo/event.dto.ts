@@ -30,7 +30,16 @@ export interface EventDTO {
   // Relations (optionnelles selon l'include)
   settings?: {
     public_token?: string
+    website_url?: string
+    registration_auto_approve?: boolean
     registration_fields?: any[]
+    [key: string]: any
+  }
+  emailSettings?: {
+    require_email_verification?: boolean
+    confirmation_enabled?: boolean
+    approval_enabled?: boolean
+    reminder_enabled?: boolean
     [key: string]: any
   }
   activitySector?: any
@@ -57,10 +66,22 @@ export interface CreateEventDTO {
   capacity?: number
   location_type?: 'physical' | 'online' | 'hybrid'
   address_formatted?: string
+  address_street?: string
+  address_city?: string
+  address_postal_code?: string
+  address_country?: string
+  latitude?: number
+  longitude?: number
   org_activity_sector_id?: string
   org_event_type_id?: string
   assigned_user_ids?: string[]
   tags?: string[]
+  website_url?: string
+  registration_auto_approve?: boolean
+  require_email_verification?: boolean
+  confirmation_enabled?: boolean
+  approval_enabled?: boolean
+  reminder_enabled?: boolean
 }
 
 export interface UpdateEventDTO extends Partial<CreateEventDTO> {

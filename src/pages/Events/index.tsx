@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
 import { TagFilterInput } from '@/features/tags'
 import { Can } from '@/shared/acl/guards/Can'
@@ -15,7 +15,6 @@ import {
   CardContent,
   LoadingSpinner,
 } from '@/shared/ui'
-import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
 import { DeleteEventModal } from '@/features/events/ui/DeleteEventModal'
 import { formatDateForDisplay } from '@/shared/lib/date-utils'
@@ -26,9 +25,9 @@ interface EventsPageProps {}
 
 export const EventsPage: React.FC<EventsPageProps> = () => {
   const { t } = useTranslation(['events', 'common'])
+  const navigate = useNavigate()
 
   // État pour les modals
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<any>(null)
   const [deletingEvent, setDeletingEvent] = useState<any>(null)
 
@@ -71,7 +70,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   }, [events, tagFilter])
 
   const handleCreateEvent = () => {
-    setIsCreateModalOpen(true)
+    navigate('/events/create')
   }
 
   const getStatusColor = (status: string) => {
@@ -295,12 +294,6 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
           </div>
         )}
       </PageSection>
-
-      {/* Modal de création d'événement */}
-      <CreateEventModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-      />
 
       {/* Modal d'édition d'événement */}
       <EditEventModal

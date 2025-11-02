@@ -108,24 +108,49 @@ export const EventDetails: React.FC = () => {
             return {
               ...savedField,
               icon: predefinedField.icon,
+              // Ajouter width: 'half' par défaut si non défini (pour les anciens champs)
+              width: savedField.width || 'half',
             }
           }
-          return savedField
+          return {
+            ...savedField,
+            // Ajouter width: 'half' par défaut si non défini
+            width: savedField.width || 'half',
+          }
         }
       )
       setFormFields(fieldsWithIcons)
-    } else {
+    } else if (event?.id && id) {
       // Valeurs par défaut si aucun champ n'est configuré
       const firstName = getFieldById('first_name')
       const lastName = getFieldById('last_name')
       const email = getFieldById('email')
 
       if (firstName && lastName && email) {
-        setFormFields([
-          { ...firstName, id: `field_${Date.now()}_1`, order: 0 },
-          { ...lastName, id: `field_${Date.now()}_2`, order: 1 },
-          { ...email, id: `field_${Date.now()}_3`, order: 2 },
-        ])
+        const defaultFields: FormField[] = [
+          { ...lastName, id: `field_${Date.now()}_1`, order: 0, width: 'half' as const, required: true },
+          { ...firstName, id: `field_${Date.now()}_2`, order: 1, width: 'half' as const, required: true },
+          { ...email, id: `field_${Date.now()}_3`, order: 2, width: 'full' as const, required: true },
+        ]
+        setFormFields(defaultFields)
+        
+        // Sauvegarder automatiquement les champs par défaut
+        const cleanedFields = defaultFields.map((field) => {
+          const { icon, ...rest } = field as any
+          return rest
+        })
+        
+        updateRegistrationFields({
+          id,
+          fields: cleanedFields,
+          submitButtonText,
+          submitButtonColor,
+          showTitle,
+          showDescription,
+          isDarkMode,
+        }).catch((error) => {
+          console.error('Erreur lors de la sauvegarde automatique des champs par défaut:', error)
+        })
       }
     }
 
@@ -586,6 +611,36 @@ export const EventDetails: React.FC = () => {
                       {event.location}
                     </p>
                   </div>
+                  {event.websiteUrl && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                        Site web
+                      </label>
+                      <p className="mt-1">
+                        <a
+                          href={event.websiteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline inline-flex items-center"
+                        >
+                          {event.websiteUrl}
+                          <svg
+                            className="h-4 w-4 ml-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                        </a>
+                      </p>
+                    </div>
+                  )}
                   {event.tags.length > 0 && (
                     <div>
                       <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">

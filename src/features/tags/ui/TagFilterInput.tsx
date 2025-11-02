@@ -31,8 +31,13 @@ export const TagFilterInput: React.FC<TagFilterInputProps> = ({
   const debouncedSearch = useDebounce(inputValue, 300)
 
   // Récupérer les suggestions depuis l'API
+  // Si showSuggestions est true, on charge les tags (avec ou sans filtre)
+  // Sinon on skip la requête pour économiser les appels API
   const { data: suggestions = [], isLoading, error } = useGetTagsQuery(
-    debouncedSearch.trim() || undefined
+    debouncedSearch.trim() || (showSuggestions ? '' : undefined),
+    {
+      skip: !showSuggestions,
+    }
   )
 
   // Debug
@@ -146,7 +151,7 @@ export const TagFilterInput: React.FC<TagFilterInputProps> = ({
       </div>
 
       {/* Suggestions dropdown */}
-      {showSuggestions && suggestions.length > 0 && (
+      {showSuggestions && !isLoading && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
           className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto"
@@ -176,11 +181,20 @@ export const TagFilterInput: React.FC<TagFilterInputProps> = ({
         </div>
       )}
 
+      {/* Loading state */}
+      {showSuggestions && isLoading && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Chargement des tags...
+          </p>
+        </div>
+      )}
+
       {/* No results message */}
       {showSuggestions &&
+        !isLoading &&
         inputValue.trim() &&
-        suggestions.length === 0 &&
-        !debouncedSearch && (
+        suggestions.length === 0 && (
           <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 text-center">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Aucun tag trouvé

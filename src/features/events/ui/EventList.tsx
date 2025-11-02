@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, MapPin, Users } from 'lucide-react'
+import { Calendar, Users } from 'lucide-react'
 import type { EventDPO } from '../dpo/event.dpo'
 import { formatDate } from '@/shared/lib/utils'
 
@@ -52,10 +52,6 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
                   {formatDate(event.startDate)}
-                </div>
-                <div className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  {event.location}
                 </div>
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />

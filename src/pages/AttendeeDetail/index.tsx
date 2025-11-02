@@ -23,7 +23,6 @@ import {
   Phone,
   Building2,
   Calendar,
-  MapPin,
   Users,
   Clock,
   Activity,
@@ -325,7 +324,7 @@ export const AttendeeDetail: React.FC = () => {
                         Date
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Lieu
+                        Date d'inscription
                       </th>
                       {isSuperAdmin && (
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -366,11 +365,8 @@ export const AttendeeDetail: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                           {formatDate(participation.event.startDate)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm text-gray-900 dark:text-white">
-                            <MapPin className="h-4 w-4 mr-1 text-gray-400" />
-                            {participation.event.location || 'Non spécifié'}
-                          </div>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                          {formatDate(participation.registrationDate)}
                         </td>
                         {isSuperAdmin && (
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
@@ -412,19 +408,24 @@ export const AttendeeDetail: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {participation.displayName !==
-                          attendee.displayName ? (
-                            <div className="space-y-1">
-                              <div className="font-medium">
-                                {participation.displayName}
+                          {(() => {
+                            const snapshotName = participation.snapshot
+                              ? `${participation.snapshot.firstName || ''} ${participation.snapshot.lastName || ''}`.trim()
+                              : null
+                            const currentName = attendee.displayName
+                            const displayedName = snapshotName || participation.displayName
+
+                            return snapshotName && snapshotName !== currentName ? (
+                              <div className="space-y-1">
+                                <div className="font-medium">{displayedName}</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  (Différent du nom actuel)
+                                </div>
                               </div>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                (Différent du nom actuel)
-                              </div>
-                            </div>
-                          ) : (
-                            participation.displayName
-                          )}
+                            ) : (
+                              displayedName
+                            )
+                          })()}
                         </td>
                       </tr>
                     ))}

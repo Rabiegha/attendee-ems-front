@@ -19,6 +19,20 @@ export interface EventDPO {
   tags: string[]
   partnerIds: string[]
   metadata: Record<string, any>
+  websiteUrl?: string
+  addressFormatted?: string
+  addressStreet?: string
+  addressCity?: string
+  addressPostalCode?: string
+  addressCountry?: string
+  latitude?: number
+  longitude?: number
+  capacity?: number
+  registrationAutoApprove?: boolean
+  requireEmailVerification?: boolean
+  confirmationEmailEnabled?: boolean
+  approvalEmailEnabled?: boolean
+  reminderEmailEnabled?: boolean
   settings?: {
     registration_fields?: any[]
     [key: string]: any
@@ -52,6 +66,20 @@ export interface CreateEventDPO {
   tags?: string[]
   partnerIds?: string[]
   metadata?: Record<string, any>
+  websiteUrl?: string
+  addressFormatted?: string
+  addressStreet?: string
+  addressCity?: string
+  addressPostalCode?: string
+  addressCountry?: string
+  latitude?: number
+  longitude?: number
+  capacity?: number
+  registrationAutoApprove?: boolean
+  requireEmailVerification?: boolean
+  confirmationEmailEnabled?: boolean
+  approvalEmailEnabled?: boolean
+  reminderEmailEnabled?: boolean
 }
 
 export interface UpdateEventDPO extends Partial<CreateEventDPO> {

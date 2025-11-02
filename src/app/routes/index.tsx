@@ -11,6 +11,7 @@ import { AuthLayout } from '@/widgets/layouts/AuthLayout'
 import { Dashboard } from '@/pages/Dashboard'
 import { EventsPage } from '@/pages/Events'
 import { EventDetails } from '@/pages/EventDetails'
+import { CreateEventPage } from '@/pages/CreateEvent'
 import { Attendees } from '@/pages/Attendees'
 import { AttendeeDetail } from '@/pages/AttendeeDetail'
 import { UsersPage } from '@/pages/Users'
@@ -62,6 +63,14 @@ export const router = createBrowserRouter([
             element: (
               <GuardedRoute action="read" subject="Event">
                 <EventsPage />
+              </GuardedRoute>
+            ),
+          },
+          {
+            path: 'create',
+            element: (
+              <GuardedRoute action="create" subject="Event">
+                <CreateEventPage />
               </GuardedRoute>
             ),
           },

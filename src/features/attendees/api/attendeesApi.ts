@@ -13,6 +13,15 @@ export interface AttendeeHistoryItem {
   registrationDate: string
   checkedInAt?: string
   customData?: Record<string, any>
+  snapshot?: {
+    firstName?: string
+    lastName?: string
+    email?: string
+    phone?: string
+    company?: string
+    jobTitle?: string
+    country?: string
+  }
   event: {
     id: string
     name: string

@@ -92,9 +92,196 @@
   * {
     max-width: 100%;
   }
+
+  /* Fix for datetime-local input icon in dark mode */
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(0);
+  }
+
+  .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0);
+  }
+
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+
+  /* ============================================
+     SCROLLBAR STYLES - Design moderne et cohérent
+     ============================================ */
+  
+  /* Scrollbar pour tous les navigateurs Webkit (Chrome, Safari, Edge) */
+  * {
+    scrollbar-width: thin; /* Pour Firefox */
+    scrollbar-color: rgb(203 213 225) transparent; /* thumb track pour Firefox */
+  }
+
+  .dark * {
+    scrollbar-color: rgb(71 85 105) transparent; /* dark mode pour Firefox */
+  }
+
+  /* Webkit scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgb(203 213 225); /* slate-300 */
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(148 163 184); /* slate-400 */
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background: rgb(100 116 139); /* slate-500 */
+  }
+
+  /* Dark mode scrollbar */
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgb(71 85 105); /* slate-600 */
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgb(100 116 139); /* slate-500 */
+  }
+
+  .dark ::-webkit-scrollbar-thumb:active {
+    background: rgb(148 163 184); /* slate-400 */
+  }
+
+  /* Scrollbar pour les dropdowns, modales et petits conteneurs */
+  .dropdown-menu::-webkit-scrollbar,
+  .modal-content::-webkit-scrollbar,
+  .overflow-y-auto::-webkit-scrollbar,
+  .overflow-x-auto::-webkit-scrollbar,
+  [class*="overflow"]::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  /* Scrollbar thin pour les tableaux et listes */
+  table::-webkit-scrollbar,
+  .table-container::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  /* Effet de survol sur les conteneurs scrollables */
+  .scrollable-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .scrollable-container::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+
+  .scrollable-container:hover::-webkit-scrollbar-thumb {
+    background: rgb(203 213 225);
+  }
+
+  .dark .scrollable-container:hover::-webkit-scrollbar-thumb {
+    background: rgb(71 85 105);
+  }
+
+  /* Animation smooth pour le scroll */
+  * {
+    scroll-behavior: smooth;
+  }
 }
 
 @layer utilities {
+  /* ============================================
+     SCROLLBAR UTILITY CLASSES
+     ============================================ */
+  
+  /* Scrollbar invisible mais fonctionnelle */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Scrollbar fine */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  /* Scrollbar normale */
+  .scrollbar-default::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  /* Scrollbar large */
+  .scrollbar-large::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Scrollbar avec couleur primaire */
+  .scrollbar-primary::-webkit-scrollbar-thumb {
+    background: rgb(59 130 246); /* blue-500 */
+  }
+
+  .scrollbar-primary::-webkit-scrollbar-thumb:hover {
+    background: rgb(37 99 235); /* blue-600 */
+  }
+
+  .dark .scrollbar-primary::-webkit-scrollbar-thumb {
+    background: rgb(96 165 250); /* blue-400 */
+  }
+
+  .dark .scrollbar-primary::-webkit-scrollbar-thumb:hover {
+    background: rgb(59 130 246); /* blue-500 */
+  }
+
+  /* Scrollbar visible uniquement au survol */
+  .scrollbar-hover::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+
+  .scrollbar-hover:hover::-webkit-scrollbar-thumb {
+    background: rgb(203 213 225);
+  }
+
+  .dark .scrollbar-hover:hover::-webkit-scrollbar-thumb {
+    background: rgb(71 85 105);
+  }
+
+  /* Scrollbar avec bordure arrondie prononcée */
+  .scrollbar-rounded::-webkit-scrollbar-thumb {
+    border-radius: 20px;
+  }
+
+  /* ============================================
+     ANIMATIONS
+     ============================================ */
+  
   /* Animation shake pour les erreurs de connexion */
   @keyframes shake {
     0%,

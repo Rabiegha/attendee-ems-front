@@ -71,7 +71,6 @@ export const LoginPage: React.FC = () => {
   const [loginAttempts, setLoginAttempts] = useState(0)
   const [lastError, setLastError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [shouldRedirect, setShouldRedirect] = useState(false)
 
   const {
     register,
@@ -88,14 +87,15 @@ export const LoginPage: React.FC = () => {
   const prevFieldsRef = useRef({ email: '', password: '' })
 
   // Rediriger automatiquement quand l'utilisateur devient authentifié
+  // UNIQUEMENT si on est encore sur la page de login (pas si on a déjà navigué ailleurs)
   useEffect(() => {
-    console.log('Auth effect triggered:', { isAuthenticated, shouldRedirect })
-    // Rediriger si authentifié, que ce soit via login manuel OU via bootstrap
-    if (isAuthenticated) {
+    console.log('Auth effect triggered:', { isAuthenticated, path: location.pathname })
+    // Rediriger si authentifié ET qu'on est toujours sur la page de login
+    if (isAuthenticated && location.pathname === '/auth/login') {
       console.log('User is now authenticated, redirecting to dashboard...')
       navigate('/dashboard', { replace: true })
     }
-  }, [isAuthenticated, navigate])
+  }, [isAuthenticated, navigate, location.pathname])
 
   // Effacer les erreurs seulement quand l'utilisateur modifie réellement les champs
   useEffect(() => {
@@ -162,19 +162,9 @@ export const LoginPage: React.FC = () => {
       // 2. Les données utilisateur sont déjà dans loginResult, pas besoin d'appeler /users/me
       // qui cause des problèmes de timing avec le token
 
-      console.log('About to redirect to dashboard...')
-
-      // Attendre un peu pour que les cookies soient configurés
-      setTimeout(() => {
-        console.log('Triggering redirect after delay...')
-        setShouldRedirect(true)
-      }, 500)
-
-      // Fallback au cas où le useEffect ne se déclenche pas
-      setTimeout(() => {
-        console.log('Fallback redirect to dashboard')
-        navigate('/dashboard', { replace: true })
-      }, 2000)
+      console.log('Login successful, waiting for auth state update...')
+      
+      // La redirection sera gérée automatiquement par le useEffect qui écoute isAuthenticated
     } catch (err: any) {
       setLoginAttempts((prev) => prev + 1)
 

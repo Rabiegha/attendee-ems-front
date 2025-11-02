@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
@@ -12,7 +12,6 @@ import { StatsCards } from '@/widgets/StatsCards'
 import { EventList } from '@/features/events/ui/EventList'
 import { formatDateForDisplay } from '@/shared/lib/date-utils'
 
-import { Can } from '@/shared/acl/guards/Can'
 import { useCan } from '@/shared/acl/hooks/useCan'
 import {
   Button,
@@ -22,9 +21,7 @@ import {
   Card,
   CardContent,
 } from '@/shared/ui'
-import { CreateEventModal } from '@/features/events/ui/CreateEventModal'
 import {
-  Plus,
   Users,
   Calendar,
   Building2,
@@ -39,9 +36,6 @@ export const Dashboard: React.FC = () => {
   const currentUser = useSelector(selectUser)
   const organization = useSelector(selectOrganization)
 
-  // État pour la modal de création d'événement
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-
   // Permissions
   const canReadOrganization = useCan('read', 'Organization')
   const canReadEvent = useCan('read', 'Event')
@@ -49,8 +43,8 @@ export const Dashboard: React.FC = () => {
 
   const { data: events = [], isLoading: eventsLoading } = useGetEventsQuery({
     limit: 5,
-    sortBy: 'start_at',
-    sortOrder: 'asc',
+    sortBy: 'created_at',
+    sortOrder: 'desc',
   })
 
   const { data: attendeesResponse, isLoading: attendeesLoading } =
@@ -64,10 +58,6 @@ export const Dashboard: React.FC = () => {
   // Extraire les attendees du format paginé { data, meta }
   const attendees = attendeesResponse?.data || []
 
-  const handleCreateEvent = () => {
-    setIsCreateModalOpen(true)
-  }
-
   // Dashboard pour les admins/managers (permissions complètes)
   if (canReadOrganization) {
     return (
@@ -76,16 +66,6 @@ export const Dashboard: React.FC = () => {
           title={t('navigation.dashboard')}
           description={`Bienvenue ${currentUser?.firstName || ''} ! Vous êtes connecté en tant que ${currentUser?.roles?.[0] || 'Utilisateur'}${organization?.name ? ` dans l'organisation ${organization.name}` : ''}.`}
           icon={LayoutDashboard}
-          actions={
-            <Can do="create" on="Event">
-              <Button
-                onClick={handleCreateEvent}
-                leftIcon={<Plus className="h-4 w-4" />}
-              >
-                {t('events:events.create')}
-              </Button>
-            </Can>
-          }
         />
 
         <PageSection spacing="lg">
@@ -165,11 +145,6 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         </PageSection>
-
-        <CreateEventModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-        />
       </PageContainer>
     )
   }

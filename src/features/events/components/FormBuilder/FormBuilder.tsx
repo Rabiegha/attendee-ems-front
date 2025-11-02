@@ -8,6 +8,7 @@ import {
   Redo2,
   RotateCcw,
   Columns,
+  AlertCircle,
 } from 'lucide-react'
 import {
   DndContext,
@@ -67,6 +68,7 @@ interface SortableFieldItemProps {
   field: FormField
   onRemove: () => void
   onToggleWidth: () => void
+  onToggleRequired: () => void
   children: React.ReactNode
 }
 
@@ -74,6 +76,7 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
   field,
   onRemove,
   onToggleWidth,
+  onToggleRequired,
   children,
 }) => {
   const {
@@ -132,6 +135,18 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             type="button"
+            onClick={onToggleRequired}
+            className={`p-1.5 rounded transition-colors ${
+              field.required
+                ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                : 'text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
+            }`}
+            title={field.required ? 'Champ obligatoire' : 'Champ facultatif'}
+          >
+            <AlertCircle className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
             onClick={onToggleWidth}
             className={`p-1.5 rounded transition-colors ${
               field.width === 'half'
@@ -142,16 +157,14 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
           >
             <Columns className="h-4 w-4" />
           </button>
-          {!field.required && (
-            <button
-              type="button"
-              onClick={onRemove}
-              className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-              title="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onRemove}
+            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+            title="Supprimer"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -178,6 +191,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const [history, setHistory] = useState<FormField[][]>([fields])
   const [historyIndex, setHistoryIndex] = useState(0)
   const [isUpdatingFromHistory, setIsUpdatingFromHistory] = useState(false)
+
+  // Calculer les champs disponibles (non encore ajoutés)
+  const availableFields = React.useMemo(() => {
+    const usedKeys = new Set(fields.map(f => f.key))
+    return PREDEFINED_FIELDS.filter(
+      (field) => field.key !== 'attendee_type' && !usedKeys.has(field.key)
+    )
+  }, [fields])
 
   // Update history when fields change externally (not from undo/redo)
   useEffect(() => {
@@ -252,6 +273,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       id: `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       order: fields.length,
       placeholder: '', // Vide par défaut
+      width: 'full', // Par défaut les nouveaux champs sont en 100%
     }
     onChange([...fields, newField])
   }
@@ -277,6 +299,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
     const newWidth = field.width === 'half' ? 'full' : 'half'
     handleUpdateField(fieldId, { width: newWidth })
+  }
+
+  // Toggle field required status
+  const handleToggleRequired = (fieldId: string) => {
+    const field = fields.find((f) => f.id === fieldId)
+    if (!field) return
+
+    handleUpdateField(fieldId, { required: !field.required })
   }
 
   // Sensors for drag and drop
@@ -354,7 +384,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   // Reset to default fields
   const handleResetToDefault = () => {
-    // Champs par défaut : Prénom, Nom, Email avec tous les champs requis
+    // Champs par défaut : Nom, Prénom, Email
     const firstNameTemplate = PREDEFINED_FIELDS.find(
       (f) => f.key === 'first_name'
     )
@@ -371,22 +401,28 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
     const defaultFields: FormField[] = [
       {
-        ...firstNameTemplate,
-        id: `field_${Date.now()}_firstname`,
+        ...lastNameTemplate,
+        id: `field_${Date.now()}_lastname`,
         order: 0,
-        placeholder: firstNameTemplate.placeholder || '',
+        placeholder: lastNameTemplate.placeholder || '',
+        width: 'half',
+        required: true,
       },
       {
-        ...lastNameTemplate,
-        id: `field_${Date.now() + 1}_lastname`,
+        ...firstNameTemplate,
+        id: `field_${Date.now() + 1}_firstname`,
         order: 1,
-        placeholder: lastNameTemplate.placeholder || '',
+        placeholder: firstNameTemplate.placeholder || '',
+        width: 'half',
+        required: true,
       },
       {
         ...emailTemplate,
         id: `field_${Date.now() + 2}_email`,
         order: 2,
         placeholder: emailTemplate.placeholder || '',
+        width: 'full',
+        required: true,
       },
     ]
 
@@ -445,24 +481,35 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         <label className="block text-sm font-medium text-indigo-900 dark:text-indigo-200 mb-2">
           ➕ Ajouter un champ
         </label>
-        <select
-          onChange={(e) => {
-            if (e.target.value) {
-              handleAddField(e.target.value)
-              e.target.value = ''
-            }
-          }}
-          className="w-full px-3 py-2 border border-indigo-300 dark:border-indigo-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        >
-          <option value="">-- Choisir un type de champ --</option>
-          {PREDEFINED_FIELDS.filter(
-            (field) => field.key !== 'attendee_type'
-          ).map((field) => (
-            <option key={field.key} value={field.key}>
-              {field.label} ({field.type})
-            </option>
-          ))}
-        </select>
+        {availableFields.length > 0 ? (
+          <select
+            onChange={(e) => {
+              if (e.target.value) {
+                handleAddField(e.target.value)
+                e.target.value = ''
+              }
+            }}
+            className="w-full px-3 py-2 border border-indigo-300 dark:border-indigo-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="">-- Choisir un type de champ --</option>
+            {availableFields.map((field) => (
+              <option key={field.key} value={field.key}>
+                {field.label} ({field.type})
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="px-3 py-2 text-sm text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg">
+            ✅ Tous les champs prédéfinis ont été ajoutés
+          </div>
+        )}
+        
+        {/* Info message */}
+        <div className="mt-3 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-xs text-blue-800 dark:text-blue-200">
+            💡 <strong>Astuce :</strong> Chaque champ ne peut être ajouté qu'une seule fois. Une fois ajouté, il disparaît de la liste.
+          </p>
+        </div>
       </div>
 
       {/* Field List */}
@@ -493,6 +540,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   field={field}
                   onRemove={() => handleRemoveField(field.id)}
                   onToggleWidth={() => handleToggleWidth(field.id)}
+                  onToggleRequired={() => handleToggleRequired(field.id)}
                 >
                   {/* Field Content */}
                   <div className="space-y-3">

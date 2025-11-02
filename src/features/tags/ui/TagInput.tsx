@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { X, Tag as TagIcon, Plus } from 'lucide-react'
 import { useGetTagsQuery } from '../api/tagsApi'
-import { useDebounce } from '@/shared/hooks/useDebounce'
 import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
 
@@ -22,13 +21,10 @@ export const TagInput: React.FC<TagInputProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('')
   const [isOpen, setIsOpen] = useState(false)
-  const debouncedSearch = useDebounce(inputValue, 300)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
-  // Toujours charger les tags, même sans recherche (pour afficher tout au clic)
-  const { data: suggestions = [], isLoading } = useGetTagsQuery(
-    debouncedSearch.trim().length > 0 ? debouncedSearch.trim() : ''
-  )
+  // Toujours charger TOUS les tags disponibles
+  const { data: suggestions = [], isLoading } = useGetTagsQuery(undefined)
 
   // Fermer le dropdown si on clique à l'extérieur
   useEffect(() => {
@@ -80,9 +76,16 @@ export const TagInput: React.FC<TagInputProps> = ({
   }
 
   // Filtrer les suggestions pour ne pas afficher les tags déjà sélectionnés
-  const filteredSuggestions = suggestions.filter(
-    (tag) => !value.includes(tag.name)
-  )
+  const filteredSuggestions = suggestions
+    .filter((tag) => !value.includes(tag.name))
+    .filter((tag) => {
+      // Si l'utilisateur tape quelque chose, filtrer par nom
+      if (inputValue.trim()) {
+        return tag.name.toLowerCase().includes(inputValue.toLowerCase())
+      }
+      // Sinon, afficher tous les tags
+      return true
+    })
 
   // Afficher les suggestions si le dropdown est ouvert (même sans texte)
   const showSuggestions = isOpen

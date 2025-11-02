@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   AlertCircle,
   CheckCircle,
@@ -56,6 +56,18 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
   // Pour l'action "Reporter"
   const [newStartDate, setNewStartDate] = useState('')
   const [newEndDate, setNewEndDate] = useState('')
+
+  // Réinitialiser l'état du modal quand il s'ouvre/ferme
+  useEffect(() => {
+    if (!isOpen) {
+      // Réinitialiser tous les états quand le modal se ferme
+      setSelectedAction(null)
+      setNotifyUsers(true)
+      setIsSubmitting(false)
+      setNewStartDate('')
+      setNewEndDate('')
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 

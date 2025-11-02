@@ -4,6 +4,7 @@ export { Input } from './Input'
 export { Textarea } from './Textarea'
 export { Select, SelectOption } from './Select'
 export { MultiSelect, type MultiSelectOption } from './MultiSelect'
+export { GooglePlacesAutocomplete, GooglePlacesAutocompleteWithProvider } from './GooglePlacesAutocomplete'
 export {
   Card,
   CardHeader,

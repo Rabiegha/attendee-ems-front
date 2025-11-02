@@ -25,6 +25,59 @@ const FIELD_TYPES = [
   { value: 'textarea', label: 'Texte long' },
 ]
 
+// Champs prédéfinis disponibles
+const PREDEFINED_FIELDS = [
+  {
+    id: 'firstName',
+    name: 'firstName',
+    label: 'Prénom',
+    type: 'text' as const,
+    required: true,
+  },
+  {
+    id: 'lastName',
+    name: 'lastName',
+    label: 'Nom',
+    type: 'text' as const,
+    required: true,
+  },
+  {
+    id: 'email',
+    name: 'email',
+    label: 'Email',
+    type: 'email' as const,
+    required: true,
+  },
+  {
+    id: 'phone',
+    name: 'phone',
+    label: 'Téléphone',
+    type: 'tel' as const,
+    required: false,
+  },
+  {
+    id: 'company',
+    name: 'company',
+    label: 'Entreprise',
+    type: 'text' as const,
+    required: false,
+  },
+  {
+    id: 'jobTitle',
+    name: 'jobTitle',
+    label: 'Poste',
+    type: 'text' as const,
+    required: false,
+  },
+  {
+    id: 'country',
+    name: 'country',
+    label: 'Pays',
+    type: 'text' as const,
+    required: false,
+  },
+]
+
 const DEFAULT_FIELDS: FormField[] = [
   {
     id: 'firstName',
@@ -48,12 +101,19 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   onChange,
 }) => {
   const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null)
+  const [selectedFieldToAdd, setSelectedFieldToAdd] = React.useState<string>('')
 
   // Undo/Redo History
   const [history, setHistory] = React.useState<FormField[][]>([fields])
   const [historyIndex, setHistoryIndex] = React.useState(0)
   const [isUpdatingFromHistory, setIsUpdatingFromHistory] =
     React.useState(false)
+
+  // Calculer les champs disponibles (non encore ajoutés)
+  const availableFields = React.useMemo(() => {
+    const existingFieldIds = new Set(fields.map(f => f.id))
+    return PREDEFINED_FIELDS.filter(field => !existingFieldIds.has(field.id))
+  }, [fields])
 
   // Initialize history when fields prop changes externally (not from undo/redo)
   useEffect(() => {
@@ -122,14 +182,28 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   const addField = () => {
     const newField: FormField = {
-      id: `field-${Date.now()}`,
+      id: `custom-${Date.now()}`,
       name: `field_${fields.length + 1}`,
-      label: 'Nouveau champ',
+      label: 'Nouveau champ personnalisé',
       type: 'text',
       required: false,
     }
     const newFields = [...fields, newField]
     onChange(newFields)
+    // History will be updated automatically via useEffect
+  }
+
+  const addPredefinedField = (fieldId: string) => {
+    const predefinedField = PREDEFINED_FIELDS.find(f => f.id === fieldId)
+    if (!predefinedField) return
+    
+    const newField: FormField = {
+      ...predefinedField,
+      id: predefinedField.id, // Garder l'ID prédéfini pour éviter les doublons
+    }
+    const newFields = [...fields, newField]
+    onChange(newFields)
+    setSelectedFieldToAdd('') // Reset le select
     // History will be updated automatically via useEffect
   }
 
@@ -225,9 +299,34 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           <Button variant="outline" size="sm" onClick={resetToDefaults}>
             Réinitialiser
           </Button>
-          <Button size="sm" onClick={addField}>
+          
+          {/* Select pour ajouter un champ prédéfini */}
+          {availableFields.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <select
+                value={selectedFieldToAdd}
+                onChange={(e) => {
+                  const fieldId = e.target.value
+                  if (fieldId) {
+                    addPredefinedField(fieldId)
+                  }
+                }}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors duration-200"
+              >
+                <option value="">Ajouter un champ...</option>
+                {availableFields.map((field) => (
+                  <option key={field.id} value={field.id}>
+                    {field.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          {/* Bouton pour ajouter un champ personnalisé */}
+          <Button size="sm" onClick={addField} variant="outline">
             <Plus className="h-4 w-4 mr-1" />
-            Ajouter un champ
+            Champ personnalisé
           </Button>
         </div>
       </div>
@@ -244,15 +343,29 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             </Button>
           </div>
         ) : (
-          fields.map((field, index) => (
+          fields.map((field, index) => {
+            const isPredefined = PREDEFINED_FIELDS.some(pf => pf.id === field.id)
+            
+            return (
             <div
               key={field.id}
               onDragOver={(e) => handleDragOver(e, index)}
-              className={`field-card bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 transition-all duration-200 ${
+              className={`field-card relative bg-white dark:bg-gray-800 border ${
+                isPredefined 
+                  ? 'border-blue-200 dark:border-blue-800' 
+                  : 'border-gray-200 dark:border-gray-700'
+              } rounded-lg p-4 transition-all duration-200 ${
                 draggedIndex === index ? 'opacity-50 scale-95' : ''
               }`}
             >
               <div className="flex items-start space-x-3">
+                {/* Indicateur de champ prédéfini */}
+                {isPredefined && (
+                  <div className="absolute top-2 right-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-md font-medium">
+                    Champ standard
+                  </div>
+                )}
+                
                 {/* Drag handle - Only this area is draggable */}
                 <div
                   draggable
@@ -367,7 +480,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                 </div>
               </div>
             </div>
-          ))
+          )})
         )}
       </div>
 
@@ -375,9 +488,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            <strong>Info :</strong> Les champs Prénom, Nom et Email sont
-            recommandés pour identifier les participants. Vous pouvez ajouter
-            des champs personnalisés selon vos besoins.
+            <strong>Info :</strong> Utilisez le menu déroulant pour ajouter des champs prédéfinis (Prénom, Nom, Email, etc.). 
+            Chaque champ ne peut être ajouté qu'une seule fois. 
+            Vous pouvez aussi créer des champs personnalisés avec le bouton "Champ personnalisé".
           </p>
         </div>
 

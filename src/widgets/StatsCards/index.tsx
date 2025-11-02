@@ -1,5 +1,6 @@
 import React from 'react'
-import { Calendar, Users, CheckCircle, Clock } from 'lucide-react'
+import { Calendar, Users, UserPlus, Plus, ArrowRight, TrendingUp } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { EventDPO } from '@/features/events/dpo/event.dpo'
 import type { AttendeeDPO } from '@/features/attendees/dpo/attendee.dpo'
 
@@ -14,43 +15,48 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
   attendees,
   isLoading,
 }) => {
-  const stats = React.useMemo(() => {
-    const activeEvents = events.filter((e) => e.isActive).length
-    const totalAttendees = attendees.length
-    const checkedInAttendees = attendees.filter((a) => a.isCheckedIn).length
-    const pendingAttendees = attendees.filter((a) => a.isPending).length
+  const navigate = useNavigate()
 
-    return [
-      {
-        title: 'Événements actifs',
-        value: activeEvents,
-        icon: Calendar,
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100',
-      },
-      {
-        title: 'Total participants',
-        value: totalAttendees,
-        icon: Users,
-        color: 'text-green-600',
-        bgColor: 'bg-green-100',
-      },
-      {
-        title: 'Participants enregistrés',
-        value: checkedInAttendees,
-        icon: CheckCircle,
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-100',
-      },
-      {
-        title: 'En attente',
-        value: pendingAttendees,
-        icon: Clock,
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-100',
-      },
-    ]
-  }, [events, attendees])
+  const quickActions = [
+    {
+      title: 'Événements',
+      description: 'Gérer les événements',
+      count: events.length,
+      activeCount: events.filter((e) => e.isActive).length,
+      icon: Calendar,
+      color: 'from-blue-500 to-blue-600',
+      bgGlow: 'bg-blue-500/10',
+      onClick: () => navigate('/events'),
+    },
+    {
+      title: 'Participants',
+      description: 'Voir tous les participants',
+      count: attendees.length,
+      activeCount: attendees.filter((a) => a.isActive).length,
+      icon: Users,
+      color: 'from-green-500 to-green-600',
+      bgGlow: 'bg-green-500/10',
+      onClick: () => navigate('/attendees'),
+    },
+    {
+      title: 'Créer un événement',
+      description: 'Nouvel événement',
+      icon: Plus,
+      color: 'from-purple-500 to-purple-600',
+      bgGlow: 'bg-purple-500/10',
+      isAction: true,
+      onClick: () => navigate('/events/create'),
+    },
+    {
+      title: 'Inviter utilisateur',
+      description: 'Ajouter un membre',
+      icon: UserPlus,
+      color: 'from-orange-500 to-orange-600',
+      bgGlow: 'bg-orange-500/10',
+      isAction: true,
+      onClick: () => navigate('/invitations'),
+    },
+  ]
 
   if (isLoading) {
     return (
@@ -58,14 +64,12 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 animate-pulse transition-colors duration-200"
+            className="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
           >
-            <div className="flex items-center">
+            <div className="space-y-3">
               <div className="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg"></div>
-              <div className="ml-4 flex-1">
-                <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-24 mb-2"></div>
-                <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-16"></div>
-              </div>
+              <div className="h-5 bg-gray-200 dark:bg-gray-600 rounded w-32"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-24"></div>
             </div>
           </div>
         ))}
@@ -75,25 +79,49 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat, index) => (
-        <div
+      {quickActions.map((action, index) => (
+        <button
           key={index}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200"
+          onClick={action.onClick}
+          className="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 text-left transition-all duration-300 hover:shadow-lg hover:scale-105 hover:border-gray-300 dark:hover:border-gray-600"
         >
-          <div className="flex items-center">
-            <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-              <stat.icon className={`h-6 w-6 ${stat.color}`} />
+          {/* Glow effect on hover */}
+          <div className={`absolute inset-0 ${action.bgGlow} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+          
+          {/* Content */}
+          <div className="relative z-10 space-y-3">
+            {/* Icon with gradient */}
+            <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${action.color} p-2.5 transform group-hover:scale-110 transition-transform duration-300`}>
+              <action.icon className="w-full h-full text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                {stat.title}
+
+            {/* Title */}
+            <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
+              {action.title}
+            </h3>
+
+            {/* Description with count or action text */}
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {action.description}
               </p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stat.value}
-              </p>
+              <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transform group-hover:translate-x-1 transition-all duration-300" />
             </div>
+
+            {/* Stats badges for non-action items */}
+            {!action.isAction && (
+              <div className="flex gap-2 pt-2">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {action.activeCount} actifs
+                </span>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                  {action.count} total
+                </span>
+              </div>
+            )}
           </div>
-        </div>
+        </button>
       ))}
     </div>
   )

@@ -37,6 +37,20 @@ export const Attendees: React.FC = () => {
     error,
   } = useGetAttendeesQuery(filters)
 
+  // Query for stats (active attendees count)
+  const { data: activeStatsResponse } = useGetAttendeesQuery({
+    page: 1,
+    pageSize: 1,
+    isActive: true,
+  })
+
+  // Query for stats (deleted attendees count)
+  const { data: deletedStatsResponse } = useGetAttendeesQuery({
+    page: 1,
+    pageSize: 1,
+    isActive: false,
+  })
+
   const attendees = attendeesResponse?.data || []
   const meta = attendeesResponse?.meta || {
     page: 1,
@@ -45,17 +59,23 @@ export const Attendees: React.FC = () => {
     totalPages: 0,
   }
 
+  // Calculate stats from separate queries
+  const stats = {
+    active: activeStatsResponse?.meta?.total || 0,
+    deleted: deletedStatsResponse?.meta?.total || 0,
+  }
+
   // Configure tabs
   const tabs: TabItem[] = [
     {
       id: 'active',
       label: 'Participants actifs',
-      ...(activeTab === 'active' && { count: meta.total }),
+      count: stats.active,
     },
     {
       id: 'deleted',
       label: 'Participants supprimés',
-      ...(activeTab === 'deleted' && { count: meta.total }),
+      count: stats.deleted,
     },
   ]
 

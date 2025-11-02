@@ -29,6 +29,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toast": "^1.1.5",
     "@reduxjs/toolkit": "^2.0.1",
+    "@vis.gl/react-google-maps": "^1.7.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "i18next": "^23.7.6",

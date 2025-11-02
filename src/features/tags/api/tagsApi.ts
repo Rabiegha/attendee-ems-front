@@ -21,7 +21,8 @@ export const tagsApi = rootApi.injectEndpoints({
     // GET /tags/search?search=...
     getTags: builder.query<Tag[], string | undefined>({
       query: (search) => {
-        const params = search ? { search } : {}
+        // Ne pas envoyer de paramètre search si vide ou undefined
+        const params = search && search.trim() ? { search: search.trim() } : {}
         return {
           url: '/tags/search',
           params,

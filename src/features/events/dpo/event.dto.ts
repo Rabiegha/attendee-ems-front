@@ -33,6 +33,7 @@ export interface EventDTO {
     website_url?: string
     registration_auto_approve?: boolean
     registration_fields?: any[]
+    badge_template_id?: string
     [key: string]: any
   }
   emailSettings?: {
@@ -82,8 +83,10 @@ export interface CreateEventDTO {
   confirmation_enabled?: boolean
   approval_enabled?: boolean
   reminder_enabled?: boolean
+  badge_template_id?: string
 }
 
 export interface UpdateEventDTO extends Partial<CreateEventDTO> {
   status?: EventDTO['status']
+  badge_template_id?: string
 }

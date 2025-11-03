@@ -8,6 +8,7 @@ import {
 import {
   useGetRegistrationsQuery,
   useBulkExportRegistrationsMutation,
+  useGenerateBadgesForEventMutation,
 } from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
@@ -26,6 +27,7 @@ import {
   Settings,
   FormInput,
   Zap,
+  CreditCard,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
@@ -79,6 +81,7 @@ export const EventDetails: React.FC = () => {
   const [updateRegistrationFields] = useUpdateRegistrationFieldsMutation()
   const [updateEvent] = useUpdateEventMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
+  const [generateBadgesForEvent, { isLoading: isGeneratingAll }] = useGenerateBadgesForEventMutation()
 
   // State pour le modal d'actions
   const [showActionsModal, setShowActionsModal] = useState(false)
@@ -368,6 +371,20 @@ export const EventDetails: React.FC = () => {
       URL.revokeObjectURL(response.downloadUrl)
     } catch (error) {
       console.error("Erreur lors de l'export:", error)
+    }
+  }
+
+  // Handler pour générer tous les badges
+  const handleGenerateAllBadges = async () => {
+    if (!id) return
+
+    try {
+      const result = await generateBadgesForEvent({ eventId: id }).unwrap()
+      alert(`✅ ${result.message}`)
+      refetchRegistrations()
+    } catch (error: any) {
+      console.error('Erreur lors de la génération des badges:', error)
+      alert(`❌ ${error.data?.message || 'Erreur lors de la génération des badges'}`)
     }
   }
 
@@ -776,6 +793,16 @@ export const EventDetails: React.FC = () => {
                 >
                   <Download className="h-4 w-4" />
                   <span>Exporter</span>
+                </Button>
+                <Button
+                  variant="default"
+                  className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={handleGenerateAllBadges}
+                  disabled={isGeneratingAll || !event.badgeTemplateId}
+                  title={!event.badgeTemplateId ? 'Aucun template de badge configuré' : 'Générer les badges pour toutes les inscriptions approuvées'}
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>{isGeneratingAll ? 'Génération...' : 'Générer tous les badges'}</span>
                 </Button>
               </div>
             </div>

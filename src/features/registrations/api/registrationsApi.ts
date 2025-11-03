@@ -268,6 +268,49 @@ export const registrationsApi = rootApi.injectEndpoints({
         },
       }),
     }),
+
+    // Génération de badges
+    generateBadgesForEvent: builder.mutation<
+      { success: boolean; message: string; generated: number },
+      { eventId: string }
+    >({
+      query: ({ eventId }) => ({
+        url: `/events/${eventId}/registrations/generate-badges`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'Event', id: eventId },
+      ],
+    }),
+
+    generateBadgesBulk: builder.mutation<
+      { success: boolean; message: string; generated: number },
+      { eventId: string; registrationIds: string[] }
+    >({
+      query: ({ eventId, registrationIds }) => ({
+        url: `/events/${eventId}/registrations/generate-badges-bulk`,
+        method: 'POST',
+        body: { registrationIds },
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+      ],
+    }),
+
+    generateBadge: builder.mutation<
+      { success: boolean; message: string; generated: number },
+      { eventId: string; registrationId: string }
+    >({
+      query: ({ eventId, registrationId }) => ({
+        url: `/events/${eventId}/registrations/${registrationId}/generate-badge`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, { eventId, registrationId }) => [
+        { type: 'Attendee', id: registrationId },
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+      ],
+    }),
   }),
   overrideExisting: false,
 })
@@ -283,4 +326,7 @@ export const {
   useDeleteRegistrationMutation,
   useBulkDeleteRegistrationsMutation,
   useBulkExportRegistrationsMutation,
+  useGenerateBadgesForEventMutation,
+  useGenerateBadgesBulkMutation,
+  useGenerateBadgeMutation,
 } = registrationsApi

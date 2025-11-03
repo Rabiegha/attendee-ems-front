@@ -4,6 +4,7 @@ import {
   useUpdateEventMutation,
   useDeleteEventMutation,
 } from '@/features/events/api/eventsApi'
+import { useGetBadgeTemplatesQuery } from '@/features/badge-templates/api/badgeTemplatesApi'
 import { Button, Input, Select, SelectOption, FormField, Textarea } from '@/shared/ui'
 import {
   Save,
@@ -15,6 +16,7 @@ import {
   Shield,
   Mail,
   MapPin,
+  CreditCard,
 } from 'lucide-react'
 import type { EventDPO } from '@/features/events/dpo/event.dpo'
 import { TagInput } from '@/features/tags'
@@ -34,6 +36,9 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation()
   const [deleteEvent, { isLoading: isDeleting }] = useDeleteEventMutation()
   const [updateEventTags] = useUpdateEventTagsMutation()
+  
+  // Récupérer les templates de badges
+  const { data: badgeTemplates = [] } = useGetBadgeTemplatesQuery({ isActive: true })
 
   // Si l'événement est supprimé, afficher un message
   if (event.isDeleted) {
@@ -68,6 +73,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     confirmation_email_enabled: event.confirmationEmailEnabled ?? false,
     approval_email_enabled: event.approvalEmailEnabled ?? false,
     reminder_email_enabled: event.reminderEmailEnabled ?? false,
+    badge_template_id: event.badgeTemplateId || '',
   })
 
   // État pour la suppression (double confirmation)
@@ -116,6 +122,11 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
       updateData.confirmationEmailEnabled = formData.confirmation_email_enabled
       updateData.approvalEmailEnabled = formData.approval_email_enabled
       updateData.reminderEmailEnabled = formData.reminder_email_enabled
+      
+      // Ajouter le template de badge
+      if (formData.badge_template_id) {
+        updateData.badgeTemplateId = formData.badge_template_id
+      }
 
       // Mettre à jour les informations de l'événement
       await updateEvent({
@@ -555,6 +566,50 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                       </p>
                     </div>
                   </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Template de badge */}
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5">
+                <CreditCard className="h-5 w-5 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                  Template de badge
+                </h4>
+                
+                <div className="space-y-3">
+                  <FormField 
+                    label="Template utilisé pour générer les badges" 
+                    hint="Sélectionnez le template de badge qui sera utilisé pour cet événement"
+                  >
+                    <Select
+                      value={formData.badge_template_id}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          badge_template_id: e.target.value,
+                        }))
+                      }
+                    >
+                      <SelectOption value="">Aucun template sélectionné</SelectOption>
+                      {badgeTemplates.map((template) => (
+                        <SelectOption key={template.id} value={template.id}>
+                          {template.name} {template.is_default ? '(Par défaut)' : ''}
+                        </SelectOption>
+                      ))}
+                    </Select>
+                  </FormField>
+
+                  {badgeTemplates.length === 0 && (
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                      ⚠️ Aucun template de badge disponible. Créez-en un dans la section "Templates de badges".
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

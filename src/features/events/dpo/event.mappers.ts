@@ -54,6 +54,7 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
     ...(dto.emailSettings?.confirmation_enabled !== undefined && { confirmationEmailEnabled: dto.emailSettings.confirmation_enabled }),
     ...(dto.emailSettings?.approval_enabled !== undefined && { approvalEmailEnabled: dto.emailSettings.approval_enabled }),
     ...(dto.emailSettings?.reminder_enabled !== undefined && { reminderEmailEnabled: dto.emailSettings.reminder_enabled }),
+    ...(dto.settings?.badge_template_id && { badgeTemplateId: dto.settings.badge_template_id }),
 
     // Computed properties (calculated from dates but stored as primitives)
     isActive: dto.status === 'published',
@@ -140,6 +141,7 @@ export const mapUpdateEventDPOtoDTO = (dpo: UpdateEventDPO): UpdateEventDTO => {
   if (dpo.confirmationEmailEnabled !== undefined) dto.confirmation_enabled = dpo.confirmationEmailEnabled
   if (dpo.approvalEmailEnabled !== undefined) dto.approval_enabled = dpo.approvalEmailEnabled
   if (dpo.reminderEmailEnabled !== undefined) dto.reminder_enabled = dpo.reminderEmailEnabled
+  if (dpo.badgeTemplateId !== undefined) dto.badge_template_id = dpo.badgeTemplateId
 
   // Map partnerIds to assigned_user_ids for backend
   if (dpo.partnerIds !== undefined) {

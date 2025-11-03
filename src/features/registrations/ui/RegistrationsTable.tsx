@@ -12,6 +12,7 @@ import {
   Phone,
   Building2,
   RefreshCw,
+  CreditCard,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button } from '@/shared/ui/Button'
@@ -23,6 +24,7 @@ import {
   useDeleteRegistrationMutation,
   useBulkDeleteRegistrationsMutation,
   useBulkExportRegistrationsMutation,
+  useGenerateBadgesBulkMutation,
 } from '../api/registrationsApi'
 import { useToast } from '@/shared/hooks/useToast'
 import { EditRegistrationModal } from './EditRegistrationModal'
@@ -100,6 +102,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [deleteRegistration] = useDeleteRegistrationMutation()
   const [bulkDeleteRegistrations] = useBulkDeleteRegistrationsMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
+  const [generateBadgesBulk, { isLoading: isGeneratingBadges }] = useGenerateBadgesBulkMutation()
 
   const handleRowClick = (registration: RegistrationDPO, e: React.MouseEvent) => {
     // Don't navigate if clicking on checkbox or action buttons
@@ -206,6 +209,29 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const bulkActions = useMemo(() => {
     const actions = []
 
+    // Génération de badges pour la sélection
+    actions.push({
+      id: 'generate-badges',
+      label: 'Générer les badges',
+      icon: <CreditCard className="h-4 w-4" />,
+      variant: 'default' as const,
+      onClick: async (selectedIds: Set<string>) => {
+        try {
+          const result = await generateBadgesBulk({
+            eventId,
+            registrationIds: Array.from(selectedIds),
+          }).unwrap()
+          
+          toast.success(result.message)
+          unselectAll()
+          onRefresh?.()
+        } catch (error: any) {
+          console.error('Erreur lors de la génération des badges:', error)
+          toast.error(error.data?.message || 'Erreur lors de la génération des badges')
+        }
+      },
+    })
+
     // Default export action using API mutation
     actions.push(
       createBulkActions.export(async (selectedIds) => {
@@ -249,7 +275,16 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     )
 
     return actions
-  }, [bulkDeleteRegistrations, bulkExportRegistrations, unselectAll, eventId])
+  }, [
+    bulkDeleteRegistrations, 
+    bulkExportRegistrations, 
+    generateBadgesBulk,
+    isGeneratingBadges,
+    unselectAll, 
+    eventId,
+    toast,
+    onRefresh,
+  ])
 
   if (isLoading) {
     return (

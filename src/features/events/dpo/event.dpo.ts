@@ -33,6 +33,7 @@ export interface EventDPO {
   confirmationEmailEnabled?: boolean
   approvalEmailEnabled?: boolean
   reminderEmailEnabled?: boolean
+  badgeTemplateId?: string
   settings?: {
     registration_fields?: any[]
     [key: string]: any
@@ -80,8 +81,10 @@ export interface CreateEventDPO {
   confirmationEmailEnabled?: boolean
   approvalEmailEnabled?: boolean
   reminderEmailEnabled?: boolean
+  badgeTemplateId?: string
 }
 
 export interface UpdateEventDPO extends Partial<CreateEventDPO> {
   status?: EventStatus
+  badgeTemplateId?: string
 }

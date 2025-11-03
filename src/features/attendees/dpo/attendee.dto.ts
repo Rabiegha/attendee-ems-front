@@ -16,6 +16,17 @@ export interface AttendeeDTO {
   is_active: boolean
   created_at: string
   updated_at: string
+  statistics?: {
+    total_events: number
+    total_registrations: number
+    approved: number
+    awaiting: number
+    refused: number
+    checked_in: number
+    attendance_rate: number
+    last_event_at?: string
+    first_event_at?: string
+  }
 }
 
 export interface CreateAttendeeDTO {

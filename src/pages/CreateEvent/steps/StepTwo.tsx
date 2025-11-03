@@ -77,84 +77,46 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
 
       {/* Adresse (si physique ou hybride) */}
       {(formData.location_type === 'physical' || formData.location_type === 'hybrid') && (
-        <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <div className="flex items-start gap-2 mb-3">
-            <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                Localisation de l'événement
-              </h4>
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                {GOOGLE_MAPS_API_KEY 
-                  ? 'Recherchez une adresse avec Google Maps ou saisissez-la manuellement'
-                  : 'Saisissez l\'adresse complète de l\'événement'
-                }
-              </p>
-            </div>
-          </div>
-
+        <>
           <FormField label="Adresse complète">
-            {GOOGLE_MAPS_API_KEY ? (
-              <GooglePlacesAutocomplete
-                id="address_formatted"
-                name="address_formatted"
-                value={formData.address_formatted || ''}
-                onChange={(value) => updateFormData({ address_formatted: value })}
-                onPlaceSelect={(place) => {
-                  const updates: Partial<CreateEventFormData> = {
-                    address_formatted: place.formatted_address,
-                    latitude: place.latitude,
-                    longitude: place.longitude,
-                  }
-                  
-                  if (place.street) updates.address_street = place.street
-                  if (place.city) updates.address_city = place.city
-                  if (place.postal_code) updates.address_postal_code = place.postal_code
-                  if (place.country) updates.address_country = place.country
-                  
-                  updateFormData(updates)
-                }}
-                placeholder="Rechercher une adresse..."
-                apiKey={GOOGLE_MAPS_API_KEY}
-              />
-            ) : (
-              <Input
-                id="address_formatted"
-                name="address_formatted"
-                value={formData.address_formatted || ''}
-                onChange={(e) => updateFormData({ address_formatted: e.target.value })}
-                placeholder="123 Rue de la République, 75001 Paris, France"
-              />
-            )}
+            <GooglePlacesAutocomplete
+              id="address_formatted"
+              name="address_formatted"
+              value={formData.address_formatted || ''}
+              onChange={(value) => {
+                // Mise à jour simple lors de la saisie manuelle
+                updateFormData({ address_formatted: value })
+              }}
+              onPlaceSelect={(place) => {
+                // Mise à jour complète lors de la sélection Google Maps
+                const updates: Partial<CreateEventFormData> = {
+                  address_formatted: place.formatted_address,
+                  latitude: place.latitude,
+                  longitude: place.longitude,
+                }
+                
+                if (place.street) updates.address_street = place.street
+                if (place.city) updates.address_city = place.city
+                if (place.postal_code) updates.address_postal_code = place.postal_code
+                if (place.country) updates.address_country = place.country
+                
+                updateFormData(updates)
+              }}
+              placeholder="Rechercher une adresse..."
+              apiKey={GOOGLE_MAPS_API_KEY}
+            />
           </FormField>
 
           {/* Affichage des coordonnées GPS si disponibles */}
           {formData.latitude && formData.longitude && (
-            <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 -mt-2">
               <MapPin className="h-3 w-3" />
               <span>
                 GPS: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
               </span>
             </div>
           )}
-
-          {!GOOGLE_MAPS_API_KEY && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-              <p className="text-xs text-amber-800 dark:text-amber-200">
-                <span className="font-medium">Info :</span> Pour activer l'autocomplete avec Google Maps, 
-                ajoutez une clé API Google Maps dans le fichier .env (VITE_GOOGLE_MAPS_API_KEY).
-                <a 
-                  href="https://github.com/Rabiegha/attendee-ems-front/blob/main/docs/GOOGLE_MAPS_SETUP.md" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="ml-1 underline hover:text-amber-900 dark:hover:text-amber-100"
-                >
-                  Voir le guide
-                </a>
-              </p>
-            </div>
-          )}
-        </div>
+        </>
       )}
 
       {/* Partenaires autorisés */}

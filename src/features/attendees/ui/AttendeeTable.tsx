@@ -219,12 +219,13 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
             <TableHead>Participant</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Entreprise</TableHead>
+            <TableHead>Check-ins</TableHead>
             <TableHead>Inscription</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </tr>
         </TableHeader>
         <TableBody>
-          <TableLoadingState columns={6} rows={5} />
+          <TableLoadingState columns={7} rows={5} />
         </TableBody>
       </Table>
     )
@@ -241,6 +242,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
             <TableHead>Participant</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Entreprise</TableHead>
+            <TableHead>Check-ins</TableHead>
             <TableHead>Inscription</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </tr>
@@ -283,6 +285,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
             <TableHead>Participant</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Entreprise</TableHead>
+            <TableHead>Check-ins</TableHead>
             <TableHead>Inscription</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </tr>
@@ -330,6 +333,22 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
                 )}
               </TableCell>
               <TableCell>{attendee.company || '-'}</TableCell>
+              <TableCell>
+                {attendee.checkedInCount !== undefined && attendee.checkedInCount > 0 ? (
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                      {attendee.checkedInCount} événement{attendee.checkedInCount > 1 ? 's' : ''}
+                    </span>
+                    {attendee.lastEventAt && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        Dernier : {formatDate(attendee.lastEventAt)}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-400 dark:text-gray-500">Aucun</span>
+                )}
+              </TableCell>
               <TableCell className="text-gray-500 dark:text-gray-400">
                 {formatDate(attendee.registrationDate)}
               </TableCell>

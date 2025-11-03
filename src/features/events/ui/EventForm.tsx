@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Calendar, MapPin, Users } from 'lucide-react'
+import { Calendar, Users } from 'lucide-react'
 import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { Textarea } from '@/shared/ui/Textarea'
 import { FormField } from '@/shared/ui/FormField'
 import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
+import { GooglePlacesAutocomplete } from '@/shared/ui/GooglePlacesAutocomplete'
 import { createEventSchema, type CreateEventFormData } from '../lib/validation'
 import { PartnerSelect } from './PartnerSelect'
 import { TagInput } from '@/features/tags'
@@ -37,6 +38,7 @@ export const EventForm: React.FC<EventFormProps> = ({
     formState: { errors },
     watch,
     setValue,
+    control,
   } = useForm<CreateEventFormData>({
     resolver: zodResolver(createEventSchema),
     defaultValues: {
@@ -127,11 +129,18 @@ export const EventForm: React.FC<EventFormProps> = ({
 
       {/* Lieu */}
       <FormField label="Lieu (optionnel)" error={errors.location?.message}>
-        <Input
-          {...register('location')}
-          placeholder="Centre de Conférences Paris"
-          leftIcon={<MapPin className="h-4 w-4" />}
-          disabled={isLoading}
+        <Controller
+          name="location"
+          control={control}
+          render={({ field }) => (
+            <GooglePlacesAutocomplete
+              value={field.value || ''}
+              onChange={field.onChange}
+              placeholder="Rechercher une adresse..."
+              apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}
+              disabled={isLoading}
+            />
+          )}
         />
       </FormField>
 

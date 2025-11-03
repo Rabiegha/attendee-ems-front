@@ -338,6 +338,9 @@ export const AttendeeDetail: React.FC = () => {
                         Statut participation
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Check-in
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                         Nom utilisé
                       </th>
                     </tr>
@@ -406,6 +409,22 @@ export const AttendeeDetail: React.FC = () => {
                           >
                             {participation.status}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {participation.checkedIn && participation.checkedInAt ? (
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                                ✓ Enregistré
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatDate(participation.checkedInAt)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-sm text-gray-400 dark:text-gray-500">
+                              Non enregistré
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                           {(() => {

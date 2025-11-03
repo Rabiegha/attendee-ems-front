@@ -24,6 +24,12 @@ export const mapAttendeeDTOtoDPO = (dto: AttendeeDTO): AttendeeDPO => {
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
 
+    // Statistics
+    totalEvents: dto.statistics?.total_events,
+    totalRegistrations: dto.statistics?.total_registrations,
+    checkedInCount: dto.statistics?.checked_in,
+    lastEventAt: dto.statistics?.last_event_at,
+
     // Computed properties
     displayName: `${dto.first_name} ${dto.last_name}`.trim() || dto.email,
     canCheckIn: dto.is_active, // Active users can check in

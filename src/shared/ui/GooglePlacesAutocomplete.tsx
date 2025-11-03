@@ -1,9 +1,5 @@
-/**
- * GooglePlacesAutocomplete - Composant d'autocomplete pour les adresses avec Google Places API
- * Utilise l'API Google Places Autocomplete pour rechercher et sélectionner des adresses
- */
-
-import React, { useEffect, useRef } from 'react'
+﻿import React, { useRef, useEffect } from 'react'
+import Autocomplete from 'react-google-autocomplete'
 
 interface PlaceDetails {
   formatted_address: string
@@ -40,145 +36,85 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
   className = '',
 }) => {
   const inputRef = useRef<HTMLInputElement>(null)
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
-  // Charger le script Google Maps et initialiser l'autocomplete
+  // Repositionner le dropdown Google Maps sous l'input
   useEffect(() => {
-    if (!apiKey || !inputRef.current) {
-      return
-    }
-
-    const initAutocomplete = () => {
-      if (!inputRef.current || autocompleteRef.current) {
-        return
-      }
-
-      try {
-        // Créer l'instance Autocomplete
-        autocompleteRef.current = new google.maps.places.Autocomplete(
-          inputRef.current,
-          {
-            types: ['address'],
-            fields: [
-              'formatted_address',
-              'address_components',
-              'geometry',
-              'place_id',
-            ],
-          }
-        )
-
-        // Écouter l'événement place_changed
-        autocompleteRef.current.addListener('place_changed', () => {
-          const place = autocompleteRef.current?.getPlace()
-
-          if (!place || !place.geometry) {
-            return
-          }
-
-          // Extraire les détails de l'adresse
-          const addressComponents = place.address_components || []
-          const details: PlaceDetails = {
-            formatted_address: place.formatted_address || '',
-            latitude: place.geometry.location?.lat() || 0,
-            longitude: place.geometry.location?.lng() || 0,
-            place_id: place.place_id || '',
-          }
-
-          // Extraire les composants d'adresse
-          addressComponents.forEach((component) => {
-            const types = component.types
-
-            if (types.includes('street_number')) {
-              details.street = component.long_name + ' ' + (details.street || '')
-            } else if (types.includes('route')) {
-              details.street = (details.street || '') + component.long_name
-            } else if (
-              types.includes('locality') ||
-              types.includes('postal_town')
-            ) {
-              details.city = component.long_name
-            } else if (types.includes('postal_code')) {
-              details.postal_code = component.long_name
-            } else if (types.includes('country')) {
-              details.country = component.long_name
-            }
-          })
-
-          // Mettre à jour la valeur
-          onChange(details.formatted_address)
-
-          // Callback avec les détails complets
-          if (onPlaceSelect) {
-            onPlaceSelect(details)
-          }
-        })
-      } catch (error) {
-        console.error('Error initializing Google Places Autocomplete:', error)
-      }
-    }
-
-    // Vérifier si le script Google Maps est déjà chargé
-    if (window.google?.maps?.places) {
-      initAutocomplete()
-    } else {
-      // Charger le script
-      const script = document.createElement('script')
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`
-      script.async = true
-      script.defer = true
-      script.onload = () => initAutocomplete()
-      script.onerror = () => console.error('Failed to load Google Maps script')
+    const repositionDropdown = () => {
+      const input = inputRef.current
+      const dropdowns = document.querySelectorAll('.pac-container') as NodeListOf<HTMLElement>
       
-      // Vérifier si le script n'est pas déjà dans le DOM
-      const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`)
-      if (!existingScript) {
-        document.head.appendChild(script)
-      } else {
-        // Le script existe, attendre qu'il se charge
-        const checkGoogle = setInterval(() => {
-          if (window.google?.maps?.places) {
-            clearInterval(checkGoogle)
-            initAutocomplete()
-          }
-        }, 100)
-        
-        // Timeout après 10 secondes
-        setTimeout(() => clearInterval(checkGoogle), 10000)
-      }
+      if (!input || dropdowns.length === 0) return
+
+      const rect = input.getBoundingClientRect()
+      
+      // Positionner tous les dropdowns (parfois Google en crée plusieurs)
+      dropdowns.forEach((dropdown) => {
+        dropdown.style.top = `${rect.bottom + window.scrollY}px`
+        dropdown.style.left = `${rect.left + window.scrollX}px`
+        dropdown.style.width = `${rect.width}px`
+      })
     }
+
+    // Observer pour détecter l'apparition du dropdown
+    const observer = new MutationObserver(() => {
+      repositionDropdown()
+    })
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    })
+
+    // Repositionner au resize
+    window.addEventListener('resize', repositionDropdown)
 
     return () => {
-      // Cleanup
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current)
-      }
+      observer.disconnect()
+      window.removeEventListener('resize', repositionDropdown)
     }
-  }, [apiKey, onChange, onPlaceSelect])
+  }, [])
 
   return (
-    <input
+    <Autocomplete
       ref={inputRef}
+      apiKey={apiKey}
       id={id}
       name={name}
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      autoComplete="off"
-      className={`
-        w-full px-4 py-2.5 
-        bg-white dark:bg-gray-800 
-        border border-gray-300 dark:border-gray-600 
-        rounded-lg 
-        text-gray-900 dark:text-white
-        placeholder:text-gray-500 dark:placeholder:text-gray-400
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-        disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed
-        transition-colors duration-200
-        ${className}
-      `}
+      defaultValue={value}
+      onPlaceSelected={(place: any) => {
+        if (!place || !place.geometry) return
+        const addressComponents = place.address_components || []
+        const details: PlaceDetails = {
+          formatted_address: place.formatted_address || '',
+          latitude: place.geometry.location?.lat() || 0,
+          longitude: place.geometry.location?.lng() || 0,
+          place_id: place.place_id || '',
+        }
+        addressComponents.forEach((component: any) => {
+          const types = component.types
+          if (types.includes('street_number')) {
+            details.street = component.long_name + ' ' + (details.street || '')
+          } else if (types.includes('route')) {
+            details.street = (details.street || '') + component.long_name
+          } else if (types.includes('locality') || types.includes('postal_town')) {
+            details.city = component.long_name
+          } else if (types.includes('postal_code')) {
+            details.postal_code = component.long_name
+          } else if (types.includes('country')) {
+            details.country = component.long_name
+          }
+        })
+        onChange(details.formatted_address)
+        if (onPlaceSelect) onPlaceSelect(details)
+      }}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+      options={{
+        types: ['address'],
+        fields: ['formatted_address', 'address_components', 'geometry', 'place_id'],
+      }}
+      className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 dark:disabled:bg-gray-900 disabled:cursor-not-allowed transition-colors duration-200"
     />
   )
 }

@@ -8,6 +8,8 @@ import {
   CreateBadgeTemplateDto,
 } from '@/features/badge-templates/api/badgeTemplatesApi'
 import { BadgeTemplateEditor } from '@/components/BadgeTemplates/BadgeTemplateEditor'
+import { useTemplateNameValidation } from '@/features/badge-templates/hooks/useTemplateNameValidation'
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 
 export const BadgeTemplateFormPage = () => {
   const navigate = useNavigate();
@@ -16,9 +18,30 @@ export const BadgeTemplateFormPage = () => {
   const toast = useToast();
 
   // RTK Query hooks
-  const { data: template, isLoading: loadingTemplate } = useGetBadgeTemplateByIdQuery(id!, {
+  const { data: template, isLoading: loadingTemplate, error: templateError } = useGetBadgeTemplateByIdQuery(id!, {
     skip: !isEditMode || !id,
   });
+
+  // Debug logs
+  useEffect(() => {
+    if (isEditMode && id) {
+      console.log('🔍 Edit mode - Template ID:', id);
+      console.log('🔍 Template loading:', loadingTemplate);
+      console.log('🔍 Template data:', template);
+      console.log('🔍 Template error:', templateError);
+    }
+  }, [isEditMode, id, loadingTemplate, template, templateError]);
+
+  // Log détaillé de l'erreur
+  useEffect(() => {
+    if (templateError) {
+      console.error('🚨 Template loading error:', templateError);
+      if ('status' in templateError) {
+        console.error('🚨 Error status:', templateError.status);
+        console.error('🚨 Error data:', templateError.data);
+      }
+    }
+  }, [templateError]);
   const [createTemplate, { isLoading: creating }] = useCreateBadgeTemplateMutation();
   const [updateTemplate, { isLoading: updating }] = useUpdateBadgeTemplateMutation();
 
@@ -27,9 +50,9 @@ export const BadgeTemplateFormPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    width: 400,
-    height: 600,
-    unit: 'px' as 'px' | 'mm' | 'cm' | 'in',
+    width: 96,
+    height: 268,
+    unit: 'mm' as 'px' | 'mm' | 'cm' | 'in',
     event_id: '',
     is_default: false,
   });
@@ -37,6 +60,12 @@ export const BadgeTemplateFormPage = () => {
     html: '',
     css: '',
     components: null as any,
+  });
+
+  // Validation du nom en temps réel
+  const nameValidation = useTemplateNameValidation({
+    name: formData.name,
+    currentTemplateId: isEditMode && id ? id : undefined,
   });
 
   // Conversion des unités vers pixels (pour l'éditeur)
@@ -59,26 +88,45 @@ export const BadgeTemplateFormPage = () => {
   const widthInPixels = convertToPixels(formData.width, formData.unit);
   const heightInPixels = convertToPixels(formData.height, formData.unit);
 
+  // Presets de dimensions pour badges
+  const dimensionPresets = [
+    { name: 'Badge personnalisé (96x268mm)', width: 96, height: 268, unit: 'mm' as const },
+    { name: 'Badge standard (85x54mm)', width: 85, height: 54, unit: 'mm' as const },
+    { name: 'Badge vertical (54x85mm)', width: 54, height: 85, unit: 'mm' as const },
+    { name: 'Badge carré (70x70mm)', width: 70, height: 70, unit: 'mm' as const },
+    { name: 'Badge large (100x70mm)', width: 100, height: 70, unit: 'mm' as const },
+  ];
+
+  const applyPreset = (preset: typeof dimensionPresets[0]) => {
+    setFormData(prev => ({
+      ...prev,
+      width: preset.width,
+      height: preset.height,
+      unit: preset.unit,
+    }));
+  };
+
   // Charger le template si mode édition
   useEffect(() => {
-    if (template) {
+    if (template && isEditMode) {
+      console.log('🔍 Loading template data:', template);
       setFormData({
-        name: template.name,
+        name: template.name || '',
         description: template.description || '',
-        width: template.width,
-        height: template.height,
+        width: template.width || 400,
+        height: template.height || 600,
         unit: 'px',
         event_id: template.event_id || '',
-        is_default: template.is_default,
+        is_default: template.is_default || false,
       });
 
       setEditorData({
         html: template.html || '',
         css: template.css || '',
-        components: template.template_data,
+        components: template.template_data || null,
       });
     }
-  }, [template]);
+  }, [template, isEditMode]);
 
   const handleEditorChange = (data: { html: string; css: string; components: any }) => {
     setEditorData(data);
@@ -90,6 +138,23 @@ export const BadgeTemplateFormPage = () => {
       return;
     }
 
+    // Vérifier la disponibilité du nom
+    if (nameValidation.isAvailable === false) {
+      toast.error('Nom indisponible', 'Ce nom de template est déjà utilisé');
+      return;
+    }
+
+    // Vérifier les limites de dimensions
+    if (widthInPixels > 5000) {
+      toast.error('Dimension invalide', 'La largeur ne peut pas dépasser 5000 pixels');
+      return;
+    }
+    
+    if (heightInPixels > 5000) {
+      toast.error('Dimension invalide', 'La hauteur ne peut pas dépasser 5000 pixels');
+      return;
+    }
+
     const templateData: any = {
       name: formData.name,
       ...(formData.description && { description: formData.description }),
@@ -97,7 +162,7 @@ export const BadgeTemplateFormPage = () => {
       css: editorData.css,
       width: widthInPixels,
       height: heightInPixels,
-      template_data: editorData.components,
+      template_data: editorData.components || {},
       ...(formData.event_id && { event_id: formData.event_id }),
       is_default: formData.is_default,
     };
@@ -168,13 +233,49 @@ export const BadgeTemplateFormPage = () => {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nom du template *
             </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ex: Badge Participant Standard"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: Badge Participant Standard"
+                className={`w-full px-3 py-2 pr-10 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  nameValidation.shouldShowValidation
+                    ? nameValidation.isAvailable === false
+                      ? 'border-red-300 dark:border-red-600'
+                      : nameValidation.isAvailable === true
+                      ? 'border-green-300 dark:border-green-600'
+                      : 'border-gray-300 dark:border-gray-600'
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
+              />
+              {nameValidation.shouldShowValidation && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  {nameValidation.isChecking ? (
+                    <Loader2 className="h-4 w-4 text-gray-400 animate-spin" />
+                  ) : nameValidation.isAvailable === true ? (
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  ) : nameValidation.isAvailable === false ? (
+                    <XCircle className="h-4 w-4 text-red-500" />
+                  ) : null}
+                </div>
+              )}
+            </div>
+            {nameValidation.shouldShowValidation && nameValidation.isAvailable === false && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                Ce nom de template est déjà utilisé
+              </p>
+            )}
+            {nameValidation.shouldShowValidation && nameValidation.isAvailable === true && (
+              <p className="mt-1 text-sm text-green-600 dark:text-green-400">
+                Ce nom est disponible
+              </p>
+            )}
+            {nameValidation.error && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                {nameValidation.error}
+              </p>
+            )}
           </div>
 
           <div>
@@ -190,6 +291,34 @@ export const BadgeTemplateFormPage = () => {
             />
           </div>
 
+          {/* Presets de dimensions courantes */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Dimensions prédéfinies
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {dimensionPresets.map((preset, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => applyPreset(preset)}
+                  className={`px-3 py-2 text-xs border rounded-lg transition-colors ${
+                    formData.width === preset.width && 
+                    formData.height === preset.height && 
+                    formData.unit === preset.unit
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  }`}
+                >
+                  {preset.name.split('(')[0]?.trim()}<br />
+                  <span className="text-gray-500 dark:text-gray-400">
+                    ({preset.width}×{preset.height}{preset.unit})
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -201,8 +330,17 @@ export const BadgeTemplateFormPage = () => {
                 onChange={(e) => setFormData({ ...formData, width: parseFloat(e.target.value) || 400 })}
                 step="0.1"
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  widthInPixels > 5000 
+                    ? 'border-red-300 dark:border-red-600' 
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
               />
+              {widthInPixels > 5000 && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                  Max 5000px ({widthInPixels}px)
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -214,8 +352,17 @@ export const BadgeTemplateFormPage = () => {
                 onChange={(e) => setFormData({ ...formData, height: parseFloat(e.target.value) || 600 })}
                 step="0.1"
                 min="0"
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200"
+                className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 ${
+                  heightInPixels > 5000 
+                    ? 'border-red-300 dark:border-red-600' 
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
               />
+              {heightInPixels > 5000 && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                  Max 5000px ({heightInPixels}px)
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

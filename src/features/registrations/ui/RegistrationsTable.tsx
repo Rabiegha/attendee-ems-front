@@ -14,6 +14,7 @@ import {
   RefreshCw,
   CreditCard,
   QrCode,
+  Award,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button } from '@/shared/ui/Button'
@@ -31,6 +32,7 @@ import { useToast } from '@/shared/hooks/useToast'
 import { EditRegistrationModal } from './EditRegistrationModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { QrCodeModal } from './QrCodeModal'
+import { BadgeDownloadModal } from './BadgeDownloadModal'
 import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
 import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
 import {
@@ -97,6 +99,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [deletingRegistration, setDeletingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [qrCodeRegistration, setQrCodeRegistration] =
+    useState<RegistrationDPO | null>(null)
+  const [badgeDownloadRegistration, setBadgeDownloadRegistration] =
     useState<RegistrationDPO | null>(null)
   const toast = useToast()
   const navigate = useNavigate()
@@ -470,6 +474,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                   <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     QR Code
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Badge
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
                   </th>
@@ -574,6 +581,18 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                           <QrCode className="h-5 w-5" />
                         </button>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setBadgeDownloadRegistration(registration)
+                          }}
+                          className="inline-flex items-center justify-center p-2 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
+                          title="Télécharger le badge"
+                        >
+                          <Award className="h-5 w-5" />
+                        </button>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-1">
                           {registration.status === 'awaiting' && (
@@ -660,6 +679,15 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           isOpen={!!qrCodeRegistration}
           onClose={() => setQrCodeRegistration(null)}
           registration={qrCodeRegistration}
+        />
+      )}
+
+      {badgeDownloadRegistration && (
+        <BadgeDownloadModal
+          isOpen={!!badgeDownloadRegistration}
+          onClose={() => setBadgeDownloadRegistration(null)}
+          registration={badgeDownloadRegistration}
+          eventId={eventId}
         />
       )}
     </div>

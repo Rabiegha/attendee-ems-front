@@ -311,6 +311,17 @@ export const registrationsApi = rootApi.injectEndpoints({
         { type: 'Attendee', id: `EVENT-${eventId}` },
       ],
     }),
+
+    downloadBadge: builder.mutation<
+      Blob,
+      { eventId: string; registrationId: string; format: 'pdf' | 'html' | 'image' }
+    >({
+      query: ({ eventId, registrationId, format }) => ({
+        url: `/events/${eventId}/registrations/${registrationId}/badge/download?format=${format}`,
+        method: 'GET',
+        responseHandler: (response) => response.blob(),
+      }),
+    }),
   }),
   overrideExisting: false,
 })
@@ -329,4 +340,5 @@ export const {
   useGenerateBadgesForEventMutation,
   useGenerateBadgesBulkMutation,
   useGenerateBadgeMutation,
+  useDownloadBadgeMutation,
 } = registrationsApi

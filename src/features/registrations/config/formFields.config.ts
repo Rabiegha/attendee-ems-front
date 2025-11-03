@@ -11,6 +11,7 @@ export type FieldType =
   | 'select' // Liste déroulante
   | 'country' // Sélecteur de pays
   | 'attendee_type' // Type de participant (Staff, Partenaire, Invité...)
+  | 'checkbox' // Case à cocher (RGPD, consentements)
 
 export interface FormFieldConfig {
   // Identifiants
@@ -36,6 +37,7 @@ export interface FormFieldConfig {
   visibleInAttendeeTable?: boolean // Affiché dans la table des participants ?
   visibleInExport?: boolean // Inclus dans les exports Excel ?
   adminOnly?: boolean // Modifiable uniquement par admin ?
+  isSystemField?: boolean // Champ système non supprimable (RGPD)
 
   // Mapping base de données
   attendeeField?: string // Champ de la table attendees

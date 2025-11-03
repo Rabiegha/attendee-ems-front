@@ -26,7 +26,7 @@ const PublicRegistration: React.FC = () => {
   const [event, setEvent] = useState<EventSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [formData, setFormData] = useState<Record<string, string>>({})
+  const [formData, setFormData] = useState<Record<string, string | boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
 
@@ -82,7 +82,7 @@ const PublicRegistration: React.FC = () => {
     }
   }, [event?.is_dark_mode])
 
-  const handleInputChange = (fieldId: string, value: string) => {
+  const handleInputChange = (fieldId: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }))
   }
 
@@ -115,6 +115,11 @@ const PublicRegistration: React.FC = () => {
           answers[field.key] = value
         }
       })
+
+      // Ajouter le consentement RGPD dans les réponses
+      if (formData.gdpr_consent) {
+        answers.gdpr_consent = true
+      }
 
       // Email est requis
       if (!attendee.email) {
@@ -194,13 +199,14 @@ const PublicRegistration: React.FC = () => {
 
   const renderField = (field: any, disabled = false) => {
     const value = formData[field.id] || ''
+    const stringValue = typeof value === 'boolean' ? '' : value
     const baseClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
 
     switch (field.type) {
       case 'textarea':
         return (
           <textarea
-            value={value}
+            value={stringValue}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             placeholder={field.placeholder}
             required={field.required}
@@ -212,7 +218,7 @@ const PublicRegistration: React.FC = () => {
       case 'select':
         return (
           <select
-            value={value}
+            value={stringValue}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             required={field.required}
             disabled={disabled}
@@ -232,7 +238,7 @@ const PublicRegistration: React.FC = () => {
         return (
           <input
             type={field.type}
-            value={value}
+            value={stringValue}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             placeholder={field.placeholder}
             required={field.required}
@@ -368,6 +374,37 @@ const PublicRegistration: React.FC = () => {
                         </div>
                       )
                     })}
+                  </div>
+
+                  {/* RGPD Consent - Affiché automatiquement en bas de tous les formulaires */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={!!formData.gdpr_consent}
+                        onChange={(e) => handleInputChange('gdpr_consent', e.target.checked)}
+                        required
+                        disabled={
+                          event.status === 'draft' ||
+                          event.status === 'cancelled' ||
+                          event.status === 'registration_closed' ||
+                          event.status === 'archived'
+                        }
+                        className="mt-1 w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                        J'accepte la{' '}
+                        <a
+                          href="/privacy-policy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 font-medium"
+                        >
+                          Politique de Confidentialité
+                        </a>
+                        <span className="text-red-500 ml-1">*</span>
+                      </span>
+                    </label>
                   </div>
 
                   <div className="pt-4">

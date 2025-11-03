@@ -13,6 +13,7 @@ import {
   MessageSquare,
   List,
   Users,
+  ShieldCheck,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { FormFieldConfig } from '@/features/registrations/config/formFields.config'
@@ -20,7 +21,7 @@ import type { FormFieldConfig } from '@/features/registrations/config/formFields
 export interface PredefinedFieldTemplate extends FormFieldConfig {
   id: string
   icon: LucideIcon
-  category: 'identity' | 'contact' | 'professional' | 'event' | 'custom'
+  category: 'identity' | 'contact' | 'professional' | 'event' | 'custom' | 'legal'
   description: string
 }
 
@@ -217,6 +218,25 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
     visibleInAdminForm: true,
     visibleInAttendeeTable: false,
     visibleInExport: true,
+  },
+
+  // ===== CATÉGORIE : RGPD (OBLIGATOIRE ET NON SUPPRIMABLE) =====
+  {
+    id: 'gdpr_consent',
+    key: 'gdpr_consent',
+    label: "J'accepte la politique de confidentialité",
+    placeholder: '',
+    type: 'checkbox',
+    icon: ShieldCheck,
+    category: 'legal',
+    description: "Consentement RGPD obligatoire - Ce champ ne peut pas être supprimé",
+    required: true,
+    storeInAnswers: true,
+    visibleInPublicForm: true,
+    visibleInAdminForm: false,
+    visibleInAttendeeTable: false,
+    visibleInExport: true,
+    isSystemField: true, // Champ système non supprimable
   },
 ]
 

@@ -28,6 +28,7 @@ import { AuthRecoveryPage } from '@/pages/AuthRecovery'
 import PublicRegistration from '@/pages/PublicRegistration'
 import { BadgeTemplatesListPage } from '@/pages/BadgeTemplates/BadgeTemplatesListPage'
 import { BadgeTemplateFormPage } from '@/pages/BadgeTemplates/BadgeTemplateFormPage'
+import { PrivacyPolicyPage } from '@/pages/PrivacyPolicy'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -199,6 +200,10 @@ export const router = createBrowserRouter([
   {
     path: '/register/:token',
     element: <PublicRegistration />,
+  },
+  {
+    path: '/privacy-policy',
+    element: <PrivacyPolicyPage />,
   },
   {
     path: '/403',

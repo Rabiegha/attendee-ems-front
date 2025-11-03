@@ -304,28 +304,51 @@ export const BadgeTemplateEditor = ({
     // GrapesJS les cache par défaut, on doit override leur CSS
     setTimeout(() => {
       const style = document.createElement('style');
+      style.id = 'force-number-spinners';
       style.textContent = `
-        input[type="number"]::-webkit-inner-spin-button,
-        input[type="number"]::-webkit-outer-spin-button {
+        /* FORCE SPINNERS - APPROCHE RADICALE */
+        * input[type="number"],
+        body input[type="number"],
+        html input[type="number"],
+        #gjs-editor input[type="number"],
+        .gjs-field[type="number"],
+        .gjs-sm-property input[type="number"] {
+          -webkit-appearance: auto !important;
+          -moz-appearance: number-input !important;
+        }
+        
+        * input[type="number"]::-webkit-inner-spin-button,
+        * input[type="number"]::-webkit-outer-spin-button,
+        body input[type="number"]::-webkit-inner-spin-button,
+        body input[type="number"]::-webkit-outer-spin-button,
+        html input[type="number"]::-webkit-inner-spin-button,
+        html input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: auto !important;
           opacity: 1 !important;
-          position: static !important;
+          display: inline-block !important;
+          position: relative !important;
           width: auto !important;
-          height: auto !important;
+          height: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
         }
-        input[type="number"] {
-          -moz-appearance: textfield;
-        }
-        input[type="number"]::-webkit-inner-spin-button {
-          -webkit-appearance: inner-spin-button;
-          display: inline-block;
-        }
-        input[type="number"]::-webkit-outer-spin-button {
-          -webkit-appearance: inner-spin-button; 
-          display: inline-block;
+        
+        /* Annuler TOUS les styles GrapesJS */
+        .gjs-field::-webkit-inner-spin-button,
+        .gjs-field::-webkit-outer-spin-button {
+          all: unset !important;
+          -webkit-appearance: auto !important;
+          opacity: 1 !important;
+          display: inline-block !important;
         }
       `;
+      
+      // Supprimer l'ancien s'il existe
+      const oldStyle = document.getElementById('force-number-spinners');
+      if (oldStyle) oldStyle.remove();
+      
       document.head.appendChild(style);
-    }, 500);
+    }, 100);
 
     // Commandes personnalisées pour zoom et rotation - pas besoin, on utilise les boutons React
 
@@ -335,7 +358,7 @@ export const BadgeTemplateEditor = ({
         onChange({
           html: editor.getHtml(),
           css: editor.getCss() || '',
-          components: editor.getComponents(),
+          components: editor.getComponents().toJSON(),
         });
       }
     });
@@ -345,7 +368,7 @@ export const BadgeTemplateEditor = ({
         onChange({
           html: editor.getHtml(),
           css: editor.getCss() || '',
-          components: editor.getComponents(),
+          components: editor.getComponents().toJSON(),
         });
       }
     });
@@ -431,24 +454,49 @@ export const BadgeTemplateEditor = ({
           overflow: hidden;
         }
         
-        /* Élargir les panneaux latéraux */
+        /* Élargir les panneaux latéraux - largeur optimale */
         .gjs-pn-views-container {
-          width: 350px !important;
+          width: 320px !important;
+          min-width: 320px !important;
         }
         
         .gjs-pn-views {
-          width: 350px !important;
+          width: 320px !important;
+          min-width: 320px !important;
         }
         
         /* Panel de gauche (blocs) */
         .gjs-blocks-cs {
-          width: 280px !important;
+          width: 260px !important;
+          min-width: 260px !important;
         }
         
-        /* Plus d'espace pour les inputs */
+        /* BEAUCOUP plus d'espace pour les inputs */
         .gjs-sm-property .gjs-field,
         .gjs-sm-property .gjs-select {
-          min-width: 100px !important;
+          min-width: 150px !important;
+          width: 100% !important;
+        }
+        
+        /* Force les inputs à prendre toute la largeur disponible */
+        .gjs-sm-property__field {
+          flex: 1 !important;
+          min-width: 150px !important;
+        }
+        
+        /* Inputs number doivent ABSOLUMENT avoir des spinners */
+        input[type="number"] {
+          -webkit-appearance: auto !important;
+          -moz-appearance: auto !important;
+        }
+        
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: auto !important;
+          display: block !important;
+          opacity: 1 !important;
+          margin: 0 !important;
+          height: 100% !important;
         }
         
         /* Force scroll on canvas */

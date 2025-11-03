@@ -74,7 +74,19 @@ export const badgeTemplatesApi = rootApi.injectEndpoints({
         if (params.search) searchParams.append('search', params.search);
         return `/badge-templates?${searchParams.toString()}`;
       },
-      transformResponse: (response: { data: BadgeTemplate[] }) => response.data,
+      transformResponse: (response: any) => {
+        console.log('🔍 Badge templates response:', response);
+        // Si la réponse a déjà un wrapper { data: [...] }
+        if (response?.data && Array.isArray(response.data)) {
+          return response.data;
+        }
+        // Sinon, c'est directement un array
+        if (Array.isArray(response)) {
+          return response;
+        }
+        // Fallback
+        return [];
+      },
       providesTags: (result) =>
         result
           ? [

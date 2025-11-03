@@ -13,7 +13,7 @@ export interface RegistrationDPO {
   confirmedAt?: string | null
   createdAt: string // Date d'inscription
   updatedAt: string
-  source?: 'public_form' | 'test_form' | 'manual' | 'import'
+  source: 'public_form' | 'test_form' | 'manual' | 'import'
   
   // Snapshot fields (données figées au moment de l'inscription)
   snapshot_first_name?: string | null
@@ -23,6 +23,10 @@ export interface RegistrationDPO {
   snapshot_company?: string | null
   snapshot_job_title?: string | null
   snapshot_country?: string | null
+  
+  // Badge URLs (générés par le backend)
+  badgePdfUrl?: string | null
+  badgeImageUrl?: string | null
   
   // Check-in tracking
   checkedInAt?: string | null // ISO date

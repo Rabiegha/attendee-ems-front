@@ -24,6 +24,10 @@ export interface RegistrationDTO {
   snapshot_job_title?: string | null
   snapshot_country?: string | null
   
+  // Badge URLs (générés par le backend)
+  badge_pdf_url?: string | null
+  badge_image_url?: string | null
+  
   // Check-in tracking
   checked_in_at?: string | null // ISO date
   checked_in_by?: string | null // User ID

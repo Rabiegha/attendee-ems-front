@@ -97,8 +97,25 @@ export const badgeTemplatesApi = rootApi.injectEndpoints({
     }),
 
     getBadgeTemplateById: builder.query<BadgeTemplate, string>({
-      query: (id) => `/badge-templates/${id}`,
-      transformResponse: (response: { data: BadgeTemplate }) => response.data,
+      query: (id) => {
+        console.log('🔍 Making request for template ID:', id);
+        return `/badge-templates/${id}`;
+      },
+      transformResponse: (response: any) => {
+        console.log('🔍 getBadgeTemplateById raw response:', response);
+        // Si la réponse a déjà un wrapper { data: ... }
+        if (response?.data) {
+          console.log('🔍 Using response.data:', response.data);
+          return response.data;
+        }
+        // Sinon, c'est directement le BadgeTemplate
+        console.log('🔍 Using response directly:', response);
+        return response;
+      },
+      transformErrorResponse: (response: any) => {
+        console.error('🚨 getBadgeTemplateById error response:', response);
+        return response;
+      },
       providesTags: (_result, _error, id) => [{ type: 'BadgeTemplate', id }],
     }),
 

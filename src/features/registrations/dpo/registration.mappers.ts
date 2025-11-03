@@ -16,16 +16,20 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     confirmedAt: dto.confirmed_at || null,
     createdAt: dto.created_at, // Date d'inscription réelle
     updatedAt: dto.updated_at,
-    source: dto.source,
+    source: dto.source || 'public_form',
     
     // Snapshot fields
-    snapshot_first_name: dto.snapshot_first_name,
-    snapshot_last_name: dto.snapshot_last_name,
-    snapshot_email: dto.snapshot_email,
-    snapshot_phone: dto.snapshot_phone,
-    snapshot_company: dto.snapshot_company,
-    snapshot_job_title: dto.snapshot_job_title,
-    snapshot_country: dto.snapshot_country,
+    snapshot_first_name: dto.snapshot_first_name || null,
+    snapshot_last_name: dto.snapshot_last_name || null,
+    snapshot_email: dto.snapshot_email || null,
+    snapshot_phone: dto.snapshot_phone || null,
+    snapshot_company: dto.snapshot_company || null,
+    snapshot_job_title: dto.snapshot_job_title || null,
+    snapshot_country: dto.snapshot_country || null,
+    
+    // Badge URLs
+    badgePdfUrl: dto.badge_pdf_url || null,
+    badgeImageUrl: dto.badge_image_url || null,
     
     // Check-in tracking
     checkedInAt: dto.checked_in_at || null,

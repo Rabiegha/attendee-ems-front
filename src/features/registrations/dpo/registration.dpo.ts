@@ -24,6 +24,14 @@ export interface RegistrationDPO {
   snapshot_job_title?: string | null
   snapshot_country?: string | null
   
+  // Check-in tracking
+  checkedInAt?: string | null // ISO date
+  checkedInBy?: string | null // User ID
+  checkinLocation?: {
+    lat: number
+    lng: number
+  } | null
+  
   attendee?: {
     id: string
     firstName: string

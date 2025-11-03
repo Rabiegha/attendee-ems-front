@@ -503,13 +503,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ✅ Tous les champs prédéfinis ont été ajoutés
           </div>
         )}
-        
-        {/* Info message */}
-        <div className="mt-3 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <p className="text-xs text-blue-800 dark:text-blue-200">
-            💡 <strong>Astuce :</strong> Chaque champ ne peut être ajouté qu'une seule fois. Une fois ajouté, il disparaît de la liste.
-          </p>
-        </div>
       </div>
 
       {/* Field List */}

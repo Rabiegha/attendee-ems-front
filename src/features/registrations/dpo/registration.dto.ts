@@ -24,6 +24,14 @@ export interface RegistrationDTO {
   snapshot_job_title?: string | null
   snapshot_country?: string | null
   
+  // Check-in tracking
+  checked_in_at?: string | null // ISO date
+  checked_in_by?: string | null // User ID
+  checkin_location?: {
+    lat: number
+    lng: number
+  } | null
+  
   attendee?: {
     id: string
     first_name: string

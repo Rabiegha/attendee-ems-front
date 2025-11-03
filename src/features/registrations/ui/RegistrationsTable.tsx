@@ -13,6 +13,7 @@ import {
   Building2,
   RefreshCw,
   CreditCard,
+  QrCode,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button } from '@/shared/ui/Button'
@@ -29,6 +30,7 @@ import {
 import { useToast } from '@/shared/hooks/useToast'
 import { EditRegistrationModal } from './EditRegistrationModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
+import { QrCodeModal } from './QrCodeModal'
 import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
 import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
 import {
@@ -89,9 +91,12 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [checkinFilter, setCheckinFilter] = useState<string>('all') // 'all' | 'checked' | 'not_checked'
   const [editingRegistration, setEditingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [deletingRegistration, setDeletingRegistration] =
+    useState<RegistrationDPO | null>(null)
+  const [qrCodeRegistration, setQrCodeRegistration] =
     useState<RegistrationDPO | null>(null)
   const toast = useToast()
   const navigate = useNavigate()
@@ -186,7 +191,12 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
     const matchesStatus = statusFilter === 'all' || reg.status === statusFilter
 
-    return matchesSearch && matchesStatus
+    const matchesCheckin = 
+      checkinFilter === 'all' ||
+      (checkinFilter === 'checked' && reg.checkedInAt) ||
+      (checkinFilter === 'not_checked' && !reg.checkedInAt)
+
+    return matchesSearch && matchesStatus && matchesCheckin
   })
 
   // Multi-select functionality
@@ -330,6 +340,20 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             </select>
           </div>
 
+          {/* Filtre Check-in */}
+          <div className="relative">
+            <CheckCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
+            <select
+              value={checkinFilter}
+              onChange={(e) => setCheckinFilter(e.target.value)}
+              className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-colors"
+            >
+              <option value="all">Tous les check-ins</option>
+              <option value="checked">Enregistrés</option>
+              <option value="not_checked">Non enregistrés</option>
+            </select>
+          </div>
+
           {onRefresh && (
             <Button
               variant="outline"
@@ -438,7 +462,13 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                     Statut
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Check-in
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Date d'inscription
+                  </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    QR Code
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
@@ -507,8 +537,42 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                           {STATUS_CONFIG[registration.status].label}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {registration.checkedInAt ? (
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                            <div className="text-xs text-gray-600 dark:text-gray-400">
+                              {new Date(registration.checkedInAt).toLocaleDateString('fr-FR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <XCircle className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                            <span className="text-xs text-gray-500 dark:text-gray-500">
+                              Pas encore
+                            </span>
+                          </div>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {formatDateTime(registration.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setQrCodeRegistration(registration)
+                          }}
+                          className="inline-flex items-center justify-center p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                          title="Voir QR Code"
+                        >
+                          <QrCode className="h-5 w-5" />
+                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -588,6 +652,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           onConfirm={handleDelete}
           isLoading={isUpdating}
           attendeeName={`${deletingRegistration.attendee?.firstName} ${deletingRegistration.attendee?.lastName}`}
+        />
+      )}
+
+      {qrCodeRegistration && (
+        <QrCodeModal
+          isOpen={!!qrCodeRegistration}
+          onClose={() => setQrCodeRegistration(null)}
+          registration={qrCodeRegistration}
         />
       )}
     </div>

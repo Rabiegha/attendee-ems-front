@@ -73,6 +73,9 @@ export const EventDetails: React.FC = () => {
   const [registrationsPage, setRegistrationsPage] = useState(1)
   const [registrationsPageSize, setRegistrationsPageSize] = useState(50)
 
+  // ⏰ POLLING AUTO - Refresh toutes les 5 secondes
+  const [pollingInterval, setPollingInterval] = useState(5000)
+
   const {
     data: event,
     isLoading: eventLoading,
@@ -309,7 +312,11 @@ export const EventDetails: React.FC = () => {
           page: registrationsPage,
           limit: registrationsPageSize,
         }
-      : skipToken
+      : skipToken,
+    {
+      // ⏰ POLLING AUTO - Refresh toutes les 5 secondes
+      pollingInterval: activeTab === 'registrations' ? pollingInterval : 0,
+    }
   )
 
   // Hook séparé pour récupérer tous les IDs lors de l'export (avec limite haute)

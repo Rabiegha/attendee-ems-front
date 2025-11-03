@@ -26,6 +26,11 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     snapshot_company: dto.snapshot_company,
     snapshot_job_title: dto.snapshot_job_title,
     snapshot_country: dto.snapshot_country,
+    
+    // Check-in tracking
+    checkedInAt: dto.checked_in_at || null,
+    checkedInBy: dto.checked_in_by || null,
+    checkinLocation: dto.checkin_location || null,
   }
 
   if (dto.attendee) {

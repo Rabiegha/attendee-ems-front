@@ -25,6 +25,7 @@
   "navigation": {
     "dashboard": "Tableau de bord",
     "events": "Événements",
+    "badge_templates": "Templates de badges",
     "attendees": "Participants",
     "users": "Utilisateurs",
     "roles_permissions": "Rôles & Permissions",

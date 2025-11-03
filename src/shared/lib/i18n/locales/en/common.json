@@ -24,6 +24,7 @@
   "navigation": {
     "dashboard": "Dashboard",
     "events": "Events",
+    "badge_templates": "Badge Templates",
     "attendees": "Attendees",
     "users": "Users",
     "roles_permissions": "Roles & Permissions",

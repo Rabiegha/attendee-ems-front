@@ -101,6 +101,7 @@ export function mapPermissionsToCASlRules(
       analytics: 'Analytics',
       registrations: 'Registration',
       permissions: 'Permission',
+      'badge-templates': 'BadgeTemplate',
     }
 
     const subject = subjectMap[resource] || resource

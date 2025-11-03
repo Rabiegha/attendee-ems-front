@@ -11,6 +11,7 @@ import {
   Settings,
   Mail,
   Building2,
+  CreditCard,
 } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
@@ -36,6 +37,13 @@ const navigation = [
     icon: Calendar,
     action: 'read' as const,
     subject: 'Event' as const,
+  },
+  {
+    name: 'navigation.badge_templates',
+    href: '/admin/badge-templates',
+    icon: CreditCard,
+    action: 'read' as const,
+    subject: 'BadgeTemplate' as const,
   },
   {
     name: 'navigation.attendees',

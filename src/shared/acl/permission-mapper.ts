@@ -18,6 +18,9 @@ export function mapPermissionsToCASlRules(
   orgId: string
 ): AppRule[] {
   const rules: AppRule[] = []
+  
+  // Track which resources have full CRUD permissions by scope
+  const resourcePermissions: Record<string, Record<string, Set<string>>> = {}
 
   permissions.forEach((permission) => {
     // Parse permission format: "resource.action:scope"
@@ -46,6 +49,15 @@ export function mapPermissionsToCASlRules(
       )
       return
     }
+    
+    // Track CRUD permissions for auto-manage detection
+    if (!resourcePermissions[resource]) {
+      resourcePermissions[resource] = {}
+    }
+    if (!resourcePermissions[resource][scope]) {
+      resourcePermissions[resource][scope] = new Set()
+    }
+    resourcePermissions[resource][scope].add(action)
 
     // Map actions to CASL actions
     let caslActions: string[] = []
@@ -64,6 +76,7 @@ export function mapPermissionsToCASlRules(
         break
       case 'manage':
         caslActions = ['manage'] // CASL 'manage' = all actions
+        console.log(`[PermissionMapper] Direct manage permission: ${resource}.${action}:${scope}`)
         break
       case 'publish':
         caslActions = ['publish'] // Custom action
@@ -101,7 +114,7 @@ export function mapPermissionsToCASlRules(
       analytics: 'Analytics',
       registrations: 'Registration',
       permissions: 'Permission',
-      'badge-templates': 'BadgeTemplate',
+      badges: 'Badge',
     }
 
     const subject = subjectMap[resource] || resource
@@ -149,6 +162,56 @@ export function mapPermissionsToCASlRules(
       }
 
       rules.push(rule)
+    })
+  })
+  
+  // Auto-grant 'manage' if user has all CRUD permissions (read, create, update, delete)
+  Object.entries(resourcePermissions).forEach(([resource, scopes]) => {
+    Object.entries(scopes).forEach(([scope, actions]) => {
+      const hasCRUD = ['read', 'create', 'update', 'delete'].every(action => 
+        actions.has(action)
+      )
+      
+      if (hasCRUD) {
+        const subjectMap: Record<string, string> = {
+          users: 'User',
+          roles: 'Role',
+          events: 'Event',
+          attendees: 'Attendee',
+          organizations: 'Organization',
+          invitations: 'Invitation',
+          analytics: 'Analytics',
+          registrations: 'Registration',
+          permissions: 'Permission',
+          badges: 'Badge',
+        }
+        
+        const subject = subjectMap[resource] || resource
+        
+        let conditions: any = {}
+        if (scope === 'org') {
+          conditions = { org_id: orgId }
+        } else if (scope === 'own') {
+          if (resource === 'users') {
+            conditions = { id: userId }
+          } else {
+            conditions = { user_id: userId }
+          }
+        }
+        
+        const manageRule: AppRule = {
+          action: 'manage' as Actions,
+          subject: subject as Subjects,
+        }
+        
+        if (Object.keys(conditions).length > 0) {
+          manageRule.conditions = conditions
+        }
+        
+        rules.push(manageRule)
+        
+        console.log(`[PermissionMapper] Auto-granted 'manage' permission for ${subject} (scope: ${scope})`)
+      }
     })
   })
 

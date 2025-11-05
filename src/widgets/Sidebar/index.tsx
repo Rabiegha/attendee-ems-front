@@ -17,6 +17,11 @@ import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
 import { cn } from '@/shared/lib/utils'
 
+interface SidebarProps {
+  isOpen: boolean
+  onToggle: () => void
+}
+
 const navigation = [
   {
     name: 'navigation.dashboard',
@@ -39,11 +44,11 @@ const navigation = [
     subject: 'Event' as const,
   },
   {
-    name: 'navigation.badge_templates',
-    href: '/admin/badge-templates',
+    name: 'navigation.badge_designer',
+    href: '/badges',
     icon: CreditCard,
-    action: 'read' as const,
-    subject: 'BadgeTemplate' as const,
+    action: 'manage' as const,
+    subject: 'Badge' as const,
   },
   {
     name: 'navigation.attendees',
@@ -89,13 +94,49 @@ const navigation = [
   },
 ]
 
-export const Sidebar: React.FC = () => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const { t } = useTranslation('common')
 
   return (
-    <aside className="fixed top-20 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen transition-colors duration-200">
-      <nav className="mt-8 px-4 overflow-y-auto h-full pb-20">
-        <ul className="space-y-2">
+    <aside
+      className={cn(
+        'fixed left-0 z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen transition-all duration-300 overflow-hidden',
+        isOpen ? 'w-64' : 'w-12'
+      )}
+      style={{ top: '69px' }}
+    >
+      {/* Bouton chevrons en haut de la sidebar */}
+      <div className="flex items-center justify-end h-12 border-b border-gray-200 dark:border-gray-700 px-2">
+        <button
+          onClick={onToggle}
+          className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300"
+          aria-label="Toggle sidebar"
+        >
+          <svg
+            className={cn(
+              "w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-300",
+              isOpen ? "rotate-0" : "rotate-180"
+            )}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            {/* Chevrons doubles pointant vers la gauche */}
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M11 19l-7-7 7-7M19 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <nav className="px-2 overflow-y-auto pb-20">
+        <ul className={cn(
+          "space-y-2 transition-all duration-300 pt-4",
+          isOpen ? "opacity-100 delay-150" : "opacity-0"
+        )}>
           {navigation.map((item) => {
             // Dashboard accessible à tous sans guard
             if (!item.action || !item.subject) {
@@ -105,15 +146,20 @@ export const Sidebar: React.FC = () => {
                     to={item.href}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                        'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors relative overflow-hidden',
                         isActive
                           ? 'bg-blue-600 text-white dark:bg-blue-700'
                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                       )
                     }
                   >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {t(item.name)}
+                    <item.icon className={cn("h-5 w-5 flex-shrink-0", isOpen ? "mr-3" : "mr-0")} />
+                    <span className={cn(
+                      "transition-all duration-300 whitespace-nowrap",
+                      isOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                    )}>
+                      {t(item.name)}
+                    </span>
                   </NavLink>
                 </li>
               )
@@ -127,15 +173,20 @@ export const Sidebar: React.FC = () => {
                     to={item.href}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                        'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors relative overflow-hidden',
                         isActive
                           ? 'bg-blue-600 text-white dark:bg-blue-700'
                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                       )
                     }
                   >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {t(item.name)}
+                    <item.icon className={cn("h-5 w-5 flex-shrink-0", isOpen ? "mr-3" : "mr-0")} />
+                    <span className={cn(
+                      "transition-all duration-300 whitespace-nowrap",
+                      isOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                    )}>
+                      {t(item.name)}
+                    </span>
                   </NavLink>
                 </li>
               </Can>

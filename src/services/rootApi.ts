@@ -101,8 +101,8 @@ export const rootApi = createApi({
     'Signup',
     'Organizations',
     'Tags',
-    'BadgeTemplates',
-    'BadgeTemplate',
+    'Badges',
+    'Badge',
   ],
   // Pas d'endpoints ici, ils seront injectés par chaque feature
   endpoints: () => ({}),

@@ -27,7 +27,6 @@ export type Subjects =
   | 'Attendee'
   | 'User'
   | 'Badge'
-  | 'BadgeTemplate'
   | 'Scan'
   | 'Report'
   | 'Settings'

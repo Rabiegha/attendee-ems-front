@@ -118,12 +118,6 @@ export const Dashboard: React.FC = () => {
                               <Mail className="h-4 w-4 mr-1" />
                               {attendee.email}
                             </div>
-                            {attendee.company && (
-                              <div className="flex items-center">
-                                <Building2 className="h-4 w-4 mr-1" />
-                                {attendee.company}
-                              </div>
-                            )}
                             {attendee.createdAt && (
                               <div className="flex items-center">
                                 <Calendar className="h-4 w-4 mr-1" />

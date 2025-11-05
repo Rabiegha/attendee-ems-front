@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import {
@@ -18,6 +18,9 @@ export const RootLayout: React.FC = () => {
   const isBootstrapping = useSelector(selectIsBootstrapping)
   const user = useSelector((state: any) => state.session.user)
   const token = useSelector((state: any) => state.session.token)
+  
+  // State pour gérer l'ouverture/fermeture de la sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   // Protection anti-boucle : compter les redirections
   const redirectCountRef = useRef(0)
@@ -126,8 +129,8 @@ export const RootLayout: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Header />
       <div className="flex">
-        <Sidebar />
-        <main className="flex-1 ml-64 pt-20 p-6">
+        <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <main className={`flex-1 pt-20 p-6 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-12'}`}>
           <PageTransition>
             <Outlet />
           </PageTransition>

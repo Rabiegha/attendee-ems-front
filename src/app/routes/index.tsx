@@ -26,9 +26,8 @@ import { ForbiddenPage } from '@/pages/Forbidden'
 import { NotFoundPage } from '@/pages/NotFound'
 import { AuthRecoveryPage } from '@/pages/AuthRecovery'
 import PublicRegistration from '@/pages/PublicRegistration'
-import { BadgeTemplatesListPage } from '@/pages/BadgeTemplates/BadgeTemplatesListPage'
-import { BadgeTemplateFormPage } from '@/pages/BadgeTemplates/BadgeTemplateFormPage'
 import { PrivacyPolicyPage } from '@/pages/PrivacyPolicy'
+import { BadgeDesigner } from '@/pages/BadgeDesigner'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -137,33 +136,12 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'admin/badge-templates',
-        children: [
-          {
-            index: true,
-            element: (
-              <GuardedRoute action="read" subject="BadgeTemplate">
-                <BadgeTemplatesListPage />
-              </GuardedRoute>
-            ),
-          },
-          {
-            path: 'create',
-            element: (
-              <GuardedRoute action="create" subject="BadgeTemplate">
-                <BadgeTemplateFormPage />
-              </GuardedRoute>
-            ),
-          },
-          {
-            path: ':id/edit',
-            element: (
-              <GuardedRoute action="update" subject="BadgeTemplate">
-                <BadgeTemplateFormPage />
-              </GuardedRoute>
-            ),
-          },
-        ],
+        path: 'badges',
+        element: (
+          <GuardedRoute action="manage" subject="Badge">
+            <BadgeDesigner />
+          </GuardedRoute>
+        ),
       },
     ],
   },

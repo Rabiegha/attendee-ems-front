@@ -13,7 +13,8 @@ export interface RegistrationDPO {
   confirmedAt?: string | null
   createdAt: string // Date d'inscription
   updatedAt: string
-  source: 'public_form' | 'test_form' | 'manual' | 'import'
+  source: 'public_form' | 'test_form' | 'manual' | 'import' | 'mobile_app'
+  comment?: string | null
   
   // Snapshot fields (données figées au moment de l'inscription)
   snapshot_first_name?: string | null

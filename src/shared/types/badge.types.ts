@@ -70,17 +70,56 @@ export interface BadgeTemplatePreview {
   previewVariables: Record<string, string>;
 }
 
-// Badge Designer specific types (from original badge generator)
+// Badge formats in mm (from original badge generator)
+export const BADGE_FORMATS = {
+  LARGE: { width: 96, height: 268, name: '96x268mm' },
+  SMALL: { width: 96, height: 164, name: '96x164mm' }
+};
+
+export type BadgeFormat = {
+  width: number;
+  height: number;
+  name: string;
+};
+
+// Badge element (from original badge generator)
 export interface BadgeElement {
   id: string;
-  type: 'text' | 'image' | 'qr' | 'shape';
+  type: 'text' | 'qrcode' | 'image';
+  content: string;
   x: number;
   y: number;
   width: number;
   height: number;
-  rotation?: number;
-  properties: Record<string, any>;
+  visible: boolean;
+  style: {
+    fontFamily: string;
+    fontSize: number;
+    color: string;
+    fontWeight: string;
+    fontStyle: string;
+    textAlign: 'left' | 'center' | 'right';
+    verticalAlign?: 'top' | 'middle' | 'bottom';
+    transform: string;
+    rotation: number;
+    textTransform?: 'uppercase' | 'none';
+    opacity: number;
+    zIndex: number;
+  };
+  imageId?: string;
+  aspectRatio?: number;
+  maintainAspectRatio?: boolean;
 }
+
+export type UploadedImage = {
+  data: string;
+  filename: string;
+};
+
+export type HistoryState = {
+  elements: BadgeElement[];
+  background: string | null;
+};
 
 export interface BadgeDesignDimensions {
   width: number;

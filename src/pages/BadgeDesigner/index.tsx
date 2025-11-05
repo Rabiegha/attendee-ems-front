@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CreditCard, Plus } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Card } from '@/shared/ui/Card';
@@ -6,6 +7,8 @@ import { Button } from '@/shared/ui/Button';
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api';
 
 export const BadgeDesigner: React.FC = () => {
+  const navigate = useNavigate();
+  
   const { 
     data, 
     isLoading, 
@@ -25,10 +28,7 @@ export const BadgeDesigner: React.FC = () => {
       <div className="flex gap-4 mb-6">
         <Button 
           leftIcon={<Plus className="h-4 w-4" />}
-          onClick={() => {
-            // TODO: Navigate to designer for new template
-            console.log('Création à implémenter');
-          }}
+          onClick={() => navigate('/badges/designer/new')}
         >
           Nouveau template
         </Button>
@@ -127,9 +127,7 @@ export const BadgeDesigner: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => {
-                        console.log('Modifier le template:', template.id);
-                      }}
+                      onClick={() => navigate(`/badges/designer/${template.id}`)}
                     >
                       Modifier
                     </Button>
@@ -151,9 +149,7 @@ export const BadgeDesigner: React.FC = () => {
             </p>
             <Button 
               leftIcon={<Plus className="h-4 w-4" />}
-              onClick={() => {
-                console.log('Création du premier template');
-              }}
+              onClick={() => navigate('/badges/designer/new')}
             >
               Créer votre premier template
             </Button>

@@ -28,6 +28,7 @@ import { AuthRecoveryPage } from '@/pages/AuthRecovery'
 import PublicRegistration from '@/pages/PublicRegistration'
 import { PrivacyPolicyPage } from '@/pages/PrivacyPolicy'
 import { BadgeDesigner } from '@/pages/BadgeDesigner'
+import { BadgeDesignerPage } from '@/pages/BadgeDesigner/BadgeDesignerPage'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -137,11 +138,24 @@ export const router = createBrowserRouter([
       },
       {
         path: 'badges',
-        element: (
-          <GuardedRoute action="manage" subject="Badge">
-            <BadgeDesigner />
-          </GuardedRoute>
-        ),
+        children: [
+          {
+            index: true,
+            element: (
+              <GuardedRoute action="manage" subject="Badge">
+                <BadgeDesigner />
+              </GuardedRoute>
+            ),
+          },
+          {
+            path: 'designer/:templateId',
+            element: (
+              <GuardedRoute action="manage" subject="Badge">
+                <BadgeDesignerPage />
+              </GuardedRoute>
+            ),
+          },
+        ],
       },
     ],
   },

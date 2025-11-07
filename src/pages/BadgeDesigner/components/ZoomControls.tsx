@@ -18,13 +18,13 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
   onFitToScreen
 }) => {
   return (
-    <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-2 flex items-center space-x-2 border dark:border-gray-700">
+    <div className="flex items-center justify-between gap-2">
       <Button
         onClick={onZoomOut}
         variant="outline"
         size="sm"
-        className="p-2"
-        title="Zoom arrière (Ctrl + roulette)"
+        className="p-2 flex-1"
+        title="Zoom arrière"
       >
         <ZoomOut size={16} />
       </Button>
@@ -37,8 +37,8 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
         onClick={onZoomIn}
         variant="outline"
         size="sm"
-        className="p-2"
-        title="Zoom avant (Ctrl + roulette)"
+        className="p-2 flex-1"
+        title="Zoom avant"
       >
         <ZoomIn size={16} />
       </Button>
@@ -49,8 +49,8 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
         onClick={onResetView}
         variant="outline"
         size="sm"
-        className="p-2"
-        title="Réinitialiser la vue (100%)"
+        className="p-2 flex-1"
+        title="Réinitialiser (100%)"
       >
         <RotateCcw size={16} />
       </Button>
@@ -59,7 +59,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
         onClick={onFitToScreen}
         variant="outline"
         size="sm"
-        className="p-2"
+        className="p-2 flex-1"
         title="Ajuster à l'écran"
       >
         <Maximize2 size={16} />

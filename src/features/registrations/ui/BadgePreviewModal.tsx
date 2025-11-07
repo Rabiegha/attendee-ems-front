@@ -17,30 +17,30 @@ type BadgeFormat = 'pdf' | 'image'
 
 export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: BadgePreviewModalProps) {
   const [isDownloading, setIsDownloading] = useState(false)
-  const [badgeHtml, setBadgeHtml] = useState<string>('')
+  const [badgeImage, setBadgeImage] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string>('')
-  const [badgeDimensions, setBadgeDimensions] = useState({ width: 400, height: 600 })
 
   const token = useSelector(selectToken)
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
-  // Fetch Badge HTML preview (instant) with authentication
+  // Load badge preview (single quality - optimized)
   useEffect(() => {
     if (!isOpen || !token) {
       setIsLoading(false)
       return
     }
 
+    // Reset states
+    setBadgeImage('')
+    setIsLoading(true)
+    setError('')
+
     const fetchBadgePreview = async () => {
       try {
-        setIsLoading(true)
-        setError('')
-        
-        console.log('[Badge Preview] Fetching HTML:', `${API_URL}/events/${eventId}/registrations/${registration.id}/badge/download?format=html`)
-        
+        console.log('[Badge Preview] Loading badge preview...')
         const response = await fetch(
-          `${API_URL}/events/${eventId}/registrations/${registration.id}/badge/download?format=html`,
+          `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?quality=high`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -48,33 +48,31 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
           }
         )
 
-        console.log('[Badge Preview] Response status:', response.status)
-
         if (!response.ok) {
           const errorText = await response.text()
-          console.error('[Badge Preview] Error response:', errorText)
+          console.error('[Badge Preview] Error:', errorText)
+          
+          try {
+            const errorData = JSON.parse(errorText)
+            if (errorData.detail?.includes('Chromium') || errorData.message?.includes('Chromium')) {
+              setError('Le serveur n\'a pas encore été configuré pour générer des badges. Veuillez contacter l\'administrateur.')
+              setIsLoading(false)
+              return
+            }
+          } catch (e) {
+            // Ignore parsing errors
+          }
+          
           throw new Error(`HTTP ${response.status}`)
         }
 
-        const html = await response.text()
-        
-        // Extraire les dimensions depuis le HTML (meta tags)
-        const widthMatch = html.match(/name="badge-width" content="(\d+)"/)
-        const heightMatch = html.match(/name="badge-height" content="(\d+)"/)
-        
-        if (widthMatch && widthMatch[1] && heightMatch && heightMatch[1]) {
-          const width = parseInt(widthMatch[1], 10)
-          const height = parseInt(heightMatch[1], 10)
-          setBadgeDimensions({ width, height })
-          console.log('[Badge Preview] Dimensions:', { width, height })
-        }
-        
-        console.log('[Badge Preview] HTML loaded successfully')
-        setBadgeHtml(html)
+        const data = await response.json()
+        setBadgeImage(data.data.previewUrl)
+        console.log('[Badge Preview] ✅ Badge loaded')
+        setIsLoading(false)
       } catch (err) {
         console.error('[Badge Preview] Failed to load:', err)
         setError('Erreur de chargement du badge')
-      } finally {
         setIsLoading(false)
       }
     }
@@ -159,46 +157,33 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
             <div className="flex flex-col items-center space-y-3 justify-center min-h-[600px]">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400" />
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Chargement de l'aperçu...
+                Génération du badge...
               </p>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center space-y-3 text-red-600 dark:text-red-400 justify-center min-h-[600px]">
-              <Award className="h-12 w-12 opacity-50" />
-              <p className="text-sm">{error}</p>
+            <div className="flex flex-col items-center space-y-4 text-red-600 dark:text-red-400 justify-center min-h-[600px] max-w-md mx-auto text-center">
+              <Award className="h-16 w-16 opacity-50" />
+              <div>
+                <p className="text-lg font-semibold mb-2">{error}</p>
+                {error.includes('configuré') && (
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-800 dark:text-blue-200 text-left">
+                    <p className="font-semibold mb-2">ℹ️ Configuration requise :</p>
+                    <p>Le serveur doit avoir Chromium installé pour générer les badges.</p>
+                    <p className="mt-2">Voir le fichier <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">CHROMIUM_SETUP.md</code> pour les instructions d'installation.</p>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
-            <div className="w-full flex justify-center">
-              {/* Calculer le scale pour adapter le badge */}
-              {(() => {
-                const maxWidth = 600  // Augmenté à 600px
-                const maxHeight = 900 // Augmenté à 900px
-                const scale = Math.min(maxWidth / badgeDimensions.width, maxHeight / badgeDimensions.height, 1)
-                
-                return (
-                  <div 
-                    className="border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-lg bg-white"
-                    style={{
-                      width: `${badgeDimensions.width * scale}px`,
-                      height: `${badgeDimensions.height * scale}px`,
-                    }}
-                  >
-                    <iframe
-                      srcDoc={badgeHtml}
-                      title={`Badge de ${attendeeName}`}
-                      sandbox="allow-same-origin"
-                      style={{ 
-                        width: `${badgeDimensions.width}px`,
-                        height: `${badgeDimensions.height}px`,
-                        border: 'none',
-                        display: 'block',
-                        transform: `scale(${scale})`,
-                        transformOrigin: 'top left',
-                      }}
-                    />
-                  </div>
-                )
-              })()}
+            <div className="w-full flex flex-col items-center">
+              {/* Badge Image */}
+              {badgeImage && (
+                <img
+                  src={badgeImage}
+                  alt={`Badge de ${attendeeName}`}
+                  className="max-w-[600px] max-h-[900px] w-auto h-auto border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
+                />
+              )}
             </div>
           )}
         </div>

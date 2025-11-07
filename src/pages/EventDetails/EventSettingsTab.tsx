@@ -15,10 +15,12 @@ import {
   Shield,
   Mail,
   MapPin,
+  CreditCard,
 } from 'lucide-react'
 import type { EventDPO } from '@/features/events/dpo/event.dpo'
 import { TagInput } from '@/features/tags'
 import { useUpdateEventTagsMutation } from '@/services/tags'
+import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api'
 
 // Récupérer la clé API Google Maps
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
@@ -34,6 +36,12 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation()
   const [deleteEvent, { isLoading: isDeleting }] = useDeleteEventMutation()
   const [updateEventTags] = useUpdateEventTagsMutation()
+  
+  // Récupérer les templates de badges disponibles
+  const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({ 
+    page: 1, 
+    limit: 100 
+  })
 
   // Si l'événement est supprimé, afficher un message
   if (event.isDeleted) {
@@ -68,6 +76,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     confirmation_email_enabled: event.confirmationEmailEnabled ?? false,
     approval_email_enabled: event.approvalEmailEnabled ?? false,
     reminder_email_enabled: event.reminderEmailEnabled ?? false,
+    badgeTemplateId: event.badgeTemplateId || '',
   })
 
   // État pour la suppression (double confirmation)
@@ -116,6 +125,11 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
       updateData.confirmationEmailEnabled = formData.confirmation_email_enabled
       updateData.approvalEmailEnabled = formData.approval_email_enabled
       updateData.reminderEmailEnabled = formData.reminder_email_enabled
+      
+      // Ajouter le template de badge
+      if (formData.badgeTemplateId) {
+        updateData.badgeTemplateId = formData.badgeTemplateId
+      }
 
       // Mettre à jour les informations de l'événement
       await updateEvent({
@@ -556,6 +570,49 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                     </div>
                   </label>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Template de badge */}
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5">
+                <CreditCard className="h-5 w-5 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                  Template de badge
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  Sélectionnez le template de badge qui sera utilisé pour générer les badges des participants
+                </p>
+                
+                <FormField label="Template de badge">
+                  <Select
+                    value={formData.badgeTemplateId}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, badgeTemplateId: e.target.value }))}
+                  >
+                    <SelectOption value="">Aucun template sélectionné</SelectOption>
+                    {badgeTemplatesData?.data?.filter(t => t.is_active).map((template) => (
+                      <SelectOption key={template.id} value={template.id}>
+                        {template.name} {template.is_default ? '(Par défaut)' : ''}
+                      </SelectOption>
+                    ))}
+                  </Select>
+                </FormField>
+
+                {formData.badgeTemplateId && (
+                  <div className="mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate(`/badges/designer/${formData.badgeTemplateId}`)}
+                    >
+                      Modifier le template
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

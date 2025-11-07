@@ -12,6 +12,7 @@ import {
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
+import { PageContainer } from '@/shared/ui/PageContainer'
 import { Pagination } from '@/shared/ui/Pagination'
 import {
   Edit,
@@ -427,9 +428,10 @@ export const EventDetails: React.FC = () => {
     : allTabs
 
   return (
-    <div className="space-y-6">
-      {/* Banner événement supprimé */}
-      {event.isDeleted && (
+    <PageContainer maxWidth="7xl" padding="lg">
+      <div className="space-y-6">
+        {/* Banner événement supprimé */}
+        {event.isDeleted && (
         <div className="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-600 dark:border-red-500 p-4 rounded-r-lg">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -894,6 +896,7 @@ export const EventDetails: React.FC = () => {
         currentEndDate={event.endDate}
         onStatusChange={handleStatusChange}
       />
-    </div>
+      </div>
+    </PageContainer>
   )
 }

@@ -46,9 +46,16 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
 
   const handleStyleUpdate = (property: string, value: any) => {
     selectedElements.forEach(element => {
-      onUpdateElement(element.id, {
+      const updates: any = {
         style: { ...element.style, [property]: value }
-      });
+      };
+      
+      // Ajuster automatiquement la hauteur quand on change la taille de police
+      if (property === 'fontSize' && element.type === 'text') {
+        updates.height = Math.ceil(value * 1.5);
+      }
+      
+      onUpdateElement(element.id, updates);
     });
   };
 
@@ -210,13 +217,13 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         {selectedElement?.type === 'text' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Taille de police ({selectedElement.style.fontSize || 16}px)
+              Taille de police ({selectedElement.style.fontSize || 70}px)
             </label>
             <input
               type="range"
               min="8"
-              max="72"
-              value={selectedElement.style.fontSize || 16}
+              max="150"
+              value={selectedElement.style.fontSize || 70}
               onChange={(e) => handleStyleUpdate('fontSize', parseInt(e.target.value))}
               className="w-full"
             />

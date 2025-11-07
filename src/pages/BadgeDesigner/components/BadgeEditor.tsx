@@ -34,6 +34,7 @@ interface BadgeEditorProps {
   selectionStart: { x: number; y: number } | null;
   selectionEnd: { x: number; y: number } | null;
   uploadedImages: Map<string, { data: string; filename: string }>;
+  zoom?: number;
 }
 
 export const BadgeEditor: React.FC<BadgeEditorProps> = ({
@@ -49,13 +50,15 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   onBackgroundUpload,
   onElementClick,
   onDragStart,
-  onDrag,
+  // onDrag est gardé dans l'interface mais non utilisé pour éviter l'effet de rebond
+  onDrag: _onDrag,
   onDragStop,
   onResize,
   isSelecting,
   selectionStart,
   selectionEnd,
-  uploadedImages
+  uploadedImages,
+  zoom = 1
 }) => {
   const [resizingElement, setResizingElement] = useState<string | null>(null);
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
@@ -116,8 +119,9 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   const handleResizeMove = (e: MouseEvent) => {
     if (!resizingElement || !resizeHandle || !resizeStartData) return;
 
-    const deltaX = e.clientX - resizeStartData.mouseX;
-    const deltaY = e.clientY - resizeStartData.mouseY;
+    // Compenser le zoom dans les deltas
+    const deltaX = (e.clientX - resizeStartData.mouseX) / zoom;
+    const deltaY = (e.clientY - resizeStartData.mouseY) / zoom;
 
     let newWidth = resizeStartData.width;
     let newHeight = resizeStartData.height;
@@ -221,13 +225,20 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
       data: { element }
     });
 
+    // Compenser le zoom dans la transformation du drag
+    const adjustedTransform = transform ? {
+      ...transform,
+      x: transform.x / zoom,
+      y: transform.y / zoom,
+    } : null;
+
     const style = {
       position: 'absolute' as const,
       left: element.x,
       top: element.y,
       width: `${element.width}px`,
       height: `${element.height}px`,
-      transform: `${CSS.Translate.toString(transform)} ${element.style.transform || ''} rotate(${element.style.rotation || 0}deg)`.trim(),
+      transform: `${CSS.Translate.toString(adjustedTransform)} ${element.style.transform || ''} rotate(${element.style.rotation || 0}deg)`.trim(),
       zIndex: isSelected ? 10 : 1,
       opacity: isDragging ? 0.5 : 1,
     };
@@ -289,10 +300,26 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     } else if (element.type === 'qrcode') {
       content = (
         <div 
-          className="flex items-center justify-center bg-gray-100 text-gray-500 text-xs"
-          style={{ fontSize: '10px' }}
+          className="flex flex-col items-center justify-center bg-white border-2 border-gray-300 text-gray-600"
+          style={{ fontSize: '10px', width: '100%', height: '100%' }}
         >
-          QR: {element.content.substring(0, 20)}...
+          <svg 
+            viewBox="0 0 100 100" 
+            className="w-3/4 h-3/4"
+            style={{ maxWidth: '80%', maxHeight: '80%' }}
+          >
+            {/* Simple QR code pattern */}
+            <rect x="0" y="0" width="100" height="100" fill="white"/>
+            <rect x="10" y="10" width="25" height="25" fill="black"/>
+            <rect x="15" y="15" width="15" height="15" fill="white"/>
+            <rect x="65" y="10" width="25" height="25" fill="black"/>
+            <rect x="70" y="15" width="15" height="15" fill="white"/>
+            <rect x="10" y="65" width="25" height="25" fill="black"/>
+            <rect x="15" y="70" width="15" height="15" fill="white"/>
+            <rect x="40" y="40" width="20" height="20" fill="black"/>
+            <rect x="45" y="45" width="10" height="10" fill="white"/>
+          </svg>
+          <span className="text-[8px] mt-1">QR Code</span>
         </div>
       );
     } else if (element.type === 'image') {
@@ -386,16 +413,9 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     }
   };
 
-  const handleDragMove = (event: DragMoveEvent) => {
-    const { active, delta } = event;
-    const elementId = active.id as string;
-    const element = elements.find(el => el.id === elementId);
-    if (element && onDrag) {
-      onDrag(elementId, null as any, { 
-        x: element.x + delta.x, 
-        y: element.y + delta.y 
-      });
-    }
+  const handleDragMove = (_event: DragMoveEvent) => {
+    // Ne rien faire pendant le drag - dnd-kit gère visuellement le déplacement
+    // L'appel à onDrag a été désactivé pour éviter l'effet de rebond
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -403,9 +423,10 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     const elementId = active.id as string;
     const element = elements.find(el => el.id === elementId);
     if (element && onDragStop) {
+      // Ajuster le delta en fonction du zoom
       onDragStop(elementId, null as any, { 
-        x: element.x + delta.x, 
-        y: element.y + delta.y 
+        x: element.x + delta.x / zoom, 
+        y: element.y + delta.y / zoom 
       });
     }
   };

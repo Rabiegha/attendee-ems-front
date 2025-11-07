@@ -1,7 +1,8 @@
 import React from 'react';
-import { Plus, ImageIcon, Save, Link } from 'lucide-react';
+import { Plus, ImageIcon, Save, Link, ArrowLeft, Trash2 } from 'lucide-react';
 import { BadgeFormat, BADGE_FORMATS } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
+import { ZoomControls } from './ZoomControls';
 
 interface LeftSidebarProps {
   format: BadgeFormat;
@@ -11,11 +12,20 @@ interface LeftSidebarProps {
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   templateName: string;
   onTemplateNameChange: (name: string) => void;
-  availableTemplates: string[];
   onSaveTemplate: () => void;
-  onLoadTemplate: (templateName: string) => void;
   copiedUrl: string;
   onCopyUrl: () => void;
+  isSaving?: boolean;
+  onGoBack?: () => void;
+  onDeleteTemplate?: () => void;
+  isDeleting?: boolean;
+  isEditMode?: boolean;
+  // Zoom controls props
+  zoom: number;
+  onZoomIn: () => void;
+  onZoomOut: () => void;
+  onResetView: () => void;
+  onFitToScreen: () => void;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -26,15 +36,43 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onImageUpload,
   templateName,
   onTemplateNameChange,
-  availableTemplates,
   onSaveTemplate,
-  onLoadTemplate,
   copiedUrl,
-  onCopyUrl
+  onCopyUrl,
+  isSaving = false,
+  onGoBack,
+  onDeleteTemplate,
+  isDeleting = false,
+  isEditMode = false,
+  zoom,
+  onZoomIn,
+  onZoomOut,
+  onResetView,
+  onFitToScreen
 }) => {
   return (
-    <div className="w-64 bg-white dark:bg-gray-800 shadow-md p-4 flex flex-col space-y-4 overflow-y-auto border-r border-gray-200 dark:border-gray-700">
-      <div>
+    <div className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col border-r border-gray-200 dark:border-gray-700 relative">
+      {/* Titre */}
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          {onGoBack && (
+            <Button
+              onClick={onGoBack}
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <ArrowLeft size={16} />
+              Retour
+            </Button>
+          )}
+          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">Créateur de Badges</h1>
+        </div>
+      </div>
+
+      {/* Contenu scrollable */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Format</label>
         <select 
           className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
@@ -53,7 +91,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 
       {/* Template Management */}
       <div className="border-t pt-4">
-        <h3 className="font-medium mb-2 text-gray-800">Gestion des Templates</h3>
+        <h3 className="font-medium mb-2 text-gray-800 dark:text-gray-200">Gestion des Templates</h3>
         <div className="space-y-2">
           <input
             type="text"
@@ -65,34 +103,25 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           
           <Button 
             onClick={onSaveTemplate}
-            disabled={!templateName.trim()}
+            disabled={!templateName.trim() || isSaving}
             className="w-full flex items-center justify-center gap-2"
             size="sm"
           >
             <Save size={16} />
-            Sauvegarder
+            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
 
-          {availableTemplates.length > 0 && (
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                Templates disponibles
-              </label>
-              <select 
-                className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    onLoadTemplate(e.target.value);
-                  }
-                }}
-                defaultValue=""
-              >
-                <option value="">Sélectionner un template</option>
-                {availableTemplates.map(template => (
-                  <option key={template} value={template}>{template}</option>
-                ))}
-              </select>
-            </div>
+          {isEditMode && onDeleteTemplate && (
+            <Button 
+              onClick={onDeleteTemplate}
+              disabled={isDeleting}
+              variant="destructive"
+              className="w-full flex items-center justify-center gap-2"
+              size="sm"
+            >
+              <Trash2 size={16} />
+              {isDeleting ? 'Suppression...' : 'Supprimer'}
+            </Button>
           )}
 
           <Button 
@@ -128,7 +157,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </Button>
 
           <Button
-            onClick={() => onAddElement('qrcode', 'https://example.com')}
+            onClick={() => onAddElement('qrcode', '{{registrationId}}')}
             variant="outline"
             className="w-full flex items-center justify-center gap-2"
             size="sm"
@@ -172,13 +201,25 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
           ].map(variable => (
             <button
               key={variable.key}
-              onClick={() => onAddElement('text', `{{${variable.key}}}}`)}
+              onClick={() => onAddElement('text', `{{${variable.key}}}`)}
               className="w-full text-left px-2 py-1 text-xs bg-gray-50 hover:bg-gray-100 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-100 dark:border-gray-600 rounded border"
             >
               {`{{${variable.key}}}`} - {variable.label}
             </button>
           ))}
         </div>
+      </div>
+      </div>
+
+      {/* Zoom Controls - Fixed en bas */}
+      <div className="border-t border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800">
+        <ZoomControls
+          zoom={zoom}
+          onZoomIn={onZoomIn}
+          onZoomOut={onZoomOut}
+          onResetView={onResetView}
+          onFitToScreen={onFitToScreen}
+        />
       </div>
     </div>
   );

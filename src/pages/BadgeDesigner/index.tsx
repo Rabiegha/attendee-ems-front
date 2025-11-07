@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Plus } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { PageContainer } from '@/shared/ui/PageContainer';
 import { Card } from '@/shared/ui/Card';
 import { Button } from '@/shared/ui/Button';
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api';
@@ -19,10 +20,12 @@ export const BadgeDesigner: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
+    <PageContainer maxWidth="7xl" padding="lg">
+      <div className="space-y-6">
       <PageHeader 
         title="Templates de badges"
         description="Créez et gérez vos templates de badges d'événements"
+        icon={CreditCard}
       />
       
       <div className="flex gap-4 mb-6">
@@ -156,6 +159,7 @@ export const BadgeDesigner: React.FC = () => {
           </div>
         )}
       </Card>
-    </div>
+      </div>
+    </PageContainer>
   );
 };

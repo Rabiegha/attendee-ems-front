@@ -1,16 +1,36 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { BadgeElement, BadgeFormat, BADGE_FORMATS, HistoryState } from '../../shared/types/badge.types';
-import { SafeStorage } from '../../shared/utils/safeStorage';
 import { mmToPx } from '../../shared/utils/conversion';
 import { BadgeEditor } from './components/BadgeEditor';
 import { LeftSidebar } from './components/LeftSidebar';
 import { RightSidebar } from './components/RightSidebar';
-import { ZoomControls } from './components/ZoomControls';
+import { 
+  useGetBadgeTemplateQuery, 
+  useCreateBadgeTemplateMutation, 
+  useUpdateBadgeTemplateMutation,
+  useDeleteBadgeTemplateMutation
+} from '@/services/api/badge-templates.api';
+import { useToast } from '@/shared/hooks/useToast';
 
-const STORAGE_KEY = 'badge-designer-state';
 const MAX_HISTORY = 50;
 
 export const BadgeDesignerPage: React.FC = () => {
+  // Router hooks
+  const { templateId } = useParams<{ templateId: string }>();
+  const navigate = useNavigate();
+  const toast = useToast();
+  
+  // API hooks
+  const { data: loadedTemplate } = useGetBadgeTemplateQuery(
+    templateId || 'skip',
+    { skip: !templateId || templateId === 'new' }
+  );
+  const [createTemplate, { isLoading: isCreating }] = useCreateBadgeTemplateMutation();
+  const [updateTemplate, { isLoading: isUpdating }] = useUpdateBadgeTemplateMutation();
+  const [deleteTemplate, { isLoading: isDeleting }] = useDeleteBadgeTemplateMutation();
+  
+  // State
   const [format, setFormat] = useState<BadgeFormat>(BADGE_FORMATS.LARGE);
   const [elements, setElements] = useState<BadgeElement[]>([]);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
@@ -21,7 +41,6 @@ export const BadgeDesignerPage: React.FC = () => {
   const [, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [templateName, setTemplateName] = useState('');
-  const [availableTemplates, setAvailableTemplates] = useState<string[]>([]);
   const [copiedUrl, setCopiedUrl] = useState('');
   const [uploadedImages, setUploadedImages] = useState<Map<string, { data: string; filename: string }>>(new Map());
   
@@ -39,9 +58,6 @@ export const BadgeDesignerPage: React.FC = () => {
   const backgroundInputRef = useRef<HTMLInputElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
 
-  // Storage helper
-  const safeStorage = new SafeStorage();
-
   // Save state to history
   const saveToHistory = useCallback((newElements: BadgeElement[], newBackground: string | null) => {
     const newState: HistoryState = {
@@ -57,59 +73,61 @@ export const BadgeDesignerPage: React.FC = () => {
     setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY - 1));
   }, [historyIndex]);
 
-  // Load state from storage
+  // Load template from API when editing
   useEffect(() => {
-    const savedState = safeStorage.getItem(STORAGE_KEY);
-    if (savedState) {
+    if (loadedTemplate?.template_data) {
       try {
-        const parsed = JSON.parse(savedState);
-        if (parsed.elements) setElements(parsed.elements);
-        if (parsed.background) setBackground(parsed.background);
-        if (parsed.format) setFormat(parsed.format);
-        if (parsed.uploadedImages) {
-          setUploadedImages(new Map(parsed.uploadedImages));
+        const data = loadedTemplate.template_data;
+        // Ensure QR code elements have aspect ratio properties
+        const elementsWithAspectRatio = (data.elements || []).map((el: BadgeElement) => {
+          if (el.type === 'qrcode' && !el.maintainAspectRatio) {
+            return {
+              ...el,
+              maintainAspectRatio: true,
+              aspectRatio: 1,
+              // Ensure it's square by using the larger dimension
+              width: Math.max(el.width, el.height),
+              height: Math.max(el.width, el.height)
+            };
+          }
+          return el;
+        });
+        setElements(elementsWithAspectRatio);
+        setBackground(data.background || null);
+        setFormat(data.format || BADGE_FORMATS.LARGE);
+        if (data.uploadedImages) {
+          setUploadedImages(new Map(data.uploadedImages));
         }
+        if (data.symmetryPairs) {
+          setSymmetryPairs(new Map(data.symmetryPairs));
+        }
+        setTemplateName(loadedTemplate.name);
       } catch (e) {
-        console.error('Failed to load saved state:', e);
+        console.error('Failed to load template from API:', e);
+        toast.error('Erreur', 'Impossible de charger le template');
       }
     }
-
-    // Load templates
-    const templates = safeStorage.getItem('badge-templates');
-    if (templates) {
-      try {
-        setAvailableTemplates(Object.keys(JSON.parse(templates)));
-      } catch (e) {
-        console.error('Failed to load templates:', e);
-      }
-    }
-  }, []);
-
-  // Save state to storage
-  useEffect(() => {
-    const stateToSave = {
-      elements,
-      background,
-      format,
-      uploadedImages: Array.from(uploadedImages.entries())
-    };
-    safeStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-  }, [elements, background, format, uploadedImages]);
+  }, [loadedTemplate]);
 
   // Add element
   const addElement = (type: 'text' | 'qrcode' | 'image', content: string = '') => {
+    const defaultFontSize = 70;
     const newElement: BadgeElement = {
       id: `element-${Date.now()}`,
       type,
       content,
       x: 50,
       y: 50,
-      width: type === 'image' ? 100 : (type === 'qrcode' ? 80 : 200),
-      height: type === 'image' ? 100 : (type === 'qrcode' ? 80 : 30),
+      width: type === 'image' ? 100 : (type === 'qrcode' ? 80 : 300),
+      height: type === 'image' ? 100 : (type === 'qrcode' ? 80 : Math.ceil(defaultFontSize * 1.5)),
       visible: true,
+      ...(type === 'qrcode' && { 
+        maintainAspectRatio: true,
+        aspectRatio: 1
+      }),
       style: {
         fontFamily: 'Arial',
-        fontSize: 16,
+        fontSize: defaultFontSize,
         color: '#000000',
         fontWeight: 'normal',
         fontStyle: 'normal',
@@ -503,47 +521,159 @@ export const BadgeDesignerPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // Save template
-  const saveTemplate = () => {
-    if (!templateName.trim()) return;
-
-    const templates = safeStorage.getItem('badge-templates');
-    const existingTemplates = templates ? JSON.parse(templates) : {};
+  // Generate HTML and CSS from elements
+  const generateHTMLAndCSS = () => {
+    const badgeWidth = mmToPx(format.width);
+    const badgeHeight = mmToPx(format.height);
     
-    existingTemplates[templateName] = {
-      elements: JSON.parse(JSON.stringify(elements)),
-      background,
-      format,
-      uploadedImages: Array.from(uploadedImages.entries())
-    };
+    // Generate HTML
+    let html = '<div class="badge-container">\n';
+    
+    elements.forEach(el => {
+      if (el.type === 'text') {
+        const content = el.content || '';
+        html += `  <div class="element element-${el.id}">${content}</div>\n`;
+      } else if (el.type === 'image') {
+        html += `  <div class="element element-${el.id}"><img src="{{photo_url}}" alt="Photo" /></div>\n`;
+      } else if (el.type === 'qr') {
+        html += `  <div class="element element-${el.id}"><img src="{{qr_code_url}}" alt="QR Code" /></div>\n`;
+      }
+    });
+    
+    html += '</div>';
+    
+    // Generate CSS
+    let css = `.badge-container {
+  position: relative;
+  width: ${badgeWidth}px;
+  height: ${badgeHeight}px;
+  ${background ? `background: ${background.startsWith('http') || background.startsWith('data:') ? `url(${background})` : background};` : 'background: #ffffff;'}
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}\n\n`;
 
-    safeStorage.setItem('badge-templates', JSON.stringify(existingTemplates));
-    setAvailableTemplates(Object.keys(existingTemplates));
-    setTemplateName('');
+    css += `.element {
+  position: absolute;
+  box-sizing: border-box;
+}\n\n`;
+
+    css += `.element img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}\n\n`;
+
+    elements.forEach(el => {
+      css += `.element-${el.id} {
+  left: ${el.x}px;
+  top: ${el.y}px;
+  width: ${el.width || 'auto'}px;
+  height: ${el.height || 'auto'}px;`;
+      
+      if (el.type === 'text') {
+        css += `\n  font-size: ${el.fontSize || 16}px;
+  font-weight: ${el.fontWeight || 'normal'};
+  text-align: ${el.textAlign || 'left'};
+  color: ${el.color || '#000000'};`;
+        if (el.fontFamily) css += `\n  font-family: ${el.fontFamily};`;
+        if (el.style?.textTransform) css += `\n  text-transform: ${el.style.textTransform};`;
+      }
+      
+      if (el.borderRadius) css += `\n  border-radius: ${el.borderRadius};`;
+      if (el.style?.rotation) css += `\n  transform: rotate(${el.style.rotation}deg);`;
+      if (el.style?.opacity !== undefined) css += `\n  opacity: ${el.style.opacity};`;
+      
+      css += '\n}\n\n';
+    });
+    
+    return { html, css };
   };
 
-  // Load template
-  const loadTemplate = (name: string) => {
-    const templates = safeStorage.getItem('badge-templates');
-    if (!templates) return;
+  // Save template to API
+  const saveTemplate = async () => {
+    if (!templateName.trim()) {
+      toast.error('Erreur', 'Veuillez entrer un nom pour le template');
+      return;
+    }
 
     try {
-      const existingTemplates = JSON.parse(templates);
-      const template = existingTemplates[name];
+      const templateData = {
+        elements,
+        background,
+        format,
+        uploadedImages: Array.from(uploadedImages.entries()),
+        symmetryPairs: Array.from(symmetryPairs.entries())
+      };
       
-      if (template) {
-        setElements(template.elements || []);
-        setBackground(template.background || null);
-        setFormat(template.format || BADGE_FORMATS.LARGE);
-        if (template.uploadedImages) {
-          setUploadedImages(new Map(template.uploadedImages));
-        }
-        setSelectedElements([]);
-        saveToHistory(template.elements || [], template.background || null);
+      // Note: We don't generate HTML/CSS here anymore
+      // The backend will generate it from template_data when rendering badges
+      // This ensures fontSize and other styles from elements are preserved
+
+      // Extract variables from elements
+      const variables = elements
+        .filter(el => el.type === 'text')
+        .map(el => el.content)
+        .filter(content => content.includes('{{') && content.includes('}}'))
+        .map(content => {
+          const match = content.match(/\{\{([^}]+)\}\}/g);
+          return match ? match.map(m => m.replace(/[{}]/g, '')) : [];
+        })
+        .flat()
+        .filter((v, i, arr) => arr.indexOf(v) === i); // unique
+
+      const payload = {
+        code: templateName.toLowerCase().replace(/\s+/g, '-'),
+        name: templateName,
+        description: `Badge template ${format.name}`,
+        width: mmToPx(format.width),
+        height: mmToPx(format.height),
+        // html and css will be generated by backend from template_data
+        html: '',
+        css: '',
+        template_data: templateData,
+        variables,
+        is_active: true
+      };
+
+      if (templateId && templateId !== 'new') {
+        // Update existing template
+        await updateTemplate({ id: templateId, data: payload }).unwrap();
+        toast.success('Succès', 'Template mis à jour avec succès');
+      } else {
+        // Create new template
+        const result = await createTemplate(payload).unwrap();
+        toast.success('Succès', 'Template créé avec succès');
+        // Navigate to edit mode with the new template ID
+        navigate(`/badges/designer/${result.id}`);
       }
-    } catch (e) {
-      console.error('Failed to load template:', e);
+    } catch (error: any) {
+      console.error('Error saving template:', error);
+      toast.error('Erreur', error?.data?.message || 'Erreur lors de la sauvegarde du template');
     }
+  };
+
+  // Delete template
+  const handleDeleteTemplate = async () => {
+    if (!templateId || templateId === 'new') return;
+    
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce template ?')) {
+      return;
+    }
+
+    try {
+      await deleteTemplate(templateId).unwrap();
+      toast.success('Succès', 'Template supprimé avec succès');
+      navigate('/badges');
+    } catch (error: any) {
+      console.error('Error deleting template:', error);
+      toast.error('Erreur', error?.data?.message || 'Erreur lors de la suppression du template');
+    }
+  };
+
+  // Go back to list
+  const handleGoBack = () => {
+    navigate('/badges');
   };
 
   // Copy URL
@@ -603,13 +733,13 @@ export const BadgeDesignerPage: React.FC = () => {
     // Drag start logic
   };
 
-  const handleDrag = (id: string, _e: any, data: { x: number; y: number }) => {
-    // Update element position during drag
-    updateElement(id, { x: data.x, y: data.y });
+  const handleDrag = (_id: string, _e: any, _data: { x: number; y: number }) => {
+    // Ne rien faire pendant le drag - dnd-kit gère l'animation visuellement
+    // On mettra à jour les coordonnées uniquement à la fin (handleDragStop)
   };
 
   const handleDragStop = (id: string, _e: any, data: { x: number; y: number }) => {
-    // Final position update
+    // Mise à jour finale de la position
     updateElement(id, { x: data.x, y: data.y });
   };
 
@@ -638,24 +768,23 @@ export const BadgeDesignerPage: React.FC = () => {
         onImageUpload={handleImageUpload}
         templateName={templateName}
         onTemplateNameChange={setTemplateName}
-        availableTemplates={availableTemplates}
         onSaveTemplate={saveTemplate}
-        onLoadTemplate={loadTemplate}
         copiedUrl={copiedUrl}
         onCopyUrl={copyUrl}
+        isSaving={isCreating || isUpdating}
+        onGoBack={handleGoBack}
+        onDeleteTemplate={handleDeleteTemplate}
+        isDeleting={isDeleting}
+        isEditMode={templateId !== 'new'}
+        zoom={zoom}
+        onZoomIn={() => handleZoom(zoom * 1.2)}
+        onZoomOut={() => handleZoom(zoom / 1.2)}
+        onResetView={resetView}
+        onFitToScreen={fitToScreen}
       />
 
       {/* Main Canvas */}
       <div className="flex-1 flex flex-col">
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">Créateur de Badges</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Format: {format.name} | 
-            Zoom: {Math.round(zoom * 100)}% |
-            Molette pour zoomer | Ctrl + clic ou clic molette pour déplacer
-          </p>
-        </div>
-        
         <div 
           ref={canvasContainerRef}
           className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-700 relative"
@@ -691,6 +820,7 @@ export const BadgeDesignerPage: React.FC = () => {
               selectionStart={selectionStart}
               selectionEnd={selectionEnd}
               uploadedImages={uploadedImages}
+              zoom={zoom}
             />
           </div>
         </div>
@@ -707,15 +837,6 @@ export const BadgeDesignerPage: React.FC = () => {
         symmetryPairs={symmetryPairs}
         onCreateSymmetry={createSymmetry}
         onBreakSymmetry={breakSymmetry}
-      />
-      
-      {/* Zoom Controls */}
-      <ZoomControls
-        zoom={zoom}
-        onZoomIn={() => handleZoom(zoom * 1.2)}
-        onZoomOut={() => handleZoom(zoom / 1.2)}
-        onResetView={resetView}
-        onFitToScreen={fitToScreen}
       />
 
       {/* Hidden background upload input */}

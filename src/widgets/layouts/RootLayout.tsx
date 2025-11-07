@@ -126,11 +126,11 @@ export const RootLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div className="min-h-[calc(100vh-69px)] bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Header />
       <div className="flex">
         <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className={`flex-1 pt-20 p-6 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-12'}`}>
+        <main className={`flex-1 pt-[69px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-12'}`}>
           <PageTransition>
             <Outlet />
           </PageTransition>

@@ -628,7 +628,7 @@ export const BadgeDesignerPage: React.FC = () => {
   };
 
   return (
-    <div className="flex bg-gray-100 dark:bg-gray-900" style={{ height: 'calc(100vh - 5rem - 3rem)', marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem' }}>
+    <div className="flex bg-gray-100 dark:bg-gray-900 h-[calc(100vh-69px)]">
       {/* Left Sidebar */}
       <LeftSidebar
         format={format}

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { BadgeElement, BadgeFormat, BADGE_FORMATS, HistoryState } from '../../shared/types/badge.types';
 import { mmToPx } from '../../shared/utils/conversion';
+import { getTransformWithRotation } from '../../shared/utils/transform';
 import { BadgeEditor } from './components/BadgeEditor';
 import { LeftSidebar } from './components/LeftSidebar';
 import { RightSidebar } from './components/RightSidebar';
@@ -245,6 +246,8 @@ export const BadgeDesignerPage: React.FC = () => {
       const cloneY = cloneCenterY - parentElement.height / 2;
       
       // Create clone with 180° rotation for true central symmetry
+      const transform = getTransformWithRotation((parentElement.style.rotation || 0) + 180, parentElement.style.transform);
+      
       const cloneElement: BadgeElement = {
         ...parentElement,
         id: `clone-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -253,6 +256,7 @@ export const BadgeDesignerPage: React.FC = () => {
         style: {
           ...parentElement.style,
           rotation: (parentElement.style.rotation || 0) + 180,
+          transform
         }
       };
       
@@ -317,6 +321,7 @@ export const BadgeDesignerPage: React.FC = () => {
             style: {
               ...updatedElement.style,
               rotation: (updatedElement.style.rotation || 0) + 180,
+              transform: getTransformWithRotation((updatedElement.style.rotation || 0) + 180, updatedElement.style.transform)
             }
           };
         }
@@ -349,6 +354,7 @@ export const BadgeDesignerPage: React.FC = () => {
               style: {
                 ...updatedElement.style,
                 rotation: (updatedElement.style.rotation || 0) - 180,
+                transform: getTransformWithRotation((updatedElement.style.rotation || 0) - 180, updatedElement.style.transform)
               }
             };
           }
@@ -821,6 +827,7 @@ export const BadgeDesignerPage: React.FC = () => {
               selectionEnd={selectionEnd}
               uploadedImages={uploadedImages}
               zoom={zoom}
+              symmetryPairs={symmetryPairs}
             />
           </div>
         </div>

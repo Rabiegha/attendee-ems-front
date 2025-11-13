@@ -13,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Plus } from 'lucide-react';
 import { BadgeElement, BadgeFormat } from '../../../shared/types/badge.types';
 import { mmToPx } from '../../../shared/utils/conversion';
+import { getTransformWithRotation } from '../../../shared/utils/transform';
 
 interface BadgeEditorProps {
   format: BadgeFormat;
@@ -35,6 +36,7 @@ interface BadgeEditorProps {
   selectionEnd: { x: number; y: number } | null;
   uploadedImages: Map<string, { data: string; filename: string }>;
   zoom?: number;
+  symmetryPairs: Map<string, string>; // Add symmetry pairs
 }
 
 export const BadgeEditor: React.FC<BadgeEditorProps> = ({
@@ -50,15 +52,15 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   onBackgroundUpload,
   onElementClick,
   onDragStart,
-  // onDrag est gardé dans l'interface mais non utilisé pour éviter l'effet de rebond
-  onDrag: _onDrag,
+  onDrag: _onDrag, // Non utilisé pour éviter l'effet de rebond avec dnd-kit
   onDragStop,
   onResize,
   isSelecting,
   selectionStart,
   selectionEnd,
   uploadedImages,
-  zoom = 1
+  zoom = 1,
+  symmetryPairs
 }) => {
   const [resizingElement, setResizingElement] = useState<string | null>(null);
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
@@ -71,6 +73,10 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     mouseY: number;
   } | null>(null);
   const [shiftPressed, setShiftPressed] = useState(false);
+  
+  // Track dragging for symmetry
+  const [activeDragElement, setActiveDragElement] = useState<BadgeElement | null>(null);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const backgroundInputRef = useRef<HTMLInputElement>(null);
 
@@ -225,20 +231,18 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
       data: { element }
     });
 
-    // Compenser le zoom dans la transformation du drag
-    const adjustedTransform = transform ? {
-      ...transform,
-      x: transform.x / zoom,
-      y: transform.y / zoom,
-    } : null;
-
+    // IMPORTANT: Do NOT adjust transform for zoom!
+    // @dnd-kit's transform is already in the correct coordinate space
+    // since DndContext is inside the scaled container
+    
+    // Apply drag transform only, element rotation is applied to content
     const style = {
       position: 'absolute' as const,
       left: element.x,
       top: element.y,
       width: `${element.width}px`,
       height: `${element.height}px`,
-      transform: `${CSS.Translate.toString(adjustedTransform)} ${element.style.transform || ''} rotate(${element.style.rotation || 0}deg)`.trim(),
+      transform: transform ? CSS.Translate.toString(transform) : undefined,
       zIndex: isSelected ? 10 : 1,
       opacity: isDragging ? 0.5 : 1,
     };
@@ -267,29 +271,30 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     );
   };
 
-  const renderElement = (element: BadgeElement) => {
-    const isSelected = selectedElements.includes(element.id);
-    
-    if (!elementRefs.current.has(element.id)) {
-      elementRefs.current.set(element.id, React.createRef());
-    }
-
-    const elementRef = elementRefs.current.get(element.id)!;
-
-    let content;
+  // Render element content (can be used for both real elements and ghost elements)
+  const renderElementContent = (element: BadgeElement) => {
     if (element.type === 'text') {
-      content = (
+      return (
         <div 
           style={{
+            width: '100%',
+            height: '100%',
             fontFamily: element.style.fontFamily,
             fontSize: `${element.style.fontSize}px`,
             color: element.style.color,
             fontWeight: element.style.fontWeight,
             fontStyle: element.style.fontStyle,
             textAlign: element.style.textAlign,
+            transform: element.style.transform,
+            transformOrigin: 'center center',
             textTransform: element.style.textTransform,
+            overflow: 'visible', // Important: like old system
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: element.style.textAlign === 'center' ? 'center' : 
+                          element.style.textAlign === 'right' ? 'flex-end' : 'flex-start',
+            pointerEvents: 'none',
             lineHeight: '1.2',
-            overflow: 'hidden',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word'
           }}
@@ -298,10 +303,16 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
         </div>
       );
     } else if (element.type === 'qrcode') {
-      content = (
+      return (
         <div 
           className="flex flex-col items-center justify-center bg-white border-2 border-gray-300 text-gray-600"
-          style={{ fontSize: '10px', width: '100%', height: '100%' }}
+          style={{ 
+            fontSize: '10px', 
+            width: '100%', 
+            height: '100%',
+            transform: element.style.transform,
+            transformOrigin: 'center center'
+          }}
         >
           <svg 
             viewBox="0 0 100 100" 
@@ -324,22 +335,31 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
       );
     } else if (element.type === 'image') {
       const imageData = uploadedImages.get(element.imageId || '');
-      content = (
-        <div className="w-full h-full overflow-hidden">
-          {imageData ? (
-            <img 
-              src={imageData.data} 
-              alt="" 
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-500 text-xs">
-              Image
-            </div>
-          )}
-        </div>
+      return (
+        <img 
+          src={imageData?.data} 
+          alt="" 
+          className="w-full h-full object-contain pointer-events-none"
+          style={{ 
+            transform: element.style.transform,
+            transformOrigin: 'center center'
+          }}
+        />
       );
     }
+    return null;
+  };
+
+  const renderElement = (element: BadgeElement) => {
+    const isSelected = selectedElements.includes(element.id);
+    
+    if (!elementRefs.current.has(element.id)) {
+      elementRefs.current.set(element.id, React.createRef());
+    }
+
+    const elementRef = elementRefs.current.get(element.id)!;
+
+    const content = renderElementContent(element);
 
     return (
       <>
@@ -404,35 +424,96 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   );
 
   // Handle drag events
+  // IMPORTANT: @dnd-kit's transform and delta are already in the correct coordinate space
+  // (relative to the DndContext which is inside the scaled container).
+  // DO NOT divide by zoom or the drag will be multiplied when zoomed out!
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const elementId = active.id as string;
     const element = elements.find(el => el.id === elementId);
-    if (element && onDragStart) {
-      onDragStart(elementId, null as any, { x: element.x, y: element.y });
+    if (element) {
+      setActiveDragElement(element);
+      setDragOffset({ x: 0, y: 0 });
+      if (onDragStart) {
+        onDragStart(elementId, null as any, { x: element.x, y: element.y });
+      }
     }
   };
 
-  const handleDragMove = (_event: DragMoveEvent) => {
-    // Ne rien faire pendant le drag - dnd-kit gère visuellement le déplacement
-    // L'appel à onDrag a été désactivé pour éviter l'effet de rebond
+  const handleDragMove = (event: DragMoveEvent) => {
+    const { delta } = event;
+    // NO zoom adjustment needed - see comment above handleDragStart
+    setDragOffset({ 
+      x: delta.x, 
+      y: delta.y 
+    });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, delta } = event;
     const elementId = active.id as string;
     const element = elements.find(el => el.id === elementId);
+    
+    // Reset drag state
+    setActiveDragElement(null);
+    setDragOffset({ x: 0, y: 0 });
+    
     if (element && onDragStop) {
-      // Ajuster le delta en fonction du zoom
+      // NO zoom adjustment needed - see comment above handleDragStart
       onDragStop(elementId, null as any, { 
-        x: element.x + delta.x / zoom, 
-        y: element.y + delta.y / zoom 
+        x: element.x + delta.x, 
+        y: element.y + delta.y 
       });
     }
   };
 
+  // Calculate symmetric clone position during drag
+  const getSymmetricClone = () => {
+    if (!activeDragElement) return null;
+    
+    // Check if this element has a symmetric pair
+    const cloneId = symmetryPairs.get(activeDragElement.id);
+    if (!cloneId) return null;
+    
+    const badgeWidth = mmToPx(format.width);
+    const badgeHeight = mmToPx(format.height);
+    const centerX = badgeWidth / 2;
+    const centerY = badgeHeight / 2;
+    
+    // Calculate parent position with drag offset
+    // NO zoom adjustment - dragOffset is already in correct coordinate space
+    const parentX = activeDragElement.x + dragOffset.x;
+    const parentY = activeDragElement.y + dragOffset.y;
+    const parentCenterX = parentX + activeDragElement.width / 2;
+    const parentCenterY = parentY + activeDragElement.height / 2;
+    
+    // Calculate symmetric position
+    const cloneCenterX = 2 * centerX - parentCenterX;
+    const cloneCenterY = 2 * centerY - parentCenterY;
+    const cloneX = cloneCenterX - activeDragElement.width / 2;
+    const cloneY = cloneCenterY - activeDragElement.height / 2;
+    
+    // Calculate the transform with rotation + flip for 180°
+    const cloneRotation = (activeDragElement.style.rotation || 0) + 180;
+    const cloneTransform = getTransformWithRotation(cloneRotation, activeDragElement.style.transform);
+    
+    return {
+      ...activeDragElement,
+      id: cloneId,
+      x: Math.round(cloneX),
+      y: Math.round(cloneY),
+      style: {
+        ...activeDragElement.style,
+        rotation: cloneRotation,
+        transform: cloneTransform
+      }
+    };
+  };
+
+  const symmetricClone = getSymmetricClone();
+
   return (
-    <div className="flex-1 flex items-center justify-center p-6 bg-gray-100 overflow-auto">
+    <div className="flex-1 flex items-center justify-center overflow-auto">
       <div className="relative">
         <DndContext
           sensors={sensors}
@@ -442,7 +523,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
         >
           <div
             ref={badgeRef}
-            className="relative bg-white shadow-lg border-2 border-gray-300 overflow-hidden"
+            className="relative bg-white shadow-lg overflow-hidden"
             style={{
               width: `${badgeWidth}px`,
               height: `${badgeHeight}px`,
@@ -480,6 +561,22 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
 
           {/* Render elements */}
           {elements.map(renderElement)}
+
+          {/* Render symmetric clone during drag */}
+          {symmetricClone && (
+            <div
+              className="absolute pointer-events-none ring-2 ring-purple-500 opacity-70"
+              style={{
+                left: symmetricClone.x,
+                top: symmetricClone.y,
+                width: `${symmetricClone.width}px`,
+                height: `${symmetricClone.height}px`,
+                zIndex: 1000
+              }}
+            >
+              {renderElementContent(symmetricClone)}
+            </div>
+          )}
 
           {/* Selection rectangle */}
           {isSelecting && selectionStart && selectionEnd && (

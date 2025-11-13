@@ -2,6 +2,7 @@ import React from 'react';
 import { Trash2, Eye, EyeOff, RotateCcw, RotateCw, Copy, ArrowUp, ArrowDown, Shuffle, X } from 'lucide-react';
 import { BadgeElement } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
+import { getTransformWithRotation } from '../../../shared/utils/transform';
 
 interface RightSidebarProps {
   selectedElements: BadgeElement[];
@@ -49,6 +50,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
       const updates: any = {
         style: { ...element.style, [property]: value }
       };
+      
+      // When rotation changes, also update the transform
+      if (property === 'rotation') {
+        updates.style.transform = getTransformWithRotation(value, element.style.transform);
+      }
       
       // Ajuster automatiquement la hauteur quand on change la taille de police
       if (property === 'fontSize' && element.type === 'text') {

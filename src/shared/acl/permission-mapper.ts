@@ -19,19 +19,23 @@ export function mapPermissionsToCASlRules(
 ): AppRule[] {
   const rules: AppRule[] = []
   
+  // Debug: log all received permissions
+  console.log('[PermissionMapper] Received permissions:', permissions)
+  
   // Track which resources have full CRUD permissions by scope
   const resourcePermissions: Record<string, Record<string, Set<string>>> = {}
 
   permissions.forEach((permission) => {
-    // Parse permission format: "resource.action:scope"
+    // Parse permission format: "resource.action:scope" or "resource.action:scope:extra"
     const parts = permission.split(':')
-    if (parts.length !== 2) {
+    if (parts.length < 2) {
       console.warn(
         `[PermissionMapper] Invalid permission format: ${permission}`
       )
       return
     }
 
+    // Take only first two parts, ignore extra (e.g., :none suffix)
     const [codeWithAction, scope] = parts
 
     if (!codeWithAction || !scope) {
@@ -143,8 +147,8 @@ export function mapPermissionsToCASlRules(
         // Global access - no conditions
         break
       case 'none':
-        // No access - skip this permission
-        return
+        // No scope restrictions - full access (backend will enforce org limits)
+        break
       default:
         console.warn(`[PermissionMapper] Unknown scope: ${scope}`)
     }

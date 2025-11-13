@@ -34,7 +34,7 @@ const PublicRegistration: React.FC = () => {
   useEffect(() => {
     const fetchEvent = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+        const apiUrl = import.meta.env.VITE_API_URL || '' // Empty = relative URL through reverse proxy
         const response = await fetch(`${apiUrl}/public/events/${token}`)
 
         if (!response.ok) {
@@ -137,7 +137,7 @@ const PublicRegistration: React.FC = () => {
 
       console.log('📤 Payload envoyé:', payload)
 
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const apiUrl = import.meta.env.VITE_API_URL || '' // Empty = relative URL through reverse proxy
       const response = await fetch(
         `${apiUrl}/public/events/${token}/register`,
         {

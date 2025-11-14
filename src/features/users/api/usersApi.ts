@@ -144,7 +144,7 @@ export const usersApi = rootApi.injectEndpoints({
       query: (userIds) => ({
         url: '/users/bulk-delete',
         method: 'POST',
-        body: { userIds },
+        body: { ids: userIds }, // Backend attend "ids" pas "userIds"
       }),
       invalidatesTags: ['Users'],
     }),

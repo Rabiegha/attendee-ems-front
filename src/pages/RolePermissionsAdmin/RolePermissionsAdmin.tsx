@@ -13,6 +13,7 @@ import {
 import { Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { Can } from '@/shared/acl/guards/Can'
+import { useToast } from '@/shared/hooks/useToast'
 import {
   Button,
   PageContainer,
@@ -52,8 +53,8 @@ export const RolePermissionsAdmin: React.FC = () => {
 
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null)
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [successMessage, setSuccessMessage] = useState('')
+  
+  const toast = useToast()
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -144,8 +145,7 @@ export const RolePermissionsAdmin: React.FC = () => {
       }).unwrap()
 
       refetchRoles()
-      setSuccessMessage('Permissions mises à jour avec succès')
-      setShowSuccessModal(true)
+      toast.success('Permissions mises à jour avec succès')
     } catch (err: any) {
       console.error('Erreur lors de la mise à jour des permissions:', err)
       const errorMessage =
@@ -527,40 +527,6 @@ export const RolePermissionsAdmin: React.FC = () => {
           </div>
         )}
       </PageContainer>
-
-      {/* Modal de succès */}
-      {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-200">
-            {/* Icône de succès */}
-            <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-3">
-                <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-
-            {/* Titre */}
-            <h3 className="text-xl font-semibold text-center text-gray-900 dark:text-white mb-2">
-              Succès !
-            </h3>
-
-            {/* Message */}
-            <p className="text-center text-gray-600 dark:text-gray-300 mb-6">
-              {successMessage}
-            </p>
-
-            {/* Bouton de fermeture */}
-            <div className="flex justify-center">
-              <Button
-                onClick={() => setShowSuccessModal(false)}
-                className="px-6"
-              >
-                OK
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </Can>
   )
 }

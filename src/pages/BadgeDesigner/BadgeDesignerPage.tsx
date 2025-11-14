@@ -49,8 +49,8 @@ export const BadgeDesignerPage: React.FC = () => {
   const [symmetryPairs, setSymmetryPairs] = useState<Map<string, string>>(new Map());
   
   // Zoom and view state
-  const [zoom, setZoom] = useState(1);
-  const [canvasOffset, setCanvasOffset] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(0.4); // Zoom initial à 40% pour voir le badge en entier
+  const [canvasOffset, setCanvasOffset] = useState({ x: -999, y: -999 }); // Valeur temporaire pour cacher le badge initial
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
@@ -103,6 +103,11 @@ export const BadgeDesignerPage: React.FC = () => {
           setSymmetryPairs(new Map(data.symmetryPairs));
         }
         setTemplateName(loadedTemplate.name);
+        
+        // Centrer et ajuster le zoom après le chargement du template
+        setTimeout(() => {
+          fitToScreen();
+        }, 300);
       } catch (e) {
         console.error('Failed to load template from API:', e);
         toast.error('Erreur', 'Impossible de charger le template');
@@ -110,17 +115,83 @@ export const BadgeDesignerPage: React.FC = () => {
     }
   }, [loadedTemplate]);
 
+  // Auto fit to screen on initial load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fitToScreen();
+    }, 300); // Augmenté à 300ms pour être sûr que le badge soit rendu
+    return () => clearTimeout(timer);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Helper function to measure text dimensions
+  const measureText = (content: string, fontSize: number, fontFamily: string = 'Arial'): { width: number; height: number } => {
+    // Créer un élément temporaire pour mesurer le texte
+    const div = document.createElement('div');
+    div.style.position = 'absolute';
+    div.style.visibility = 'hidden';
+    div.style.whiteSpace = 'pre-wrap';
+    div.style.wordBreak = 'break-word';
+    div.style.fontFamily = fontFamily;
+    div.style.fontSize = `${fontSize}px`;
+    div.style.lineHeight = '1.2';
+    div.style.width = 'fit-content';
+    div.style.height = 'fit-content';
+    div.textContent = content;
+    
+    document.body.appendChild(div);
+    const width = div.offsetWidth;
+    const height = div.offsetHeight;
+    document.body.removeChild(div);
+    
+    return { width: width + 5, height: height + 5 }; // Ajouter une petite marge
+  };
+
   // Add element
   const addElement = (type: 'text' | 'qrcode' | 'image', content: string = '') => {
     const defaultFontSize = 70;
+    const badgeWidth = mmToPx(format.width);
+    const badgeHeight = mmToPx(format.height);
+    
+    // Détecter si c'est une variable (contient {{ }})
+    const isVariable = content.includes('{{') && content.includes('}}');
+    
+    let textWidth: number;
+    let textHeight: number;
+    let posX: number;
+    let posY: number;
+    let textAlign: 'left' | 'center' | 'right' = 'left';
+    
+    if (type === 'text' && isVariable) {
+      // Variables : 90% de la largeur du badge, centrées
+      textWidth = badgeWidth * 0.9;
+      textHeight = Math.ceil(defaultFontSize * 1.5);
+      posX = badgeWidth * 0.05; // Centré (5% de marge de chaque côté)
+      posY = 50;
+      textAlign = 'left'; // Texte aligné à gauche dans la zone centrée
+    } else if (type === 'text' && content) {
+      // Texte libre : mesurer la taille réelle du texte
+      const measured = measureText(content, defaultFontSize);
+      textWidth = measured.width;
+      textHeight = measured.height;
+      posX = 50;
+      posY = 50;
+      textAlign = 'left';
+    } else {
+      // Défaut pour autres types
+      textWidth = type === 'image' ? 100 : (type === 'qrcode' ? 80 : 300);
+      textHeight = type === 'image' ? 100 : (type === 'qrcode' ? 80 : Math.ceil(defaultFontSize * 1.5));
+      posX = 50;
+      posY = 50;
+    }
+    
     const newElement: BadgeElement = {
       id: `element-${Date.now()}`,
       type,
       content,
-      x: 50,
-      y: 50,
-      width: type === 'image' ? 100 : (type === 'qrcode' ? 80 : 300),
-      height: type === 'image' ? 100 : (type === 'qrcode' ? 80 : Math.ceil(defaultFontSize * 1.5)),
+      x: posX,
+      y: posY,
+      width: textWidth,
+      height: textHeight,
       visible: true,
       ...(type === 'qrcode' && { 
         maintainAspectRatio: true,
@@ -132,7 +203,7 @@ export const BadgeDesignerPage: React.FC = () => {
         color: '#000000',
         fontWeight: 'normal',
         fontStyle: 'normal',
-        textAlign: 'left',
+        textAlign: textAlign,
         transform: '',
         rotation: 0,
         opacity: 1,
@@ -148,6 +219,62 @@ export const BadgeDesignerPage: React.FC = () => {
 
   // Update element
   const updateElement = (id: string, updates: Partial<BadgeElement>) => {
+    const element = elements.find(el => el.id === id);
+    if (!element) return;
+    
+    // Si le contenu change et que c'est un texte, recalculer les dimensions automatiquement
+    if (updates.content !== undefined && element.type === 'text') {
+      const newContent = updates.content;
+      const isVariable = newContent.includes('{{') && newContent.includes('}}');
+      const fontSize = updates.style?.fontSize || element.style.fontSize || 70;
+      const fontFamily = updates.style?.fontFamily || element.style.fontFamily || 'Arial';
+      const badgeWidth = mmToPx(format.width);
+      
+      if (isVariable) {
+        // Variables : garder 90% de la largeur du badge
+        updates.width = badgeWidth * 0.9;
+        updates.x = badgeWidth * 0.05;
+        updates.height = Math.ceil(fontSize * 1.5);
+      } else {
+        // Texte libre : mesurer la taille réelle du texte
+        const measured = measureText(newContent, fontSize, fontFamily);
+        updates.width = measured.width;
+        updates.height = measured.height;
+      }
+    }
+    
+    // Si la taille de police change et que c'est un texte, recalculer les dimensions
+    if (updates.style?.fontSize !== undefined && element.type === 'text') {
+      const fontSize = updates.style.fontSize;
+      const fontFamily = updates.style.fontFamily || element.style.fontFamily || 'Arial';
+      const content = updates.content || element.content;
+      const isVariable = content.includes('{{') && content.includes('}}');
+      const badgeWidth = mmToPx(format.width);
+      
+      if (isVariable) {
+        updates.width = badgeWidth * 0.9;
+        updates.height = Math.ceil(fontSize * 1.5);
+      } else {
+        const measured = measureText(content, fontSize, fontFamily);
+        updates.width = measured.width;
+        updates.height = measured.height;
+      }
+    }
+    
+    // Si la police change et que c'est un texte libre, recalculer les dimensions
+    if (updates.style?.fontFamily !== undefined && element.type === 'text') {
+      const fontSize = updates.style.fontSize || element.style.fontSize || 70;
+      const fontFamily = updates.style.fontFamily;
+      const content = updates.content || element.content;
+      const isVariable = content.includes('{{') && content.includes('}}');
+      
+      if (!isVariable) {
+        const measured = measureText(content, fontSize, fontFamily);
+        updates.width = measured.width;
+        updates.height = measured.height;
+      }
+    }
+    
     const newElements = elements.map(el => 
       el.id === id ? { ...el, ...updates } : el
     );
@@ -370,17 +497,30 @@ export const BadgeDesignerPage: React.FC = () => {
     const maxZoom = 5;
     const clampedZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
     
-    if (centerPoint && canvasContainerRef.current) {
+    if (centerPoint && canvasContainerRef.current && badgeRef.current) {
       // Zoom towards a specific point (like mouse position)
       const container = canvasContainerRef.current;
-      const rect = container.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const badgeRect = badgeRef.current.getBoundingClientRect();
       
+      // Position de la souris relative au conteneur
+      const mouseX = centerPoint.x - containerRect.left;
+      const mouseY = centerPoint.y - containerRect.top;
+      
+      // Position actuelle du centre du badge dans le conteneur
+      const badgeCenterX = badgeRect.left - containerRect.left + badgeRect.width / 2;
+      const badgeCenterY = badgeRect.top - containerRect.top + badgeRect.height / 2;
+      
+      // Distance de la souris au centre du badge
+      const deltaX = mouseX - badgeCenterX;
+      const deltaY = mouseY - badgeCenterY;
+      
+      // Ratio de zoom
       const zoomRatio = clampedZoom / zoom;
-      const mouseX = centerPoint.x - rect.left;
-      const mouseY = centerPoint.y - rect.top;
       
-      const newOffsetX = mouseX - (mouseX - canvasOffset.x) * zoomRatio;
-      const newOffsetY = mouseY - (mouseY - canvasOffset.y) * zoomRatio;
+      // Calculer le nouvel offset pour que le point sous la souris reste fixe
+      const newOffsetX = canvasOffset.x - deltaX * (zoomRatio - 1);
+      const newOffsetY = canvasOffset.y - deltaY * (zoomRatio - 1);
       
       setCanvasOffset({ x: newOffsetX, y: newOffsetY });
     }
@@ -417,19 +557,20 @@ export const BadgeDesignerPage: React.FC = () => {
     if (!canvasContainerRef.current || !badgeRef.current) return;
     
     const container = canvasContainerRef.current;
-    const badge = badgeRef.current;
     const containerRect = container.getBoundingClientRect();
-    const badgeRect = badge.getBoundingClientRect();
     
-    const scaleX = (containerRect.width - 100) / badgeRect.width;
-    const scaleY = (containerRect.height - 100) / badgeRect.height;
+    // Utiliser les dimensions réelles du badge depuis le format
+    const badgeWidth = mmToPx(format.width);
+    const badgeHeight = mmToPx(format.height);
+    
+    // Calculer le zoom pour que le badge rentre dans le conteneur avec une marge de 100px
+    const scaleX = (containerRect.width - 100) / badgeWidth;
+    const scaleY = (containerRect.height - 100) / badgeHeight;
     const newZoom = Math.min(scaleX, scaleY);
     
-    const centerX = (containerRect.width - badgeRect.width * newZoom) / 2;
-    const centerY = (containerRect.height - badgeRect.height * newZoom) / 2;
-    
     setZoom(newZoom);
-    setCanvasOffset({ x: centerX, y: centerY });
+    // Le centrage est géré par flex center, on réinitialise juste l'offset pour déclencher l'opacity
+    setCanvasOffset({ x: 0, y: 0 });
   };
 
   const handleCanvasMouseDown = (e: React.MouseEvent) => {
@@ -803,7 +944,9 @@ export const BadgeDesignerPage: React.FC = () => {
             className="absolute inset-0 flex items-center justify-center"
             style={{
               transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${zoom})`,
-              transformOrigin: '0 0'
+              transformOrigin: 'center center',
+              opacity: canvasOffset.x === -999 ? 0 : 1,
+              transition: 'opacity 0.1s'
             }}
           >
             <BadgeEditor

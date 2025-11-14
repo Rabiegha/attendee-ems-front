@@ -7,15 +7,20 @@ import type { AttendeeDPO } from '@/features/attendees/dpo/attendee.dpo'
 interface StatsCardsProps {
   events: EventDPO[]
   attendees: AttendeeDPO[]
+  totalAttendees?: number // Total depuis l'API (peut différer de attendees.length si paginé)
   isLoading: boolean
 }
 
 export const StatsCards: React.FC<StatsCardsProps> = ({
   events,
   attendees,
+  totalAttendees,
   isLoading,
 }) => {
   const navigate = useNavigate()
+
+  // Utiliser le total fourni ou la longueur du tableau
+  const attendeesCount = totalAttendees ?? attendees.length
 
   const quickActions = [
     {
@@ -31,7 +36,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
     {
       title: 'Participants',
       description: 'Voir tous les participants',
-      count: attendees.length,
+      count: attendeesCount,
       activeCount: attendees.filter((a) => a.isActive).length,
       icon: Users,
       color: 'from-green-500 to-green-600',

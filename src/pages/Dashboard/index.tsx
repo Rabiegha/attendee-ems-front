@@ -41,10 +41,16 @@ export const Dashboard: React.FC = () => {
   const canReadEvent = useCan('read', 'Event')
   const canReadAttendee = useCan('read', 'Attendee')
 
+  // Récupérer les 5 derniers événements pour l'affichage
   const { data: events = [], isLoading: eventsLoading } = useGetEventsQuery({
     limit: 5,
     sortBy: 'created_at',
     sortOrder: 'desc',
+  })
+
+  // Récupérer TOUS les événements pour le comptage total
+  const { data: allEvents = [] } = useGetEventsQuery({
+    limit: 1000, // Limite haute pour avoir tous les événements
   })
 
   const { data: attendeesResponse, isLoading: attendeesLoading } =
@@ -55,8 +61,9 @@ export const Dashboard: React.FC = () => {
       sortDir: 'desc',
     })
 
-  // Extraire les attendees du format paginé { data, meta }
+  // Récupérer le total des participants depuis meta
   const attendees = attendeesResponse?.data || []
+  const totalAttendees = attendeesResponse?.meta?.total || attendees.length
 
   // Dashboard pour les admins/managers (permissions complètes)
   if (canReadOrganization) {
@@ -70,8 +77,9 @@ export const Dashboard: React.FC = () => {
 
         <PageSection spacing="lg">
           <StatsCards
-            events={events}
+            events={allEvents}
             attendees={attendees}
+            totalAttendees={totalAttendees}
             isLoading={eventsLoading || attendeesLoading}
           />
         </PageSection>

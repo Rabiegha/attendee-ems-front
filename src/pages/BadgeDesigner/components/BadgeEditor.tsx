@@ -255,8 +255,14 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             (elementRef as any).current = node;
           }
         }}
-        style={style}
-        className={`select-none ${isSelected ? 'ring-2 ring-blue-500' : ''}`}
+        style={{
+          ...style,
+          ...(isSelected && {
+            outline: `${Math.max(2, 2 / zoom)}px solid rgb(59, 130, 246)`,
+            outlineOffset: '0px'
+          })
+        }}
+        className="select-none"
         onClick={(e) => onElementClick(element.id, e)}
         {...attributes}
       >
@@ -375,38 +381,44 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
         {/* Resize handles - en dehors de la zone draggable */}
         {isSelected && (
           <>
-            {['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'].map(handle => (
-              <div
-                key={handle}
-                className={`absolute w-2 h-2 bg-blue-500 border border-white z-20`}
-                style={{
-                  ...getHandlePosition(handle, element),
-                  display: resizingElement && resizingElement !== element.id ? 'none' : 'block',
-                  cursor: `${handle}-resize`
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation(); // Empêche le drag
-                  handleResizeStart(element.id, handle, e);
-                }}
-              />
-            ))}
+            {['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'].map(handle => {
+              const handleSize = Math.max(6, 8 / zoom); // Taille adaptée au zoom
+              const handleOffset = handleSize / 2;
+              return (
+                <div
+                  key={handle}
+                  className={`absolute bg-blue-500 border border-white z-20`}
+                  style={{
+                    ...getHandlePosition(handle, element, handleOffset),
+                    width: `${handleSize}px`,
+                    height: `${handleSize}px`,
+                    display: resizingElement && resizingElement !== element.id ? 'none' : 'block',
+                    cursor: `${handle}-resize`
+                  }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation(); // Empêche le drag
+                    handleResizeStart(element.id, handle, e);
+                  }}
+                />
+              );
+            })}
           </>
         )}
       </>
     );
   };
 
-  const getHandlePosition = (handle: string, element: BadgeElement) => {
+  const getHandlePosition = (handle: string, element: BadgeElement, offset: number = 4) => {
     const { x, y, width, height } = element;
     switch (handle) {
-      case 'nw': return { top: y - 4, left: x - 4 };
-      case 'ne': return { top: y - 4, left: x + width - 4 };
-      case 'sw': return { top: y + height - 4, left: x - 4 };
-      case 'se': return { top: y + height - 4, left: x + width - 4 };
-      case 'n': return { top: y - 4, left: x + width / 2 - 4 };
-      case 's': return { top: y + height - 4, left: x + width / 2 - 4 };
-      case 'w': return { top: y + height / 2 - 4, left: x - 4 };
-      case 'e': return { top: y + height / 2 - 4, left: x + width - 4 };
+      case 'nw': return { top: y - offset, left: x - offset };
+      case 'ne': return { top: y - offset, left: x + width - offset };
+      case 'sw': return { top: y + height - offset, left: x - offset };
+      case 'se': return { top: y + height - offset, left: x + width - offset };
+      case 'n': return { top: y - offset, left: x + width / 2 - offset };
+      case 's': return { top: y + height - offset, left: x + width / 2 - offset };
+      case 'w': return { top: y + height / 2 - offset, left: x - offset };
+      case 'e': return { top: y + height / 2 - offset, left: x + width - offset };
       default: return {};
     }
   };
@@ -544,10 +556,16 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
                 e.stopPropagation();
                 backgroundInputRef.current?.click();
               }}
+              style={{
+                fontSize: `${Math.max(12, 14 / zoom)}px` // Adapter la taille au zoom
+              }}
             >
               <div className="text-center">
-                <Plus size={48} className="mx-auto mb-2" />
-                <p className="text-sm">Cliquez pour ajouter un arrière-plan</p>
+                <Plus 
+                  size={Math.max(32, 48 / zoom)} 
+                  className="mx-auto mb-2" 
+                />
+                <p>Cliquez pour ajouter un arrière-plan</p>
                 <input
                   ref={backgroundInputRef}
                   type="file"

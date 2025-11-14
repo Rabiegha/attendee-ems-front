@@ -63,12 +63,22 @@ interface FormBuilderProps {
   className?: string
 }
 
+// Champs obligatoires qui ne peuvent pas être supprimés
+const MANDATORY_FIELDS = ['first_name', 'last_name', 'email']
+
+// Vérifie si un champ est obligatoire (non supprimable)
+const isMandatoryField = (field: FormField): boolean => {
+  return MANDATORY_FIELDS.some(mandatoryKey => field.key === mandatoryKey)
+}
+
 // Composant pour un champ draggable et sortable
 interface SortableFieldItemProps {
   field: FormField
   onRemove: () => void
   onToggleWidth: () => void
   onToggleRequired: () => void
+  isRemoveDisabled?: boolean
+  isRequiredDisabled?: boolean
   children: React.ReactNode
 }
 
@@ -77,6 +87,8 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
   onRemove,
   onToggleWidth,
   onToggleRequired,
+  isRemoveDisabled = false,
+  isRequiredDisabled = false,
   children,
 }) => {
   const {
@@ -136,12 +148,19 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
           <button
             type="button"
             onClick={onToggleRequired}
+            disabled={isRequiredDisabled}
             className={`p-1.5 rounded transition-colors ${
               field.required
                 ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
                 : 'text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
-            }`}
-            title={field.required ? 'Champ obligatoire' : 'Champ facultatif'}
+            } ${isRequiredDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            title={
+              isRequiredDisabled
+                ? 'Ce champ doit être obligatoire'
+                : field.required
+                ? 'Champ obligatoire'
+                : 'Champ facultatif'
+            }
           >
             <AlertCircle className="h-4 w-4" />
           </button>
@@ -160,8 +179,13 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
           <button
             type="button"
             onClick={onRemove}
-            className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
-            title="Supprimer"
+            disabled={isRemoveDisabled}
+            className={`p-1.5 rounded transition-colors ${
+              isRemoveDisabled
+                ? 'opacity-30 cursor-not-allowed text-gray-300 dark:text-gray-600'
+                : 'text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30'
+            }`}
+            title={isRemoveDisabled ? 'Ce champ ne peut pas être supprimé' : 'Supprimer'}
           >
             <Trash2 className="h-4 w-4" />
           </button>
@@ -280,6 +304,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   }
 
   const handleRemoveField = (fieldId: string) => {
+    const fieldToRemove = fields.find((f) => f.id === fieldId)
+    
+    // Empêcher la suppression des champs obligatoires
+    if (fieldToRemove && isMandatoryField(fieldToRemove)) {
+      return
+    }
+    
     const updatedFields = fields
       .filter((f) => f.id !== fieldId)
       .map((f, index) => ({ ...f, order: index }))
@@ -306,6 +337,11 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const handleToggleRequired = (fieldId: string) => {
     const field = fields.find((f) => f.id === fieldId)
     if (!field) return
+    
+    // Les champs obligatoires doivent toujours être required
+    if (isMandatoryField(field)) {
+      return
+    }
 
     handleUpdateField(fieldId, { required: !field.required })
   }
@@ -535,6 +571,8 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   onRemove={() => handleRemoveField(field.id)}
                   onToggleWidth={() => handleToggleWidth(field.id)}
                   onToggleRequired={() => handleToggleRequired(field.id)}
+                  isRemoveDisabled={isMandatoryField(field)}
+                  isRequiredDisabled={isMandatoryField(field)}
                 >
                   {/* Field Content */}
                   <div className="space-y-3">

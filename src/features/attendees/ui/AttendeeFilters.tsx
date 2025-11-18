@@ -1,7 +1,7 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
-import { Search, Filter, X } from 'lucide-react'
+import { Filter, X } from 'lucide-react'
 import {
   selectAttendeesSearchQuery,
   selectAttendeesSelectedStatus,
@@ -10,8 +10,8 @@ import {
   setSelectedStatus,
   resetFilters,
 } from '../model/attendeesSlice'
-import { Input } from '@/shared/ui/Input'
 import { Button } from '@/shared/ui/Button'
+import { SearchInput } from '@/shared/ui/SearchInput'
 
 const statusOptions = [
   { value: '', label: 'Tous' },
@@ -30,14 +30,6 @@ export const AttendeeFilters: React.FC = () => {
   const hasActiveFilters =
     searchQuery || selectedStatus || selectedTags.length > 0
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setSearchQuery(e.target.value))
-  }
-
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setSelectedStatus(e.target.value || null))
-  }
-
   const handleResetFilters = () => {
     dispatch(resetFilters())
   }
@@ -46,19 +38,17 @@ export const AttendeeFilters: React.FC = () => {
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
       <div className="flex items-center space-x-4">
         <div className="flex-1">
-          <Input
-            type="text"
+          <SearchInput
             placeholder={t('filters.search_placeholder')}
             value={searchQuery}
-            onChange={handleSearchChange}
-            leftIcon={<Search className="h-4 w-4" />}
+            onChange={(value) => dispatch(setSearchQuery(value))}
           />
         </div>
 
         <div className="w-48">
           <select
             value={selectedStatus || ''}
-            onChange={handleStatusChange}
+            onChange={(e) => dispatch(setSelectedStatus(e.target.value || null))}
             className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors duration-200"
           >
             {statusOptions.map((option) => (

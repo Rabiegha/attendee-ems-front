@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { CreditCard, Plus } from 'lucide-react';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { PageContainer } from '@/shared/ui/PageContainer';
-import { Card } from '@/shared/ui/Card';
+import { Card } from '@/shared/ui/Card'
+import { LoadingState, BadgeTemplatesGridSkeleton } from '@/shared/ui';
 import { Button } from '@/shared/ui/Button';
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api';
 
@@ -39,9 +40,8 @@ export const BadgeDesigner: React.FC = () => {
       
       <Card>
         {isLoading && (
-          <div className="p-8 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Chargement des templates...</p>
+          <div className="p-6">
+            <BadgeTemplatesGridSkeleton count={6} />
           </div>
         )}
 

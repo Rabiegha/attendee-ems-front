@@ -602,6 +602,209 @@ Animations subtiles et élégantes :
   Exemples: CreateEventModal, EditEventModal, DeleteEventModal
   **🌙 DARK MODE OBLIGATOIRE** : backdrop et contenu avec thème approprié
 
+## 💀 SKELETON LOADING SYSTEM
+
+**⚠️ OBLIGATOIRE : Implémenter skeleton loading pour toutes les pages avec données asynchrones**
+
+Le système dispose d'un ensemble complet de composants skeleton pour afficher des états de chargement professionnels. Consulter la documentation complète : **`docs/SKELETON_LOADING_GUIDELINES.md`**
+
+### Principes Fondamentaux
+
+1. **TOUJOURS utiliser des skeletons** plutôt que des spinners pour les pages
+2. **STRUCTURE IDENTIQUE** : Le skeleton doit matcher exactement le contenu réel
+3. **ÉLÉMENTS STATIQUES VISIBLES** : Filtres, headers, navigation restent visibles pendant le chargement
+4. **CONTENU DYNAMIQUE SEULEMENT** : Seul le contenu chargé depuis l'API est remplacé par un skeleton
+
+### Skeletons Disponibles (20+)
+
+Tous les skeletons sont dans `src/shared/ui/SkeletonLayouts.tsx` :
+
+- **Pages principales** : `EventsPageSkeleton`, `EventDetailsSkeleton` (avec support `activeTab`), `DashboardPageSkeleton`
+- **Tables/Listes** : `UsersTableSkeleton`, `RegistrationsTableSkeleton`, `AttendeeFiltersWithTableSkeleton`
+- **Grilles** : `BadgeTemplatesGridSkeleton`, `PageWithFiltersSkeleton`
+- **Organisations** : `OrganizationsPageSkeleton` (single card + team list)
+- **Rôles** : `RolesPermissionsPageSkeleton` (2 colonnes : roles list + permissions accordions)
+- **Dashboard** : `DashboardStatsCardsSkeleton`, `DashboardEventListSkeleton`, `DashboardAttendeeListSkeleton`
+- **EventDetails tabs** : `EventDetailsTabSkeleton`, `EventRegistrationsTabSkeleton`, `EventFormTabSkeleton`, `EventSettingsTabSkeleton`
+
+### Implémentation Type
+
+```tsx
+// ✅ BON - Skeleton matching structure réelle
+function EventsPage() {
+  const { data: events, isLoading } = useGetEventsQuery()
+
+  if (isLoading) {
+    return (
+      <PageContainer title="Événements">
+        {/* Filters visibles pendant loading */}
+        <EventFilters />
+        {/* Skeleton pour le contenu dynamique */}
+        <EventsPageSkeleton />
+      </PageContainer>
+    )
+  }
+
+  return (
+    <PageContainer title="Événements">
+      <EventFilters />
+      <EventGrid events={events} />
+    </PageContainer>
+  )
+}
+
+// ✅ BON - Skeleton avec tabs dynamiques
+function EventDetails() {
+  const { data, isLoading } = useGetEventQuery(id)
+  const [activeTab, setActiveTab] = useState('details')
+
+  if (isLoading) {
+    return <EventDetailsSkeleton activeTab={activeTab} />
+  }
+
+  return <EventDetailsContent data={data} activeTab={activeTab} />
+}
+
+// ❌ MAUVAIS - Spinner au lieu de skeleton
+function EventsPage() {
+  const { data, isLoading } = useGetEventsQuery()
+  if (isLoading) return <LoadingSpinner />
+  return <EventGrid events={data} />
+}
+```
+
+### Règles Critiques
+
+1. **NE PAS inclure les éléments statiques dans le skeleton** (filtres, headers, sidebars)
+2. **UTILISER PageContainer** pour cohérence visuelle
+3. **CRÉER des skeletons spécifiques** si les existants ne matchent pas
+4. **SUPPORT dark mode** : tous les skeletons utilisent `dark:bg-gray-600`
+5. **TABS DYNAMIQUES** : utiliser le prop `activeTab` pour afficher le bon skeleton
+
+### DevTools API Delay
+
+Pour tester les skeletons, utiliser le panneau DevTools (bottom-right) :
+
+- Slider 0-5000ms
+- Presets : Fast (100ms), Normal (500ms), Slow (1500ms), Very Slow (3000ms)
+- Mode Random pour simuler latence variable
+
+**DOCUMENTATION COMPLÈTE** : `docs/SKELETON_LOADING_GUIDELINES.md`
+
+---
+
+## 📊 TABLES RESPONSIVE - RÈGLES CRITIQUES
+
+**⚠️ OBLIGATOIRE : Toute table avec checkbox ou actions doit avoir des largeurs fixes**
+
+### Problème Résolu
+
+Les colonnes de sélection (checkbox) et d'actions disparaissaient sur petits écrans car elles n'avaient pas de largeur minimale définie.
+
+### Règles à Appliquer
+
+#### Colonne Checkbox (Sélection Multiple)
+```tsx
+// ✅ CORRECT - Largeur fixe + taille visible (h-5 w-5) + flex-shrink-0
+<th className="px-6 py-3 w-16 min-w-[4rem]">
+  <input type="checkbox" className="h-5 w-5 flex-shrink-0 cursor-pointer" />
+</th>
+
+<td className="px-6 py-4 w-16 min-w-[4rem]">
+  <input type="checkbox" className="h-5 w-5 flex-shrink-0 cursor-pointer" />
+</td>
+```
+
+#### Colonne Actions (selon nombre de boutons)
+```tsx
+// 2 boutons (Edit + Delete)
+<th className="px-6 py-3 text-right w-32 min-w-[8rem]">Actions</th>
+
+// 3-4 boutons (Approve + Refuse + Edit + Delete)
+<th className="px-6 py-3 text-right w-40 min-w-[10rem]">Actions</th>
+
+// 5+ boutons
+<th className="px-6 py-3 text-right w-48 min-w-[12rem]">Actions</th>
+```
+
+#### Container et Boutons d'Actions
+```tsx
+// ✅ CORRECT - flex-shrink-0 partout
+<td className="px-6 py-4 text-right w-32 min-w-[8rem]">
+  <div className="flex items-center justify-end gap-2 flex-shrink-0">
+    <Button className="flex-shrink-0">...</Button>
+    <Button className="flex-shrink-0">...</Button>
+  </div>
+</td>
+
+// ❌ MAUVAIS - Pas de largeur fixe, va rétrécir
+<td className="px-6 py-4 text-right">
+  <div className="flex items-center justify-end gap-2">
+    <Button>...</Button>
+  </div>
+</td>
+```
+
+### Guide des Largeurs
+
+| Type de Colonne | Classes | Utilisation |
+|-----------------|---------|-------------|
+| Checkbox | `w-16 min-w-[4rem]` | Sélection multiple |
+| Icon seule | `w-20 min-w-[5rem]` | QR Code, Badge |
+| 2 boutons | `w-32 min-w-[8rem]` | Edit + Delete |
+| 3-4 boutons | `w-40 min-w-[10rem]` | Actions multiples |
+| 5+ boutons | `w-48 min-w-[12rem]` | Actions nombreuses |
+
+### Template Nouvelle Table
+
+```tsx
+<table className="w-full">
+  <thead className="bg-gray-50 dark:bg-gray-700">
+    <tr>
+      {/* Checkbox */}
+      <th className="px-6 py-3 w-16 min-w-[4rem]">
+        <input type="checkbox" className="h-5 w-5 flex-shrink-0 cursor-pointer" />
+      </th>
+      
+      {/* Colonnes de données (pas de largeur fixe) */}
+      <th className="px-6 py-3 text-left">Données</th>
+      
+      {/* Actions */}
+      <th className="px-6 py-3 text-right w-32 min-w-[8rem]">Actions</th>
+    </tr>
+  </thead>
+  
+  <tbody>
+    <tr>
+      <td className="px-6 py-4 w-16 min-w-[4rem]">
+        <input type="checkbox" className="h-5 w-5 flex-shrink-0 cursor-pointer" />
+      </td>
+      
+      <td className="px-6 py-4">...</td>
+      
+      <td className="px-6 py-4 text-right w-32 min-w-[8rem]">
+        <div className="flex items-center justify-end gap-2 flex-shrink-0">
+          <Button className="flex-shrink-0">Edit</Button>
+          <Button className="flex-shrink-0">Delete</Button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+```
+
+### Checklist Table Responsive
+
+- [ ] Colonne Checkbox : `w-16 min-w-[4rem]`
+- [ ] Colonne Actions : largeur selon nombre de boutons
+- [ ] Input checkbox : `flex-shrink-0`
+- [ ] Container actions : `flex-shrink-0`
+- [ ] Chaque bouton : `flex-shrink-0`
+- [ ] Testé à 320px de largeur
+- [ ] Dark mode vérifié
+
+**DOCUMENTATION COMPLÈTE** : `docs/TABLE_RESPONSIVE_FIX.md`
+
 TOASTS SYSTÈME
 TOUJOURS utiliser le système de toast centralisé (shared/ui/Toast.tsx).
 

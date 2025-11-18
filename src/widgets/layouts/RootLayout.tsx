@@ -19,8 +19,16 @@ export const RootLayout: React.FC = () => {
   const user = useSelector((state: any) => state.session.user)
   const token = useSelector((state: any) => state.session.token)
   
-  // State pour gérer l'ouverture/fermeture de la sidebar
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  // State pour gérer l'ouverture/fermeture de la sidebar avec persistance
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem('sidebarOpen')
+    return saved !== null ? JSON.parse(saved) : true
+  })
+
+  // Sauvegarder l'état de la sidebar dans le localStorage
+  useEffect(() => {
+    localStorage.setItem('sidebarOpen', JSON.stringify(isSidebarOpen))
+  }, [isSidebarOpen])
 
   // Protection anti-boucle : compter les redirections
   const redirectCountRef = useRef(0)
@@ -130,7 +138,7 @@ export const RootLayout: React.FC = () => {
       <Header />
       <div className="flex">
         <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className={`flex-1 pt-[69px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-12'}`}>
+        <main className={`flex-1 pt-[69px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
           <PageTransition>
             <Outlet />
           </PageTransition>

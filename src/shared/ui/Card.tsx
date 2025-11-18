@@ -11,6 +11,7 @@ const cardVariants = cva('card-base transition-colors duration-200', {
       outlined: 'bg-transparent border-2 border-gray-300 dark:border-gray-600',
       ghost:
         'bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-700/50',
+      transparent: 'bg-transparent border-transparent',
     },
     padding: {
       none: 'p-0',

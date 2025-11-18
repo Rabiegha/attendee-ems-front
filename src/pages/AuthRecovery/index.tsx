@@ -93,7 +93,7 @@ export const AuthRecoveryPage: React.FC = () => {
             <p className="text-gray-600 dark:text-gray-300 mb-2">
               Nettoyage en cours...
             </p>
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+            <LoadingSpinner size="md" />
           </div>
         )}
 

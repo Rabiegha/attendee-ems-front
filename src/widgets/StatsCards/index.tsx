@@ -3,6 +3,7 @@ import { Calendar, Users, UserPlus, Plus, ArrowRight, TrendingUp } from 'lucide-
 import { useNavigate } from 'react-router-dom'
 import type { EventDPO } from '@/features/events/dpo/event.dpo'
 import type { AttendeeDPO } from '@/features/attendees/dpo/attendee.dpo'
+import { DashboardStatsCardsSkeleton } from '@/shared/ui'
 
 interface StatsCardsProps {
   events: EventDPO[]
@@ -64,22 +65,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
   ]
 
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div
-            key={i}
-            className="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
-          >
-            <div className="space-y-3">
-              <div className="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg"></div>
-              <div className="h-5 bg-gray-200 dark:bg-gray-600 rounded w-32"></div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-24"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    )
+    return <DashboardStatsCardsSkeleton />
   }
 
   return (

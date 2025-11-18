@@ -12,6 +12,7 @@ import {
   Select,
   SelectOption,
   GooglePlacesAutocomplete,
+  SearchInput,
 } from '@/shared/ui'
 import { CreateEventFormData } from '../index'
 import { MapPin, Users } from 'lucide-react'
@@ -127,12 +128,11 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
 
         {/* Barre de recherche */}
         <div className="mb-3">
-          <Input
+          <SearchInput
             id="search_users"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={setSearchTerm}
             placeholder="Rechercher par nom ou email..."
-            leftIcon={<Users className="h-4 w-4" />}
           />
         </div>
 

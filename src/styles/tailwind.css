@@ -79,6 +79,7 @@
 
   body {
     @apply bg-background text-foreground;
+    overflow-y: scroll; /* Force la scrollbar pour éviter les sauts */
   }
 
   #root {
@@ -337,9 +338,25 @@
     animation: bounce-gentle 1s ease-in-out infinite;
   }
 
+  /* Animation spin lente pour DevTools */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
   /* Page Transitions - Subtle Slide Effect */
   .page-transition-wrapper {
     animation: pageSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Remove transform after animation to not break position: sticky */
+    animation-fill-mode: forwards;
   }
 
   @keyframes pageSlideIn {

@@ -9,6 +9,7 @@ import {
   PageContainer,
   PageHeader,
   PageSection,
+  OrganizationsPageSkeleton,
 } from '@/shared/ui'
 import { useUniversalModal } from '@/shared/ui/useUniversalModal'
 import { AccessDenied } from '@/pages/AccessDenied'
@@ -39,7 +40,8 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
 }) => {
   const { data: usersData, isLoading: isLoadingUsers } =
     useGetOrganizationUsersQuery(organization.id, {
-      skip: !isExpanded && isSuperAdmin,
+      skip: !isExpanded && isSuperAdmin, // Pour super admin: skip si pas expanded
+      // Pour user normal: toujours charger (isExpanded = true, isSuperAdmin = false)
     })
 
   const shouldShowUsers = isSuperAdmin ? isExpanded : true
@@ -233,7 +235,18 @@ export const OrganizationsPage: React.FC = () => {
       ? [myOrgData] // L'API retourne directement l'organisation, pas un array
       : []
 
-  const isLoading = isSuperAdmin ? isLoadingOrgs : isLoadingMyOrg
+  // Pour les users normaux: précharger les utilisateurs de leur org
+  const firstOrgId = organizationsToDisplay[0]?.id
+  const { isLoading: isLoadingInitialUsers } = useGetOrganizationUsersQuery(
+    firstOrgId || '',
+    {
+      skip: isSuperAdmin || !firstOrgId, // Skip pour super admin ou si pas d'org
+    }
+  )
+
+  const isLoading = isSuperAdmin 
+    ? isLoadingOrgs 
+    : (isLoadingMyOrg || isLoadingInitialUsers) // Attendre org + users pour user normal
   const error = isSuperAdmin ? orgsError : myOrgError
 
   // Gestion du succès de création d'organisation
@@ -253,9 +266,14 @@ export const OrganizationsPage: React.FC = () => {
   if (isLoading) {
     return (
       <PageContainer maxWidth="7xl" padding="lg">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <LoadingSpinner />
-        </div>
+        <PageHeader
+          icon={Building2}
+          title="Organisations"
+          description="Gérez les organisations"
+        />
+        <PageSection spacing="lg">
+          <OrganizationsPageSkeleton />
+        </PageSection>
       </PageContainer>
     )
   }

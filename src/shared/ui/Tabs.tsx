@@ -13,6 +13,7 @@ interface TabsProps {
   activeTab: string
   onTabChange: (tabId: string) => void
   className?: string
+  actions?: React.ReactNode
 }
 
 export const Tabs: React.FC<TabsProps> = ({
@@ -20,10 +21,11 @@ export const Tabs: React.FC<TabsProps> = ({
   activeTab,
   onTabChange,
   className,
+  actions,
 }) => {
   return (
     <div
-      className={cn('border-b border-gray-200 dark:border-gray-700', className)}
+      className={cn('dark:border-gray-700 flex items-center justify-between', className)}
     >
       <nav className="-mb-px flex space-x-8" aria-label="Tabs">
         {items.map((item) => (
@@ -64,6 +66,11 @@ export const Tabs: React.FC<TabsProps> = ({
           </button>
         ))}
       </nav>
+      {actions && (
+        <div className="flex items-center gap-2 -mb-px pb-2">
+          {actions}
+        </div>
+      )}
     </div>
   )
 }

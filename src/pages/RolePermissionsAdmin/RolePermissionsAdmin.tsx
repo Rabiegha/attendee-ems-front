@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Shield,
   Users,
@@ -9,6 +9,8 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle,
+  Search,
+  X,
 } from 'lucide-react'
 import { Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -21,6 +23,7 @@ import {
   PageSection,
   Card,
   CardContent,
+  RolesPermissionsPageSkeleton,
 } from '@/shared/ui'
 import {
   useGetRolesQuery,
@@ -53,6 +56,8 @@ export const RolePermissionsAdmin: React.FC = () => {
 
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null)
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   
   const toast = useToast()
 
@@ -183,6 +188,35 @@ export const RolePermissionsAdmin: React.FC = () => {
     reports: 'Rapports',
   }
 
+  // Filtrer les permissions selon la recherche et la catégorie sélectionnée
+  const filteredGroupedPermissions = useMemo(() => {
+    let filtered = { ...groupedPermissions }
+
+    // Filtrer par catégorie sélectionnée
+    if (selectedCategory) {
+      filtered = { [selectedCategory]: groupedPermissions[selectedCategory] || [] }
+    }
+
+    // Filtrer par recherche
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = Object.entries(filtered).reduce((acc, [category, perms]) => {
+        const matchingPerms = perms.filter(
+          p =>
+            p.name.toLowerCase().includes(query) ||
+            p.code.toLowerCase().includes(query) ||
+            p.description.toLowerCase().includes(query)
+        )
+        if (matchingPerms.length > 0) {
+          acc[category] = matchingPerms
+        }
+        return acc
+      }, {} as Record<string, Permission[]>)
+    }
+
+    return filtered
+  }, [groupedPermissions, searchQuery, selectedCategory])
+
   // Protection par permissions - Seuls les ADMIN peuvent voir cette page
   return (
     <Can do="manage" on="Role" fallback={<Navigate to="/403" replace />}>
@@ -207,59 +241,6 @@ export const RolePermissionsAdmin: React.FC = () => {
           }
         />
 
-        {/* Statistiques globales */}
-        <PageSection spacing="lg">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card variant="default" padding="lg">
-              <CardContent>
-                <div className="flex items-center space-x-3">
-                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  <div>
-                    <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                      Rôles configurés
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {roles.length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card variant="default" padding="lg">
-              <CardContent>
-                <div className="flex items-center space-x-3">
-                  <Shield className="h-6 w-6 text-green-600 dark:text-green-400" />
-                  <div>
-                    <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                      Permissions disponibles
-                    </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {permissions.length}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card variant="default" padding="lg">
-              <CardContent>
-                <div className="flex items-center space-x-3">
-                  <Lock className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                  <div>
-                    <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                      Rôle sélectionné
-                    </p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {selectedRole?.name || 'Aucun'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </PageSection>
-
         {/* Gestion des erreurs */}
         {error && (
           <PageSection spacing="lg">
@@ -282,14 +263,9 @@ export const RolePermissionsAdmin: React.FC = () => {
 
         {/* État de chargement */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <RefreshCw className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-300">
-                Chargement des rôles et permissions...
-              </p>
-            </div>
-          </div>
+          <PageSection spacing="lg">
+            <RolesPermissionsPageSkeleton />
+          </PageSection>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Colonne gauche : Liste des rôles */}
@@ -413,9 +389,71 @@ export const RolePermissionsAdmin: React.FC = () => {
                     </p>
                   </div>
 
+                  {/* Barre de recherche et filtres */}
+                  <div className="mb-6 space-y-4">
+                    {/* Recherche */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <input
+                        type="text"
+                        placeholder="Rechercher une permission..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Filtres par catégorie */}
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">Catégories :</span>
+                      <button
+                        onClick={() => setSelectedCategory(null)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          selectedCategory === null
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        Toutes
+                      </button>
+                      {Object.keys(groupedPermissions).map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => setSelectedCategory(category === selectedCategory ? null : category)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            selectedCategory === category
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          }`}
+                        >
+                          {categoryLabels[category] || category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Liste des permissions groupées par catégorie avec dropdowns */}
                   <div className="space-y-3">
-                    {Object.entries(groupedPermissions).map(
+                    {Object.entries(filteredGroupedPermissions).length === 0 ? (
+                      <div className="text-center py-12">
+                        <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 dark:text-gray-300">
+                          Aucune permission trouvée
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                          Essayez d'ajuster vos filtres ou votre recherche
+                        </p>
+                      </div>
+                    ) : (
+                      Object.entries(filteredGroupedPermissions).map(
                       ([category, categoryPermissions]) => {
                         // Vérifier si on peut modifier ce rôle
                         const isOwnRole =
@@ -506,6 +544,7 @@ export const RolePermissionsAdmin: React.FC = () => {
                           </div>
                         )
                       }
+                    )
                     )}
                   </div>
                 </div>

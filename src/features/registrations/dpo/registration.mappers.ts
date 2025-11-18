@@ -16,6 +16,7 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     confirmedAt: dto.confirmed_at || null,
     createdAt: dto.created_at, // Date d'inscription réelle
     updatedAt: dto.updated_at,
+    deletedAt: dto.deleted_at || null,
     source: dto.source || 'public_form',
     
     // Snapshot fields

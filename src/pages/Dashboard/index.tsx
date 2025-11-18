@@ -20,6 +20,7 @@ import {
   PageSection,
   Card,
   CardContent,
+  DashboardAttendeeListSkeleton,
 } from '@/shared/ui'
 import {
   Users,
@@ -94,15 +95,7 @@ export const Dashboard: React.FC = () => {
             <div className="space-y-4">
               <h2 className="section-title">Participants récents</h2>
               {attendeesLoading ? (
-                <div className="space-y-4">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="animate-pulse">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
-                      <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mb-1"></div>
-                      <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/3"></div>
-                    </div>
-                  ))}
-                </div>
+                <DashboardAttendeeListSkeleton />
               ) : attendees.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <User className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />

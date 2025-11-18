@@ -101,15 +101,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     <aside
       className={cn(
         'fixed left-0 z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen transition-all duration-300 overflow-hidden',
-        isOpen ? 'w-64' : 'w-12'
+        isOpen ? 'w-64' : 'w-16'
       )}
       style={{ top: '69px' }}
     >
       {/* Bouton chevrons en haut de la sidebar */}
-      <div className="flex items-center justify-end h-12 border-b border-gray-200 dark:border-gray-700 px-2">
+      <div className="flex items-center h-12 border-b border-gray-200 dark:border-gray-700 px-2 relative">
         <button
           onClick={onToggle}
-          className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300"
+          className="absolute p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300"
+          style={{
+            right: isOpen ? '8px' : '50%',
+            transform: isOpen ? 'translateX(0)' : 'translateX(50%)',
+            transition: 'right 0.3s ease, transform 0.3s ease'
+          }}
           aria-label="Toggle sidebar"
         >
           <svg
@@ -133,10 +138,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       </div>
 
       <nav className="px-2 overflow-y-auto pb-20">
-        <ul className={cn(
-          "space-y-2 transition-all duration-300 pt-4",
-          isOpen ? "opacity-100 delay-150" : "opacity-0"
-        )}>
+        <ul className="space-y-2 pt-4">
           {navigation.map((item) => {
             // Dashboard accessible à tous sans guard
             if (!item.action || !item.subject) {
@@ -146,17 +148,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                     to={item.href}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors relative overflow-hidden',
+                        'flex items-center py-2 text-sm font-medium rounded-md transition-all duration-300 relative overflow-hidden group',
+                        'px-4',
                         isActive
                           ? 'bg-blue-600 text-white dark:bg-blue-700'
                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                       )
                     }
+                    title={!isOpen ? t(item.name) : undefined}
                   >
-                    <item.icon className={cn("h-5 w-5 flex-shrink-0", isOpen ? "mr-3" : "mr-0")} />
+                    <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
                     <span className={cn(
-                      "transition-all duration-300 whitespace-nowrap",
-                      isOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                      "whitespace-nowrap transition-opacity duration-300",
+                      isOpen ? "opacity-100" : "opacity-0"
                     )}>
                       {t(item.name)}
                     </span>
@@ -173,17 +177,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                     to={item.href}
                     className={({ isActive }) =>
                       cn(
-                        'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors relative overflow-hidden',
+                        'flex items-center py-2 text-sm font-medium rounded-md transition-all duration-300 relative overflow-hidden group',
+                        'px-4',
                         isActive
                           ? 'bg-blue-600 text-white dark:bg-blue-700'
                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                       )
                     }
+                    title={!isOpen ? t(item.name) : undefined}
                   >
-                    <item.icon className={cn("h-5 w-5 flex-shrink-0", isOpen ? "mr-3" : "mr-0")} />
+                    <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
                     <span className={cn(
-                      "transition-all duration-300 whitespace-nowrap",
-                      isOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+                      "whitespace-nowrap transition-opacity duration-300",
+                      isOpen ? "opacity-100" : "opacity-0"
                     )}>
                       {t(item.name)}
                     </span>

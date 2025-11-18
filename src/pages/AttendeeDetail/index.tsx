@@ -29,6 +29,7 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { formatDate } from '@/shared/lib/utils'
+import { HistoryTable } from './HistoryTable'
 
 export const AttendeeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -66,11 +67,63 @@ export const AttendeeDetail: React.FC = () => {
   if (attendeeLoading) {
     return (
       <PageContainer maxWidth="7xl" padding="lg">
-        <div className="flex justify-center items-center py-12">
-          <LoadingSpinner size="lg" />
-          <span className="ml-3 text-gray-600 dark:text-gray-300">
-            Chargement des détails du participant...
-          </span>
+        {/* Header Skeleton */}
+        <div className="mb-6">
+          <div className="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
+          <div className="h-4 w-96 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        </div>
+
+        {/* Info Cards Skeleton */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} variant="default" padding="lg">
+                <CardContent>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+                    <div className="flex-1">
+                      <div className="h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
+                      <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="mb-8">
+          <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i} variant="default" padding="lg">
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-3" />
+                      <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    </div>
+                    <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* History Table Skeleton */}
+        <div>
+          <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+          <Card variant="default" padding="none">
+            <CardContent>
+              <div className="p-6 space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </PageContainer>
     )
@@ -289,20 +342,13 @@ export const AttendeeDetail: React.FC = () => {
       <PageSection title="Historique des participations" spacing="lg">
         <Card variant="default" padding="none">
           <CardContent>
-            {historyLoading ? (
-              <div className="p-6 text-center">
-                <LoadingSpinner size="md" />
-                <p className="text-body-sm text-gray-500 dark:text-gray-400 mt-4">
-                  Chargement de l'historique...
-                </p>
-              </div>
-            ) : historyError ? (
+            {historyError ? (
               <div className="p-6 text-center">
                 <p className="text-red-600 dark:text-red-400">
                   Erreur lors du chargement de l'historique
                 </p>
               </div>
-            ) : history.length === 0 ? (
+            ) : history.length === 0 && !historyLoading ? (
               <div className="p-6 text-center">
                 <Users className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3 mx-auto" />
                 <p className="text-gray-600 dark:text-gray-300 font-medium">
@@ -313,144 +359,12 @@ export const AttendeeDetail: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Événement
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Date
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Date d'inscription
-                      </th>
-                      {isSuperAdmin && (
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                          Organisation
-                        </th>
-                      )}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Statut événement
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Statut participation
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Check-in
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                        Nom utilisé
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    {history.map((participation) => (
-                      <tr
-                        key={`${participation.event.id}-${participation.id}`}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors duration-150"
-                        onClick={() => handleEventClick(participation.event.id)}
-                        title="Cliquer pour voir l'événement"
-                      >
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-                            {participation.event.name}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {participation.event.description &&
-                            participation.event.description.length > 50
-                              ? `${participation.event.description.substring(0, 50)}...`
-                              : participation.event.description ||
-                                'Aucune description'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {formatDate(participation.event.startDate)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {formatDate(participation.registrationDate)}
-                        </td>
-                        {isSuperAdmin && (
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            <div className="flex items-center">
-                              <Building2 className="h-4 w-4 mr-1 text-gray-400" />
-                              {participation.event.organizationName ||
-                                'Organisation inconnue'}
-                            </div>
-                          </td>
-                        )}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              participation.event.status === 'completed'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : participation.event.status === 'active'
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                                  : participation.event.status === 'published'
-                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-                            }`}
-                          >
-                            {participation.event.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              participation.status === 'confirmed'
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : participation.status === 'pending'
-                                  ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                  : participation.status === 'checked_in'
-                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                                    : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-                            }`}
-                          >
-                            {participation.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {participation.checkedIn && participation.checkedInAt ? (
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                                ✓ Enregistré
-                              </span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {formatDate(participation.checkedInAt)}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-400 dark:text-gray-500">
-                              Non enregistré
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                          {(() => {
-                            const snapshotName = participation.snapshot
-                              ? `${participation.snapshot.firstName || ''} ${participation.snapshot.lastName || ''}`.trim()
-                              : null
-                            const currentName = attendee.displayName
-                            const displayedName = snapshotName || participation.displayName
-
-                            return snapshotName && snapshotName !== currentName ? (
-                              <div className="space-y-1">
-                                <div className="font-medium">{displayedName}</div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400">
-                                  (Différent du nom actuel)
-                                </div>
-                              </div>
-                            ) : (
-                              displayedName
-                            )
-                          })()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <HistoryTable
+                history={history}
+                currentDisplayName={attendee.displayName}
+                isSuperAdmin={isSuperAdmin}
+                isLoading={historyLoading}
+              />
             )}
           </CardContent>
         </Card>

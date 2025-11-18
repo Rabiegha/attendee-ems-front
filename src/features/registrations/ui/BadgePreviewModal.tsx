@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { selectToken } from '@/features/auth/model/sessionSlice'
 import { Modal } from '@/shared/ui/Modal'
 import { Award, FileText, Image as ImageIcon } from 'lucide-react'
+import { LoadingSpinner } from '@/shared/ui'
 import { Button } from '@/shared/ui/Button'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 

@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '@/shared/lib/utils'
+import { Skeleton } from './Skeleton'
 
 /* ============================================
    TABLE COMPONENTS - Design System
@@ -188,10 +189,10 @@ export const TableLoadingState: React.FC<TableLoadingStateProps> = ({
   return (
     <>
       {[...Array(rows)].map((_, i) => (
-        <tr key={i}>
+        <tr key={i} className="border-b border-gray-200 dark:border-gray-700">
           {[...Array(columns)].map((_, j) => (
             <td key={j} className="px-6 py-4">
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <Skeleton className="h-4 w-full" />
             </td>
           ))}
         </tr>

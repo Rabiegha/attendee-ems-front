@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { selectToken } from '@/features/auth/model/sessionSlice'
 import { Modal } from '@/shared/ui/Modal'
 import { QrCodeIcon, DownloadIcon, CheckCircleIcon, XCircleIcon } from 'lucide-react'
+import { LoadingState } from '@/shared/ui'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 
 interface QrCodeModalProps {

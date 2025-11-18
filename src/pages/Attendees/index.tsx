@@ -122,39 +122,26 @@ export const Attendees: React.FC = () => {
 
       <PageSection spacing="lg">
         <Card variant="default" padding="none">
-          <Tabs
-            items={tabs}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            className="px-6 pt-6"
-          />
-          <CardContent>
-            {error ? (
-              <div className="p-6 text-center">
-                <p className="text-red-600 dark:text-red-400">
-                  Erreur lors du chargement des participants
-                </p>
-              </div>
-            ) : (
-              <>
-                <AttendeeTable
-                  attendees={attendees}
-                  isLoading={isLoading}
-                  isDeletedTab={activeTab === 'deleted'}
+          {error ? (
+            <div className="p-6 text-center">
+              <p className="text-red-600 dark:text-red-400">
+                Erreur lors du chargement des participants
+              </p>
+            </div>
+          ) : (
+            <AttendeeTable
+              attendees={attendees}
+              isLoading={isLoading}
+              isDeletedTab={activeTab === 'deleted'}
+              tabsElement={
+                <Tabs
+                  items={tabs}
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
                 />
-                {!isLoading && meta.totalPages > 1 && (
-                  <Pagination
-                    currentPage={meta.page}
-                    totalPages={meta.totalPages}
-                    pageSize={meta.pageSize}
-                    total={meta.total}
-                    onPageChange={handlePageChange}
-                    onPageSizeChange={handlePageSizeChange}
-                  />
-                )}
-              </>
-            )}
-          </CardContent>
+              }
+            />
+          )}
         </Card>
       </PageSection>
     </PageContainer>

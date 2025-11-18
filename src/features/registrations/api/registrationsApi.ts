@@ -25,6 +25,7 @@ export interface RegistrationsQueryParams {
   search?: string
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
+  isActive?: boolean
 }
 
 export const registrationsApi = rootApi.injectEndpoints({
@@ -234,6 +235,36 @@ export const registrationsApi = rootApi.injectEndpoints({
       }
     ),
 
+    restoreRegistration: builder.mutation<RegistrationDPO, { id: string; eventId: string }>(
+      {
+        query: ({ id }) => ({
+          url: `/registrations/${id}/restore`,
+          method: 'POST',
+        }),
+        transformResponse: (response: RegistrationDTO) =>
+          mapRegistrationDTOtoDPO(response),
+        invalidatesTags: (_result, _error, { id, eventId }) => [
+          { type: 'Attendee', id },
+          { type: 'Attendee', id: `EVENT-${eventId}` },
+          { type: 'Event', id: eventId },
+        ],
+      }
+    ),
+
+    permanentDeleteRegistration: builder.mutation<void, { id: string; eventId: string }>(
+      {
+        query: ({ id }) => ({
+          url: `/registrations/${id}/permanent`,
+          method: 'DELETE',
+        }),
+        invalidatesTags: (_result, _error, { id, eventId }) => [
+          { type: 'Attendee', id },
+          { type: 'Attendee', id: `EVENT-${eventId}` },
+          { type: 'Event', id: eventId },
+        ],
+      }
+    ),
+
     bulkDeleteRegistrations: builder.mutation<
       { deletedCount: number },
       { ids: string[]; eventId: string }
@@ -335,6 +366,8 @@ export const {
   useCreateRegistrationMutation,
   useUpdateRegistrationMutation,
   useDeleteRegistrationMutation,
+  useRestoreRegistrationMutation,
+  usePermanentDeleteRegistrationMutation,
   useBulkDeleteRegistrationsMutation,
   useBulkExportRegistrationsMutation,
   useGenerateBadgesForEventMutation,

@@ -14,6 +14,8 @@ import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { PageContainer } from '@/shared/ui/PageContainer'
 import { Pagination } from '@/shared/ui/Pagination'
+import { LoadingSpinner, EventDetailsSkeleton } from '@/shared/ui'
+import { Tabs, type TabItem } from '@/shared/ui'
 import {
   Edit,
   Download,
@@ -71,6 +73,8 @@ export const EventDetails: React.FC = () => {
   // State pour la pagination des inscriptions
   const [registrationsPage, setRegistrationsPage] = useState(1)
   const [registrationsPageSize, setRegistrationsPageSize] = useState(50)
+  const [registrationsIsActive, setRegistrationsIsActive] = useState(true)
+  const [registrationsActiveTab, setRegistrationsActiveTab] = useState<'active' | 'deleted'>('active')
 
   // ⏰ POLLING AUTO - Refresh toutes les 5 secondes
   const [pollingInterval, setPollingInterval] = useState(5000)
@@ -309,6 +313,7 @@ export const EventDetails: React.FC = () => {
           eventId: id,
           page: registrationsPage,
           limit: registrationsPageSize,
+          isActive: registrationsIsActive,
         }
       : skipToken,
     {
@@ -332,6 +337,35 @@ export const EventDetails: React.FC = () => {
     }
   )
 
+  // Queries pour les stats des onglets (actives/supprimées)
+  const { data: activeRegistrationsStats } = useGetRegistrationsQuery(
+    id
+      ? {
+          eventId: id,
+          page: 1,
+          limit: 1,
+          isActive: true,
+        }
+      : skipToken,
+    {
+      skip: !id,
+    }
+  )
+
+  const { data: deletedRegistrationsStats } = useGetRegistrationsQuery(
+    id
+      ? {
+          eventId: id,
+          page: 1,
+          limit: 1,
+          isActive: false,
+        }
+      : skipToken,
+    {
+      skip: !id,
+    }
+  )
+
   // Les inscriptions sont récupérées via l'API RTK Query
   const allRegistrations = registrationsResponse?.data || []
   const registrationsMeta = registrationsResponse?.meta || {
@@ -344,6 +378,27 @@ export const EventDetails: React.FC = () => {
       approved: 0,
       refused: 0,
     },
+  }
+
+  // Configure registrations tabs
+  const registrationsTabs: TabItem[] = [
+    {
+      id: 'active',
+      label: 'Actives',
+      count: activeRegistrationsStats?.meta?.total || 0,
+    },
+    {
+      id: 'deleted',
+      label: 'Supprimées',
+      count: deletedRegistrationsStats?.meta?.total || 0,
+    },
+  ]
+
+  const handleRegistrationsTabChange = (tabId: string) => {
+    const newTab = tabId as 'active' | 'deleted'
+    setRegistrationsActiveTab(newTab)
+    setRegistrationsIsActive(newTab === 'active')
+    setRegistrationsPage(1) // Reset to first page
   }
 
   // Callback pour l'import Excel - plus besoin du mode local
@@ -381,9 +436,9 @@ export const EventDetails: React.FC = () => {
 
   if (eventLoading) {
     return (
-      <div className="flex items-center justify-center min-h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
-      </div>
+      <PageContainer maxWidth="7xl" padding="lg">
+        <EventDetailsSkeleton activeTab={activeTab} />
+      </PageContainer>
     )
   }
 
@@ -794,6 +849,14 @@ export const EventDetails: React.FC = () => {
               isLoading={registrationsLoading}
               eventId={id!}
               onRefresh={() => refetchRegistrations()}
+              isDeletedTab={registrationsActiveTab === 'deleted'}
+              tabsElement={
+                <Tabs
+                  items={registrationsTabs}
+                  activeTab={registrationsActiveTab}
+                  onTabChange={handleRegistrationsTabChange}
+                />
+              }
               meta={registrationsMeta}
             />
 

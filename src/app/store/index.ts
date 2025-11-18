@@ -18,6 +18,7 @@ import { eventsSlice } from '@/features/events/model/eventsSlice'
 import { attendeesSlice } from '@/features/attendees/model/attendeesSlice'
 import usersSlice from '@/features/users/model/usersSlice'
 import { toastReducer } from '@/shared/ui/toast-slice'
+import { apiDelayMiddleware } from '../middleware/apiDelayMiddleware'
 
 // Combiner tous les reducers
 const rootReducer = combineReducers({
@@ -47,7 +48,9 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
-    }).concat(rootApi.middleware),
+    })
+      .concat(rootApi.middleware)
+      .concat(apiDelayMiddleware), // Ajouter le middleware de délai en dev
   devTools: process.env.NODE_ENV !== 'production',
 })
 

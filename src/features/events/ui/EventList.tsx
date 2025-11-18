@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Calendar, Users } from 'lucide-react'
 import type { EventDPO } from '../dpo/event.dpo'
 import { formatDate } from '@/shared/lib/utils'
+import { DashboardEventListSkeleton } from '@/shared/ui'
 
 interface EventListProps {
   events: EventDPO[]
@@ -13,17 +14,7 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
   // const { t } = useTranslation('events')
 
   if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="h-4 bg-gray-200 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mb-1"></div>
-            <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/3"></div>
-          </div>
-        ))}
-      </div>
-    )
+    return <DashboardEventListSkeleton />
   }
 
   if (events.length === 0) {

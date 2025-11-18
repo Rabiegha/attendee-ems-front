@@ -9,6 +9,7 @@
  */
 
 import React, { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, Check } from 'lucide-react'
 import { useGetRolesQuery } from '@/features/roles/api/rolesApi'
 import { useUpdateUserMutation } from '@/features/users/api/usersApi'
@@ -29,6 +30,9 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
+  const [dropdownPosition, setDropdownPosition] = useState<'bottom' | 'top'>('bottom')
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({})
+  const buttonRef = React.useRef<HTMLButtonElement>(null)
   const { success, error } = useToast()
 
   // Récupérer les rôles disponibles
@@ -97,6 +101,22 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
   const isCurrentUser = currentUserId && user.id === currentUserId
   const isDisabled = disabled || isCurrentUser
 
+  // Set z-index on parent td/cell when dropdown is open
+  React.useEffect(() => {
+    if (buttonRef.current) {
+      const cell = buttonRef.current.closest('td')
+      if (cell) {
+        if (isOpen) {
+          cell.style.position = 'relative'
+          cell.style.zIndex = '50'
+        } else {
+          cell.style.position = ''
+          cell.style.zIndex = ''
+        }
+      }
+    }
+  }, [isOpen])
+
   if (rolesLoading) {
     return (
       <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 animate-pulse">
@@ -105,10 +125,40 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
     )
   }
 
+  const handleToggle = () => {
+    if (isDisabled) return
+    
+    if (!isOpen && buttonRef.current) {
+      const button = buttonRef.current
+      const rect = button.getBoundingClientRect()
+      const dropdownHeight = 200 // Hauteur approximative du dropdown
+      const dropdownWidth = 176 // w-44 = 11rem = 176px
+      
+      // Calculer l'espace disponible dans la fenêtre
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      const shouldShowAbove = spaceBelow < dropdownHeight && spaceAbove > dropdownHeight
+      
+      setDropdownPosition(shouldShowAbove ? 'top' : 'bottom')
+      
+      // Calculer la position absolue pour le portal
+      setDropdownStyle({
+        position: 'fixed',
+        left: `${rect.left}px`,
+        top: shouldShowAbove ? `${rect.top - dropdownHeight - 4}px` : `${rect.bottom + 4}px`,
+        width: `${dropdownWidth}px`,
+        zIndex: 9999,
+      })
+    }
+    
+    setIsOpen(!isOpen)
+  }
+
   return (
-    <div className="relative">
+    <div className="relative inline-block w-full">
       <button
-        onClick={() => !isDisabled && setIsOpen(!isOpen)}
+        ref={buttonRef}
+        onClick={handleToggle}
         disabled={isDisabled || isUpdating}
         title={
           isCurrentUser
@@ -139,16 +189,20 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
         )}
       </button>
 
-      {isOpen && !isDisabled && (
+      {isOpen && !isDisabled && createPortal(
         <>
           {/* Overlay pour fermer le dropdown */}
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0"
+            style={{ zIndex: 9998 }}
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Menu dropdown */}
-          <div className="absolute top-full left-0 mt-1 w-44 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-20">
+          {/* Menu dropdown - Positionné avec fixed */}
+          <div 
+            style={dropdownStyle}
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-xl"
+          >
             <div className="py-1 max-h-48 overflow-y-auto">
               {availableRoles.map((role) => (
                 <button
@@ -176,7 +230,8 @@ export const RoleSelector: React.FC<RoleSelectorProps> = ({
               ))}
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   )

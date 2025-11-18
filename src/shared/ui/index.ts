@@ -1,6 +1,7 @@
 // Core Components - Design System
 export { Button } from './Button'
 export { Input } from './Input'
+export { SearchInput } from './SearchInput'
 export { Textarea } from './Textarea'
 export { Select, SelectOption } from './Select'
 export { MultiSelect, type MultiSelectOption } from './MultiSelect'
@@ -29,6 +30,11 @@ export {
   TableLoadingState,
 } from './Table'
 export { ActionButtons, type ActionButtonsProps } from './ActionButtons'
+export { Checkbox, type CheckboxProps } from './Checkbox'
+
+// TanStack Table Components
+export { DataTable } from './DataTable'
+export * from './DataTable/columns'
 
 // Layout Components
 export { PageContainer } from './PageContainer'
@@ -41,7 +47,41 @@ export { ActionGroup } from './ActionGroup'
 export { Alert } from './Alert'
 export { AnimatedContainer } from './AnimatedContainer'
 export { ThemeToggle } from './ThemeToggle'
-export { LoadingSpinner } from './LoadingSpinner'
+export { LoadingSpinner, LoadingState, InlineLoading } from './LoadingSpinner'
+export {
+  Skeleton,
+  SkeletonText,
+  SkeletonAvatar,
+  SkeletonCard,
+  TableLoadingSkeleton,
+  TableRowSkeleton,
+} from './Skeleton'
+export {
+  EventCardSkeleton,
+  EventsGridSkeleton,
+  EventsPageSkeleton,
+  StatCardSkeleton,
+  StatsGridSkeleton,
+  UserRowSkeleton,
+  UsersTableSkeleton,
+  AttendeeRowSkeleton,
+  EventDetailsSkeleton,
+  EventDetailsTabSkeleton,
+  EventRegistrationsTabSkeleton,
+  EventFormTabSkeleton,
+  EventSettingsTabSkeleton,
+  RegistrationsTableSkeleton,
+  BadgeTemplateCardSkeleton,
+  BadgeTemplatesGridSkeleton,
+  OrganizationsPageSkeleton,
+  RolesPermissionsPageSkeleton,
+  FormSkeleton,
+  PageWithFiltersSkeleton,
+  DashboardStatsCardsSkeleton,
+  DashboardEventListSkeleton,
+  DashboardAttendeeListSkeleton,
+  DashboardPageSkeleton,
+} from './SkeletonLayouts'
 export { UniversalModal } from './UniversalModal'
 export { useUniversalModal } from './useUniversalModal'
 export { Pagination, type PaginationProps } from './Pagination'

@@ -13,6 +13,7 @@ export interface RegistrationDPO {
   confirmedAt?: string | null
   createdAt: string // Date d'inscription
   updatedAt: string
+  deletedAt?: string | null
   source: 'public_form' | 'test_form' | 'manual' | 'import' | 'mobile_app'
   comment?: string | null
   

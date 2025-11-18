@@ -13,6 +13,7 @@ export interface RegistrationDTO {
   confirmed_at?: string | null
   created_at: string
   updated_at: string
+  deleted_at?: string | null
   source?: 'public_form' | 'test_form' | 'manual' | 'import'
   
   // Snapshot fields (données figées au moment de l'inscription)

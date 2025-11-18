@@ -36,6 +36,8 @@ export interface ActionButtonsProps {
   size?: 'sm' | 'default' | 'lg'
   /** Afficher uniquement les icônes (mode compact) */
   iconOnly?: boolean
+  /** Enfants à afficher avant les boutons par défaut */
+  children?: React.ReactNode
 }
 
 /**
@@ -62,9 +64,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   canDelete,
   size = 'sm',
   iconOnly = true,
+  children,
 }) => {
   return (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex items-center justify-end gap-1">
+      {/* Boutons personnalisés */}
+      {children}
+
       {/* Bouton Edit */}
       {onEdit && (
         canEdit ? (
@@ -78,7 +84,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               }}
               aria-label={editLabel}
               title={editLabel}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px]"
             >
               {iconOnly ? (
                 <Edit2 className="h-4 w-4" />
@@ -100,7 +106,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             }}
             aria-label={editLabel}
             title={editLabel}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px]"
           >
             {iconOnly ? (
               <Edit2 className="h-4 w-4" />
@@ -127,7 +133,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               }}
               aria-label={deleteLabel}
               title={deleteLabel}
-              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px]"
             >
               {iconOnly ? (
                 <Trash2 className="h-4 w-4" />
@@ -149,7 +155,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             }}
             aria-label={deleteLabel}
             title={deleteLabel}
-            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px]"
           >
             {iconOnly ? (
               <Trash2 className="h-4 w-4" />

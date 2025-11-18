@@ -14,12 +14,15 @@ import {
   Card,
   CardContent,
   LoadingSpinner,
+  LoadingState,
+  SearchInput,
+  EventsPageSkeleton,
 } from '@/shared/ui'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
 import { DeleteEventModal } from '@/features/events/ui/DeleteEventModal'
 import { formatDateForDisplay } from '@/shared/lib/date-utils'
 import { formatAttendeesCount } from '@/shared/lib/utils'
-import { Plus, Search, Calendar, MapPin, Users, Clock } from 'lucide-react'
+import { Plus, Calendar, MapPin, Users, Clock } from 'lucide-react'
 
 interface EventsPageProps {}
 
@@ -93,12 +96,84 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   if (isLoading) {
     return (
       <PageContainer maxWidth="7xl" padding="lg">
-        <div className="flex items-center justify-center py-12">
-          <LoadingSpinner size="lg" />
-          <p className="text-body-sm text-gray-500 dark:text-gray-400 ml-4">
-            Chargement des événements...
-          </p>
-        </div>
+        <PageHeader
+          title="Événements"
+          description="Gérez vos événements"
+          icon={Calendar}
+          actions={
+            <Can do="create" on="Event">
+              <Button
+                onClick={handleCreateEvent}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                {t('events:actions.create')}
+              </Button>
+            </Can>
+          }
+        />
+
+        {/* Filtres et recherche */}
+        <PageSection spacing="lg">
+          <Card variant="default" padding="lg">
+            <CardContent>
+              <div className="flex items-center gap-4">
+                {/* Search */}
+                <div className="flex-1">
+                  <SearchInput
+                    placeholder="Rechercher des événements..."
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                  />
+                </div>
+
+                {/* Tag Filter */}
+                <div className="w-64">
+                  <TagFilterInput
+                    value={tagFilter}
+                    onChange={setTagFilter}
+                    placeholder="Filtrer par tag..."
+                  />
+                </div>
+
+                {/* Status Filter */}
+                <Select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-48"
+                >
+                  <option value="all">Tous les statuts</option>
+                  <option value="draft">Brouillon</option>
+                  <option value="published">Publié</option>
+                  <option value="active">Actif</option>
+                  <option value="completed">Terminé</option>
+                  <option value="cancelled">Annulé</option>
+                </Select>
+
+                {/* Sort */}
+                <Select
+                  value={`${sortBy}-${sortOrder}`}
+                  onChange={(e) => {
+                    const [field, order] = e.target.value.split('-')
+                    setSortBy(field as any)
+                    setSortOrder(order as any)
+                  }}
+                  className="w-56"
+                >
+                  <option value="createdAt-desc">Créé (plus récent)</option>
+                  <option value="createdAt-asc">Créé (plus ancien)</option>
+                  <option value="startDate-asc">Date (plus ancien)</option>
+                  <option value="startDate-desc">Date (plus récent)</option>
+                  <option value="name-asc">Nom (A-Z)</option>
+                  <option value="name-desc">Nom (Z-A)</option>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        </PageSection>
+
+        <PageSection spacing="lg">
+          <EventsPageSkeleton />
+        </PageSection>
       </PageContainer>
     )
   }
@@ -142,12 +217,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
             <div className="flex items-center gap-4">
               {/* Search */}
               <div className="flex-1">
-                <Input
-                  type="text"
+                <SearchInput
                   placeholder="Rechercher des événements..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  leftIcon={<Search className="h-4 w-4" />}
+                  onChange={setSearchQuery}
                 />
               </div>
 
@@ -229,7 +302,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 <Card
                   variant="elevated"
                   padding="none"
-                  className="overflow-hidden flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
+                  className="overflow-hidden flex flex-col h-full transition-all duration-300 hover:shadow-xl hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
                 >
                   <CardContent className="p-6 flex-grow">
                     <div className="flex items-start justify-between mb-3">

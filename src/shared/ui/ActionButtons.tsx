@@ -67,7 +67,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   children,
 }) => {
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-0">
       {/* Boutons personnalisés */}
       {children}
 
@@ -84,13 +84,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               }}
               aria-label={editLabel}
               title={editLabel}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px]"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px] p-1.5"
             >
               {iconOnly ? (
-                <Edit2 className="h-4 w-4" />
+                <Edit2 className="h-4 w-4 shrink-0" />
               ) : (
                 <>
-                  <Edit2 className="h-4 w-4 mr-1.5" />
+                  <Edit2 className="h-4 w-4 shrink-0 mr-1.5" />
                   {editLabel}
                 </>
               )}
@@ -106,13 +106,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             }}
             aria-label={editLabel}
             title={editLabel}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px]"
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px] p-1.5"
           >
             {iconOnly ? (
-              <Edit2 className="h-4 w-4" />
+              <Edit2 className="h-4 w-4 shrink-0" />
             ) : (
               <>
-                <Edit2 className="h-4 w-4 mr-1.5" />
+                <Edit2 className="h-4 w-4 shrink-0 mr-1.5" />
                 {editLabel}
               </>
             )}
@@ -133,13 +133,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               }}
               aria-label={deleteLabel}
               title={deleteLabel}
-              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px]"
+              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
             >
               {iconOnly ? (
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4 shrink-0" />
               ) : (
                 <>
-                  <Trash2 className="h-4 w-4 mr-1.5" />
+                  <Trash2 className="h-4 w-4 shrink-0 mr-1.5" />
                   {deleteLabel}
                 </>
               )}
@@ -155,13 +155,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             }}
             aria-label={deleteLabel}
             title={deleteLabel}
-            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px]"
+            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
           >
             {iconOnly ? (
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4 shrink-0" />
             ) : (
               <>
-                <Trash2 className="h-4 w-4 mr-1.5" />
+                <Trash2 className="h-4 w-4 shrink-0 mr-1.5" />
                 {deleteLabel}
               </>
             )}

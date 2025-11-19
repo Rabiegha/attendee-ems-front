@@ -70,17 +70,7 @@ export const rolesApi = rootApi.injectEndpoints({
         console.log('🌐 [ROLES API] Final URL:', finalUrl)
         return finalUrl
       },
-      // 🔥 FIX: Cache dynamique basé sur les paramètres pour éviter les collisions
-      providesTags: (result, error, params) => {
-        if (params && typeof params === 'object') {
-          if (params.templatesOnly) {
-            return [{ type: 'Role', id: 'TEMPLATES' }]
-          } else if (params.orgId) {
-            return [{ type: 'Role', id: `ORG-${params.orgId}` }]
-          }
-        }
-        return [{ type: 'Role', id: 'LIST' }]
-      },
+      providesTags: ['Role'],
     }),
 
     // Récupérer un rôle par ID

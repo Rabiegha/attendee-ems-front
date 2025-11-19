@@ -86,10 +86,13 @@ export async function bootstrapAuth() {
     // Le backend répondra 401 si le cookie n'existe pas ou est invalide
     try {
       // console.log('[AUTH] Attempting to restore session from refresh token...')
-      // Force le refresh sans utiliser le cache
+      // Force le refresh sans utiliser le cache - ajout de forceRefetch pour éviter le cache RTK
       const res: any = await store
         .dispatch(
-          authApi.endpoints.refresh.initiate(undefined, { track: false })
+          authApi.endpoints.refresh.initiate(undefined, { 
+            track: false,
+            forceRefetch: true, // Force un vrai appel réseau sans cache
+          })
         )
         .unwrap()
 
@@ -106,8 +109,11 @@ export async function bootstrapAuth() {
         store.dispatch(clearSession())
       }
     } catch (error: any) {
-      // console.log('[AUTH] Bootstrap refresh failed (normal if no refresh token or expired):', error?.status || error?.message)
-
+      // 401 au bootstrap = comportement normal (pas de refresh token ou expiré)
+      // On ne log que si ce n'est pas un 401
+      if (error?.status !== 401) {
+        console.warn('[AUTH] Bootstrap refresh failed:', error?.status || error?.message)
+      }
       // CRITIQUE : Nettoyer la session en cas d'échec du refresh
       // Cela garantit que l'utilisateur ne reste pas dans un état "fantôme"
       store.dispatch(clearSession())

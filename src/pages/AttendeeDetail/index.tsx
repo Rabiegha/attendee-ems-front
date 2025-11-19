@@ -13,7 +13,6 @@ import {
   PageSection,
   Card,
   CardContent,
-  LoadingSpinner,
   ActionGroup,
 } from '@/shared/ui'
 import {
@@ -36,13 +35,12 @@ export const AttendeeDetail: React.FC = () => {
   const navigate = useNavigate()
   const user = useSelector(selectUser)
 
+  // État de pagination pour l'historique
+  const [historyPage, setHistoryPage] = React.useState(1)
+  const [historyPageSize, setHistoryPageSize] = React.useState(10)
+
   // Vérifier si l'utilisateur est SUPER_ADMIN
   const isSuperAdmin = user?.roles?.[0] === 'SUPER_ADMIN'
-
-  // Fonction pour naviguer vers un événement
-  const handleEventClick = (eventId: string) => {
-    navigate(`/events/${eventId}`)
-  }
 
   const {
     data: attendee,
@@ -51,13 +49,24 @@ export const AttendeeDetail: React.FC = () => {
   } = useGetAttendeeByIdQuery(id!, { skip: !id })
 
   const {
-    data: history = [],
+    data: historyResponse,
     isLoading: historyLoading,
     error: historyError,
   } = useGetAttendeeHistoryQuery(
-    { attendeeId: id!, email: attendee?.email || '' },
+    { 
+      attendeeId: id!, 
+      email: attendee?.email || '', 
+      page: historyPage,
+      limit: historyPageSize 
+    },
     { skip: !id || !attendee?.email }
   )
+
+  const history = historyResponse?.data.map(item => ({
+    ...item,
+    checkedIn: !!item.checkedInAt,
+  })) || []
+  const historyMeta = historyResponse?.meta
 
   if (!id) {
     navigate('/attendees')
@@ -364,6 +373,12 @@ export const AttendeeDetail: React.FC = () => {
                 currentDisplayName={attendee.displayName}
                 isSuperAdmin={isSuperAdmin}
                 isLoading={historyLoading}
+                currentPage={historyPage}
+                pageSize={historyPageSize}
+                totalPages={historyMeta?.totalPages || 0}
+                totalItems={historyMeta?.total || 0}
+                onPageChange={setHistoryPage}
+                onPageSizeChange={setHistoryPageSize}
               />
             )}
           </CardContent>

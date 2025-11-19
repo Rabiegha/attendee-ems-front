@@ -135,8 +135,6 @@ export const CreateUserEnhancedModal: React.FC<
 
       // Si on doit créer une nouvelle organisation
       if (newOrgData) {
-        console.log('🏢 Création de la nouvelle organisation:', newOrgData.name)
-
         // Générer le slug simple à partir du nom
         const orgSlug =
           newOrgData.slug ||
@@ -154,8 +152,6 @@ export const CreateUserEnhancedModal: React.FC<
             slug: orgSlug,
             timezone: 'Europe/Paris',
           }).unwrap()
-
-          console.log('✅ Organisation créée:', createdOrg)
 
           // Sauvegarder les infos de l'organisation pour les afficher dans la modal des identifiants
           createdOrgName = createdOrg.name
@@ -195,10 +191,6 @@ export const CreateUserEnhancedModal: React.FC<
       }
 
       // Créer l'utilisateur
-      console.log(
-        "👤 Création de l'utilisateur dans l'organisation:",
-        finalDto.org_id
-      )
       await createUser(finalDto).unwrap()
 
       // Préparer les données pour la modal des identifiants (incluant l'org si créée)

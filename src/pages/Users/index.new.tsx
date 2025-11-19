@@ -4,7 +4,7 @@
  * Utilise DataTable (TanStack Table) au lieu de table HTML custom
  */
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { ColumnDef } from '@tanstack/react-table'
@@ -34,6 +34,8 @@ import {
   createTextColumn,
   createDateColumn,
   createActionsColumn,
+  TableSelector,
+  type TableSelectorOption,
 } from '@/shared/ui'
 import {
   useGetUsersQuery,
@@ -41,8 +43,8 @@ import {
   useBulkDeleteUsersMutation,
   usersApi,
 } from '@/features/users/api/usersApi'
+import { useGetRolesQuery } from '@/features/roles/api/rolesApi'
 import { Can } from '@/shared/acl/guards/Can'
-import { RoleSelector } from '@/features/users/ui/RoleSelector'
 import { selectUser } from '@/features/auth/model/sessionSlice'
 import { EditUserModal } from '@/features/users/ui/EditUserModal'
 import { DeleteUserModal } from '@/features/users/ui/DeleteUserModal'
@@ -61,6 +63,7 @@ interface User {
   first_name: string
   last_name: string
   role: {
+    id: string
     name: string
   }
   is_active: boolean
@@ -78,7 +81,12 @@ export function UsersPage() {
   const activeTab = useSelector(selectUsersActiveTab)
 
   // API queries
-  const { data: usersData, isLoading, refetch } = useGetUsersQuery(filters)
+  const { data: usersData, isLoading } = useGetUsersQuery(filters)
+  
+  // Récupérer la liste des rôles (skip si pas de currentUser)
+  const { data: roles = [], isLoading: rolesLoading } = useGetRolesQuery(undefined, {
+    skip: !currentUser,
+  })
   
   // Query for global stats (without isActive filter)
   const { data: allUsersData } = useGetUsersQuery({
@@ -86,14 +94,12 @@ export function UsersPage() {
     pageSize: 1000, // Large enough to get all users for stats
   })
 
-  // Force refetch when filters change
-  useEffect(() => {
-    refetch()
-  }, [filters.isActive, refetch])
-
   // Mutations
   const [updateUser] = useUpdateUserMutation()
   const [bulkDeleteUsers] = useBulkDeleteUsersMutation()
+
+  // Optimistic updates: stocke temporairement les nouveaux roleId avant confirmation serveur
+  const [optimisticRoleUpdates, setOptimisticRoleUpdates] = useState<Map<string, string>>(new Map())
 
   // Modal states
   const [editingUser, setEditingUser] = useState<User | null>(null)
@@ -105,7 +111,8 @@ export function UsersPage() {
   const isDeletedTab = activeTab === 'deleted'
 
   const handleRefresh = () => {
-    refetch()
+    // Invalider le cache pour forcer un refetch de toutes les queries
+    dispatch(usersApi.util.invalidateTags(['Users']))
   }
 
   const handleInviteUser = () => {
@@ -113,8 +120,6 @@ export function UsersPage() {
   }
 
   const handleTabChange = (tabId: string) => {
-    // Invalider le cache RTK Query pour forcer un refetch
-    dispatch(usersApi.util.invalidateTags(['Users']))
     // Changer l'onglet actif (qui change aussi isActive dans les filtres)
     dispatch(setActiveTab(tabId as UsersTab))
   }
@@ -131,13 +136,11 @@ export function UsersPage() {
   const handleSaveUser = async (userId: string, data: any) => {
     await updateUser({ id: userId, data }).unwrap()
     setEditingUser(null)
-    refetch()
   }
 
   const handleConfirmDelete = async (userId: string, data: any) => {
     await updateUser({ id: userId, data }).unwrap()
     setDeletingUser(null)
-    refetch()
   }
 
   // Actions pour utilisateurs supprimés
@@ -152,13 +155,11 @@ export function UsersPage() {
   const handleConfirmRestore = async (userId: string, data: any) => {
     await updateUser({ id: userId, data }).unwrap()
     setRestoringUser(null)
-    refetch()
   }
 
   const handleConfirmPermanentDelete = async (userIds: string[]) => {
     await bulkDeleteUsers(userIds).unwrap()
     setPermanentDeletingUser(null)
-    refetch()
   }
 
   // Calcul des statistiques
@@ -216,26 +217,111 @@ export function UsersPage() {
         enableSorting: true,
       },
 
-      // Colonne Rôle (avec RoleSelector si permission)
+      // Colonne Rôle (avec TableSelector si permission)
       {
         id: 'role',
         header: 'Rôle',
         accessorKey: 'role.name',
         cell: ({ row }) => {
           const user = row.original
+          
+          // Si les rôles sont en chargement, afficher un loader
+          if (rolesLoading) {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                Chargement...
+              </span>
+            )
+          }
+          
+          // Si aucun rôle n'est disponible, afficher le rôle statique
+          if (roles.length === 0) {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200">
+                {user.role?.name || 'Non défini'}
+              </span>
+            )
+          }
+          
+          // Trouver le niveau du rôle de l'utilisateur connecté
+          const currentUserRoleCode = currentUser?.roles?.[0] // Premier rôle dans le JWT
+          const currentUserRole = roles.find(r => r.code === currentUserRoleCode)
+          const currentUserLevel = currentUserRole?.level ?? 999
+          
+          // Filtrer les rôles selon la hiérarchie
+          // L'utilisateur connecté ne peut attribuer que des rôles de niveau supérieur ou égal au sien
+          let availableRoles = roles.filter(role => role.level >= currentUserLevel)
+          
+          // Toujours inclure le rôle actuel de l'utilisateur pour l'affichage
+          if (user.role?.id && !availableRoles.find(r => r.id === user.role.id)) {
+            const targetUserRole = roles.find(r => r.id === user.role.id)
+            if (targetUserRole) {
+              availableRoles = [targetUserRole, ...availableRoles]
+            }
+          }
+          
+          const roleOptions: TableSelectorOption[] = availableRoles.map(role => ({
+            value: role.id,
+            label: role.name,
+            description: role.description,
+            color: 'blue' as const,
+          }))
+
+          // Utiliser la valeur optimiste si disponible, sinon la valeur serveur
+          const optimisticRoleId = optimisticRoleUpdates.get(user.id)
+          const displayedRoleId = optimisticRoleId || user.role?.id || ''
+          
+          // Si on a une valeur optimiste ET que le serveur a renvoyé la même valeur, on peut nettoyer
+          if (optimisticRoleId && user.role?.id === optimisticRoleId) {
+            // Nettoyer de manière asynchrone pour éviter les updates pendant le render
+            Promise.resolve().then(() => {
+              setOptimisticRoleUpdates(prev => {
+                const next = new Map(prev)
+                next.delete(user.id)
+                return next
+              })
+            })
+          }
+          
+          const displayedRole = roles.find(r => r.id === displayedRoleId)
+
           return (
             <Can
               do="assign"
               on="Role"
               fallback={
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200">
-                  {user.role?.name || 'Non défini'}
+                  {displayedRole?.name || user.role?.name || 'Non défini'}
                 </span>
               }
             >
-              <RoleSelector
-                user={user as any}
-                currentUserId={currentUser?.id}
+              <TableSelector
+                value={displayedRoleId}
+                options={roleOptions}
+                onChange={async (newRoleId) => {
+                  if (user.id === currentUser?.id) {
+                    throw new Error('Vous ne pouvez pas modifier votre propre rôle')
+                  }
+                  // Optimistic update: afficher immédiatement le nouveau rôle
+                  setOptimisticRoleUpdates(prev => new Map(prev).set(user.id, newRoleId))
+                  
+                  try {
+                    await updateUser({
+                      id: user.id,
+                      data: { role_id: newRoleId },
+                    }).unwrap()
+                    // Le nettoyage se fera automatiquement quand le serveur renverra la bonne valeur
+                  } catch (error) {
+                    // Erreur: restaurer l'ancienne valeur immédiatement
+                    setOptimisticRoleUpdates(prev => {
+                      const next = new Map(prev)
+                      next.delete(user.id)
+                      return next
+                    })
+                    throw error
+                  }
+                }}
+                disabled={user.id === currentUser?.id}
               />
             </Can>
           )
@@ -300,9 +386,9 @@ export function UsersPage() {
                   handleRestoreUser(user)
                 }}
                 title="Restaurer"
-                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0"
+                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 min-w-[32px] p-1.5"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-4 w-4 shrink-0" />
               </Button>
               <Button
                 variant="ghost"
@@ -312,9 +398,9 @@ export function UsersPage() {
                   handlePermanentDelete(user)
                 }}
                 title="Supprimer définitivement"
-                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4 shrink-0" />
               </Button>
             </>
           )
@@ -331,9 +417,9 @@ export function UsersPage() {
                 handleEditUser(user)
               }}
               title="Modifier"
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0"
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0 min-w-[32px] p-1.5"
             >
-              <Edit2 className="h-4 w-4" />
+              <Edit2 className="h-4 w-4 shrink-0" />
             </Button>
             <Button
               variant="ghost"
@@ -343,15 +429,15 @@ export function UsersPage() {
                 handleDeleteUser(user)
               }}
               title="Désactiver"
-              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0"
+              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-4 w-4 shrink-0" />
             </Button>
           </>
         )
       }),
     ],
-    [currentUser?.id, isDeletedTab]
+    [currentUser?.id, isDeletedTab, roles, rolesLoading, optimisticRoleUpdates, updateUser]
   )
 
   return (

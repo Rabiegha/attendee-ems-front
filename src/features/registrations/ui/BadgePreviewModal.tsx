@@ -39,7 +39,6 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
 
     const fetchBadgePreview = async () => {
       try {
-        console.log('[Badge Preview] Loading badge preview...')
         const response = await fetch(
           `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?quality=high`,
           {
@@ -69,7 +68,6 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
 
         const data = await response.json()
         setBadgeImage(data.data.previewUrl)
-        console.log('[Badge Preview] ✅ Badge loaded')
         setIsLoading(false)
       } catch (err) {
         console.error('[Badge Preview] Failed to load:', err)
@@ -84,8 +82,6 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
   const handleDownload = async (format: BadgeFormat) => {
     try {
       setIsDownloading(true)
-      
-      console.log(`[Badge Download] Downloading ${format}:`, `${API_URL}/events/${eventId}/registrations/${registration.id}/badge/download?format=${format}`)
       
       const response = await fetch(
         `${API_URL}/events/${eventId}/registrations/${registration.id}/badge/download?format=${format}`,
@@ -113,8 +109,6 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
-      
-      console.log(`[Badge Download] ${format} downloaded successfully`)
     } catch (error) {
       console.error(`Error downloading badge ${format}:`, error)
       alert(`Erreur lors du téléchargement du badge ${format}`)

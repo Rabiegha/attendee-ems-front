@@ -34,6 +34,17 @@ export interface AttendeeHistoryItem {
     organizationName?: string
   }
 }
+
+export interface AttendeeHistoryResponse {
+  data: AttendeeHistoryItem[]
+  meta: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+
 import type {
   AttendeeDPO,
   CreateAttendeeDPO,
@@ -192,12 +203,14 @@ export const attendeesApi = rootApi.injectEndpoints({
     }),
 
     getAttendeeHistory: builder.query<
-      AttendeeHistoryItem[],
-      { attendeeId: string; email: string }
+      AttendeeHistoryResponse,
+      { attendeeId: string; email: string; page?: number; limit?: number }
     >({
-      query: ({ attendeeId, email }) => {
+      query: ({ attendeeId, email, page = 1, limit = 10 }) => {
         const searchParams = new URLSearchParams()
         searchParams.append('email', email)
+        searchParams.append('page', page.toString())
+        searchParams.append('limit', limit.toString())
         return `${API_ENDPOINTS.ATTENDEES.HISTORY(attendeeId)}?${searchParams.toString()}`
       },
       providesTags: (_result, _error, { attendeeId }) => [

@@ -140,6 +140,13 @@ export const Attendees: React.FC = () => {
                   onTabChange={handleTabChange}
                 />
               }
+              // Server-side pagination
+              currentPage={meta.page}
+              pageSize={meta.pageSize}
+              totalPages={meta.totalPages}
+              totalItems={meta.total}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
             />
           )}
         </Card>

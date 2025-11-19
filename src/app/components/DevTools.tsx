@@ -165,7 +165,7 @@ export const DevTools: React.FC = () => {
 
           <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
             <p className="text-xs text-gray-400 dark:text-gray-500">
-              💡 Simule un délai réseau pour tester les états de chargement
+              Simule un délai réseau pour tester les états de chargement
             </p>
           </div>
         </div>

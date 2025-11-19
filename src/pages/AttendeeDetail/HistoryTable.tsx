@@ -32,6 +32,13 @@ interface HistoryTableProps {
   currentDisplayName: string
   isSuperAdmin: boolean
   isLoading: boolean
+  // Pagination props
+  currentPage?: number
+  pageSize?: number
+  totalPages?: number
+  totalItems?: number
+  onPageChange?: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
 }
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
@@ -39,6 +46,12 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   currentDisplayName,
   isSuperAdmin,
   isLoading,
+  currentPage,
+  pageSize,
+  totalPages,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
 }) => {
   const navigate = useNavigate()
 
@@ -211,7 +224,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         enableColumnOrdering={true}
         enableColumnVisibility={true}
         emptyMessage="Aucune participation trouvée"
-        pageSize={10}
+        // Server-side pagination
+        manualPagination={true}
+        pageCount={totalPages ?? 1}
+        currentPage={currentPage ?? 1}
+        totalItems={totalItems ?? 0}
+        pageSize={pageSize ?? 10}
+        {...(onPageChange && { onPageChange })}
+        {...(onPageSizeChange && { onPageSizeChange })}
       />
     </Card>
   )

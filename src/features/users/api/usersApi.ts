@@ -85,18 +85,15 @@ export const usersApi = rootApi.injectEndpoints({
         isActive?: boolean
       }
     >({
-      query: ({ page = 1, pageSize = 10, search, isActive }) => {
-        console.log('🚀 RTK Query - Building request with:', { page, pageSize, search, isActive })
-        return {
-          url: API_ENDPOINTS.USERS.LIST,
-          params: {
-            page: page.toString(),
-            limit: pageSize.toString(),
-            ...(search && { q: search }),
-            ...(isActive !== undefined && { isActive: isActive.toString() }),
-          },
-        }
-      },
+      query: ({ page = 1, pageSize = 10, search, isActive }) => ({
+        url: API_ENDPOINTS.USERS.LIST,
+        params: {
+          page: page.toString(),
+          limit: pageSize.toString(),
+          ...(search && { q: search }),
+          ...(isActive !== undefined && { isActive: isActive.toString() }),
+        },
+      }),
       providesTags: (_result, _error, arg) => [
         'Users',
         { type: 'Users', id: `LIST-${arg.isActive}` }, // Tag unique par filtre isActive
@@ -124,10 +121,8 @@ export const usersApi = rootApi.injectEndpoints({
         method: 'PATCH',
         body: data,
       }),
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: 'Users', id },
-        { type: 'Users', id: 'LIST' }, // Invalider aussi la liste pour rafraîchir immédiatement
-      ],
+      // Invalider TOUS les caches liés aux users pour une mise à jour instantanée
+      invalidatesTags: ['Users', 'Roles'],
     }),
 
     // Supprimer un utilisateur

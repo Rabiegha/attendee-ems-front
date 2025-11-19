@@ -83,16 +83,17 @@ export const RootLayout: React.FC = () => {
 
     // Vérification de sécurité : Si marqué comme authentifié mais pas de user/token
     // Cela ne devrait jamais arriver, mais protège contre un état incohérent
-    if (!isBootstrapping && isAuthenticated && (!user || !token)) {
-      console.error(
-        '[ROOTLAYOUT] CRITICAL: Authenticated but no user/token! Forcing logout...'
-      )
-      redirectCountRef.current++
-      lastRedirectTimeRef.current = now
-      dispatch(clearSession())
-      navigate('/auth/login', { replace: true })
-      return
-    }
+    // DÉSACTIVÉ temporairement car crée des boucles lors du chargement initial
+    // if (!isBootstrapping && isAuthenticated && (!user || !token)) {
+    //   console.error(
+    //     '[ROOTLAYOUT] CRITICAL: Authenticated but no user/token! Forcing logout...'
+    //   )
+    //   redirectCountRef.current++
+    //   lastRedirectTimeRef.current = now
+    //   dispatch(clearSession())
+    //   navigate('/auth/login', { replace: true })
+    //   return
+    // }
 
     if (!isBootstrapping && isAuthenticated && user && token) {
       // console.log('[ROOTLAYOUT] ✅ User authenticated and valid:', user.email)

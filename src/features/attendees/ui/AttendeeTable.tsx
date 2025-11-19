@@ -37,6 +37,13 @@ interface AttendeeTableProps {
     selectedIds: Set<string>,
     selectedItems: AttendeeDPO[]
   ) => Promise<void>
+  // Server-side pagination
+  currentPage?: number
+  pageSize?: number
+  totalPages?: number
+  totalItems?: number
+  onPageChange?: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
 }
 
 export const AttendeeTable: React.FC<AttendeeTableProps> = ({
@@ -46,6 +53,12 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   tabsElement,
   onBulkDelete,
   onBulkExport,
+  currentPage,
+  pageSize,
+  totalPages,
+  totalItems,
+  onPageChange,
+  onPageSizeChange,
 }) => {
   const navigate = useNavigate()
 
@@ -230,7 +243,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         id: 'actions',
         header: 'Actions',
         cell: ({ row }) => (
-          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-end gap-0" onClick={(e) => e.stopPropagation()}>
             {isDeletedTab ? (
               <>
                 <Button
@@ -238,18 +251,18 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
                   variant="ghost"
                   onClick={() => handleRestoreAttendee(row.original)}
                   title="Restaurer"
-                  className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 min-w-[32px] p-1.5"
                 >
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw className="h-4 w-4 shrink-0" />
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => handlePermanentDeleteAttendee(row.original)}
                   title="Supprimer définitivement"
-                  className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                 >
-                  <Trash className="h-4 w-4" />
+                  <Trash className="h-4 w-4 shrink-0" />
                 </Button>
               </>
             ) : (
@@ -353,6 +366,14 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
           // TanStack Table handles selection internally
         }}
         emptyMessage="Aucun participant trouvé"
+        // Server-side pagination
+        manualPagination={true}
+        pageSize={pageSize || 50}
+        currentPage={currentPage || 1}
+        pageCount={totalPages || 1}
+        totalItems={totalItems || 0}
+        onPageChange={onPageChange || (() => {})}
+        onPageSizeChange={onPageSizeChange || (() => {})}
       />
 
       <EditAttendeeModal

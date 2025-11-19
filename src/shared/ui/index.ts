@@ -31,6 +31,7 @@ export {
 } from './Table'
 export { ActionButtons, type ActionButtonsProps } from './ActionButtons'
 export { Checkbox, type CheckboxProps } from './Checkbox'
+export { TableSelector, type TableSelectorOption } from './TableSelector'
 
 // TanStack Table Components
 export { DataTable } from './DataTable'

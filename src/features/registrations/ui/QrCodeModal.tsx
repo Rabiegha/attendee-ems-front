@@ -33,8 +33,6 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
         setIsLoading(true)
         setError('')
         
-        console.log('[QR Code] Fetching:', `${API_URL}/registrations/${registration.id}/qr-code`)
-        
         const response = await fetch(
           `${API_URL}/registrations/${registration.id}/qr-code?format=png`,
           {
@@ -44,15 +42,12 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
           }
         )
 
-        console.log('[QR Code] Response status:', response.status)
-
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`)
         }
 
         const blob = await response.blob()
         const dataUrl = URL.createObjectURL(blob)
-        console.log('[QR Code] Loaded successfully')
         setQrCodeDataUrl(dataUrl)
       } catch (err) {
         console.error('[QR Code] Failed to load:', err)
@@ -66,9 +61,8 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
 
     // Cleanup blob URL on unmount
     return () => {
-      if (qrCodeDataUrl) {
-        console.log('[QR Code] Cleanup blob URL')
-        URL.revokeObjectURL(qrCodeDataUrl)
+      if (qrCodeUrl) {
+        URL.revokeObjectURL(qrCodeUrl)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -51,7 +51,7 @@ export function createActionsColumn<TData>(
     size: 128, // w-32
     header: () => <div className="text-right">Actions</div>,
     cell: ({ row }) => (
-      <div className="flex items-center justify-end gap-2 flex-wrap">
+      <div className="flex items-center justify-end gap-0 flex-wrap">
         {renderActions(row.original)}
       </div>
     ),

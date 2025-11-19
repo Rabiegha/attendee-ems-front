@@ -13,7 +13,6 @@ import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { PageContainer } from '@/shared/ui/PageContainer'
-import { Pagination } from '@/shared/ui/Pagination'
 import { LoadingSpinner, EventDetailsSkeleton } from '@/shared/ui'
 import { Tabs, type TabItem } from '@/shared/ui'
 import {
@@ -858,22 +857,16 @@ export const EventDetails: React.FC = () => {
                 />
               }
               meta={registrationsMeta}
+              // Server-side pagination props
+              currentPage={registrationsMeta.page}
+              pageSize={registrationsMeta.limit}
+              totalPages={registrationsMeta.totalPages}
+              onPageChange={(page) => setRegistrationsPage(page)}
+              onPageSizeChange={(pageSize) => {
+                setRegistrationsPageSize(pageSize)
+                setRegistrationsPage(1) // Reset to first page when changing page size
+              }}
             />
-
-            {/* Pagination */}
-            {!registrationsLoading && registrationsMeta.totalPages > 1 && (
-              <Pagination
-                currentPage={registrationsMeta.page}
-                totalPages={registrationsMeta.totalPages}
-                pageSize={registrationsMeta.limit}
-                total={registrationsMeta.total}
-                onPageChange={(page) => setRegistrationsPage(page)}
-                onPageSizeChange={(pageSize) => {
-                  setRegistrationsPageSize(pageSize)
-                  setRegistrationsPage(1) // Reset to first page when changing page size
-                }}
-              />
-            )}
           </div>
         )}
 

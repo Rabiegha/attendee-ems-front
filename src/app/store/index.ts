@@ -49,8 +49,8 @@ export const store = configureStore({
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
     })
-      .concat(rootApi.middleware)
-      .concat(apiDelayMiddleware), // Ajouter le middleware de délai en dev
+      .concat(rootApi.middleware),
+      // .concat(apiDelayMiddleware), // Désactivé - middleware de délai en dev
   devTools: process.env.NODE_ENV !== 'production',
 })
 

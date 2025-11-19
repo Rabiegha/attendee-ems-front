@@ -17,7 +17,7 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
-import { Button } from '@/shared/ui'
+import { Button, TableSelector, type TableSelectorOption } from '@/shared/ui'
 import { ActionButtons, SearchInput } from '@/shared/ui'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { Card } from '@/shared/ui/Card'
@@ -64,6 +64,12 @@ interface RegistrationsTableProps {
       refused: number
     }
   }
+  // Server-side pagination
+  currentPage?: number
+  pageSize?: number
+  totalPages?: number
+  onPageChange?: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
 }
 
 const STATUS_CONFIG = {
@@ -91,6 +97,38 @@ const STATUS_CONFIG = {
   },
 }
 
+// Options pour le TableSelector
+const STATUS_OPTIONS: TableSelectorOption<string>[] = [
+  {
+    value: 'awaiting',
+    label: 'En attente',
+    icon: Clock,
+    color: 'yellow',
+    description: 'En attente de validation',
+  },
+  {
+    value: 'approved',
+    label: 'Approuvé',
+    icon: CheckCircle,
+    color: 'green',
+    description: 'Inscription approuvée',
+  },
+  {
+    value: 'refused',
+    label: 'Refusé',
+    icon: XCircle,
+    color: 'red',
+    description: 'Inscription refusée',
+  },
+  {
+    value: 'cancelled',
+    label: 'Annulé',
+    icon: Ban,
+    color: 'gray',
+    description: 'Inscription annulée',
+  },
+]
+
 export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   registrations,
   isLoading,
@@ -100,6 +138,11 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   isDeletedTab,
   tabsElement,
   meta,
+  currentPage,
+  pageSize,
+  totalPages,
+  onPageChange,
+  onPageSizeChange,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -119,6 +162,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const toast = useToast()
   const navigate = useNavigate()
 
+  // Optimistic updates: stocke temporairement les nouveaux status avant confirmation serveur
+  const [optimisticStatusUpdates, setOptimisticStatusUpdates] = useState<Map<string, string>>(new Map())
+
   const [updateStatus] = useUpdateRegistrationStatusMutation()
   const [updateRegistration, { isLoading: isUpdating }] =
     useUpdateRegistrationMutation()
@@ -136,14 +182,24 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     registrationId: string,
     newStatus: string
   ) => {
+    // Optimistic update: afficher immédiatement le nouveau statut
+    setOptimisticStatusUpdates(prev => new Map(prev).set(registrationId, newStatus))
+    
     try {
       await updateStatus({ id: registrationId, status: newStatus }).unwrap()
       toast.success(
         'Statut mis à jour',
         `L'inscription a été ${STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG].label.toLowerCase()}`
       )
+      // Le nettoyage se fera automatiquement quand le serveur renverra la bonne valeur
     } catch (error) {
       console.error('Error updating status:', error)
+      // Erreur: restaurer l'ancienne valeur
+      setOptimisticStatusUpdates(prev => {
+        const next = new Map(prev)
+        next.delete(registrationId)
+        return next
+      })
       toast.error('Erreur', 'Impossible de mettre à jour le statut')
     }
   }
@@ -309,16 +365,53 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         header: 'Statut',
         accessorKey: 'status',
         cell: ({ row }) => {
-          const StatusIcon = STATUS_CONFIG[row.original.status].icon
+          // Utiliser la valeur optimiste si disponible, sinon la valeur serveur
+          const optimisticStatus = optimisticStatusUpdates.get(row.original.id)
+          const displayedStatus = optimisticStatus || row.original.status
+          
+          // Si on a une valeur optimiste ET que le serveur a renvoyé la même valeur, on peut nettoyer
+          if (optimisticStatus && row.original.status === optimisticStatus) {
+            // Nettoyer de manière asynchrone pour éviter les updates pendant le render
+            Promise.resolve().then(() => {
+              setOptimisticStatusUpdates(prev => {
+                const next = new Map(prev)
+                next.delete(row.original.id)
+                return next
+              })
+            })
+          }
+          
+          if (isDeletedTab) {
+            // Affichage simple pour les inscriptions supprimées
+            const StatusIcon = STATUS_CONFIG[displayedStatus as keyof typeof STATUS_CONFIG].icon
+            return (
+              <div className="cursor-pointer" onClick={() => handleRowClick(row.original)}>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_CONFIG[displayedStatus as keyof typeof STATUS_CONFIG].color}`}
+                >
+                  <StatusIcon className="h-3 w-3 mr-1" />
+                  {STATUS_CONFIG[displayedStatus as keyof typeof STATUS_CONFIG].label}
+                </span>
+              </div>
+            )
+          }
+
+          // StatusSelector pour les inscriptions actives
           return (
-            <div className="cursor-pointer" onClick={() => handleRowClick(row.original)}>
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_CONFIG[row.original.status].color}`}
-              >
-                <StatusIcon className="h-3 w-3 mr-1" />
-                {STATUS_CONFIG[row.original.status].label}
-              </span>
-            </div>
+            <TableSelector
+              value={displayedStatus}
+              options={STATUS_OPTIONS}
+              onChange={async (newStatus) => {
+                try {
+                  await handleStatusChange(row.original.id, newStatus)
+                } catch (error) {
+                  // L'erreur est déjà gérée dans handleStatusChange
+                  throw error
+                }
+              }}
+              disabled={isUpdating}
+              loadingText="Mise à jour..."
+            />
           )
         },
       },
@@ -399,8 +492,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         cell: ({ row }) =>
           isDeletedTab ? (
             <ActionButtons
-              onEdit={undefined}
-              onDelete={undefined}
               size="sm"
               iconOnly
             >
@@ -408,19 +499,19 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                 variant="ghost"
                 size="sm"
                 onClick={() => setRestoringRegistration(row.original)}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px]"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px] p-1.5"
                 title="Restaurer"
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-4 w-4 shrink-0" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setPermanentDeletingRegistration(row.original)}
-                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px]"
+                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                 title="Supprimer définitivement"
               >
-                <XCircle className="h-4 w-4" />
+                <XCircle className="h-4 w-4 shrink-0" />
               </Button>
             </ActionButtons>
           ) : (
@@ -437,20 +528,20 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                     size="sm"
                     onClick={() => handleStatusChange(row.original.id, 'approved')}
                     disabled={isUpdating}
-                    className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 min-w-[32px]"
+                    className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 min-w-[32px] p-1.5"
                     title="Approuver"
                   >
-                    <CheckCircle className="h-4 w-4" />
+                    <CheckCircle className="h-4 w-4 shrink-0" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => handleStatusChange(row.original.id, 'refused')}
                     disabled={isUpdating}
-                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px]"
+                    className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                     title="Refuser"
                   >
-                    <XCircle className="h-4 w-4" />
+                    <XCircle className="h-4 w-4 shrink-0" />
                   </Button>
                 </>
               )}
@@ -460,7 +551,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         enableHiding: false,
       },
     ],
-    [isUpdating, isDeletedTab]
+    [isUpdating, isDeletedTab, optimisticStatusUpdates, updateStatus]
   )
 
   // Bulk actions
@@ -638,6 +729,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               ? 'Aucune inscription supprimée'
               : 'Aucune inscription trouvée'
           }
+          // Server-side pagination
+          manualPagination={true}
+          pageSize={pageSize || 50}
+          currentPage={currentPage || 1}
+          pageCount={totalPages || 1}
+          totalItems={meta?.total || 0}
+          onPageChange={onPageChange || (() => {})}
+          onPageSizeChange={onPageSizeChange || (() => {})}
         />
       </Card>
 

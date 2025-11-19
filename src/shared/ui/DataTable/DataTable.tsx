@@ -129,8 +129,8 @@ function DraggableTableHeader({
         'bg-gray-50 dark:bg-gray-700', // Background pour le sticky
         // Transitions seulement au repos
         !isDragging && 'transition-colors duration-150',
-        isDragging && 'shadow-xl',
-        canSort && 'cursor-pointer select-none',
+        isDragging && 'shadow-xl cursor-grabbing',
+        canSort && !isDragging && 'cursor-pointer select-none',
         !isDragging && canSort && 'hover:bg-gray-100 dark:hover:bg-gray-600'
       )}
       onClick={canSort && onSortClick ? (e) => onSortClick(e) : undefined}
@@ -748,10 +748,30 @@ export function DataTable<TData, TValue>({
         </div>
 
         {/* Drag Overlay - Aperçu pendant le drag */}
-        <DragOverlay dropAnimation={null}>
+        <DragOverlay
+          dropAnimation={{
+            duration: 200,
+            easing: 'ease-out',
+            keyframes: ({ transform }) => [
+              { transform: CSS.Transform.toString(transform.initial), opacity: 1 },
+              { transform: CSS.Transform.toString(transform.final), opacity: 0 },
+            ],
+          }}
+          style={{
+            cursor: 'grabbing',
+          }}
+          // Décalage pour ne pas cacher le texte avec le curseur
+          modifiers={[
+            ({ transform }) => ({
+              ...transform,
+              x: transform.x + 15, // Décalage horizontal
+              y: transform.y + 15, // Décalage vertical
+            }),
+          ]}
+        >
           {activeId ? (
-            <div className="bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow-2xl border-2 border-blue-500 dark:border-blue-400">
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">
+            <div className="bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow-2xl border-2 border-blue-500 dark:border-blue-400 cursor-grabbing">
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase select-none">
                 {(() => {
                   const column = table.getAllLeafColumns().find((col) => col.id === activeId)
                   if (!column) return activeId

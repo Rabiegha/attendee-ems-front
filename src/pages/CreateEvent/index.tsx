@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { useCreateEventMutation } from '@/features/events/api/eventsApi'
 import { useToast } from '@/shared/hooks/useToast'
+import { useEventNameAvailability } from '@/features/events/hooks/useEventNameAvailability'
 
 // Import des composants d'étapes
 import { StepOne, StepTwo, StepThree } from './steps'
@@ -89,6 +90,9 @@ export function CreateEventPage() {
     assigned_user_ids: [],
   })
 
+  // Vérification de la disponibilité du nom
+  const { isChecking, isAvailable } = useEventNameAvailability(formData.name)
+
   const updateFormData = (updates: Partial<CreateEventFormData>) => {
     setFormData(prev => ({ ...prev, ...updates }))
   }
@@ -136,7 +140,14 @@ export function CreateEventPage() {
 
   const canGoNext = () => {
     if (currentStep === 1) {
-      return formData.name && formData.start_at && formData.end_at
+      // Vérifier que le nom existe, les dates sont remplies et le nom est disponible
+      return (
+        formData.name && 
+        formData.start_at && 
+        formData.end_at && 
+        !isChecking && 
+        isAvailable === true
+      )
     }
     return true
   }
@@ -240,14 +251,17 @@ export function CreateEventPage() {
 
         {/* Navigation buttons */}
         <div className="flex justify-between mt-6">
-          <Button
-            variant="outline"
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            leftIcon={<ArrowLeft className="h-4 w-4" />}
-          >
-            Précédent
-          </Button>
+          {currentStep > 1 ? (
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              leftIcon={<ArrowLeft className="h-4 w-4" />}
+            >
+              Précédent
+            </Button>
+          ) : (
+            <div />
+          )}
 
           <div className="flex gap-3">
             {currentStep < 3 ? (

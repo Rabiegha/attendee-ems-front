@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ColumnDef } from '@tanstack/react-table'
 import {
-  Filter,
   Download,
   CheckCircle,
   XCircle,
@@ -17,8 +16,10 @@ import {
   RotateCcw,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
-import { Button, TableSelector, type TableSelectorOption } from '@/shared/ui'
-import { ActionButtons, SearchInput } from '@/shared/ui'
+import { Button, TableSelector, type TableSelectorOption, ActionButtons } from '@/shared/ui'
+import { SearchInput } from '@/shared/ui'
+import { FilterBar, FilterButton } from '@/shared/ui/FilterBar'
+import type { FilterValues } from '@/shared/ui/FilterBar/types'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { Card } from '@/shared/ui/Card'
 import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
@@ -145,8 +146,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   onPageSizeChange,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [checkinFilter, setCheckinFilter] = useState<string>('all')
+  const [filterValues, setFilterValues] = useState<FilterValues>({})
   const [editingRegistration, setEditingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [deletingRegistration, setDeletingRegistration] =
@@ -161,6 +161,30 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     useState<RegistrationDPO | null>(null)
   const toast = useToast()
   const navigate = useNavigate()
+
+  // Configuration des filtres pour le popup
+  const filterConfig = {
+    status: {
+      label: 'Statut',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous les statuts' },
+        { value: 'awaiting', label: 'En attente' },
+        { value: 'approved', label: 'Approuvés' },
+        { value: 'refused', label: 'Refusés' },
+        { value: 'cancelled', label: 'Annulés' },
+      ],
+    },
+    checkin: {
+      label: 'Check-in',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous les check-ins' },
+        { value: 'checked', label: 'Enregistrés' },
+        { value: 'not_checked', label: 'Non enregistrés' },
+      ],
+    },
+  }
 
   // Optimistic updates: stocke temporairement les nouveaux status avant confirmation serveur
   const [optimisticStatusUpdates, setOptimisticStatusUpdates] = useState<Map<string, string>>(new Map())
@@ -280,6 +304,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       toast.error('Erreur', "Impossible de supprimer définitivement l'inscription")
     }
   }
+
+  // Extraction des valeurs de filtres
+  const statusFilter = (filterValues.status as string) || 'all'
+  const checkinFilter = (filterValues.checkin as string) || 'all'
 
   // Filtrage
   const filteredRegistrations = registrations.filter((reg) => {
@@ -603,68 +631,38 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   return (
     <div className="space-y-4">
       {/* Barre de recherche et filtres */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <SearchInput
-            placeholder="Rechercher par nom, prénom ou email..."
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-        </div>
+      <FilterBar
+        onReset={() => {
+          setSearchQuery('')
+          setFilterValues({})
+        }}
+        showResetButton={searchQuery !== '' || Object.keys(filterValues).length > 0}
+        onRefresh={onRefresh}
+        showRefreshButton={!!onRefresh}
+      >
+        <SearchInput
+          placeholder="Rechercher par nom, prénom ou email..."
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
 
-        <div className="flex items-center space-x-3">
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-colors"
-            >
-              <option value="all">Tous les statuts</option>
-              <option value="awaiting">En attente</option>
-              <option value="approved">Approuvés</option>
-              <option value="refused">Refusés</option>
-              <option value="cancelled">Annulés</option>
-            </select>
-          </div>
+        <FilterButton
+          filters={filterConfig}
+          values={filterValues}
+          onChange={setFilterValues}
+        />
 
-          <div className="relative">
-            <CheckCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500 pointer-events-none" />
-            <select
-              value={checkinFilter}
-              onChange={(e) => setCheckinFilter(e.target.value)}
-              className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer transition-colors"
-            >
-              <option value="all">Tous les check-ins</option>
-              <option value="checked">Enregistrés</option>
-              <option value="not_checked">Non enregistrés</option>
-            </select>
-          </div>
-
-          {onRefresh && (
-            <Button
-              variant="outline"
-              onClick={onRefresh}
-              className="flex items-center space-x-2"
-              title="Rafraîchir la liste"
-            >
-              <RefreshCw className="h-4 w-4" />
-              <span className="hidden sm:inline">Rafraîchir</span>
-            </Button>
-          )}
-
-          {onExport && (
-            <Button
-              variant="outline"
-              onClick={onExport}
-              className="flex items-center space-x-2"
-            >
-              <Download className="h-4 w-4" />
-              <span>Exporter</span>
-            </Button>
-          )}
-        </div>
-      </div>
+        {onExport && (
+          <Button
+            variant="outline"
+            onClick={onExport}
+            className="h-10 flex-shrink-0"
+            leftIcon={<Download className="h-4 w-4" />}
+          >
+            Exporter
+          </Button>
+        )}
+      </FilterBar>
 
       {/* Statistiques */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

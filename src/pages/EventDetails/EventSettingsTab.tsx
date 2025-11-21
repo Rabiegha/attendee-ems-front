@@ -117,9 +117,8 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
       }
 
       // Ajouter les options d'inscription et de notification
-      if (formData.capacity !== undefined) {
-        updateData.capacity = formData.capacity
-      }
+      // Si capacity est undefined, on envoie null pour supprimer la limite
+      updateData.capacity = formData.capacity !== undefined ? formData.capacity : null
       updateData.registrationAutoApprove = formData.registration_auto_approve
       updateData.requireEmailVerification = formData.require_email_verification
       updateData.confirmationEmailEnabled = formData.confirmation_email_enabled

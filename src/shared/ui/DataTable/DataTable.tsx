@@ -465,7 +465,7 @@ export function DataTable<TData, TValue>({
       {(enableColumnVisibility || enableColumnOrdering || tabsElement) && (
         <div className={cn(
           "flex items-center gap-2 mb-4",
-          tabsElement ? "justify-between px-6 pt-6" : "justify-end bg-transparent"
+          tabsElement ? "justify-between px-6 pt-4" : "justify-end bg-transparent"
         )}>
           {/* Tabs on the left */}
           {tabsElement && <div className="flex-1">{tabsElement}</div>}

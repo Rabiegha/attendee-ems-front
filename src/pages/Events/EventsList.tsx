@@ -13,7 +13,6 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Plus,
-  Filter,
   Calendar,
   MapPin,
   Users,
@@ -24,8 +23,14 @@ import {
 import { useToast } from '@/shared/hooks/useToast'
 import { useSelector } from 'react-redux'
 import { selectUser, selectOrgId } from '@/features/auth/model/sessionSlice'
-import { SearchInput } from '@/shared/ui/SearchInput'
-import { LoadingState, EventsGridSkeleton } from '@/shared/ui'
+import {
+  SearchInput,
+  FilterBar,
+  FilterButton,
+  LoadingState,
+  EventsGridSkeleton,
+  type FilterValues,
+} from '@/shared/ui'
 
 // Real API calls
 import {
@@ -50,10 +55,13 @@ const EventsList = () => {
 
   // Filters state
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<EventStatus | 'all'>('all')
-  const [tagFilter, setTagFilter] = useState<string>('')
+  const [filterValues, setFilterValues] = useState<FilterValues>({})
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+
+  // Extract filter values
+  const statusFilter = filterValues.status as string | undefined
+  const hasCheckinFilter = filterValues.hasCheckin as string | undefined
 
   // API calls - Real data instead of mocks
   const {
@@ -64,34 +72,76 @@ const EventsList = () => {
     page: currentPage,
     limit: itemsPerPage,
     ...(search && { search }),
-    ...(statusFilter !== 'all' && { status: statusFilter }),
   })
-
-  // Get all tags for filtering (no search needed here, will show all org tags)
-  const { data: allTags = [] } = useGetTagsQuery(undefined)
 
   const [deleteEvent] = useDeleteEventMutation()
   const [bulkDeleteEvents] = useBulkDeleteEventsMutation()
   const [bulkExportEvents] = useBulkExportEventsMutation()
 
+  const handleRefresh = () => {
+    dispatch(eventsApi.util.invalidateTags(['Events']))
+  }
+
   // Get user role for RBAC
   const userRole = user?.roles?.[0] || 'VIEWER'
   const isSuperAdmin = userRole === 'SUPER_ADMIN'
 
-  // Filter events based on user role (additional client-side filtering if needed)
+  // Filter events based on user role and filters
   const filteredEvents = events.filter((event) => {
     // RBAC: SUPER_ADMIN sees all events, others see only their org events
     if (!isSuperAdmin && event.orgId !== orgId) {
       return false
     }
     
-    // Filter by tag if selected
-    if (tagFilter && !event.tags.includes(tagFilter)) {
+    // Filter by status (single select)
+    if (statusFilter && statusFilter !== 'all' && event.status !== statusFilter) {
       return false
+    }
+
+    // Filter by check-in
+    if (hasCheckinFilter && hasCheckinFilter !== 'all') {
+      const hasCheckin = event.enableCheckin || false
+      if (hasCheckinFilter === 'yes' && !hasCheckin) return false
+      if (hasCheckinFilter === 'no' && hasCheckin) return false
     }
     
     return true
   })
+
+  // Configuration des filtres pour le popup
+  const filterConfig = {
+    status: {
+      label: 'Statut',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous' },
+        { value: 'draft', label: 'Brouillon' },
+        { value: 'published', label: 'Publié' },
+        { value: 'registration_closed', label: 'Inscriptions closes' },
+        { value: 'cancelled', label: 'Annulé' },
+        { value: 'postponed', label: 'Reporté' },
+        { value: 'archived', label: 'Archivé' },
+      ],
+    },
+    hasCheckin: {
+      label: 'Check-in',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous' },
+        { value: 'yes', label: 'Avec check-in' },
+        { value: 'no', label: 'Sans check-in' },
+      ],
+    },
+  }
+
+  const handleResetFilters = () => {
+    setSearch('')
+    setFilterValues({})
+  }
+
+  const handleRefresh = () => {
+    dispatch(eventsApi.util.invalidateTags(['Events']))
+  }
 
   // Pagination (if not handled by API)
   const totalPages = Math.ceil(filteredEvents.length / itemsPerPage)
@@ -250,62 +300,26 @@ const EventsList = () => {
 
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Search */}
-            <SearchInput
-              placeholder="Rechercher un événement..."
-              value={search}
-              onChange={setSearch}
-            />
+        <FilterBar
+          resultCount={filteredEvents.length}
+          resultLabel="événement"
+          onReset={handleResetFilters}
+          showResetButton={search !== '' || Object.keys(filterValues).length > 0}
+          onRefresh={handleRefresh}
+          showRefreshButton={true}
+        >
+          <SearchInput
+            placeholder="Rechercher un événement..."
+            value={search}
+            onChange={setSearch}
+          />
 
-            {/* Status Filter */}
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value as EventStatus | 'all')
-                }
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 appearance-none"
-              >
-                <option value="all">Tous les statuts</option>
-                <option value="draft">Brouillon</option>
-                <option value="published">Publié</option>
-                <option value="registration_closed">Inscriptions closes</option>
-                <option value="cancelled">Annulé</option>
-                <option value="postponed">Reporté</option>
-                <option value="archived">Archivé</option>
-              </select>
-            </div>
-
-            {/* Tag Filter */}
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <select
-                value={tagFilter}
-                onChange={(e) => setTagFilter(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-200 appearance-none"
-              >
-                <option value="">Tous les tags</option>
-                {allTags.map((tag: Tag) => (
-                  <option key={tag.id} value={tag.name}>
-                    {tag.name} ({tag.usage_count})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Results count */}
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
-              <span className="font-medium">{filteredEvents.length}</span>
-              <span className="ml-1">
-                événement{filteredEvents.length > 1 ? 's' : ''} trouvé
-                {filteredEvents.length > 1 ? 's' : ''}
-              </span>
-            </div>
-          </div>
-        </div>
+          <FilterButton
+            filters={filterConfig}
+            values={filterValues}
+            onChange={setFilterValues}
+          />
+        </FilterBar>
 
         {/* Events Table */}
         <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-200">

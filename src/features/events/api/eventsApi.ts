@@ -62,6 +62,13 @@ export const eventsApi = rootApi.injectEndpoints({
       providesTags: (_result, _error, id) => [{ type: 'Event', id }],
     }),
 
+    checkEventNameAvailability: builder.query<
+      { available: boolean; name: string },
+      string
+    >({
+      query: (name) => `${API_ENDPOINTS.EVENTS.LIST}/check-name?name=${encodeURIComponent(name)}`,
+    }),
+
     createEvent: builder.mutation<EventDPO, CreateEventDPO>({
       query: (eventData) => ({
         url: API_ENDPOINTS.EVENTS.CREATE,
@@ -199,6 +206,8 @@ export const eventsApi = rootApi.injectEndpoints({
 export const {
   useGetEventsQuery,
   useGetEventByIdQuery,
+  useCheckEventNameAvailabilityQuery,
+  useLazyCheckEventNameAvailabilityQuery,
   useCreateEventMutation,
   useUpdateEventMutation,
   useUpdateRegistrationFieldsMutation,

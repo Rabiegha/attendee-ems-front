@@ -61,8 +61,8 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
 
     // Cleanup blob URL on unmount
     return () => {
-      if (qrCodeUrl) {
-        URL.revokeObjectURL(qrCodeUrl)
+      if (qrCodeDataUrl) {
+        URL.revokeObjectURL(qrCodeDataUrl)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

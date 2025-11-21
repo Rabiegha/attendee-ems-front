@@ -33,7 +33,11 @@ import {
   createDateColumn,
   createActionsColumn,
   TableSelector,
+  SearchInput,
+  FilterBar,
+  FilterButton,
   type TableSelectorOption,
+  type FilterValues,
 } from '@/shared/ui'
 import {
   useGetUsersQuery,
@@ -105,8 +109,58 @@ export function UsersPage() {
   const [restoringUser, setRestoringUser] = useState<User | null>(null)
   const [permanentDeletingUser, setPermanentDeletingUser] = useState<User | null>(null)
 
+  // Filtres locaux (recherche + rôles)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [roleFilters, setRoleFilters] = useState<FilterValues>({})
+
   // Tabs configuration
   const isDeletedTab = activeTab === 'deleted'
+
+  // Filtrage local côté client pour recherche et rôles
+  const selectedRoleId = roleFilters.roles as string | undefined
+  const filteredUsers = useMemo(() => {
+    let users = usersData?.users || []
+
+    // Filtre par recherche
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      users = users.filter((user) => {
+        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase()
+        const email = (user.email || '').toLowerCase()
+        return fullName.includes(query) || email.includes(query)
+      })
+    }
+
+    // Filtre par rôle (single select)
+    if (selectedRoleId && selectedRoleId !== 'all') {
+      users = users.filter((user) => {
+        const userRoles = user.roles || []
+        return userRoles.some((r: any) => r.id === selectedRoleId || r.role_id === selectedRoleId)
+      })
+    }
+
+    return users
+  }, [usersData?.users, searchQuery, selectedRoleId])
+
+  // Configuration des filtres pour le popup
+  const filterConfig = useMemo(() => ({
+    roles: {
+      label: 'Rôles',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous les rôles' },
+        ...roles.map((role) => ({
+          value: role.id,
+          label: role.name || role.code,
+        })),
+      ],
+    },
+  }), [roles])
+
+  const handleResetFilters = () => {
+    setSearchQuery('')
+    setRoleFilters({})
+  }
 
   const handleRefresh = () => {
     dispatch(usersApi.util.invalidateTags(['Users']))
@@ -552,11 +606,35 @@ export function UsersPage() {
       </PageSection>
 
       {/* Section liste des utilisateurs */}
-      <PageSection title="Liste des utilisateurs" spacing="lg">
+      <PageSection spacing="lg">
+        <FilterBar
+          resultCount={filteredUsers.length}
+          resultLabel="utilisateur"
+          onReset={handleResetFilters}
+          showResetButton={searchQuery !== '' || (selectedRoleId !== undefined && selectedRoleId !== 'all')}
+          onRefresh={handleRefresh}
+          showRefreshButton={true}
+        >
+          <SearchInput
+            placeholder="Rechercher par nom ou email..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+
+          <FilterButton
+            filters={filterConfig}
+            values={roleFilters}
+            onChange={setRoleFilters}
+          />
+        </FilterBar>
+      </PageSection>
+
+      {/* Table des utilisateurs */}
+      <PageSection spacing="lg">
         <Card variant="default" padding="none">
           <DataTable
             columns={columns}
-            data={usersData?.users || []}
+            data={filteredUsers}
             isLoading={isLoading}
             emptyMessage={
               isDeletedTab

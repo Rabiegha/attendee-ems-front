@@ -8,6 +8,8 @@
 import { Input, Textarea, FormField } from '@/shared/ui'
 import { CreateEventFormData } from '../index'
 import { TagInput } from '@/features/tags'
+import { useEventNameAvailability } from '@/features/events/hooks/useEventNameAvailability'
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 
 interface StepOneProps {
   formData: CreateEventFormData
@@ -15,6 +17,43 @@ interface StepOneProps {
 }
 
 export function StepOne({ formData, updateFormData }: StepOneProps) {
+  const { isChecking, isAvailable, errorMessage } = useEventNameAvailability(formData.name)
+
+  const getNameValidationUI = () => {
+    if (!formData.name || formData.name.trim().length < 2) {
+      return null
+    }
+
+    if (isChecking) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Vérification de la disponibilité...</span>
+        </div>
+      )
+    }
+
+    if (isAvailable === true) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mt-1">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>Ce nom est disponible</span>
+        </div>
+      )
+    }
+
+    if (isAvailable === false || errorMessage) {
+      return (
+        <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 mt-1">
+          <XCircle className="h-4 w-4" />
+          <span>{errorMessage || 'Ce nom n\'est pas disponible'}</span>
+        </div>
+      )
+    }
+
+    return null
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -37,6 +76,7 @@ export function StepOne({ formData, updateFormData }: StepOneProps) {
           required
           autoFocus
         />
+        {getNameValidationUI()}
       </FormField>
 
       {/* Description */}

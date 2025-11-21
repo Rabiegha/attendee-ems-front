@@ -1,22 +1,26 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
-import { useGetEventsQuery } from '@/features/events/api/eventsApi'
-import { TagFilterInput } from '@/features/tags'
+import { useNavigate, Link } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import { useGetEventsQuery, eventsApi } from '@/features/events/api/eventsApi'
 import { Can } from '@/shared/acl/guards/Can'
 import {
   Button,
-  Input,
-  Select,
+  Card,
+  CardContent,
   PageContainer,
   PageHeader,
   PageSection,
-  Card,
-  CardContent,
   LoadingSpinner,
   LoadingState,
   SearchInput,
   EventsPageSkeleton,
+  FilterBar,
+  FilterButton,
+  FilterTag,
+  FilterSort,
+  type FilterValues,
+  type SortOption,
 } from '@/shared/ui'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
 import { DeleteEventModal } from '@/features/events/ui/DeleteEventModal'
@@ -36,12 +40,15 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
   // Filtres et recherche
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [tagFilter, setTagFilter] = useState<string>('')
-  const [sortBy, setSortBy] = useState<'name' | 'startDate' | 'createdAt'>(
-    'createdAt'
-  )
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [filterValues, setFilterValues] = useState<FilterValues>({})
+  const [sortValue, setSortValue] = useState<string>('createdAt-desc')
+
+  // Extraction des valeurs de filtres et tri
+  const statusFilter = filterValues.status as string | undefined
+  const locationTypeFilter = filterValues.locationType as string | undefined
+  const eventStateFilter = filterValues.eventState as string | undefined
+  const [sortBy, sortOrder] = sortValue.split('-') as [string, 'asc' | 'desc']
 
   // Récupération des événements avec filtres
   const queryParams = useMemo(() => {
@@ -55,25 +62,103 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       params.search = searchQuery
     }
 
-    if (statusFilter !== 'all') {
-      params.status = statusFilter
-    }
-
     return params
-  }, [searchQuery, statusFilter, sortBy, sortOrder])
+  }, [searchQuery, sortBy, sortOrder])
 
   const { data: events = [], isLoading, error } = useGetEventsQuery(queryParams)
 
-  // Filtrage côté client pour les tags (car l'API ne supporte pas encore le filtre par tag)
+  const handleRefresh = () => {
+    dispatch(eventsApi.util.invalidateTags(['Events']))
+  }
+
+  // Filtrage côté client pour tags et autres filtres
   const filteredEvents = useMemo(() => {
-    if (!tagFilter) return events
-    return events.filter((event) => 
-      event.tags && Array.isArray(event.tags) && event.tags.includes(tagFilter)
-    )
-  }, [events, tagFilter])
+    return events.filter((event) => {
+      // Filtre par tag
+      if (tagFilter && !(event.tags && Array.isArray(event.tags) && event.tags.includes(tagFilter))) {
+        return false
+      }
+
+      // Filtre par statut (single select)
+      if (statusFilter && statusFilter !== 'all' && event.status !== statusFilter) {
+        return false
+      }
+
+      // Filtre par type de lieu
+      if (locationTypeFilter && locationTypeFilter !== 'all' && event.locationType !== locationTypeFilter) {
+        return false
+      }
+
+      // Filtre par état de l'événement (terminé, en cours, à venir)
+      if (eventStateFilter && eventStateFilter !== 'all') {
+        const now = new Date()
+        const start = new Date(event.startDate)
+        const end = new Date(event.endDate)
+        
+        if (eventStateFilter === 'completed' && end > now) return false
+        if (eventStateFilter === 'ongoing' && (start > now || end < now)) return false
+        if (eventStateFilter === 'upcoming' && start < now) return false
+      }
+
+      return true
+    })
+  }, [events, tagFilter, statusFilter, locationTypeFilter, eventStateFilter])
 
   const handleCreateEvent = () => {
     navigate('/events/create')
+  }
+
+  // Configuration des filtres pour le popup
+  const filterConfig = {
+    status: {
+      label: 'Statut',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous' },
+        { value: 'draft', label: 'Brouillon' },
+        { value: 'published', label: 'Publié' },
+        { value: 'active', label: 'Actif' },
+        { value: 'completed', label: 'Terminé' },
+        { value: 'cancelled', label: 'Annulé' },
+      ],
+    },
+    locationType: {
+      label: 'Type de lieu',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous' },
+        { value: 'online', label: 'En ligne' },
+        { value: 'physical', label: 'Physique' },
+        { value: 'hybrid', label: 'Hybride' },
+      ],
+    },
+    eventState: {
+      label: 'État de l\'événement',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous' },
+        { value: 'upcoming', label: 'À venir' },
+        { value: 'ongoing', label: 'En cours' },
+        { value: 'completed', label: 'Terminé' },
+      ],
+    },
+  }
+
+  // Options de tri
+  const sortOptions: SortOption[] = [
+    { value: 'createdAt-desc', label: 'Créé (plus récent)' },
+    { value: 'createdAt-asc', label: 'Créé (plus ancien)' },
+    { value: 'startDate-asc', label: 'Date (plus proche)' },
+    { value: 'startDate-desc', label: 'Date (plus loin)' },
+    { value: 'name-asc', label: 'Nom (A-Z)' },
+    { value: 'name-desc', label: 'Nom (Z-A)' },
+  ]
+
+  const handleResetFilters = () => {
+    setSearchQuery('')
+    setTagFilter('')
+    setFilterValues({})
+    setSortValue('createdAt-desc')
   }
 
   const getStatusColor = (status: string) => {
@@ -114,61 +199,38 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
         {/* Filtres et recherche */}
         <PageSection spacing="lg">
-          <Card variant="default" padding="lg">
-            <CardContent>
-              <div className="flex items-center gap-4">
-                {/* Search */}
-                <div className="flex-1">
-                  <SearchInput
-                    placeholder="Rechercher des événements..."
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                  />
-                </div>
+          <FilterBar
+            resultCount={filteredEvents.length}
+            resultLabel="événement"
+            onReset={handleResetFilters}
+            showResetButton={searchQuery !== '' || tagFilter !== '' || Object.keys(filterValues).length > 0}
+          >
+            <SearchInput
+              placeholder="Rechercher des événements..."
+              value={searchQuery}
+              onChange={setSearchQuery}
+              className="flex-1"
+            />
 
-                {/* Tag Filter */}
-                <div className="w-64">
-                  <TagFilterInput
-                    value={tagFilter}
-                    onChange={setTagFilter}
-                    placeholder="Filtrer par tag..."
-                  />
-                </div>
+            <FilterTag
+              value={tagFilter}
+              onChange={setTagFilter}
+              placeholder="Filtrer par tag..."
+              className="w-64"
+            />
 
-                {/* Status Filter */}
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-48"
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="draft">Brouillon</option>
-                  <option value="published">Publié</option>
-                  <option value="active">Actif</option>
-                  <option value="completed">Terminé</option>
-                  <option value="cancelled">Annulé</option>
-                </Select>
+            <FilterButton
+              filters={filterConfig}
+              values={filterValues}
+              onChange={setFilterValues}
+            />
 
-                {/* Sort */}
-                <Select
-                  value={`${sortBy}-${sortOrder}`}
-                  onChange={(e) => {
-                    const [field, order] = e.target.value.split('-')
-                    setSortBy(field as any)
-                    setSortOrder(order as any)
-                  }}
-                  className="w-56"
-                >
-                  <option value="createdAt-desc">Créé (plus récent)</option>
-                  <option value="createdAt-asc">Créé (plus ancien)</option>
-                  <option value="startDate-asc">Date (plus ancien)</option>
-                  <option value="startDate-desc">Date (plus récent)</option>
-                  <option value="name-asc">Nom (A-Z)</option>
-                  <option value="name-desc">Nom (Z-A)</option>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+            <FilterSort
+              value={sortValue}
+              onChange={setSortValue}
+              options={sortOptions}
+            />
+          </FilterBar>
         </PageSection>
 
         <PageSection spacing="lg">
@@ -181,13 +243,11 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   if (error) {
     return (
       <PageContainer maxWidth="7xl" padding="lg">
-        <Card variant="default" padding="lg" className="text-center">
-          <CardContent>
-            <p className="text-red-600 dark:text-red-400">
-              Erreur lors du chargement des événements
-            </p>
-          </CardContent>
-        </Card>
+        <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <p className="text-red-600 dark:text-red-400">
+            Erreur lors du chargement des événements
+          </p>
+        </div>
       </PageContainer>
     )
   }
@@ -212,85 +272,61 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
       {/* Filtres et recherche */}
       <PageSection spacing="lg">
-        <Card variant="default" padding="lg">
-          <CardContent>
-            <div className="flex items-center gap-4">
-              {/* Search */}
-              <div className="flex-1">
-                <SearchInput
-                  placeholder="Rechercher des événements..."
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                />
-              </div>
+        <FilterBar
+          resultCount={filteredEvents.length}
+          resultLabel="événement"
+          onReset={handleResetFilters}
+          showResetButton={searchQuery !== '' || tagFilter !== '' || Object.keys(filterValues).length > 0}
+          onRefresh={handleRefresh}
+          showRefreshButton={true}
+        >
+          <SearchInput
+            placeholder="Rechercher des événements..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
 
-              {/* Tag Filter */}
-              <div className="w-64">
-                <TagFilterInput
-                  value={tagFilter}
-                  onChange={setTagFilter}
-                  placeholder="Filtrer par tag..."
-                />
-              </div>
+          <FilterTag
+            value={tagFilter}
+            onChange={setTagFilter}
+            placeholder="Filtrer par tag..."
+            className="w-64 flex-shrink-0"
+          />
 
-              {/* Status Filter */}
-              <Select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-48"
-              >
-                <option value="all">Tous les statuts</option>
-                <option value="draft">Brouillon</option>
-                <option value="published">Publié</option>
-                <option value="active">Actif</option>
-                <option value="completed">Terminé</option>
-                <option value="cancelled">Annulé</option>
-              </Select>
+          <FilterButton
+            filters={filterConfig}
+            values={filterValues}
+            onChange={setFilterValues}
+          />
 
-              {/* Sort */}
-              <Select
-                value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
-                  const [field, order] = e.target.value.split('-')
-                  setSortBy(field as any)
-                  setSortOrder(order as any)
-                }}
-                className="w-56"
-              >
-                <option value="createdAt-desc">Créé (plus récent)</option>
-                <option value="createdAt-asc">Créé (plus ancien)</option>
-                <option value="startDate-asc">Date (plus ancien)</option>
-                <option value="startDate-desc">Date (plus récent)</option>
-                <option value="name-asc">Nom (A-Z)</option>
-                <option value="name-desc">Nom (Z-A)</option>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+          <FilterSort
+            value={sortValue}
+            onChange={setSortValue}
+            options={sortOptions}
+          />
+        </FilterBar>
       </PageSection>
 
       {/* Liste des événements */}
       <PageSection spacing="lg">
         {filteredEvents.length === 0 ? (
-          <Card variant="default" padding="lg" className="text-center py-12">
-            <CardContent>
-              <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-              <h3 className="text-heading-sm mb-2">Aucun événement trouvé</h3>
-              <p className="text-body text-gray-500 dark:text-gray-400 mb-6">
-                {searchQuery
-                  ? 'Aucun événement ne correspond à votre recherche.'
-                  : 'Commencez par créer votre premier événement.'}
-              </p>
-              <Can do="create" on="Event">
-                <Button
-                  onClick={handleCreateEvent}
-                  leftIcon={<Plus className="h-4 w-4" />}
-                >
-                  Créer un événement
-                </Button>
-              </Can>
-            </CardContent>
-          </Card>
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
+            <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Aucun événement trouvé</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              {searchQuery || tagFilter || Object.keys(filterValues).length > 0
+                ? 'Aucun événement ne correspond à votre recherche.'
+                : 'Commencez par créer votre premier événement.'}
+            </p>
+            <Can do="create" on="Event">
+              <Button
+                onClick={handleCreateEvent}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Créer un événement
+              </Button>
+            </Can>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (

@@ -4,6 +4,22 @@ export { Input } from './Input'
 export { SearchInput } from './SearchInput'
 export { Textarea } from './Textarea'
 export { Select, SelectOption } from './Select'
+
+// FilterBar System
+export {
+  FilterBar,
+  FilterButton,
+  FilterPopover,
+  FilterTag,
+  FilterSort,
+  type FilterType,
+  type FilterOption,
+  type FilterConfig,
+  type FilterConfigs,
+  type FilterValues,
+  type FilterBarProps,
+  type SortOption,
+} from './FilterBar'
 export { MultiSelect, type MultiSelectOption } from './MultiSelect'
 export { GooglePlacesAutocomplete, GooglePlacesAutocompleteWithProvider } from './GooglePlacesAutocomplete'
 export {

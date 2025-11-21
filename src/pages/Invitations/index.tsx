@@ -273,21 +273,30 @@ export const InvitationsPage: React.FC = () => {
         newOrgName: '',
       })
     } catch (error: any) {
-      console.error("Erreur lors de l'envoi de l'invitation:", error)
-
       // Gestion spécifique des erreurs d'invitation (les erreurs d'organisation sont gérées séparément)
       const errorMessage =
         error?.data?.message ||
+        error?.data?.error ||
+        error?.data?.detail ||
         error?.message ||
         "Une erreur inattendue s'est produite"
 
+      // Vérifier si c'est une erreur de compte existant
       if (
         errorMessage.includes('already exists') ||
-        errorMessage.includes('déjà')
+        errorMessage.includes('déjà existe') ||
+        errorMessage.includes('existe déjà') ||
+        errorMessage.includes('User with this email already exists') ||
+        errorMessage.includes('account already exists')
       ) {
-        showWarning(
-          'Utilisateur existant',
-          `Un utilisateur avec l'email ${formData.email} existe déjà.`
+        showError(
+          'Compte existant détecté',
+          `Un compte avec l'email ${formData.email} existe déjà dans le système. 
+          
+Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette personne doit accéder à plusieurs organisations, veuillez :
+• Demander à cette personne d'utiliser un autre email pour créer un second compte
+• Ou attendre la mise à jour prochaine qui permettra à un utilisateur de rejoindre plusieurs organisations
+`
         )
       } else if (
         errorMessage.includes('invalid email') ||
@@ -306,7 +315,10 @@ export const InvitationsPage: React.FC = () => {
           "Vous n'avez pas les permissions nécessaires pour envoyer cette invitation."
         )
       } else {
-        showError("Erreur lors de l'envoi", errorMessage)
+        showError(
+          "Erreur lors de l'envoi",
+          errorMessage
+        )
       }
     }
   }

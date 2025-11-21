@@ -14,6 +14,7 @@ import {
   QrCode,
   Award,
   RotateCcw,
+  UserCheck,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button, TableSelector, type TableSelectorOption, ActionButtons } from '@/shared/ui'
@@ -32,6 +33,8 @@ import {
   usePermanentDeleteRegistrationMutation,
   useBulkDeleteRegistrationsMutation,
   useBulkExportRegistrationsMutation,
+  useBulkUpdateRegistrationStatusMutation,
+  useBulkCheckInMutation,
 } from '../api/registrationsApi'
 import { useToast } from '@/shared/hooks/useToast'
 import { EditRegistrationModal } from './EditRegistrationModal'
@@ -40,8 +43,8 @@ import { RestoreRegistrationModal } from './RestoreRegistrationModal'
 import { PermanentDeleteRegistrationModal } from './PermanentDeleteRegistrationModal'
 import { QrCodeModal } from './QrCodeModal'
 import { BadgePreviewModal } from './BadgePreviewModal'
-import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
-import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
+import { BulkStatusChangeModal } from './BulkStatusChangeModal'
+import { createBulkActions } from '@/shared/ui/BulkActions'
 import {
   getRegistrationFullName,
   getRegistrationEmail,
@@ -147,6 +150,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterValues, setFilterValues] = useState<FilterValues>({})
+  const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false)
+  const [bulkStatusSelectedIds, setBulkStatusSelectedIds] = useState<Set<string>>(new Set())
   const [editingRegistration, setEditingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [deletingRegistration, setDeletingRegistration] =
@@ -197,6 +202,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [permanentDeleteRegistration] = usePermanentDeleteRegistrationMutation()
   const [bulkDeleteRegistrations] = useBulkDeleteRegistrationsMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
+  const [bulkUpdateStatus] = useBulkUpdateRegistrationStatusMutation()
+  const [bulkCheckIn] = useBulkCheckInMutation()
 
   const handleRowClick = (registration: RegistrationDPO) => {
     navigate(`/attendees/${registration.attendeeId}`)
@@ -305,6 +312,26 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     }
   }
 
+  const handleBulkStatusChange = async (status: string) => {
+    try {
+      await bulkUpdateStatus({
+        ids: Array.from(bulkStatusSelectedIds),
+        status,
+      }).unwrap()
+      
+      const statusLabel = STATUS_OPTIONS.find(o => o.value === status)?.label || status
+      toast.success(`${bulkStatusSelectedIds.size} inscription(s) → ${statusLabel}`)
+      
+      // Réinitialiser
+      setBulkStatusModalOpen(false)
+      setBulkStatusSelectedIds(new Set())
+    } catch (error) {
+      console.error('Erreur lors du changement de statut:', error)
+      toast.error('Erreur lors du changement de statut')
+      throw error
+    }
+  }
+
   // Extraction des valeurs de filtres
   const statusFilter = (filterValues.status as string) || 'all'
   const checkinFilter = (filterValues.checkin as string) || 'all'
@@ -329,17 +356,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       (checkinFilter === 'not_checked' && !reg.checkedInAt)
 
     return matchesSearch && matchesStatus && matchesCheckin
-  })
-
-  // Multi-select functionality
-  const {
-    selectedIds,
-    selectedItems,
-    selectedCount,
-    unselectAll,
-  } = useMultiSelect({
-    items: filteredRegistrations,
-    getItemId: (registration) => registration.id,
   })
 
   // Columns definition
@@ -586,6 +602,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const bulkActions = useMemo(() => {
     const actions = []
 
+    // Export : toujours disponible
     actions.push(
       createBulkActions.export(async (selectedIds) => {
         try {
@@ -601,32 +618,139 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           document.body.appendChild(a)
           a.click()
           document.body.removeChild(a)
-
-          unselectAll()
+          
+          toast.success(`${selectedIds.size} inscription(s) exportée(s)`)
         } catch (error) {
           console.error("Erreur lors de l'export:", error)
+          toast.error("Erreur lors de l'export")
           throw error
         }
       })
     )
 
-    actions.push(
-      createBulkActions.delete(async (selectedIds) => {
-        try {
-          await bulkDeleteRegistrations({
-            ids: Array.from(selectedIds),
-            eventId,
-          }).unwrap()
-          unselectAll()
-        } catch (error) {
-          console.error('Erreur lors de la suppression:', error)
-          throw error
+    if (!isDeletedTab) {
+      // Actions pour les inscriptions actives
+      
+      // Changer le statut avec sélecteur
+      actions.push({
+        id: 'change-status',
+        label: 'Changer le statut',
+        icon: <RefreshCw className="h-4 w-4" />,
+        variant: 'outline' as const,
+        skipClearSelection: true, // Ne pas réinitialiser car on ouvre juste une modale
+        onClick: async (selectedIds: Set<string>) => {
+          // Ouvrir la modale de sélection de statut
+          setBulkStatusSelectedIds(selectedIds)
+          setBulkStatusModalOpen(true)
+          // Ne pas throw d'erreur ici car on ouvre juste la modale
         }
       })
-    )
+
+      // Check-in en masse
+      actions.push({
+        id: 'check-in',
+        label: 'Check-in',
+        icon: <UserCheck className="h-4 w-4" />,
+        variant: 'default' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Enregistrer le check-in pour toutes les inscriptions sélectionnées ?',
+        actionType: 'edit' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            const result = await bulkCheckIn({
+              ids: Array.from(selectedIds),
+            }).unwrap()
+            
+            toast.success(`Check-in effectué pour ${result.checkedInCount} inscription(s)`)
+          } catch (error) {
+            console.error('Erreur lors du check-in:', error)
+            toast.error('Erreur lors du check-in')
+            throw error
+          }
+        }
+      })
+
+      // Supprimer (soft delete)
+      actions.push({
+        id: 'delete',
+        label: 'Supprimer',
+        icon: <XCircle className="h-4 w-4" />,
+        variant: 'destructive' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Supprimer toutes les inscriptions sélectionnées ? Elles seront déplacées dans les éléments supprimés.',
+        actionType: 'delete' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            // Utiliser deleteRegistration pour chaque ID (soft delete)
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                deleteRegistration({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`${selectedIds.size} inscription(s) supprimée(s)`)
+          } catch (error) {
+            console.error('Erreur lors de la suppression:', error)
+            toast.error('Erreur lors de la suppression')
+            throw error
+          }
+        }
+      })
+    } else {
+      // Actions pour les inscriptions supprimées
+      
+      // Restaurer en masse
+      actions.push({
+        id: 'restore',
+        label: 'Restaurer',
+        icon: <RotateCcw className="h-4 w-4" />,
+        variant: 'default' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Restaurer toutes les inscriptions sélectionnées ?',
+        actionType: 'edit' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                restoreRegistration({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`${selectedIds.size} inscription(s) restaurée(s)`)
+          } catch (error) {
+            console.error('Erreur lors de la restauration:', error)
+            toast.error('Erreur lors de la restauration')
+            throw error
+          }
+        }
+      })
+
+      // Supprimer définitivement
+      actions.push({
+        id: 'permanent-delete',
+        label: 'Supprimer définitivement',
+        icon: <XCircle className="h-4 w-4" />,
+        variant: 'destructive' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'ATTENTION : Cette action est IRRÉVERSIBLE. Supprimer définitivement toutes les inscriptions sélectionnées ?',
+        actionType: 'delete' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                permanentDeleteRegistration({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`${selectedIds.size} inscription(s) supprimée(s) définitivement`)
+          } catch (error) {
+            console.error('Erreur lors de la suppression définitive:', error)
+            toast.error('Erreur lors de la suppression définitive')
+            throw error
+          }
+        }
+      })
+    }
 
     return actions
-  }, [bulkDeleteRegistrations, bulkExportRegistrations, unselectAll, eventId])
+  }, [isDeletedTab, bulkExportRegistrations, bulkUpdateStatus, deleteRegistration, restoreRegistration, permanentDeleteRegistration, eventId, toast])
 
   return (
     <div className="space-y-4">
@@ -701,16 +825,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         </div>
       </div>
 
-      {/* Bulk Actions */}
-      <BulkActions
-        selectedCount={selectedCount}
-        selectedIds={selectedIds}
-        selectedItems={selectedItems}
-        actions={bulkActions}
-        onClearSelection={unselectAll}
-        itemType="inscriptions"
-      />
-
       {/* DataTable */}
       <Card variant="default" padding="none">
         <DataTable
@@ -718,6 +832,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           data={filteredRegistrations}
           isLoading={isLoading}
           enableRowSelection
+          bulkActions={bulkActions}
+          getItemId={(registration) => registration.id}
+          itemType="inscriptions"
           tabsElement={tabsElement}
           onRowSelectionChange={() => {
             // TanStack Table handles selection
@@ -785,6 +902,16 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           eventId={eventId}
         />
       )}
+
+      <BulkStatusChangeModal
+        isOpen={bulkStatusModalOpen}
+        onClose={() => {
+          setBulkStatusModalOpen(false)
+          setBulkStatusSelectedIds(new Set())
+        }}
+        onConfirm={handleBulkStatusChange}
+        selectedCount={bulkStatusSelectedIds.size}
+      />
     </div>
   )
 }

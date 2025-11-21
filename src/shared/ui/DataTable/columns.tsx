@@ -10,12 +10,17 @@ import { Checkbox } from '../Checkbox'
 /**
  * Colonne de sélection (checkbox)
  */
-export function createSelectionColumn<TData>(): ColumnDef<TData> {
+export function createSelectionColumn<TData>(options?: {
+  onRowClick?: (rowIndex: number, event: React.MouseEvent) => void
+}): ColumnDef<TData> {
   return {
     id: 'select',
     size: 48, // w-12
     header: ({ table }) => (
-      <div className="flex items-center justify-center w-full">
+      <div 
+        className="flex items-center justify-center w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           indeterminate={table.getIsSomePageRowsSelected()}
@@ -24,17 +29,35 @@ export function createSelectionColumn<TData>(): ColumnDef<TData> {
         />
       </div>
     ),
-    cell: ({ row }) => (
-      <div className="flex items-center justify-center w-full">
-        <Checkbox
-          checked={row.getIsSelected()}
-          disabled={!row.getCanSelect()}
-          indeterminate={row.getIsSomeSelected()}
-          onChange={row.getToggleSelectedHandler()}
-          aria-label="Sélectionner la ligne"
-        />
-      </div>
-    ),
+    cell: ({ row, table }) => {
+      const rowIndex = table.getRowModel().rows.findIndex(r => r.id === row.id)
+      
+      return (
+        <div 
+          className="flex items-center justify-center w-full"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (options?.onRowClick) {
+              options.onRowClick(rowIndex, e)
+            } else {
+              row.toggleSelected()
+            }
+          }}
+        >
+          <Checkbox
+            checked={row.getIsSelected()}
+            disabled={!row.getCanSelect()}
+            indeterminate={row.getIsSomeSelected()}
+            onChange={(e) => {
+              // Le onChange du checkbox est déjà géré par le onClick du parent
+              e.stopPropagation()
+            }}
+            aria-label="Sélectionner la ligne"
+            title="Maj+Clic pour sélectionner une plage"
+          />
+        </div>
+      )
+    },
     enableSorting: false,
     enableHiding: false,
   }

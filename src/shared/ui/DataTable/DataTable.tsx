@@ -66,6 +66,7 @@ import {
 import { Button } from '../Button'
 import { Checkbox } from '../Checkbox'
 import { cn } from '@/shared/lib/utils'
+import { BulkActions, type BulkAction } from '../BulkActions'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -73,6 +74,10 @@ interface DataTableProps<TData, TValue> {
   // Selection
   enableRowSelection?: boolean
   onRowSelectionChange?: (selectedRows: TData[]) => void
+  // Bulk actions
+  bulkActions?: BulkAction[]
+  getItemId?: (item: TData) => string
+  itemType?: string // 'inscriptions', 'utilisateurs', 'événements', etc.
   // Pagination
   pageSize?: number
   enablePagination?: boolean
@@ -161,6 +166,9 @@ export function DataTable<TData, TValue>({
   data,
   enableRowSelection = false,
   onRowSelectionChange,
+  bulkActions,
+  getItemId,
+  itemType = 'éléments',
   pageSize = 10,
   enablePagination = true,
   enableColumnOrdering = true,
@@ -256,10 +264,73 @@ export function DataTable<TData, TValue>({
     useSensor(KeyboardSensor)
   )
 
+  // Inject handleRowClick into selection column
+  const enhancedColumns = React.useMemo(() => {
+    return columns.map(col => {
+      if (col.id === 'select' && enableRowSelection) {
+        return {
+          ...col,
+          cell: ({ row, table: innerTable }: any) => {
+            const rowIndex = innerTable.getRowModel().rows.findIndex((r: any) => r.id === row.id)
+            
+            const handleClick = (e: React.MouseEvent) => {
+              e.stopPropagation()
+              
+              // Shift+Click for range selection
+              if (e.shiftKey && lastSelectedIndex !== null) {
+                const start = Math.min(lastSelectedIndex, rowIndex)
+                const end = Math.max(lastSelectedIndex, rowIndex)
+                
+                const newSelection: RowSelectionState = {}
+                
+                // Copy existing selection
+                Object.assign(newSelection, rowSelection)
+                
+                // Add range
+                for (let i = start; i <= end; i++) {
+                  const targetRow = innerTable.getRowModel().rows[i]
+                  if (targetRow) {
+                    newSelection[targetRow.id] = true
+                  }
+                }
+                
+                setRowSelection(newSelection)
+                setLastSelectedIndex(rowIndex)
+              } else {
+                // Normal toggle
+                row.toggleSelected()
+                setLastSelectedIndex(rowIndex)
+              }
+            }
+            
+            return (
+              <div 
+                className="flex items-center justify-center w-full cursor-pointer"
+                onClick={handleClick}
+                title="Maj+Clic pour sélectionner une plage"
+              >
+                <Checkbox
+                  checked={row.getIsSelected()}
+                  disabled={!row.getCanSelect()}
+                  indeterminate={row.getIsSomeSelected()}
+                  onChange={(e) => {
+                    e.stopPropagation()
+                  }}
+                  aria-label="Sélectionner la ligne"
+                />
+              </div>
+            )
+          }
+        }
+      }
+      return col
+    })
+  }, [columns, enableRowSelection, lastSelectedIndex, rowSelection])
+
   // Table instance
   const table = useReactTable({
     data,
-    columns,
+    columns: enhancedColumns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -324,13 +395,27 @@ export function DataTable<TData, TValue>({
     setActiveId(null)
   }
 
+  // Calculer les items sélectionnés pour BulkActions
+  const selectedItems = React.useMemo(
+    () => table.getFilteredSelectedRowModel().rows.map((row) => row.original),
+    [table, rowSelection]
+  )
+
+  const selectedIds = React.useMemo(() => {
+    if (!getItemId) return new Set<string>()
+    return new Set(selectedItems.map(getItemId))
+  }, [selectedItems, getItemId])
+
+  const handleClearSelection = React.useCallback(() => {
+    table.resetRowSelection()
+  }, [table])
+
   // Notify parent of selection changes
   React.useEffect(() => {
     if (onRowSelectionChange) {
-      const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original)
-      onRowSelectionChange(selectedRows)
+      onRowSelectionChange(selectedItems)
     }
-  }, [rowSelection, onRowSelectionChange, table])
+  }, [rowSelection, onRowSelectionChange, selectedItems])
 
   // Get visible columns for ordering (exclude pinned columns)
   const columnIds = React.useMemo(
@@ -391,35 +476,6 @@ export function DataTable<TData, TValue>({
     
     // Reset column visibility to all visible
     setColumnVisibility({})
-  }
-
-  // Handle range selection with Shift+Click
-  const handleRowClick = (rowIndex: number, e: React.MouseEvent) => {
-    if (!enableRowSelection) return
-    
-    const row = table.getRowModel().rows[rowIndex]
-    if (!row) return
-
-    // Shift+Click for range selection
-    if (e.shiftKey && lastSelectedIndex !== null) {
-      const start = Math.min(lastSelectedIndex, rowIndex)
-      const end = Math.max(lastSelectedIndex, rowIndex)
-      
-      const newSelection: RowSelectionState = { ...rowSelection }
-      
-      for (let i = start; i <= end; i++) {
-        const targetRow = table.getRowModel().rows[i]
-        if (targetRow) {
-          newSelection[targetRow.id] = true
-        }
-      }
-      
-      setRowSelection(newSelection)
-    } else {
-      // Normal toggle
-      row.toggleSelected()
-      setLastSelectedIndex(rowIndex)
-    }
   }
 
   // Count visible columns
@@ -568,6 +624,18 @@ export function DataTable<TData, TValue>({
           )}
           </div>
         </div>
+      )}
+
+      {/* Bulk Actions */}
+      {bulkActions && bulkActions.length > 0 && enableRowSelection && (
+        <BulkActions
+          selectedCount={selectedItems.length}
+          selectedIds={selectedIds}
+          selectedItems={selectedItems}
+          actions={bulkActions}
+          onClearSelection={handleClearSelection}
+          itemType={itemType}
+        />
       )}
 
       {/* Table with DnD */}
@@ -719,16 +787,13 @@ export function DataTable<TData, TValue>({
                     </td>
                   </tr>
                 ) : (
-                  table.getRowModel().rows.map((row, rowIndex) => (
+                  table.getRowModel().rows.map((row) => (
                     <tr
                       key={row.id}
                       className={cn(
                         'hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-150',
-                        row.getIsSelected() && 'bg-blue-50 dark:bg-blue-900/20',
-                        enableRowSelection && 'cursor-pointer'
+                        row.getIsSelected() && 'bg-blue-50 dark:bg-blue-900/20'
                       )}
-                      onClick={(e) => enableRowSelection && handleRowClick(rowIndex, e)}
-                      title={enableRowSelection ? "Maj+Click pour sélectionner une plage" : undefined}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td
@@ -794,9 +859,6 @@ export function DataTable<TData, TValue>({
                 <span>
                   {table.getFilteredSelectedRowModel().rows.length} sur{' '}
                   {table.getFilteredRowModel().rows.length} ligne(s) sélectionnée(s)
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  💡 Maj+Click pour sélectionner une plage
                 </span>
               </div>
             ) : (

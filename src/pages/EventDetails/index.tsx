@@ -818,29 +818,22 @@ export const EventDetails: React.FC = () => {
 
         {activeTab === 'registrations' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Inscriptions ({registrationsMeta.total})
-                </h2>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Button
-                  onClick={() => setIsImportModalOpen(true)}
-                  className="flex items-center space-x-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  <span>Importer depuis Excel</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex items-center space-x-2"
-                  onClick={handleExportAll}
-                >
-                  <Download className="h-4 w-4" />
-                  <span>Exporter</span>
-                </Button>
-              </div>
+            <div className="flex items-center justify-end space-x-3">
+              <Button
+                onClick={() => setIsImportModalOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <Upload className="h-4 w-4" />
+                <span>Importer</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="flex items-center space-x-2"
+                onClick={handleExportAll}
+              >
+                <Download className="h-4 w-4" />
+                <span>Exporter</span>
+              </Button>
             </div>
 
             <RegistrationsTable

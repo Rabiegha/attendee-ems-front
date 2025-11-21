@@ -280,6 +280,36 @@ export const registrationsApi = rootApi.injectEndpoints({
       ],
     }),
 
+    bulkUpdateRegistrationStatus: builder.mutation<
+      { updatedCount: number },
+      { ids: string[]; status: string }
+    >({
+      query: ({ ids, status }) => ({
+        url: '/registrations/bulk-update-status',
+        method: 'PATCH',
+        body: { ids, status },
+      }),
+      invalidatesTags: (_result, _error, { ids }) => [
+        ...ids.map(id => ({ type: 'Attendee' as const, id })),
+        { type: 'Attendee', id: 'LIST' },
+      ],
+    }),
+
+    bulkCheckIn: builder.mutation<
+      { checkedInCount: number },
+      { ids: string[] }
+    >({
+      query: ({ ids }) => ({
+        url: '/registrations/bulk-checkin',
+        method: 'POST',
+        body: { ids },
+      }),
+      invalidatesTags: (_result, _error, { ids }) => [
+        ...ids.map(id => ({ type: 'Attendee' as const, id })),
+        { type: 'Attendee', id: 'LIST' },
+      ],
+    }),
+
     bulkExportRegistrations: builder.mutation<
       { downloadUrl: string; filename: string },
       { ids: string[]; format?: string }
@@ -369,6 +399,8 @@ export const {
   useRestoreRegistrationMutation,
   usePermanentDeleteRegistrationMutation,
   useBulkDeleteRegistrationsMutation,
+  useBulkUpdateRegistrationStatusMutation,
+  useBulkCheckInMutation,
   useBulkExportRegistrationsMutation,
   useGenerateBadgesForEventMutation,
   useGenerateBadgesBulkMutation,

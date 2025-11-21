@@ -11,6 +11,7 @@ export interface BulkAction {
   requiresConfirmation?: boolean
   confirmationMessage?: string
   actionType?: 'delete' | 'export' | 'edit'
+  skipClearSelection?: boolean // Ne pas réinitialiser la sélection après cette action
   onClick: (
     selectedIds: Set<string>,
     selectedItems: any[]
@@ -51,8 +52,13 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
     try {
       setLoadingAction(action.id)
       await action.onClick(selectedIds, selectedItems)
+      // Réinitialiser la sélection après une action réussie (sauf si skipClearSelection)
+      if (!action.skipClearSelection) {
+        onClearSelection()
+      }
     } catch (error) {
       console.error(`Error executing bulk action ${action.id}:`, error)
+      // Ne pas réinitialiser en cas d'erreur
     } finally {
       setLoadingAction(null)
     }
@@ -64,11 +70,16 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
     try {
       setLoadingAction(confirmModal.action.id)
       await confirmModal.action.onClick(selectedIds, selectedItems)
+      // Réinitialiser la sélection après une action réussie (sauf si skipClearSelection)
+      if (!confirmModal.action.skipClearSelection) {
+        onClearSelection()
+      }
     } catch (error) {
       console.error(
         `Error executing bulk action ${confirmModal.action.id}:`,
         error
       )
+      // Ne pas réinitialiser en cas d'erreur
     } finally {
       setLoadingAction(null)
       setConfirmModal({ isOpen: false, action: null })

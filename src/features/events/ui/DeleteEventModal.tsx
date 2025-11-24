@@ -59,23 +59,23 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
           <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-red-500/25">
             <AlertTriangle className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-red-400 mb-2">
+          <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">
             Supprimer l'événement
           </h2>
-          <p className="text-gray-400">Cette action est irréversible</p>
+          <p className="text-gray-500 dark:text-gray-400">Cette action est irréversible</p>
         </div>
 
         {/* Message principal */}
         <div className="text-center mb-8">
-          <p className="text-gray-300 mb-4">
+          <p className="text-gray-700 dark:text-gray-300 mb-4">
             Êtes-vous sûr de vouloir supprimer l'événement{' '}
-            <span className="font-semibold text-white">"{event.name}"</span> ?
+            <span className="font-semibold text-gray-900 dark:text-white">"{event.name}"</span> ?
           </p>
 
           {/* Avertissement moderne */}
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6">
-            <p className="text-sm text-gray-300">
-              <span className="font-medium text-red-400">Attention :</span> Tous
+          <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-6">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="font-medium text-red-600 dark:text-red-400">Attention :</span> Tous
               les participants associés à cet événement seront également
               supprimés.
             </p>
@@ -88,7 +88,7 @@ export const DeleteEventModal: React.FC<DeleteEventModalProps> = ({
             variant="outline"
             onClick={onClose}
             disabled={isLoading}
-            className="px-6 py-3 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200 rounded-xl"
+            className="px-6 py-3 bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white transition-all duration-200 rounded-xl"
           >
             Annuler
           </Button>

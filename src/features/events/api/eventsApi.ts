@@ -54,12 +54,17 @@ export const eventsApi = rootApi.injectEndpoints({
               { type: 'Events', id: 'LIST' },
             ]
           : [{ type: 'Events', id: 'LIST' }],
+      // Garder les données en cache pendant 60 secondes seulement
+      keepUnusedDataFor: 60,
     }),
 
     getEventById: builder.query<EventDPO, string>({
       query: (id) => API_ENDPOINTS.EVENTS.BY_ID(id),
       transformResponse: (response: EventDTO) => mapEventDTOtoDPO(response),
       providesTags: (_result, _error, id) => [{ type: 'Event', id }],
+      // Refetch automatiquement si les données ont plus de 30 secondes
+      // ou si la fenêtre reprend le focus
+      keepUnusedDataFor: 30,
     }),
 
     checkEventNameAvailability: builder.query<

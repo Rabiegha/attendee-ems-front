@@ -1,15 +1,35 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Plus } from 'lucide-react';
-import { PageHeader } from '@/shared/ui/PageHeader';
-import { PageContainer } from '@/shared/ui/PageContainer';
-import { Card } from '@/shared/ui/Card'
-import { LoadingState, BadgeTemplatesGridSkeleton } from '@/shared/ui';
-import { Button } from '@/shared/ui/Button';
+import { 
+  PageHeader,
+  PageContainer,
+  Card,
+  LoadingState,
+  BadgeTemplatesGridSkeleton,
+  Button,
+  SearchInput,
+  FilterBar,
+  FilterButton,
+  FilterSort,
+  type FilterValues,
+  type SortOption
+} from '@/shared/ui';
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api';
+import { TemplatePreviewModal } from './components/TemplatePreviewModal';
+import type { BadgeTemplate } from '@/shared/types/badge.types';
+import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch';
 
 export const BadgeDesigner: React.FC = () => {
   const navigate = useNavigate();
+  
+  // États de recherche et filtrage
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterValues, setFilterValues] = useState<FilterValues>({});
+  const [sortValue, setSortValue] = useState<string>('createdAt-desc');
+  
+  // État pour la modal d'aperçu
+  const [previewTemplate, setPreviewTemplate] = useState<BadgeTemplate | null>(null);
   
   const { 
     data, 
@@ -17,8 +37,103 @@ export const BadgeDesigner: React.FC = () => {
     error 
   } = useGetBadgeTemplatesQuery({ 
     page: 1, 
-    limit: 10 
+    limit: 100 
   });
+
+  // Configuration des filtres
+  const filterConfig = [
+    {
+      key: 'status',
+      label: 'Statut',
+      type: 'select' as const,
+      options: [
+        { value: 'active', label: 'Actif' },
+        { value: 'inactive', label: 'Inactif' },
+      ],
+    },
+    {
+      key: 'isDefault',
+      label: 'Type',
+      type: 'select' as const,
+      options: [
+        { value: 'default', label: 'Par défaut' },
+        { value: 'custom', label: 'Personnalisé' },
+      ],
+    },
+  ];
+
+  // Configuration des options de tri
+  const sortOptions: SortOption[] = [
+    { value: 'createdAt-desc', label: 'Plus récent' },
+    { value: 'createdAt-asc', label: 'Plus ancien' },
+    { value: 'name-asc', label: 'Nom (A-Z)' },
+    { value: 'name-desc', label: 'Nom (Z-A)' },
+    { value: 'usageCount-desc', label: 'Plus utilisé' },
+    { value: 'usageCount-asc', label: 'Moins utilisé' },
+  ];
+
+  // Extraction des valeurs de filtres et tri
+  const statusFilter = filterValues.status as string | undefined;
+  const isDefaultFilter = filterValues.isDefault as string | undefined;
+  const [sortBy, sortOrder] = sortValue.split('-') as [string, 'asc' | 'desc'];
+
+  // 1. Recherche floue
+  const searchResults = useFuzzySearch(
+    data?.data || [],
+    searchQuery,
+    ['name', 'description']
+  );
+
+  // Filtrage et tri des templates
+  const filteredAndSortedTemplates = useMemo(() => {
+    if (!data?.data) return [];
+
+    let filtered = [...searchResults];
+
+    // Filtrage par statut
+    if (statusFilter) {
+      filtered = filtered.filter((template) =>
+        statusFilter === 'active' ? template.is_active : !template.is_active
+      );
+    }
+
+    // Filtrage par type (défaut/personnalisé)
+    if (isDefaultFilter) {
+      filtered = filtered.filter((template) =>
+        isDefaultFilter === 'default' ? template.is_default : !template.is_default
+      );
+    }
+
+    // Tri
+    filtered.sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortBy) {
+        case 'createdAt':
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case 'name':
+          comparison = a.name.localeCompare(b.name, 'fr');
+          break;
+        case 'usageCount':
+          comparison = (a.usage_count || 0) - (b.usage_count || 0);
+          break;
+        default:
+          comparison = 0;
+      }
+
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+    return filtered;
+  }, [searchResults, statusFilter, isDefaultFilter, sortBy, sortOrder, data?.data]);
+
+  // Fonction pour réinitialiser les filtres
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setFilterValues({});
+    setSortValue('createdAt-desc');
+  };
 
   return (
     <PageContainer maxWidth="7xl" padding="lg">
@@ -37,6 +152,33 @@ export const BadgeDesigner: React.FC = () => {
           Nouveau template
         </Button>
       </div>
+
+      {/* Barre de recherche et filtres */}
+      <FilterBar
+        resultCount={filteredAndSortedTemplates.length}
+        resultLabel="template"
+        onReset={handleResetFilters}
+        showResetButton={searchQuery !== '' || Object.keys(filterValues).length > 0}
+      >
+        <SearchInput
+          placeholder="Rechercher un template..."
+          value={searchQuery}
+          onChange={setSearchQuery}
+          className="flex-1"
+        />
+
+        <FilterButton
+          filters={filterConfig}
+          values={filterValues}
+          onChange={setFilterValues}
+        />
+
+        <FilterSort
+          value={sortValue}
+          onChange={setSortValue}
+          options={sortOptions}
+        />
+      </FilterBar>
       
       <Card>
         {isLoading && (
@@ -56,7 +198,7 @@ export const BadgeDesigner: React.FC = () => {
         {!isLoading && !error && data?.data && data.data.length > 0 && (
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {data.data.map((template) => (
+              {filteredAndSortedTemplates.map((template) => (
                 <div 
                   key={template.id}
                   className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -121,9 +263,7 @@ export const BadgeDesigner: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => {
-                        console.log('Aperçu du template:', template.id);
-                      }}
+                      onClick={() => setPreviewTemplate(template)}
                     >
                       Aperçu
                     </Button>
@@ -148,7 +288,9 @@ export const BadgeDesigner: React.FC = () => {
               Aucun template trouvé
             </h3>
             <p className="text-gray-500 mb-6">
-              Vous n'avez pas encore créé de template de badge
+              {searchQuery || Object.keys(filterValues).length > 0
+                ? 'Aucun template ne correspond à vos critères de recherche'
+                : 'Vous n\'avez pas encore créé de template de badge'}
             </p>
             <Button 
               leftIcon={<Plus className="h-4 w-4" />}
@@ -160,6 +302,15 @@ export const BadgeDesigner: React.FC = () => {
         )}
       </Card>
       </div>
+
+      {/* Modal d'aperçu */}
+      {previewTemplate && (
+        <TemplatePreviewModal
+          isOpen={true}
+          onClose={() => setPreviewTemplate(null)}
+          template={previewTemplate}
+        />
+      )}
     </PageContainer>
   );
 };

@@ -67,8 +67,9 @@ export const tagsApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { eventId }) => [
         { type: 'Tags', id: eventId },
+        { type: 'Event', id: eventId },
         'Tags',
-        'Events',
+        { type: 'Events', id: 'LIST' },
       ],
     }),
   }),

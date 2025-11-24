@@ -47,29 +47,30 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <span className="hidden sm:inline">Rafraîchir</span>
             </Button>
           )}
-
-          {/* Bouton reset */}
-          {showResetButton && onReset && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onReset}
-              className="h-10 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex-shrink-0"
-              leftIcon={<RotateCcw className="h-4 w-4" />}
-            >
-              Réinitialiser
-            </Button>
-          )}
         </div>
       </div>
 
-      {/* Compteur de résultats en bas */}
+      {/* Compteur de résultats en bas avec lien de réinitialisation */}
       {resultCount !== undefined && (
-        <div className="flex items-center text-sm text-gray-600 dark:text-gray-300 px-1">
-          <span className="font-medium">{resultCount}</span>
-          <span className="ml-1">
-            {resultLabel}{resultCount > 1 ? 's' : ''} trouvé{resultCount > 1 ? 's' : ''}
-          </span>
+        <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-300 px-1">
+          <div className="flex items-center">
+            <span className="font-medium">{resultCount}</span>
+            <span className="ml-1">
+              {resultLabel}{resultCount > 1 ? 's' : ''} trouvé{resultCount > 1 ? 's' : ''}
+            </span>
+          </div>
+          
+          {/* Lien de réinitialisation subtile */}
+          {showResetButton && onReset && (
+            <button
+              onClick={onReset}
+              className="inline-flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline-offset-2 hover:underline"
+              title="Réinitialiser les filtres"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Réinitialiser</span>
+            </button>
+          )}
         </div>
       )}
     </div>

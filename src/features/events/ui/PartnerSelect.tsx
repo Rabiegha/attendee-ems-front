@@ -40,9 +40,9 @@ export const PartnerSelect: React.FC<PartnerSelectProps> = ({
   if (isLoading) {
     return (
       <div
-        className={`min-h-[42px] border border-gray-300 rounded-lg p-3 bg-gray-50 ${className}`}
+        className={`min-h-[42px] border border-gray-300 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800 ${className}`}
       >
-        <div className="flex items-center justify-center text-sm text-gray-500">
+        <div className="flex items-center justify-center text-sm text-gray-500 dark:text-gray-400">
           Chargement des partenaires...
         </div>
       </div>
@@ -52,9 +52,9 @@ export const PartnerSelect: React.FC<PartnerSelectProps> = ({
   if (error) {
     return (
       <div
-        className={`min-h-[42px] border border-red-300 rounded-lg p-3 bg-red-50 ${className}`}
+        className={`min-h-[42px] border border-red-300 dark:border-red-800 rounded-lg p-3 bg-red-50 dark:bg-red-900/20 ${className}`}
       >
-        <div className="text-sm text-red-600">
+        <div className="text-sm text-red-600 dark:text-red-400">
           Erreur lors du chargement des partenaires
         </div>
       </div>

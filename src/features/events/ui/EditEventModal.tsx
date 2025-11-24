@@ -105,10 +105,10 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
 
         {/* Titre moderne */}
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             Modifier l'événement
           </h2>
-          <p className="text-gray-400">
+          <p className="text-gray-500 dark:text-gray-400">
             Mettez à jour les informations de votre événement
           </p>
         </div>

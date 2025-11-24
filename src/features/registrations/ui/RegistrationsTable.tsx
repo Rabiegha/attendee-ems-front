@@ -51,11 +51,13 @@ import {
   getRegistrationPhone,
   getRegistrationCompany,
 } from '../utils/registration-helpers'
+import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 
 interface RegistrationsTableProps {
   registrations: RegistrationDPO[]
   isLoading: boolean
   eventId: string
+  eventBadgeTemplateId?: string | null
   onExport?: () => void
   onRefresh?: () => void
   isDeletedTab: boolean
@@ -137,6 +139,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   registrations,
   isLoading,
   eventId,
+  eventBadgeTemplateId,
   onExport,
   onRefresh,
   isDeletedTab,
@@ -336,27 +339,32 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const statusFilter = (filterValues.status as string) || 'all'
   const checkinFilter = (filterValues.checkin as string) || 'all'
 
+  // 1. Recherche floue (Fuzzy Search)
+  const searchResults = useFuzzySearch(
+    registrations,
+    searchQuery,
+    [
+      'attendee.firstName',
+      'attendee.lastName',
+      'attendee.email',
+      'attendee.company',
+    ]
+  )
+
   // Filtrage
-  const filteredRegistrations = registrations.filter((reg) => {
-    const matchesSearch =
-      !searchQuery ||
-      reg.attendee?.firstName
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      reg.attendee?.lastName
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      reg.attendee?.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRegistrations = useMemo(() => {
+    // 2. Autres filtres
+    return searchResults.filter((reg) => {
+      const matchesStatus = statusFilter === 'all' || reg.status === statusFilter
 
-    const matchesStatus = statusFilter === 'all' || reg.status === statusFilter
+      const matchesCheckin =
+        checkinFilter === 'all' ||
+        (checkinFilter === 'checked' && reg.checkedInAt) ||
+        (checkinFilter === 'not_checked' && !reg.checkedInAt)
 
-    const matchesCheckin =
-      checkinFilter === 'all' ||
-      (checkinFilter === 'checked' && reg.checkedInAt) ||
-      (checkinFilter === 'not_checked' && !reg.checkedInAt)
-
-    return matchesSearch && matchesStatus && matchesCheckin
-  })
+      return matchesStatus && matchesCheckin
+    })
+  }, [searchResults, statusFilter, checkinFilter])
 
   // Columns definition
   const columns = useMemo<ColumnDef<RegistrationDPO>[]>(
@@ -756,6 +764,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     <div className="space-y-4">
       {/* Barre de recherche et filtres */}
       <FilterBar
+        resultCount={filteredRegistrations.length}
+        resultLabel="inscription"
         onReset={() => {
           setSearchQuery('')
           setFilterValues({})
@@ -900,6 +910,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           onClose={() => setBadgeDownloadRegistration(null)}
           registration={badgeDownloadRegistration}
           eventId={eventId}
+          currentBadgeTemplateId={eventBadgeTemplateId}
         />
       )}
 

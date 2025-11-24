@@ -66,12 +66,12 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
               />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {organizationName
               ? 'Organisation et utilisateur créés'
               : 'Utilisateur créé'}
           </h2>
-          <p className="text-gray-400">
+          <p className="text-gray-500 dark:text-gray-400">
             {organizationName
               ? `L'organisation "${organizationName}" et l'utilisateur ${firstName} ${lastName} ont été créés avec succès`
               : `L'utilisateur ${firstName} ${lastName} a été créé avec succès`}
@@ -81,9 +81,9 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
         <div className="space-y-6">
           {/* Info organisation si créée */}
           {organizationName && organizationSlug && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6">
+            <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-xl p-6">
               <div className="flex items-start space-x-3">
-                <div className="w-6 h-6 text-blue-400 mt-0.5">
+                <div className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-0.5">
                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -93,8 +93,8 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
                     />
                   </svg>
                 </div>
-                <div className="text-sm text-gray-300">
-                  <p className="font-medium mb-2 text-blue-400">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  <p className="font-medium mb-2 text-blue-600 dark:text-blue-400">
                     Organisation créée :
                   </p>
                   <ul className="text-xs space-y-1 opacity-90">
@@ -105,7 +105,7 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
                       <strong>Slug :</strong>{' '}
                       <span className="font-mono">{organizationSlug}</span>
                     </li>
-                    <li className="text-gray-400 mt-2">
+                    <li className="text-gray-500 dark:text-gray-400 mt-2">
                       L'utilisateur a été automatiquement assigné à cette
                       organisation
                     </li>
@@ -118,44 +118,44 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
           {/* Informations d'identification */}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-3">
+              <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
                 Email de connexion
               </label>
               <div className="flex items-center space-x-3">
-                <div className="flex-1 p-4 bg-gray-800/50 border border-gray-700/50 rounded-xl font-mono text-sm text-gray-300">
+                <div className="flex-1 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-xl font-mono text-sm text-gray-700 dark:text-gray-300">
                   {email}
                 </div>
                 <Button
                   variant="outline"
                   onClick={() => copyToClipboard(email, 'email')}
-                  className="px-4 py-3 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200 rounded-xl"
+                  className="px-4 py-3 bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white transition-all duration-200 rounded-xl"
                 >
                   <Copy className="w-4 h-4" />
                 </Button>
               </div>
               {copied === 'email' && (
-                <p className="text-xs text-green-400 mt-2">Email copié !</p>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2">Email copié !</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-400 mb-3">
+              <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
                 Mot de passe temporaire
               </label>
               <div className="flex items-center space-x-3">
-                <div className="flex-1 p-4 bg-gray-800/50 border border-gray-700/50 rounded-xl font-mono text-sm text-gray-300">
+                <div className="flex-1 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-xl font-mono text-sm text-gray-700 dark:text-gray-300">
                   {temporaryPassword}
                 </div>
                 <Button
                   variant="outline"
                   onClick={() => copyToClipboard(temporaryPassword, 'password')}
-                  className="px-4 py-3 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200 rounded-xl"
+                  className="px-4 py-3 bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white transition-all duration-200 rounded-xl"
                 >
                   <Copy className="w-4 h-4" />
                 </Button>
               </div>
               {copied === 'password' && (
-                <p className="text-xs text-green-400 mt-2">
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2">
                   Mot de passe copié !
                 </p>
               )}
@@ -163,9 +163,9 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
           </div>
 
           {/* Avertissement moderne */}
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-6">
+          <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-xl p-6">
             <div className="flex items-start space-x-3">
-              <div className="w-6 h-6 text-yellow-400 mt-0.5">
+              <div className="w-6 h-6 text-yellow-600 dark:text-yellow-400 mt-0.5">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
@@ -175,8 +175,8 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
                   />
                 </svg>
               </div>
-              <div className="text-sm text-gray-300">
-                <p className="font-medium mb-2 text-yellow-400">Important :</p>
+              <div className="text-sm text-gray-700 dark:text-gray-300">
+                <p className="font-medium mb-2 text-yellow-600 dark:text-yellow-400">Important :</p>
                 <ul className="text-xs space-y-1 list-disc list-inside opacity-90">
                   <li>
                     L'utilisateur <strong>doit changer</strong> ce mot de passe
@@ -196,7 +196,7 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
             <Button
               variant="outline"
               onClick={onClose}
-              className="px-6 py-3 bg-gray-800/50 border-gray-600 text-gray-300 hover:bg-gray-700/50 hover:text-white transition-all duration-200 rounded-xl"
+              className="px-6 py-3 bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white transition-all duration-200 rounded-xl"
             >
               Fermer
             </Button>

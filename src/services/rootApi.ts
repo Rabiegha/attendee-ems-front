@@ -82,6 +82,10 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
 export const rootApi = createApi({
   reducerPath: 'rootApi',
   baseQuery: baseQueryWithReauth,
+  // Configuration globale pour refetch automatique
+  refetchOnMountOrArgChange: 30, // Refetch si données > 30 secondes
+  refetchOnFocus: true, // Refetch quand la fenêtre reprend le focus
+  refetchOnReconnect: true, // Refetch après reconnexion réseau
   // Tous les tags utilisés par les différentes features
   tagTypes: [
     'Attendees',

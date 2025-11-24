@@ -61,6 +61,7 @@ import {
   type UsersTab,
 } from '@/features/users/model/usersSlice'
 import { useToast } from '@/shared/hooks/useToast'
+import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 
 export function UsersPage() {
   const navigate = useNavigate()
@@ -116,20 +117,17 @@ export function UsersPage() {
   // Tabs configuration
   const isDeletedTab = activeTab === 'deleted'
 
+  // 1. Recherche floue
+  const searchResults = useFuzzySearch(
+    usersData?.users || [],
+    searchQuery,
+    ['first_name', 'last_name', 'email']
+  )
+
   // Filtrage local côté client pour recherche et rôles
   const selectedRoleId = roleFilters.roles as string | undefined
   const filteredUsers = useMemo(() => {
-    let users = usersData?.users || []
-
-    // Filtre par recherche
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      users = users.filter((user) => {
-        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase()
-        const email = (user.email || '').toLowerCase()
-        return fullName.includes(query) || email.includes(query)
-      })
-    }
+    let users = searchResults
 
     // Filtre par rôle (single select)
     if (selectedRoleId && selectedRoleId !== 'all') {
@@ -140,7 +138,7 @@ export function UsersPage() {
     }
 
     return users
-  }, [usersData?.users, searchQuery, selectedRoleId])
+  }, [searchResults, selectedRoleId])
 
   // Configuration des filtres pour le popup
   const filterConfig = useMemo(() => ({

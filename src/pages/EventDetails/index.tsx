@@ -560,7 +560,7 @@ export const EventDetails: React.FC = () => {
             </div>
             <div className="flex items-center">
               <MapPin className="h-4 w-4 mr-2" />
-              {event.location}
+              {event.locationType === 'online' ? 'En ligne' : event.location}
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
@@ -671,7 +671,7 @@ export const EventDetails: React.FC = () => {
                     </label>
                     <p className="mt-1 text-gray-900 dark:text-white flex items-center">
                       <MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
-                      {event.location}
+                      {event.locationType === 'online' ? 'En ligne' : event.location}
                     </p>
                   </div>
                   {event.websiteUrl && (
@@ -840,6 +840,7 @@ export const EventDetails: React.FC = () => {
               registrations={allRegistrations}
               isLoading={registrationsLoading}
               eventId={id!}
+              eventBadgeTemplateId={event?.badgeTemplateId ?? null}
               onRefresh={() => refetchRegistrations()}
               isDeletedTab={registrationsActiveTab === 'deleted'}
               tabsElement={

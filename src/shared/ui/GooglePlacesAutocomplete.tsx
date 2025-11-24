@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect } from 'react'
+﻿import React, { useRef } from 'react'
 import Autocomplete from 'react-google-autocomplete'
 
 interface PlaceDetails {
@@ -36,43 +36,6 @@ export const GooglePlacesAutocomplete: React.FC<GooglePlacesAutocompleteProps> =
   className = '',
 }) => {
   const inputRef = useRef<HTMLInputElement>(null)
-
-  // Repositionner le dropdown Google Maps sous l'input
-  useEffect(() => {
-    const repositionDropdown = () => {
-      const input = inputRef.current
-      const dropdowns = document.querySelectorAll('.pac-container') as NodeListOf<HTMLElement>
-      
-      if (!input || dropdowns.length === 0) return
-
-      const rect = input.getBoundingClientRect()
-      
-      // Positionner tous les dropdowns (parfois Google en crée plusieurs)
-      dropdowns.forEach((dropdown) => {
-        dropdown.style.top = `${rect.bottom + window.scrollY}px`
-        dropdown.style.left = `${rect.left + window.scrollX}px`
-        dropdown.style.width = `${rect.width}px`
-      })
-    }
-
-    // Observer pour détecter l'apparition du dropdown
-    const observer = new MutationObserver(() => {
-      repositionDropdown()
-    })
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    })
-
-    // Repositionner au resize
-    window.addEventListener('resize', repositionDropdown)
-
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', repositionDropdown)
-    }
-  }, [])
 
   return (
     <Autocomplete

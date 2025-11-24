@@ -21,7 +21,7 @@ export {
   type SortOption,
 } from './FilterBar'
 export { MultiSelect, type MultiSelectOption } from './MultiSelect'
-export { GooglePlacesAutocomplete, GooglePlacesAutocompleteWithProvider } from './GooglePlacesAutocomplete'
+export { AddressAutocomplete } from './AddressAutocomplete'
 export {
   Card,
   CardHeader,

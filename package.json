@@ -36,6 +36,7 @@
     "@vis.gl/react-google-maps": "^1.7.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
+    "fuse.js": "^7.1.0",
     "grapesjs": "^0.22.13",
     "grapesjs-preset-webpage": "^1.0.3",
     "i18next": "^23.7.6",

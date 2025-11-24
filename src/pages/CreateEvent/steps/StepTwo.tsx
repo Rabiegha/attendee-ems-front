@@ -11,20 +11,20 @@ import {
   FormField,
   Select,
   SelectOption,
-  GooglePlacesAutocomplete,
+  AddressAutocomplete,
   SearchInput,
 } from '@/shared/ui'
 import { CreateEventFormData } from '../index'
 import { MapPin, Users } from 'lucide-react'
 import { useGetUsersQuery } from '@/features/users/api/usersApi'
 import type { UserResponse } from '@/features/users/dpo/user.dpo'
+import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 
 interface StepTwoProps {
   formData: CreateEventFormData
   updateFormData: (updates: Partial<CreateEventFormData>) => void
 }
 
-// Récupérer la clé API depuis les variables d'environnement
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
 export function StepTwo({ formData, updateFormData }: StepTwoProps) {
@@ -34,13 +34,12 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
   const { data: usersData } = useGetUsersQuery({ page: 1, pageSize: 1000 })
   const users = usersData?.users || []
 
-  // Filtrer les utilisateurs par recherche
-  const filteredUsers = users.filter((user: UserResponse) => {
-    const fullName = `${user.first_name} ${user.last_name}`.toLowerCase()
-    const email = user.email.toLowerCase()
-    const search = searchTerm.toLowerCase()
-    return fullName.includes(search) || email.includes(search)
-  })
+  // Filtrer les utilisateurs par recherche (Fuzzy Search)
+  const filteredUsers = useFuzzySearch(
+    users,
+    searchTerm,
+    ['first_name', 'last_name', 'email']
+  )
 
   // Toggle sélection utilisateur
   const toggleUser = (userId: string) => {
@@ -78,46 +77,30 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
 
       {/* Adresse (si physique ou hybride) */}
       {(formData.location_type === 'physical' || formData.location_type === 'hybrid') && (
-        <>
-          <FormField label="Adresse complète">
-            <GooglePlacesAutocomplete
-              id="address_formatted"
-              name="address_formatted"
-              value={formData.address_formatted || ''}
-              onChange={(value) => {
-                // Mise à jour simple lors de la saisie manuelle
-                updateFormData({ address_formatted: value })
-              }}
-              onPlaceSelect={(place) => {
-                // Mise à jour complète lors de la sélection Google Maps
-                const updates: Partial<CreateEventFormData> = {
-                  address_formatted: place.formatted_address,
-                  latitude: place.latitude,
-                  longitude: place.longitude,
-                }
-                
-                if (place.street) updates.address_street = place.street
-                if (place.city) updates.address_city = place.city
-                if (place.postal_code) updates.address_postal_code = place.postal_code
-                if (place.country) updates.address_country = place.country
-                
-                updateFormData(updates)
-              }}
-              placeholder="Rechercher une adresse..."
-              apiKey={GOOGLE_MAPS_API_KEY}
-            />
-          </FormField>
-
-          {/* Affichage des coordonnées GPS si disponibles */}
-          {formData.latitude && formData.longitude && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 -mt-2">
-              <MapPin className="h-3 w-3" />
-              <span>
-                GPS: {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
-              </span>
-            </div>
-          )}
-        </>
+        <FormField label="Adresse complète">
+          <AddressAutocomplete
+            id="address_formatted"
+            name="address_formatted"
+            value={formData.address_formatted || ''}
+            onChange={(value) => updateFormData({ address_formatted: value })}
+            onPlaceSelect={(place) => {
+              const updates: Partial<CreateEventFormData> = {
+                address_formatted: place.formatted_address,
+                latitude: place.latitude,
+                longitude: place.longitude,
+              }
+              
+              if (place.street) updates.address_street = place.street
+              if (place.city) updates.address_city = place.city
+              if (place.postal_code) updates.address_postal_code = place.postal_code
+              if (place.country) updates.address_country = place.country
+              
+              updateFormData(updates)
+            }}
+            placeholder="Rechercher une adresse..."
+            apiKey={GOOGLE_MAPS_API_KEY}
+          />
+        </FormField>
       )}
 
       {/* Partenaires autorisés */}

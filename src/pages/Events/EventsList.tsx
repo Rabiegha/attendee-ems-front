@@ -471,7 +471,7 @@ const EventsList = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                            {event.location || 'En ligne'}
+                            {event.locationType === 'online' ? 'En ligne' : (event.location || 'En ligne')}
                           </div>
                         </td>
                         <td className="px-6 py-4">

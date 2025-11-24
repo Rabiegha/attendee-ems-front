@@ -33,7 +33,8 @@ export const FilterSort: React.FC<FilterSortProps> = ({
         onChange={(e) => onChange(e.target.value)}
         className={cn(
           'h-10 pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg',
-          'bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm',
+          'bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm',
+          'hover:bg-gray-50 dark:hover:bg-gray-700',
           'focus:ring-2 focus:ring-blue-500 focus:border-transparent',
           'transition-colors duration-200 appearance-none cursor-pointer',
           'min-w-[180px] flex-shrink-0',

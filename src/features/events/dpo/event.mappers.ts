@@ -9,15 +9,19 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
   const endDate = new Date(dto.end_at)
   const now = new Date()
 
-  // Construire le location string à partir des données d'adresse
-  const location =
-    dto.address_formatted ||
-    [dto.address_city, dto.address_country].filter(Boolean).join(', ') ||
-    (dto.location_type === 'online'
-      ? 'En ligne'
-      : dto.location_type === 'hybrid'
-        ? 'Hybride'
-        : 'Non spécifié')
+  // Construire le location string en fonction du type de lieu
+  let location = 'Non spécifié'
+  if (dto.location_type === 'online') {
+    location = 'En ligne'
+  } else if (dto.location_type === 'hybrid') {
+    location = 'Hybride'
+  } else {
+    // Pour les événements physiques, utiliser l'adresse
+    location =
+      dto.address_formatted ||
+      [dto.address_city, dto.address_country].filter(Boolean).join(', ') ||
+      'Non spécifié'
+  }
 
   return {
     id: dto.id,
@@ -88,6 +92,7 @@ export const mapCreateEventDPOtoDTO = (dpo: CreateEventDPO): CreateEventDTO => {
   if (dpo.description) dto.description = dpo.description
   if (dpo.maxAttendees !== undefined) dto.capacity = dpo.maxAttendees
   if (dpo.websiteUrl) dto.website_url = dpo.websiteUrl
+  if (dpo.locationType) dto.location_type = dpo.locationType
   
   // Map location data
   if (dpo.location) dto.address_formatted = dpo.location
@@ -132,6 +137,7 @@ export const mapUpdateEventDPOtoDTO = (dpo: UpdateEventDPO): UpdateEventDTO => {
   if (dpo.endDate) dto.end_at = dpo.endDate
   if (dpo.maxAttendees !== undefined) dto.capacity = dpo.maxAttendees
   if (dpo.location) dto.address_formatted = dpo.location
+  if (dpo.locationType) dto.location_type = dpo.locationType
   if (dpo.websiteUrl !== undefined) dto.website_url = dpo.websiteUrl
 
   // Map email/registration options for update

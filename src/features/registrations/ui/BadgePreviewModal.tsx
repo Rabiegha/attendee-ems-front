@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
 import { selectToken } from '@/features/auth/model/sessionSlice'
 import { Modal } from '@/shared/ui/Modal'
-import { Award, FileText, Image as ImageIcon } from 'lucide-react'
-import { LoadingSpinner } from '@/shared/ui'
+import { Award, FileText, Image as ImageIcon, Plus, AlertCircle } from 'lucide-react'
+import { Select, SelectOption, FormField } from '@/shared/ui'
 import { Button } from '@/shared/ui/Button'
+import { ROUTES } from '@/app/config/constants'
+import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api'
+import { useUpdateEventMutation } from '@/features/events/api/eventsApi'
+import { useToast } from '@/shared/hooks/useToast'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 
 interface BadgePreviewModalProps {
@@ -12,41 +17,70 @@ interface BadgePreviewModalProps {
   onClose: () => void
   registration: RegistrationDPO
   eventId: string
+  currentBadgeTemplateId?: string | null
 }
 
 type BadgeFormat = 'pdf' | 'image'
 
-export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: BadgePreviewModalProps) {
+export function BadgePreviewModal({ 
+  isOpen, 
+  onClose, 
+  registration, 
+  eventId,
+  currentBadgeTemplateId 
+}: BadgePreviewModalProps) {
   const [isDownloading, setIsDownloading] = useState(false)
   const [badgeImage, setBadgeImage] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string>('')
+  const [errorType, setErrorType] = useState<'chromium' | 'no-template' | 'other'>('other')
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(currentBadgeTemplateId || '')
 
   const token = useSelector(selectToken)
+  const navigate = useNavigate()
+  const toast = useToast()
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+  
+  // Récupérer les templates de badges disponibles
+  const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({ 
+    page: 1, 
+    limit: 100 
+  })
+  
+  // Mutation pour mettre à jour le template de l'événement
+  const [updateEvent] = useUpdateEventMutation()
 
-  // Load badge preview (single quality - optimized)
+  // Synchroniser le template sélectionné avec le template courant
   useEffect(() => {
-    if (!isOpen || !token) {
+    if (currentBadgeTemplateId) {
+      setSelectedTemplateId(currentBadgeTemplateId)
+    }
+  }, [currentBadgeTemplateId])
+
+  // Fonction pour charger/régénérer le badge
+  const loadBadgePreview = async (templateIdOverride?: string) => {
+    if (!token) {
       setIsLoading(false)
       return
     }
 
     // Reset states
     setBadgeImage('')
-    setIsLoading(true)
     setError('')
+    setIsLoading(true) // Toujours afficher le loading complet
 
     const fetchBadgePreview = async () => {
       try {
-        const response = await fetch(
-          `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?quality=high`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        )
+        // Si un template est spécifié, on force la régénération avec ce template
+        const url = templateIdOverride
+          ? `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?quality=high&templateId=${templateIdOverride}&force=true`
+          : `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?quality=high`
+        
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
 
         if (!response.ok) {
           const errorText = await response.text()
@@ -54,8 +88,21 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
           
           try {
             const errorData = JSON.parse(errorText)
+            
+            // Détection de l'erreur Chromium
             if (errorData.detail?.includes('Chromium') || errorData.message?.includes('Chromium')) {
               setError('Le serveur n\'a pas encore été configuré pour générer des badges. Veuillez contacter l\'administrateur.')
+              setErrorType('chromium')
+              setIsLoading(false)
+              return
+            }
+            
+            // Détection de l'erreur "pas de template"
+            if (errorData.message?.includes('No badge template') || 
+                errorData.message?.includes('badge template') ||
+                errorData.detail?.includes('No badge template')) {
+              setError('Aucun template de badge n\'a été configuré pour générer des badges.')
+              setErrorType('no-template')
               setIsLoading(false)
               return
             }
@@ -72,11 +119,22 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
       } catch (err) {
         console.error('[Badge Preview] Failed to load:', err)
         setError('Erreur de chargement du badge')
+        setErrorType('other')
         setIsLoading(false)
       }
     }
 
-    fetchBadgePreview()
+    await fetchBadgePreview()
+  }
+
+  // Load badge preview (single quality - optimized)
+  useEffect(() => {
+    if (!isOpen) {
+      setIsLoading(false)
+      return
+    }
+
+    loadBadgePreview()
   }, [isOpen, registration.id, eventId, API_URL, token])
 
   const handleDownload = async (format: BadgeFormat) => {
@@ -117,6 +175,37 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
     }
   }
 
+  // Fonction pour changer le template et régénérer le badge
+  const handleTemplateChange = async (newTemplateId: string) => {
+    if (newTemplateId === selectedTemplateId) return
+    
+    setSelectedTemplateId(newTemplateId)
+    
+    try {
+      // 1. Mettre à jour le template dans les settings de l'événement
+      if (newTemplateId) {
+        await updateEvent({
+          id: eventId,
+          data: {
+            badgeTemplateId: newTemplateId,
+          },
+        }).unwrap()
+        
+        toast.success('Template mis à jour', 'Le template de badge a été changé pour cet événement')
+      }
+      
+      // 2. Régénérer le badge avec le nouveau template (loadBadgePreview gère isLoading)
+      await loadBadgePreview(newTemplateId || undefined)
+      
+    } catch (error: any) {
+      console.error('Error changing template:', error)
+      toast.error('Erreur', 'Impossible de changer le template de badge')
+      // Revenir à l'ancien template en cas d'erreur
+      setSelectedTemplateId(currentBadgeTemplateId || '')
+      setIsLoading(false)
+    }
+  }
+
   const attendeeName = registration.attendee
     ? `${registration.attendee.firstName} ${registration.attendee.lastName}`
     : 'Participant'
@@ -146,6 +235,29 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
           )}
         </div>
 
+        {/* Template Selector */}
+        {!error && badgeTemplatesData?.data && badgeTemplatesData.data.length > 0 && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+            <FormField label="Template de badge">
+              <Select
+                value={selectedTemplateId}
+                onChange={(e) => handleTemplateChange(e.target.value)}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                <SelectOption value="">Par défaut</SelectOption>
+                {badgeTemplatesData.data
+                  .filter(t => t.is_active)
+                  .map((template) => (
+                    <SelectOption key={template.id} value={template.id}>
+                      {template.name} {template.is_default ? '(Par défaut)' : ''}
+                    </SelectOption>
+                  ))}
+              </Select>
+            </FormField>
+          </div>
+        )}
+
         {/* Badge Preview */}
         <div className="flex justify-center items-start bg-gray-50 dark:bg-gray-900 rounded-lg p-6 max-h-[85vh] overflow-auto">
           {isLoading ? (
@@ -156,18 +268,62 @@ export function BadgePreviewModal({ isOpen, onClose, registration, eventId }: Ba
               </p>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center space-y-4 text-red-600 dark:text-red-400 justify-center min-h-[600px] max-w-md mx-auto text-center">
-              <Award className="h-16 w-16 opacity-50" />
-              <div>
-                <p className="text-lg font-semibold mb-2">{error}</p>
-                {error.includes('configuré') && (
-                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-800 dark:text-blue-200 text-left">
-                    <p className="font-semibold mb-2">ℹ️ Configuration requise :</p>
-                    <p>Le serveur doit avoir Chromium installé pour générer les badges.</p>
-                    <p className="mt-2">Voir le fichier <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">CHROMIUM_SETUP.md</code> pour les instructions d'installation.</p>
+            <div className="flex flex-col items-center space-y-4 justify-center min-h-[600px] max-w-lg mx-auto text-center">
+              {errorType === 'no-template' ? (
+                <>
+                  <AlertCircle className="h-16 w-16 text-orange-500 dark:text-orange-400" />
+                  <div>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{error}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                      Pour générer des badges, vous devez d'abord créer un template de badge.
+                    </p>
                   </div>
-                )}
-              </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => {
+                        onClose()
+                        navigate(ROUTES.BADGES)
+                      }}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Créer un template de badge
+                    </Button>
+                    <Button
+                      onClick={onClose}
+                      variant="outline"
+                    >
+                      Fermer
+                    </Button>
+                  </div>
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-800 dark:text-blue-200 text-left w-full">
+                    <p className="font-semibold mb-2 flex items-center gap-2">
+                      <Award className="h-4 w-4" />
+                      Comment créer un template de badge ?
+                    </p>
+                    <ol className="space-y-1 list-decimal list-inside">
+                      <li>Accédez à la section "Badges" via le menu</li>
+                      <li>Cliquez sur "Créer un template"</li>
+                      <li>Personnalisez le design de votre badge</li>
+                      <li>Revenez ici pour générer les badges</li>
+                    </ol>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Award className="h-16 w-16 text-red-600 dark:text-red-400 opacity-50" />
+                  <div>
+                    <p className="text-lg font-semibold text-red-600 dark:text-red-400 mb-2">{error}</p>
+                    {errorType === 'chromium' && (
+                      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-800 dark:text-blue-200 text-left">
+                        <p className="font-semibold mb-2">ℹ️ Configuration requise :</p>
+                        <p>Le serveur doit avoir Chromium installé pour générer les badges.</p>
+                        <p className="mt-2">Voir le fichier <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">CHROMIUM_SETUP.md</code> pour les instructions d'installation.</p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="w-full flex flex-col items-center">

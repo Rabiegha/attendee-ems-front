@@ -4,7 +4,7 @@ import {
   useUpdateEventMutation,
   useDeleteEventMutation,
 } from '@/features/events/api/eventsApi'
-import { Button, Input, Select, SelectOption, FormField, Textarea } from '@/shared/ui'
+import { Button, Input, Select, SelectOption, FormField, Textarea, AddressAutocomplete } from '@/shared/ui'
 import {
   Save,
   Trash2,
@@ -22,7 +22,6 @@ import { TagInput } from '@/features/tags'
 import { useUpdateEventTagsMutation } from '@/services/tags'
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api'
 
-// Récupérer la clé API Google Maps
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
 interface EventSettingsTabProps {
@@ -42,6 +41,19 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     page: 1, 
     limit: 100 
   })
+
+  // Composant de bouton de sauvegarde réutilisable
+  const SaveButton: React.FC<{ className?: string }> = ({ className = '' }) => (
+    <div className={`flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700 mt-4 ${className}`}>
+      <Button
+        onClick={handleSaveChanges}
+        disabled={isUpdating}
+        leftIcon={<Save className="h-4 w-4" />}
+      >
+        {isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications'}
+      </Button>
+    </div>
+  )
 
   // Si l'événement est supprimé, afficher un message
   if (event.isDeleted) {
@@ -65,7 +77,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     description: event.description,
     startDate: event.startDate.split('T')[0] + 'T' + event.startDate.split('T')[1]?.substring(0, 5) || '',
     endDate: event.endDate.split('T')[0] + 'T' + event.endDate.split('T')[1]?.substring(0, 5) || '',
-    location: event.location,
+    location: event.addressFormatted || '', // Utiliser l'adresse réelle du backend, pas la location mappée
     locationType: event.locationType,
     maxAttendees: event.maxAttendees && event.maxAttendees < 999999 ? event.maxAttendees : '',
     tags: event.tags || [],
@@ -107,7 +119,9 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         description: formData.description,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
-        location: formData.location,
+        // Si l'événement est en ligne, vider l'adresse
+        location: formData.locationType === 'online' ? '' : formData.location,
+        locationType: formData.locationType,
         maxAttendees: maxAttendeesValue,
       }
 
@@ -257,6 +271,8 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
             </p>
           </FormField>
         </div>
+
+        <SaveButton />
       </div>
 
       {/* STEP 2: Lieu et participants */}
@@ -275,7 +291,16 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
           <FormField label="Type de lieu">
             <Select
               value={formData.locationType}
-              onChange={(e) => setFormData((prev) => ({ ...prev, locationType: e.target.value as 'physical' | 'online' | 'hybrid' }))}
+              onChange={(e) => {
+                const newLocationType = e.target.value as 'physical' | 'online' | 'hybrid'
+                setFormData((prev) => ({ 
+                  ...prev, 
+                  locationType: newLocationType,
+                  location: newLocationType === 'online' 
+                    ? '' 
+                    : (prev.location || event.addressFormatted || '')
+                }))
+              }}
             >
               <SelectOption value="physical">Physique</SelectOption>
               <SelectOption value="online">En ligne</SelectOption>
@@ -293,20 +318,25 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                     Localisation de l'événement
                   </h4>
                   <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                    {GOOGLE_MAPS_API_KEY 
-                      ? 'Adresse enregistrée (modifiable depuis la création)'
-                      : 'Saisissez l\'adresse complète de l\'événement'
-                    }
+                    Saisissez l'adresse complète de l'événement
                   </p>
                 </div>
               </div>
 
               <FormField label="Adresse complète">
-                <Input
+                <AddressAutocomplete
+                  id="location"
                   name="location"
                   value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="Ex: 123 Rue de la Paix, 75001 Paris, France"
+                  onChange={(value) => setFormData((prev) => ({ ...prev, location: value }))}
+                  onPlaceSelect={(place) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      location: place.formatted_address,
+                    }))
+                  }}
+                  placeholder="Rechercher une adresse..."
+                  apiKey={GOOGLE_MAPS_API_KEY}
                 />
               </FormField>
             </div>
@@ -359,6 +389,8 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
             </Button>
           </div>
         </div>
+
+        <SaveButton />
       </div>
 
       {/* STEP 3: Options et paramètres */}
@@ -592,7 +624,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                     value={formData.badgeTemplateId}
                     onChange={(e) => setFormData((prev) => ({ ...prev, badgeTemplateId: e.target.value }))}
                   >
-                    <SelectOption value="">Aucun template sélectionné</SelectOption>
+                    <SelectOption value="">Par défaut</SelectOption>
                     {badgeTemplatesData?.data?.filter(t => t.is_active).map((template) => (
                       <SelectOption key={template.id} value={template.id}>
                         {template.name} {template.is_default ? '(Par défaut)' : ''}
@@ -615,18 +647,9 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
               </div>
             </div>
           </div>
-
-          {/* Bouton de sauvegarde */}
-          <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              onClick={handleSaveChanges}
-              disabled={isUpdating}
-              leftIcon={<Save className="h-4 w-4" />}
-            >
-              {isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications'}
-            </Button>
-          </div>
         </div>
+
+        <SaveButton />
       </div>
 
       {/* Zone de danger */}

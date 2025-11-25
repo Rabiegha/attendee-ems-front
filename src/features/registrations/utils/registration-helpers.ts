@@ -9,21 +9,11 @@ import type { RegistrationDPO } from '../dpo/registration.dpo'
 type RegistrationData = RegistrationDTO | RegistrationDPO
 
 export const getRegistrationFirstName = (registration: RegistrationData): string => {
-  if (registration.snapshot_first_name) return registration.snapshot_first_name
-  if ('attendee' in registration && registration.attendee) {
-    const attendee = registration.attendee as any
-    return attendee.firstName || attendee.first_name || ''
-  }
-  return ''
+  return registration.snapshot_first_name || ''
 }
 
 export const getRegistrationLastName = (registration: RegistrationData): string => {
-  if (registration.snapshot_last_name) return registration.snapshot_last_name
-  if ('attendee' in registration && registration.attendee) {
-    const attendee = registration.attendee as any
-    return attendee.lastName || attendee.last_name || ''
-  }
-  return ''
+  return registration.snapshot_last_name || ''
 }
 
 export const getRegistrationFullName = (registration: RegistrationData): string => {
@@ -33,42 +23,21 @@ export const getRegistrationFullName = (registration: RegistrationData): string 
 }
 
 export const getRegistrationEmail = (registration: RegistrationData): string => {
-  if (registration.snapshot_email) return registration.snapshot_email
-  if ('attendee' in registration && registration.attendee) {
-    return registration.attendee.email || ''
-  }
-  return ''
+  return registration.snapshot_email || ''
 }
 
 export const getRegistrationPhone = (registration: RegistrationData): string => {
-  if (registration.snapshot_phone) return registration.snapshot_phone
-  if ('attendee' in registration && registration.attendee) {
-    return registration.attendee.phone || ''
-  }
-  return ''
+  return registration.snapshot_phone || ''
 }
 
 export const getRegistrationCompany = (registration: RegistrationData): string => {
-  if (registration.snapshot_company) return registration.snapshot_company
-  if ('attendee' in registration && registration.attendee) {
-    return registration.attendee.company || ''
-  }
-  return ''
+  return registration.snapshot_company || ''
 }
 
 export const getRegistrationJobTitle = (registration: RegistrationData): string => {
-  if (registration.snapshot_job_title) return registration.snapshot_job_title
-  if ('attendee' in registration && registration.attendee) {
-    const attendee = registration.attendee as any
-    return attendee.jobTitle || attendee.job_title || ''
-  }
-  return ''
+  return registration.snapshot_job_title || ''
 }
 
 export const getRegistrationCountry = (registration: RegistrationData): string => {
-  if (registration.snapshot_country) return registration.snapshot_country
-  if ('attendee' in registration && registration.attendee) {
-    return registration.attendee.country || ''
-  }
-  return ''
+  return registration.snapshot_country || ''
 }

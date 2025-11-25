@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useMemo } from 'react'
+import { useNavigate, useBlocker } from 'react-router-dom'
 import {
   useUpdateEventMutation,
   useDeleteEventMutation,
@@ -46,7 +46,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   const SaveButton: React.FC<{ className?: string }> = ({ className = '' }) => (
     <div className={`flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700 mt-4 ${className}`}>
       <Button
-        onClick={handleSaveChanges}
+        onClick={() => handleSaveChanges(true)}
         disabled={isUpdating}
         leftIcon={<Save className="h-4 w-4" />}
       >
@@ -71,8 +71,8 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     )
   }
 
-  // État du formulaire
-  const [formData, setFormData] = useState({
+  // État initial mémorisé pour la comparaison
+  const initialFormData = useMemo(() => ({
     name: event.name,
     description: event.description,
     startDate: event.startDate.split('T')[0] + 'T' + event.startDate.split('T')[1]?.substring(0, 5) || '',
@@ -89,16 +89,67 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     approval_email_enabled: event.approvalEmailEnabled ?? false,
     reminder_email_enabled: event.reminderEmailEnabled ?? false,
     badgeTemplateId: event.badgeTemplateId || '',
-  })
+  }), [event])
+
+  // État du formulaire
+  const [formData, setFormData] = useState(initialFormData)
+
+  // Détection des changements
+  const isDirty = useMemo(() => {
+    return JSON.stringify(formData) !== JSON.stringify(initialFormData)
+  }, [formData, initialFormData])
+
+  // Protection contre la navigation interne
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && (
+        currentLocation.pathname !== nextLocation.pathname || 
+        currentLocation.search !== nextLocation.search
+      )
+  )
+
+  useEffect(() => {
+    if (blocker.state === 'blocked') {
+      setShowUnsavedChangesModal(true)
+    } else {
+      setShowUnsavedChangesModal(false)
+    }
+  }, [blocker])
+
+  const handleStay = () => {
+    blocker.reset()
+  }
+
+  const handleLeave = () => {
+    blocker.proceed()
+  }
+
+  const handleSaveAndLeave = async () => {
+    const success = await handleSaveChanges(false)
+    if (success) {
+      blocker.proceed()
+    } else {
+      blocker.reset()
+    }
+  }
+
+  // Protection contre la fermeture de l'onglet/navigateur
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isDirty])
 
   // État pour la suppression (double confirmation)
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false)
-  const [deleteResult, setDeleteResult] = useState<{
-    message: string
-    type: 'hard' | 'soft'
-  } | null>(null)
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -107,7 +158,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = async (showSuccessModal: boolean = true) => {
     try {
       const maxAttendeesValue = formData.maxAttendees
         ? parseInt(formData.maxAttendees.toString())
@@ -156,10 +207,12 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         tags: formData.tags,
       }).unwrap()
 
-      setShowUpdateSuccessModal(true)
+      if (showSuccessModal) setShowUpdateSuccessModal(true)
+      return true
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error)
       alert('❌ Erreur lors de la sauvegarde')
+      return false
     }
   }
 
@@ -184,555 +237,602 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* STEP 1: Informations de base */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-            Informations de base
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Informations essentielles de votre événement
-          </p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Nom de l'événement */}
-          <FormField label="Nom de l'événement" required>
-            <Input
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              placeholder="Ex: Conférence annuelle 2024"
-              required
-            />
-          </FormField>
-
-          {/* Description */}
-          <FormField 
-            label="Description"
-            hint="Optionnel - Décrivez brièvement votre événement"
-          >
-            <Textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Décrivez votre événement..."
-              rows={4}
-            />
-          </FormField>
-
-          {/* Dates */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField label="Date et heure de début" required>
-              <Input
-                name="startDate"
-                type="datetime-local"
-                value={formData.startDate}
-                onChange={handleInputChange}
-                required
-              />
-            </FormField>
-
-            <FormField label="Date et heure de fin" required>
-              <Input
-                name="endDate"
-                type="datetime-local"
-                value={formData.endDate}
-                onChange={handleInputChange}
-                required
-              />
-            </FormField>
+    <>
+      <div className="space-y-6">
+        {/* STEP 1: Informations de base */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              Informations de base
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Informations essentielles de votre événement
+            </p>
           </div>
 
-          {/* URL du site / Page de présentation */}
-          <FormField 
-            label="URL du site / Page de présentation"
-            hint="Optionnel - Lien vers la page de présentation de l'événement"
-          >
-            <Input
-              name="websiteUrl"
-              type="url"
-              value={formData.websiteUrl}
-              onChange={handleInputChange}
-              placeholder="https://example.com/mon-evenement"
-            />
-          </FormField>
+          <div className="space-y-6">
+            {/* Nom de l'événement */}
+            <FormField label="Nom de l'événement" required>
+              <Input
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Ex: Conférence annuelle 2024"
+                required
+              />
+            </FormField>
 
-          {/* Tags */}
-          <FormField label="Tags">
-            <TagInput
-              value={formData.tags}
-              onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
-              placeholder="Ex: Technologie, Networking, Innovation"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Utilisez les tags pour catégoriser et filtrer vos événements
-            </p>
-          </FormField>
-        </div>
-
-        <SaveButton />
-      </div>
-
-      {/* STEP 2: Lieu et participants */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-            Lieu et participants
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Définissez le lieu et les paramètres de participation
-          </p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Type de lieu */}
-          <FormField label="Type de lieu">
-            <Select
-              value={formData.locationType}
-              onChange={(e) => {
-                const newLocationType = e.target.value as 'physical' | 'online' | 'hybrid'
-                setFormData((prev) => ({ 
-                  ...prev, 
-                  locationType: newLocationType,
-                  location: newLocationType === 'online' 
-                    ? '' 
-                    : (prev.location || event.addressFormatted || '')
-                }))
-              }}
+            {/* Description */}
+            <FormField 
+              label="Description"
+              hint="Optionnel - Décrivez brièvement votre événement"
             >
-              <SelectOption value="physical">Physique</SelectOption>
-              <SelectOption value="online">En ligne</SelectOption>
-              <SelectOption value="hybrid">Hybride</SelectOption>
-            </Select>
-          </FormField>
+              <Textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                placeholder="Décrivez votre événement..."
+                rows={4}
+              />
+            </FormField>
 
-          {/* Adresse (si physique ou hybride) */}
-          {(formData.locationType === 'physical' || formData.locationType === 'hybrid') && (
-            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <div className="flex items-start gap-2 mb-3">
-                <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                    Localisation de l'événement
-                  </h4>
-                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                    Saisissez l'adresse complète de l'événement
-                  </p>
-                </div>
-              </div>
+            {/* Dates */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField label="Date et heure de début" required>
+                <Input
+                  name="startDate"
+                  type="datetime-local"
+                  value={formData.startDate}
+                  onChange={handleInputChange}
+                  required
+                />
+              </FormField>
 
-              <FormField label="Adresse complète">
-                <AddressAutocomplete
-                  id="location"
-                  name="location"
-                  value={formData.location}
-                  onChange={(value) => setFormData((prev) => ({ ...prev, location: value }))}
-                  onPlaceSelect={(place) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      location: place.formatted_address,
-                    }))
-                  }}
-                  placeholder="Rechercher une adresse..."
-                  apiKey={GOOGLE_MAPS_API_KEY}
+              <FormField label="Date et heure de fin" required>
+                <Input
+                  name="endDate"
+                  type="datetime-local"
+                  value={formData.endDate}
+                  onChange={handleInputChange}
+                  required
                 />
               </FormField>
             </div>
-          )}
 
-          {/* Partenaires autorisés */}
-          <div className="space-y-3">
-            <FormField label="Partenaires autorisés">
-              {event.partnerIds && event.partnerIds.length > 0 ? (
-                <div className="space-y-2">
-                  {event.partnerIds.map((partnerId) => (
-                    <div
-                      key={partnerId}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                    >
-                      <div className="flex items-center">
-                        <Users className="h-4 w-4 mr-2 text-gray-400" />
-                        <span className="text-sm text-gray-900 dark:text-white">
-                          Partenaire #{partnerId}
-                        </span>
+            {/* URL du site / Page de présentation */}
+            <FormField 
+              label="URL du site / Page de présentation"
+              hint="Optionnel - Lien vers la page de présentation de l'événement"
+            >
+              <Input
+                name="websiteUrl"
+                type="url"
+                value={formData.websiteUrl}
+                onChange={handleInputChange}
+                placeholder="https://example.com/mon-evenement"
+              />
+            </FormField>
+
+            {/* Tags */}
+            <FormField label="Tags">
+              <TagInput
+                value={formData.tags}
+                onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
+                placeholder="Ex: Technologie, Networking, Innovation"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Utilisez les tags pour catégoriser et filtrer vos événements
+              </p>
+            </FormField>
+          </div>
+
+          <SaveButton />
+        </div>
+
+        {/* STEP 2: Lieu et participants */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              Lieu et participants
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Définissez le lieu et les paramètres de participation
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Type de lieu */}
+            <FormField label="Type de lieu">
+              <Select
+                value={formData.locationType}
+                onChange={(e) => {
+                  const newLocationType = e.target.value as 'physical' | 'online' | 'hybrid'
+                  setFormData((prev) => ({ 
+                    ...prev, 
+                    locationType: newLocationType,
+                    location: newLocationType === 'online' 
+                      ? '' 
+                      : (prev.location || event.addressFormatted || '')
+                  }))
+                }}
+              >
+                <SelectOption value="physical">Physique</SelectOption>
+                <SelectOption value="online">En ligne</SelectOption>
+                <SelectOption value="hybrid">Hybride</SelectOption>
+              </Select>
+            </FormField>
+
+            {/* Adresse (si physique ou hybride) */}
+            {(formData.locationType === 'physical' || formData.locationType === 'hybrid') && (
+              <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-2 mb-3">
+                  <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                      Localisation de l'événement
+                    </h4>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                      Saisissez l'adresse complète de l'événement
+                    </p>
+                  </div>
+                </div>
+
+                <FormField label="Adresse complète">
+                  <AddressAutocomplete
+                    id="location"
+                    name="location"
+                    value={formData.location}
+                    onChange={(value) => setFormData((prev) => ({ ...prev, location: value }))}
+                    onPlaceSelect={(place) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        location: place.formatted_address,
+                      }))
+                    }}
+                    placeholder="Rechercher une adresse..."
+                    apiKey={GOOGLE_MAPS_API_KEY}
+                  />
+                </FormField>
+              </div>
+            )}
+
+            {/* Partenaires autorisés */}
+            <div className="space-y-3">
+              <FormField label="Partenaires autorisés">
+                {event.partnerIds && event.partnerIds.length > 0 ? (
+                  <div className="space-y-2">
+                    {event.partnerIds.map((partnerId) => (
+                      <div
+                        key={partnerId}
+                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      >
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-2 text-gray-400" />
+                          <span className="text-sm text-gray-900 dark:text-white">
+                            Partenaire #{partnerId}
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          leftIcon={<UserMinus className="h-3 w-3" />}
+                          onClick={() => {
+                            if (confirm('Retirer ce partenaire de l\'événement ?')) {
+                              alert('Fonctionnalité à implémenter')
+                            }
+                          }}
+                        >
+                          Retirer
+                        </Button>
                       </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Aucun partenaire invité pour le moment
+                  </p>
+                )}
+              </FormField>
+              
+              <Button
+                variant="outline"
+                leftIcon={<UserPlus className="h-4 w-4" />}
+                onClick={() => alert('Modal d\'ajout de partenaires à implémenter')}
+              >
+                Ajouter des partenaires
+              </Button>
+            </div>
+          </div>
+
+          <SaveButton />
+        </div>
+
+        {/* STEP 3: Options et paramètres */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              Options et paramètres
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Configurez les options d'inscription et de notification
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {/* Capacité maximale */}
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <Users className="h-5 w-5 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    Gestion des participants
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.capacity !== undefined}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData((prev) => ({ ...prev, capacity: 100 }))
+                          } else {
+                            setFormData((prev) => {
+                              const { capacity, ...rest } = prev
+                              return rest as any
+                            })
+                          }
+                        }}
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          Limiter le nombre de participants
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Définir une capacité maximale pour cet événement
+                        </p>
+                      </div>
+                    </label>
+
+                    {formData.capacity !== undefined && (
+                      <FormField label="Capacité maximale">
+                        <Input
+                          name="capacity"
+                          type="number"
+                          min={1}
+                          value={formData.capacity || ''}
+                          onChange={(e) => {
+                            const value = e.target.value ? parseInt(e.target.value) : undefined
+                            setFormData((prev) => ({ ...prev, capacity: value }))
+                          }}
+                          placeholder="Ex: 100"
+                        />
+                      </FormField>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Approbation */}
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    Gestion des inscriptions
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.registration_auto_approve}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            registration_auto_approve: e.target.checked,
+                          }))
+                        }
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          Approuver automatiquement tous les inscrits
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Les participants sont immédiatement approuvés sans validation manuelle
+                        </p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.require_email_verification}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            require_email_verification: e.target.checked,
+                          }))
+                        }
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          Vérifier l'email pour être pris en compte
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          L'inscription est validée uniquement après vérification de l'adresse email
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notifications email */}
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <Mail className="h-5 w-5 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    Notifications par email
+                  </h4>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.confirmation_email_enabled}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            confirmation_email_enabled: e.target.checked,
+                          }))
+                        }
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          Envoyer un email de confirmation lors de l'inscription
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Le participant reçoit un email confirmant son inscription
+                        </p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.approval_email_enabled}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            approval_email_enabled: e.target.checked,
+                          }))
+                        }
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          Envoyer un email lorsque l'inscription est approuvée
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Le participant reçoit un email quand son inscription est validée
+                        </p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.reminder_email_enabled}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            reminder_email_enabled: e.target.checked,
+                          }))
+                        }
+                        className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          Envoyer des rappels avant l'événement
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Les participants reçoivent des rappels quelques jours avant l'événement
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Template de badge */}
+            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <CreditCard className="h-5 w-5 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    Template de badge
+                  </h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                    Sélectionnez le template de badge qui sera utilisé pour générer les badges des participants
+                  </p>
+                  
+                  <FormField label="Template de badge">
+                    <Select
+                      value={formData.badgeTemplateId}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, badgeTemplateId: e.target.value }))}
+                    >
+                      <SelectOption value="">Par défaut</SelectOption>
+                      {badgeTemplatesData?.data?.filter(t => t.is_active).map((template) => (
+                        <SelectOption key={template.id} value={template.id}>
+                          {template.name} {template.is_default ? '(Par défaut)' : ''}
+                        </SelectOption>
+                      ))}
+                    </Select>
+                  </FormField>
+
+                  {formData.badgeTemplateId && (
+                    <div className="mt-3">
                       <Button
                         variant="outline"
                         size="sm"
-                        leftIcon={<UserMinus className="h-3 w-3" />}
-                        onClick={() => {
-                          if (confirm('Retirer ce partenaire de l\'événement ?')) {
-                            alert('Fonctionnalité à implémenter')
-                          }
-                        }}
+                        onClick={() => navigate(`/badges/designer/${formData.badgeTemplateId}`)}
                       >
-                        Retirer
+                        Modifier le template
                       </Button>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Aucun partenaire invité pour le moment
-                </p>
-              )}
-            </FormField>
-            
-            <Button
-              variant="outline"
-              leftIcon={<UserPlus className="h-4 w-4" />}
-              onClick={() => alert('Modal d\'ajout de partenaires à implémenter')}
-            >
-              Ajouter des partenaires
-            </Button>
-          </div>
-        </div>
-
-        <SaveButton />
-      </div>
-
-      {/* STEP 3: Options et paramètres */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-            Options et paramètres
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Configurez les options d'inscription et de notification
-          </p>
-        </div>
-
-        <div className="space-y-6">
-          {/* Capacité maximale */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5">
-                <Users className="h-5 w-5 text-purple-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                  Gestion des participants
-                </h4>
-                
-                <div className="space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.capacity !== undefined}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setFormData((prev) => ({ ...prev, capacity: 100 }))
-                        } else {
-                          setFormData((prev) => {
-                            const { capacity, ...rest } = prev
-                            return rest as any
-                          })
-                        }
-                      }}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Limiter le nombre de participants
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Définir une capacité maximale pour cet événement
-                      </p>
-                    </div>
-                  </label>
-
-                  {formData.capacity !== undefined && (
-                    <FormField label="Capacité maximale">
-                      <Input
-                        name="capacity"
-                        type="number"
-                        min={1}
-                        value={formData.capacity || ''}
-                        onChange={(e) => {
-                          const value = e.target.value ? parseInt(e.target.value) : undefined
-                          setFormData((prev) => ({ ...prev, capacity: value }))
-                        }}
-                        placeholder="Ex: 100"
-                      />
-                    </FormField>
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Approbation */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5">
-                <Shield className="h-5 w-5 text-blue-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                  Gestion des inscriptions
-                </h4>
-                
-                <div className="space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.registration_auto_approve}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          registration_auto_approve: e.target.checked,
-                        }))
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Approuver automatiquement tous les inscrits
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Les participants sont immédiatement approuvés sans validation manuelle
-                      </p>
-                    </div>
-                  </label>
+          <SaveButton />
+        </div>
 
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.require_email_verification}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          require_email_verification: e.target.checked,
-                        }))
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Vérifier l'email pour être pris en compte
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        L'inscription est validée uniquement après vérification de l'adresse email
-                      </p>
-                    </div>
-                  </label>
+        {/* Zone de danger */}
+        <div className="bg-red-50 dark:bg-red-900/10 rounded-lg border-2 border-red-200 dark:border-red-800 p-6">
+          <h2 className="text-lg font-semibold text-red-900 dark:text-red-400 mb-4 flex items-center">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            Zone de danger
+          </h2>
+
+          <div className="space-y-4">
+            <p className="text-sm text-red-800 dark:text-red-300">
+              La suppression d'un événement est une action définitive et irréversible.
+            </p>
+
+            {deleteStep === 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setDeleteStep(1)}
+                leftIcon={<Trash2 className="h-4 w-4" />}
+                className="border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20"
+              >
+                Supprimer l'événement
+              </Button>
+            )}
+
+            {deleteStep === 1 && (
+              <div className="space-y-3 p-4 bg-red-100 dark:bg-red-900/20 rounded-lg">
+                <p className="font-medium text-red-900 dark:text-red-300">
+                  Êtes-vous sûr de vouloir supprimer l'événement "{event.name}" ?
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setDeleteStep(0)}
+                    size="sm"
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={() => setDeleteStep(2)}
+                    size="sm"
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Oui, continuer
+                  </Button>
                 </div>
               </div>
-            </div>
-          </div>
+            )}
 
-          {/* Notifications email */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5">
-                <Mail className="h-5 w-5 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                  Notifications par email
-                </h4>
-                
-                <div className="space-y-3">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.confirmation_email_enabled}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          confirmation_email_enabled: e.target.checked,
-                        }))
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Envoyer un email de confirmation lors de l'inscription
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Le participant reçoit un email confirmant son inscription
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.approval_email_enabled}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          approval_email_enabled: e.target.checked,
-                        }))
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Envoyer un email lorsque l'inscription est approuvée
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Le participant reçoit un email quand son inscription est validée
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.reminder_email_enabled}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          reminder_email_enabled: e.target.checked,
-                        }))
-                      }
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <div className="flex-1">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        Envoyer des rappels avant l'événement
-                      </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Les participants reçoivent des rappels quelques jours avant l'événement
-                      </p>
-                    </div>
-                  </label>
+            {deleteStep === 2 && (
+              <div className="space-y-3 p-4 bg-red-200 dark:bg-red-900/30 rounded-lg border-2 border-red-400 dark:border-red-700">
+                <p className="font-bold text-red-900 dark:text-red-300">
+                  DERNIÈRE CONFIRMATION
+                </p>
+                <p className="text-sm text-red-800 dark:text-red-300">
+                  Cette action est <strong>irréversible</strong>. L'événement sera
+                  définitivement supprimé de la base de données.
+                </p>
+                <p className="text-sm font-medium text-red-900 dark:text-red-200">
+                  Confirmez-vous la suppression de "{event.name}" ?
+                </p>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setDeleteStep(0)}
+                    size="sm"
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={handleDeleteEvent}
+                    disabled={isDeleting}
+                    size="sm"
+                    className="bg-red-700 hover:bg-red-800 text-white"
+                    leftIcon={<Trash2 className="h-4 w-4" />}
+                  >
+                    {isDeleting ? 'Suppression...' : 'Confirmer la suppression'}
+                  </Button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
+        </div>
+      </div>
 
-          {/* Template de badge */}
-          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5">
-                <CreditCard className="h-5 w-5 text-purple-600" />
+      {/* Modal de confirmation de navigation */}
+      {showUnsavedChangesModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-6 transform transition-all">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                  Template de badge
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                  Sélectionnez le template de badge qui sera utilisé pour générer les badges des participants
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Modifications non enregistrées
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Vous avez des modifications en attente. Si vous quittez cette page sans enregistrer, elles seront perdues.
                 </p>
                 
-                <FormField label="Template de badge">
-                  <Select
-                    value={formData.badgeTemplateId}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, badgeTemplateId: e.target.value }))}
+                <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={handleStay}
+                    className="order-3 sm:order-1"
                   >
-                    <SelectOption value="">Par défaut</SelectOption>
-                    {badgeTemplatesData?.data?.filter(t => t.is_active).map((template) => (
-                      <SelectOption key={template.id} value={template.id}>
-                        {template.name} {template.is_default ? '(Par défaut)' : ''}
-                      </SelectOption>
-                    ))}
-                  </Select>
-                </FormField>
-
-                {formData.badgeTemplateId && (
-                  <div className="mt-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/badges/designer/${formData.badgeTemplateId}`)}
-                    >
-                      Modifier le template
-                    </Button>
-                  </div>
-                )}
+                    Retour
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleLeave}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 order-2 sm:order-2"
+                  >
+                    Quitter
+                  </Button>
+                  <Button
+                    onClick={handleSaveAndLeave}
+                    disabled={isUpdating}
+                    className="order-1 sm:order-3"
+                  >
+                    {isUpdating ? 'Enregistrement...' : 'Sauvegarder'}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        <SaveButton />
-      </div>
-
-      {/* Zone de danger */}
-      <div className="bg-red-50 dark:bg-red-900/10 rounded-lg border-2 border-red-200 dark:border-red-800 p-6">
-        <h2 className="text-lg font-semibold text-red-900 dark:text-red-400 mb-4 flex items-center">
-          <AlertTriangle className="h-5 w-5 mr-2" />
-          Zone de danger
-        </h2>
-
-        <div className="space-y-4">
-          <p className="text-sm text-red-800 dark:text-red-300">
-            La suppression d'un événement est une action définitive et irréversible.
-          </p>
-
-          {deleteStep === 0 && (
-            <Button
-              variant="outline"
-              onClick={() => setDeleteStep(1)}
-              leftIcon={<Trash2 className="h-4 w-4" />}
-              className="border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20"
-            >
-              Supprimer l'événement
-            </Button>
-          )}
-
-          {deleteStep === 1 && (
-            <div className="space-y-3 p-4 bg-red-100 dark:bg-red-900/20 rounded-lg">
-              <p className="font-medium text-red-900 dark:text-red-300">
-                Êtes-vous sûr de vouloir supprimer l'événement "{event.name}" ?
-              </p>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setDeleteStep(0)}
-                  size="sm"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={() => setDeleteStep(2)}
-                  size="sm"
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                >
-                  Oui, continuer
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {deleteStep === 2 && (
-            <div className="space-y-3 p-4 bg-red-200 dark:bg-red-900/30 rounded-lg border-2 border-red-400 dark:border-red-700">
-              <p className="font-bold text-red-900 dark:text-red-300">
-                DERNIÈRE CONFIRMATION
-              </p>
-              <p className="text-sm text-red-800 dark:text-red-300">
-                Cette action est <strong>irréversible</strong>. L'événement sera
-                définitivement supprimé de la base de données.
-              </p>
-              <p className="text-sm font-medium text-red-900 dark:text-red-200">
-                Confirmez-vous la suppression de "{event.name}" ?
-              </p>
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setDeleteStep(0)}
-                  size="sm"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  onClick={handleDeleteEvent}
-                  disabled={isDeleting}
-                  size="sm"
-                  className="bg-red-700 hover:bg-red-800 text-white"
-                  leftIcon={<Trash2 className="h-4 w-4" />}
-                >
-                  {isDeleting ? 'Suppression...' : 'Confirmer la suppression'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Modal de succès de mise à jour */}
       {showUpdateSuccessModal && (
@@ -849,6 +949,6 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
           to { width: 100%; }
         }
       `}</style>
-    </div>
+    </>
   )
 }

@@ -121,14 +121,34 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       return
     }
 
-    // Vérifier si le script est déjà chargé
-    if (window.google?.maps?.places) {
+    // Fonction pour vérifier si l'API est chargée
+    const isApiLoaded = () => !!(window.google?.maps?.places)
+
+    // Si déjà chargé, on met à jour l'état
+    if (isApiLoaded()) {
       setIsScriptLoaded(true)
       return
     }
 
-    // Charger le script
+    // Vérifier si le script est déjà présent dans le DOM (chargé par un autre composant)
+    const scriptId = 'google-maps-script'
+    const existingScript = document.getElementById(scriptId)
+
+    if (existingScript) {
+      // Si le script existe mais n'est pas encore prêt, on attend
+      const checkInterval = setInterval(() => {
+        if (isApiLoaded()) {
+          setIsScriptLoaded(true)
+          clearInterval(checkInterval)
+        }
+      }, 100)
+
+      return () => clearInterval(checkInterval)
+    }
+
+    // Charger le script si non présent
     const script = document.createElement('script')
+    script.id = scriptId
     script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&language=fr`
     script.async = true
     script.defer = true

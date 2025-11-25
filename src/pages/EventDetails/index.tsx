@@ -65,8 +65,11 @@ export const EventDetails: React.FC = () => {
 
   // Fonction pour changer d'onglet et mettre à jour l'URL
   const handleTabChange = (tab: TabType) => {
-    setActiveTab(tab)
-    setSearchParams({ tab })
+    setSearchParams((prev) => {
+      const newParams = new URLSearchParams(prev)
+      newParams.set('tab', tab)
+      return newParams
+    })
   }
 
   // State pour la pagination des inscriptions

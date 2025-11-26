@@ -324,7 +324,7 @@ export const registrationsApi = rootApi.injectEndpoints({
           const contentDisposition = response.headers.get('content-disposition')
           const filename =
             contentDisposition?.match(/filename="(.+)"/)?.[1] ||
-            `inscriptions_export_${new Date().toISOString().split('T')[0]}.csv`
+            `inscriptions_export_${new Date().toISOString().split('T')[0]}.${format === 'excel' || format === 'xlsx' ? 'xlsx' : 'csv'}`
           return { downloadUrl, filename }
         },
       }),

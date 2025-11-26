@@ -407,6 +407,8 @@ export const EventDetails: React.FC = () => {
   const handleImportSuccess = (result: any) => {
     console.log('Import terminé:', result)
     // La liste sera automatiquement rafraîchie par RTK Query invalidation
+    // Force refresh just in case
+    refetchRegistrations()
   }
 
   // Fonction pour exporter toutes les inscriptions

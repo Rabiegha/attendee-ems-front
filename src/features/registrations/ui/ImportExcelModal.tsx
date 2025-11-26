@@ -5,6 +5,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Download,
+  Trash2,
 } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
@@ -39,6 +40,8 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
     'fonction',
     'titre',
   ],
+  country: ['pays', 'country', 'nation', 'state'],
+  attendanceType: ['mode', 'attendance_type', 'type', 'participation', 'attendance'],
 }
 
 function normalizeColumnName(colName: string): string {
@@ -152,7 +155,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       setHeaders(headerRow)
       setColumnMapping(detectedMapping)
       setAllData(parsedData) // Stocker toutes les données
-      setPreview(parsedData.slice(0, 5)) // Aperçu des 5 premières lignes
+      setPreview(parsedData) // Aperçu de toutes les lignes
       setStep('preview')
     } catch (error) {
       console.error('Error parsing Excel:', error)
@@ -161,35 +164,55 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   }
 
   const handleImport = async () => {
-    if (!selectedFile) {
-      toast.error('Erreur', 'Aucun fichier sélectionné')
+    if (allData.length === 0) {
+      toast.error('Erreur', 'Aucune donnée à importer')
       return
     }
 
     setIsProcessing(true)
 
     try {
+      // Générer un nouveau fichier Excel à partir de allData (qui contient les suppressions)
+      const ws = XLSX.utils.json_to_sheet(allData, { header: headers })
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Import')
+      const excelBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+      const fileToImport = new File([blob], 'import.xlsx', {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      })
+
       // Premier import SANS remplacer les doublons pour détecter les conflits
       const result = await importExcelRegistrations({
         eventId,
-        file: selectedFile,
+        file: fileToImport,
         autoApprove: true,
         replaceExisting: false, // ← Ne pas remplacer au premier passage
       }).unwrap()
 
       // Vérifier s'il y a des doublons détectés
       const duplicateErrors = result.summary.errors?.filter(
-        (e: any) => e.error?.includes('already registered')
+        (e: any) => 
+          e.error?.toLowerCase().includes('already registered') || 
+          e.error?.toLowerCase().includes('previously deleted')
       ) || []
 
       if (duplicateErrors.length > 0) {
         // Il y a des doublons → Afficher l'étape de résolution de conflits
         setConflicts(duplicateErrors)
         setStep('conflicts')
-        toast.info(
-          'Doublons détectés',
-          `${duplicateErrors.length} inscription(s) existent déjà. Choisissez lesquelles remplacer.`
-        )
+        
+        const deletedCount = duplicateErrors.filter((e: any) => e.error?.toLowerCase().includes('previously deleted')).length
+        const existingCount = duplicateErrors.length - deletedCount
+        
+        let message = ''
+        if (existingCount > 0) message += `${existingCount} inscription(s) existent déjà. `
+        if (deletedCount > 0) message += `${deletedCount} inscription(s) sont dans la corbeille. `
+        message += 'Choisissez lesquelles remplacer/restaurer.'
+
+        toast.info('Conflits détectés', message)
       } else {
         // Pas de doublons → Succès direct
         setImportResult(result)
@@ -271,6 +294,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
         return rowEmail && emailsToReplace.includes(String(row[rowEmail]).toLowerCase().trim())
       })
 
+      console.log(`Filtered ${filteredData.length} rows for replacement out of ${allData.length} total rows.`);
+
       // Créer un nouveau fichier Excel avec seulement ces lignes
       const ws = XLSX.utils.json_to_sheet(filteredData)
       const wb = XLSX.utils.book_new()
@@ -282,6 +307,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       const replacementFile = new File([blob], 'replacements.xlsx', {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       })
+
+      console.log('Sending replacement file with replaceExisting=true');
 
       // Import avec replaceExisting=true
       const result = await importExcelRegistrations({
@@ -331,29 +358,29 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const downloadTemplate = () => {
     // Créer un fichier Excel template
     const templateData = [
-      ['prénom', 'nom', 'email', 'téléphone', 'entreprise', 'poste'],
-      [
-        'Jean',
-        'Dupont',
-        'jean.dupont@example.com',
-        '0612345678',
-        'ACME Corp',
-        'Directeur',
-      ],
-      [
-        'Marie',
-        'Martin',
-        'marie.martin@example.com',
-        '0698765432',
-        'TechStart',
-        'Manager',
-      ],
+      ['prénom', 'nom', 'email', 'téléphone', 'entreprise', 'poste', 'pays', 'mode'],
     ]
 
     const ws = XLSX.utils.aoa_to_sheet(templateData)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Inscriptions')
     XLSX.writeFile(wb, 'template_inscriptions.xlsx')
+  }
+
+  const handleRemoveRow = (indexToRemove: number) => {
+    const newData = allData.filter((_, index) => index !== indexToRemove)
+    setAllData(newData)
+    setPreview(newData)
+  }
+
+  const handleCellChange = (rowIndex: number, header: string, value: string) => {
+    const newData = [...allData]
+    newData[rowIndex] = {
+      ...newData[rowIndex],
+      [header]: value
+    }
+    setAllData(newData)
+    setPreview(newData)
   }
 
   return (
@@ -433,6 +460,12 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 <li>
                   • <strong>Poste</strong> : poste, job_title, fonction
                 </li>
+                <li>
+                  • <strong>Pays</strong> : pays, country
+                </li>
+                <li>
+                  • <strong>Mode</strong> : mode, attendance_type (onsite/online)
+                </li>
               </ul>
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
                 Les colonnes non reconnues seront sauvegardées comme données
@@ -462,12 +495,15 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
             <div>
               <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                Aperçu des données (5 premières lignes) :
+                Aperçu des données ({preview.length} lignes) :
               </h4>
-              <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+              <div className="overflow-x-auto max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16 min-w-[64px]">
+                        {/* Actions */}
+                      </th>
                       {headers.map((header, index) => (
                         <th
                           key={index}
@@ -486,16 +522,27 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                   <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                     {preview.map((row, rowIndex) => (
                       <tr key={rowIndex}>
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                          <button
+                            onClick={() => handleRemoveRow(rowIndex)}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+                            title="Supprimer cette ligne"
+                          >
+                            <Trash2 className="h-5 w-5 min-w-[20px] min-h-[20px]" />
+                          </button>
+                        </td>
                         {headers.map((header, colIndex) => (
                           <td
                             key={colIndex}
-                            className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap"
+                            className="px-2 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap"
                           >
-                            {row[header]?.toString() || (
-                              <span className="text-gray-400 dark:text-gray-500">
-                                null
-                              </span>
-                            )}
+                            <input
+                              type="text"
+                              value={row[header]?.toString() || ''}
+                              onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
+                              className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
+                              placeholder="-"
+                            />
                           </td>
                         ))}
                       </tr>
@@ -547,10 +594,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                   <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
                   <div className="flex-1">
                     <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
-                      {conflicts.length} doublon(s) détecté(s)
+                      {conflicts.length} conflit(s) détecté(s)
                     </h4>
                     <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
-                      Les inscriptions suivantes existent déjà dans le système. Sélectionnez celles que vous souhaitez remplacer par les nouvelles données.
+                      Certaines inscriptions existent déjà ou sont dans la corbeille. Sélectionnez celles que vous souhaitez remplacer ou restaurer.
                     </p>
                   </div>
                 </div>
@@ -602,12 +649,18 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                           <span className="text-sm font-medium text-gray-900 dark:text-white">
                             {conflict.email}
                           </span>
-                          <span className="text-xs font-mono text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
-                            Ligne {conflict.row}
-                          </span>
+                          {conflict.error?.toLowerCase().includes('previously deleted') ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200">
+                              Supprimé (Corbeille)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
+                              Déjà inscrit
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          {conflict.error}
+                          Ligne {conflict.row} • {conflict.error?.toLowerCase().includes('previously deleted') ? 'Sera restauré et mis à jour' : 'Sera remplacé par les nouvelles données'}
                         </p>
                       </div>
                     </label>
@@ -621,18 +674,18 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 variant="outline"
                 onClick={() => {
                   setStep('success')
-                  toast.info('Import terminé', 'Doublons ignorés')
+                  toast.info('Import terminé', 'Conflits ignorés')
                 }}
               >
-                Ignorer les doublons
+                Ignorer les conflits
               </Button>
               <Button
                 onClick={handleApplyReplacements}
                 disabled={isProcessing || selectedConflicts.size === 0}
               >
                 {isProcessing
-                  ? 'Remplacement en cours...'
-                  : `Remplacer ${selectedConflicts.size} inscription(s)`}
+                  ? 'Traitement en cours...'
+                  : `Remplacer/Restaurer ${selectedConflicts.size} inscription(s)`}
               </Button>
             </div>
           </>

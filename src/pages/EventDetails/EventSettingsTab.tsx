@@ -94,6 +94,11 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   // État du formulaire
   const [formData, setFormData] = useState(initialFormData)
 
+  // Mettre à jour le formulaire quand les données initiales changent (après sauvegarde ou chargement)
+  useEffect(() => {
+    setFormData(initialFormData)
+  }, [initialFormData])
+
   // Détection des changements
   const isDirty = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify(initialFormData)

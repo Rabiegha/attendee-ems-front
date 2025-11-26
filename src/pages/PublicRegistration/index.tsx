@@ -28,7 +28,11 @@ const PublicRegistration: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<Record<string, string | boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submissionResult, setSubmissionResult] = useState<{
+    type: 'success' | 'already_registered' | 'full' | 'error'
+    title: string
+    message: string
+  } | null>(null)
 
   // Charger les données de l'événement
   useEffect(() => {
@@ -71,7 +75,7 @@ const PublicRegistration: React.FC = () => {
     updateHeight()
     window.addEventListener('resize', updateHeight)
     return () => window.removeEventListener('resize', updateHeight)
-  }, [event, isSubmitted])
+  }, [event, submissionResult])
 
   // Contrôler le mode dark sur l'élément HTML
   useEffect(() => {
@@ -165,35 +169,52 @@ const PublicRegistration: React.FC = () => {
           errorData.status === 403 ||
           userMessage.includes('not open for registration')
         ) {
-          userMessage =
-            'Les inscriptions pour cet événement ne sont pas encore ouvertes ou sont clôturées.'
+          setSubmissionResult({
+            type: 'error',
+            title: 'Inscriptions fermées',
+            message: 'Les inscriptions pour cet événement ne sont pas encore ouvertes ou sont clôturées.'
+          })
+          return
+        } else if (userMessage.includes('already registered')) {
+          setSubmissionResult({
+            type: 'already_registered',
+            title: 'Déjà inscrit',
+            message: 'Vous êtes déjà inscrit à cet événement avec cette adresse email.'
+          })
+          return
         } else if (errorData.status === 409 || userMessage.includes('full')) {
-          userMessage =
-            "L'événement est complet. Aucune nouvelle inscription n'est possible."
+          setSubmissionResult({
+            type: 'full',
+            title: 'Événement complet',
+            message: "L'événement est complet. Aucune nouvelle inscription n'est possible."
+          })
+          return
         }
 
         throw new Error(userMessage)
       }
 
-      setIsSubmitted(true)
-      toast.success(
-        'Inscription réussie !',
-        'Votre inscription a été enregistrée avec succès'
-      )
+      setSubmissionResult({
+        type: 'success',
+        title: 'Inscription confirmée !',
+        message: 'Votre inscription a été enregistrée avec succès'
+      })
     } catch (err) {
-      toast.error(
-        'Erreur',
-        err instanceof Error
-          ? err.message
-          : 'Impossible de soumettre le formulaire'
-      )
+      const message = err instanceof Error ? err.message : 'Impossible de soumettre le formulaire'
+      
+      // Si on n'a pas déjà défini un résultat spécifique (comme pour already_registered)
+      setSubmissionResult({
+        type: 'error',
+        title: "Erreur d'inscription",
+        message: message
+      })
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const resetForm = () => {
-    setIsSubmitted(false)
+    setSubmissionResult(null)
     setFormData({})
   }
 
@@ -322,21 +343,34 @@ const PublicRegistration: React.FC = () => {
           {/* Form avec overlay si nécessaire */}
           <div className="relative">
             <form className="p-6 space-y-4" onSubmit={handleSubmit}>
-              {isSubmitted ? (
+              {submissionResult ? (
                 <div className="text-center py-8">
-                  <CheckCircle className="h-16 w-16 text-green-500 dark:text-green-400 mx-auto mb-4" />
+                  {submissionResult.type === 'success' && (
+                    <CheckCircle className="h-16 w-16 text-green-500 dark:text-green-400 mx-auto mb-4" />
+                  )}
+                  {submissionResult.type === 'already_registered' && (
+                    <CheckCircle className="h-16 w-16 text-blue-500 dark:text-blue-400 mx-auto mb-4" />
+                  )}
+                  {submissionResult.type === 'full' && (
+                    <AlertCircle className="h-16 w-16 text-orange-500 dark:text-orange-400 mx-auto mb-4" />
+                  )}
+                  {submissionResult.type === 'error' && (
+                    <AlertCircle className="h-16 w-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+                  )}
+                  
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                    Inscription confirmée !
+                    {submissionResult.title}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-6">
-                    Votre inscription a été enregistrée avec succès
+                    {submissionResult.message}
                   </p>
+                  
                   <button
                     type="button"
                     onClick={resetForm}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
-                    Nouvelle inscription
+                    {submissionResult.type === 'error' ? 'Réessayer' : 'Nouvelle inscription'}
                   </button>
                 </div>
               ) : (
@@ -430,7 +464,7 @@ const PublicRegistration: React.FC = () => {
             </form>
 
             {/* Overlay avec message selon le statut */}
-            {!isSubmitted &&
+            {!submissionResult &&
               (event.status === 'draft' ||
                 event.status === 'cancelled' ||
                 event.status === 'registration_closed' ||

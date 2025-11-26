@@ -132,13 +132,18 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
 
       // Handle specific error cases
       let errorMessage = "Une erreur est survenue lors de l'inscription"
+      const backendMessage = error?.data?.message || ''
 
       if (error?.status === 409) {
-        errorMessage = 'Cet email est déjà inscrit à cet événement'
+        if (backendMessage.includes('full')) {
+          errorMessage = "L'événement est complet"
+        } else {
+          errorMessage = 'Cet email est déjà inscrit à cet événement'
+        }
       } else if (error?.status === 403) {
         errorMessage = "L'événement n'accepte plus d'inscriptions"
-      } else if (error?.data?.message) {
-        errorMessage = error.data.message
+      } else if (backendMessage) {
+        errorMessage = backendMessage
       }
 
       toast.error("Erreur d'inscription", errorMessage)

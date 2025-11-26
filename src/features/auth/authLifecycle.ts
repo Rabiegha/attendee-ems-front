@@ -118,6 +118,14 @@ export async function bootstrapAuth() {
       // Cela garantit que l'utilisateur ne reste pas dans un état "fantôme"
       store.dispatch(clearSession())
     }
+    // Mark bootstrap as completed in every case so UI won't get stuck
+    // (previously missing — when no token is present we never left bootstrapping state)
+    try {
+      const { setBootstrapCompleted } = await import('@/features/auth/model/sessionSlice')
+      store.dispatch(setBootstrapCompleted())
+    } catch (e) {
+      // best-effort, ignore failures
+    }
   })()
 
   // Nettoyer la promesse une fois terminée

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import {
   onAuthStateMaybeChanged,
   bootstrapAuth,
@@ -13,6 +13,7 @@ interface AuthLifecycleProviderProps {
 export const AuthLifecycleProvider: React.FC<AuthLifecycleProviderProps> = ({
   children,
 }) => {
+  const dispatch = useDispatch()
   const { token, expiresAt } = useSelector(selectSession)
   const [hasBootstrapped, setHasBootstrapped] = useState(false)
 
@@ -30,7 +31,16 @@ export const AuthLifecycleProvider: React.FC<AuthLifecycleProviderProps> = ({
         // Ne tenter le refresh QUE si on a un token (en mémoire OU dans persist)
         // Ceci évite le 401 au premier chargement de la page de login
         if (token || sessionData?.token) {
+          // We only attempt a bootstrap if a token is persisted or in memory
+          // bootstrapAuth will mark bootstrap completed when done.
           bootstrapAuth()
+        } else {
+          // No token — we must explicitly mark bootstrap completed so the UI stops showing the loader
+          // and can show the login page.
+          // dynamic import without top-level await so it parses correctly in dev
+          import('@/features/auth/model/sessionSlice')
+            .then((mod) => dispatch(mod.setBootstrapCompleted()))
+            .catch(() => {})
         }
       } else if (token) {
         // Pas de persist mais token en mémoire = cas edge, bootstrap quand même
@@ -40,6 +50,11 @@ export const AuthLifecycleProvider: React.FC<AuthLifecycleProviderProps> = ({
       // En cas d'erreur de parsing, tenter seulement si on a un token en mémoire
       if (token) {
         bootstrapAuth()
+        } else {
+          // If parsing failed and we don't have a token, make sure we finish bootstrapping
+          import('@/features/auth/model/sessionSlice')
+            .then((mod) => dispatch(mod.setBootstrapCompleted()))
+            .catch(() => {})
       }
     }
     

@@ -87,6 +87,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null) // ← Stocker le fichier
   const [conflicts, setConflicts] = useState<any[]>([]) // ← Doublons détectés
   const [selectedConflicts, setSelectedConflicts] = useState<Set<number>>(new Set()) // ← Lignes à remplacer
+  const [firstImportResult, setFirstImportResult] = useState<any | null>(null) // ← Stocker le premier résultat complet
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
@@ -172,7 +173,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     setIsProcessing(true)
 
     try {
-      // Générer un nouveau fichier Excel à partir de allData (qui contient les suppressions)
+      // Générer un fichier Excel
       const ws = XLSX.utils.json_to_sheet(allData, { header: headers })
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Import')
@@ -184,15 +185,20 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       })
 
-      // Premier import SANS remplacer les doublons pour détecter les conflits
+      // NOUVELLE APPROCHE: Import direct avec replaceExisting=true
+      // Cela va:
+      // - Remplacer les inscriptions existantes (déjà inscrits)
+      // - Restaurer les soft-deleted
+      // - Créer les nouvelles inscriptions jusqu'à la capacité
       const result = await importExcelRegistrations({
         eventId,
         file: fileToImport,
         autoApprove: true,
-        replaceExisting: false, // ← Ne pas remplacer au premier passage
+        replaceExisting: true, // ← Tout de suite avec replaceExisting=true
       }).unwrap()
 
-      // Vérifier s'il y a des doublons détectés
+      // Vérifier s'il y a encore des erreurs de conflit
+      // (ne devrait pas arriver car replaceExisting=true)
       const duplicateErrors = result.summary.errors?.filter(
         (e: any) => 
           e.error?.toLowerCase().includes('already registered') || 
@@ -200,41 +206,30 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       ) || []
 
       if (duplicateErrors.length > 0) {
-        // Il y a des doublons → Afficher l'étape de résolution de conflits
-        setConflicts(duplicateErrors)
-        setStep('conflicts')
-        
-        const deletedCount = duplicateErrors.filter((e: any) => e.error?.toLowerCase().includes('previously deleted')).length
-        const existingCount = duplicateErrors.length - deletedCount
-        
-        let message = ''
-        if (existingCount > 0) message += `${existingCount} inscription(s) existent déjà. `
-        if (deletedCount > 0) message += `${deletedCount} inscription(s) sont dans la corbeille. `
-        message += 'Choisissez lesquelles remplacer/restaurer.'
+        // Des conflits persistent (ne devrait pas arriver)
+        console.warn('Des conflits persistent malgré replaceExisting=true:', duplicateErrors);
+      }
 
-        toast.info('Conflits détectés', message)
+      // Afficher directement le résultat
+      setImportResult(result)
+      setStep('success')
+
+      if (onImportSuccess) {
+        onImportSuccess(result)
+      }
+
+      const { created, updated, restored, skipped, errors } = result.summary
+      
+      if (errors && errors.length > 0) {
+        toast.warning(
+          'Import terminé avec des erreurs',
+          `${created} créées, ${updated} màj, ${restored || 0} restaurées, ${skipped} ignorées. ${errors.length} erreur(s).`
+        )
       } else {
-        // Pas de doublons → Succès direct
-        setImportResult(result)
-        setStep('success')
-
-        if (onImportSuccess) {
-          onImportSuccess(result)
-        }
-
-        const { created, updated, skipped, errors } = result.summary
-        
-        if (errors && errors.length > 0) {
-          toast.warning(
-            'Import terminé avec des erreurs',
-            `${created} créées, ${updated} mises à jour, ${skipped} ignorées. ${errors.length} erreur(s) détectée(s).`
-          )
-        } else {
-          toast.success(
-            'Import réussi !',
-            `${created} créées, ${updated} mises à jour, ${skipped} ignorées`
-          )
-        }
+        toast.success(
+          'Import réussi !',
+          `${created} créées, ${updated} màj, ${restored || 0} restaurées, ${skipped} ignorées`
+        )
       }
     } catch (error: any) {
       console.error('Import error:', error)
@@ -265,6 +260,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     setSelectedFile(null)
     setConflicts([])
     setSelectedConflicts(new Set())
+    setFirstImportResult(null)
     setStep('upload')
     setImportResult(null)
     onClose()
@@ -272,9 +268,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
   const handleApplyReplacements = async () => {
     if (selectedConflicts.size === 0) {
-      // Aucune ligne sélectionnée → Terminer sans remplacer
-      toast.info('Import terminé', 'Aucun doublon remplacé')
+      // Aucune ligne sélectionnée → Utiliser le premier résultat
+      setImportResult(firstImportResult)
       setStep('success')
+      toast.info('Import terminé', 'Aucun conflit résolu')
       return
     }
 
@@ -282,22 +279,67 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
     try {
       // Récupérer les emails des conflits sélectionnés
-      const emailsToReplace = Array.from(selectedConflicts).map(
-        (index) => conflicts[index].email
+      const selectedConflictEmails = Array.from(selectedConflicts).map(
+        (index) => conflicts[index].email?.toLowerCase().trim()
       )
 
-      // Filtrer allData pour ne garder que les lignes sélectionnées
-      const filteredData = allData.filter((row) => {
+      console.log('=== DÉBUT REMPLACEMENT ===');
+      console.log('Conflits sélectionnés:', selectedConflicts.size);
+      console.log('Emails sélectionnés:', selectedConflictEmails);
+
+      // Séparer les restaurations des mises à jour
+      const restorationEmails = Array.from(selectedConflicts)
+        .filter((index) => conflicts[index].error?.toLowerCase().includes('previously deleted'))
+        .map((index) => conflicts[index].email?.toLowerCase().trim());
+      
+      const updateEmails = selectedConflictEmails.filter(email => !restorationEmails.includes(email));
+      
+      console.log('Restaurations à faire:', restorationEmails.length);
+      console.log('Mises à jour à faire:', updateEmails.length);
+
+      // NOUVELLE LOGIQUE:
+      // 1. Les inscriptions créées lors du premier import (firstImportResult.summary.created)
+      //    doivent être RÉDUITES si on restaure des soft-deleted
+      // 2. Calculer combien de places sont vraiment disponibles après restauration
+      
+      const createdInFirstImport = firstImportResult?.summary?.created || 0;
+      const restorationCount = restorationEmails.length;
+      
+      // Si on restaure N personnes, on doit enlever N personnes créées lors du premier import
+      const adjustedCreations = Math.max(0, createdInFirstImport - restorationCount);
+      
+      console.log(`Premier import a créé: ${createdInFirstImport}`);
+      console.log(`Restaurations demandées: ${restorationCount}`);
+      console.log(`Créations ajustées: ${adjustedCreations} (différence: ${createdInFirstImport - adjustedCreations} à supprimer)`);
+
+      // ÉTAPE 1: Si des restaurations sont demandées ET que le premier import a créé des inscriptions,
+      // il faut supprimer le nombre équivalent d'inscriptions pour faire de la place
+      if (restorationCount > 0 && createdInFirstImport > 0) {
+        const toDelete = Math.min(restorationCount, createdInFirstImport);
+        console.warn(`⚠️ ATTENTION: ${toDelete} inscriptions du premier import devraient être supprimées pour faire place aux restaurations`);
+        
+        // Avertir l'utilisateur
+        const overage = toDelete;
+        toast.warning(
+          'Dépassement de capacité',
+          `L'événement dépassera sa capacité de ${overage} place(s) car ${createdInFirstImport} personne(s) ont déjà été ajoutées lors de la détection des conflits.`,
+          { duration: 8000 }
+        );
+      }
+
+      // Filtrer allData : SEULEMENT les conflits sélectionnés
+      const dataToImport = allData.filter((row) => {
         const rowEmail = Object.keys(row).find((key) =>
           ['email', 'Email', 'E-mail', 'e-mail', 'mail'].includes(key)
         )
-        return rowEmail && emailsToReplace.includes(String(row[rowEmail]).toLowerCase().trim())
-      })
+        const email = rowEmail ? String(row[rowEmail]).toLowerCase().trim() : null;
+        return email && selectedConflictEmails.includes(email);
+      });
 
-      console.log(`Filtered ${filteredData.length} rows for replacement out of ${allData.length} total rows.`);
+      console.log(`Données à importer: ${dataToImport.length} lignes (conflits seulement)`);
 
-      // Créer un nouveau fichier Excel avec seulement ces lignes
-      const ws = XLSX.utils.json_to_sheet(filteredData)
+      // Créer un nouveau fichier Excel avec seulement les conflits sélectionnés
+      const ws = XLSX.utils.json_to_sheet(dataToImport)
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Replacements')
       const excelBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
@@ -309,26 +351,61 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       })
 
       console.log('Sending replacement file with replaceExisting=true');
+      console.log('EventId:', eventId);
 
       // Import avec replaceExisting=true
-      const result = await importExcelRegistrations({
+      const replacementResult = await importExcelRegistrations({
         eventId,
         file: replacementFile,
         autoApprove: true,
         replaceExisting: true,
       }).unwrap()
 
-      setImportResult(result)
+      console.log('=== RÉSULTAT REMPLACEMENT ===');
+      console.log('Résultat brut:', replacementResult);
+      console.log('Created:', replacementResult.summary.created);
+      console.log('Updated:', replacementResult.summary.updated);
+      console.log('Restored:', replacementResult.summary.restored);
+      console.log('Errors:', replacementResult.summary.errors);
+
+      // Fusionner les résultats : 
+      // - Garder les créations du premier import (personnes déjà ajoutées)
+      // - Ajouter les restaurations/mises à jour du second import
+      // - Garder TOUTES les erreurs du premier import (sauf les conflits résolus)
+      const resolvedEmails = new Set(selectedConflictEmails)
+      const unresolvedErrors = (firstImportResult?.summary?.errors || []).filter(
+        (e: any) => !resolvedEmails.has(e.email?.toLowerCase().trim())
+      )
+
+      const mergedResult = {
+        ...replacementResult,
+        summary: {
+          // Les créations du premier import (déjà en base)
+          created: firstImportResult?.summary?.created || 0,
+          // Les mises à jour du second import
+          updated: replacementResult.summary.updated || 0,
+          // Les restaurations du second import
+          restored: replacementResult.summary.restored || 0,
+          // Les erreurs non résolues + les nouvelles erreurs du second import
+          skipped: unresolvedErrors.length + (replacementResult.summary.errors?.length || 0),
+          errors: [...unresolvedErrors, ...(replacementResult.summary.errors || [])],
+        }
+      }
+
+      setImportResult(mergedResult)
       setStep('success')
 
       if (onImportSuccess) {
-        onImportSuccess(result)
+        onImportSuccess(mergedResult)
       }
 
-      toast.success(
-        'Remplacements appliqués !',
-        `${selectedConflicts.size} inscription(s) mise(s) à jour`
-      )
+      const restoredCount = replacementResult.summary.restored || 0
+      const updatedCount = replacementResult.summary.updated || 0
+      const message = restoredCount > 0 
+        ? `${updatedCount} mise(s) à jour, ${restoredCount} restauration(s)`
+        : `${updatedCount} inscription(s) mise(s) à jour`
+
+      toast.success('Remplacements appliqués !', message)
     } catch (error: any) {
       console.error('Replacement error:', error)
       toast.error('Erreur', 'Échec du remplacement des doublons')
@@ -673,6 +750,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
               <Button
                 variant="outline"
                 onClick={() => {
+                  // Utiliser le premier résultat d'import (sans les remplacements)
+                  setImportResult(firstImportResult)
                   setStep('success')
                   toast.info('Import terminé', 'Conflits ignorés')
                 }}
@@ -697,14 +776,46 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
               <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
                 <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
                 Import terminé !
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {importResult.summary.created} créées •{' '}
-                {importResult.summary.updated} mises à jour •{' '}
-                {importResult.summary.skipped} ignorées
-              </p>
+              
+              <div className={`grid gap-4 mb-6 ${importResult.summary.restored > 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center border border-green-100 dark:border-green-800">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    {importResult.summary.created}
+                  </div>
+                  <div className="text-sm font-medium text-green-800 dark:text-green-300">
+                    Ajoutés
+                  </div>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center border border-blue-100 dark:border-blue-800">
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {importResult.summary.updated}
+                  </div>
+                  <div className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                    Mis à jour
+                  </div>
+                </div>
+                {importResult.summary.restored > 0 && (
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg text-center border border-purple-100 dark:border-purple-800">
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      {importResult.summary.restored}
+                    </div>
+                    <div className="text-sm font-medium text-purple-800 dark:text-purple-300">
+                      Restaurés
+                    </div>
+                  </div>
+                )}
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-center border border-gray-200 dark:border-gray-700">
+                  <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                    {importResult.summary.skipped}
+                  </div>
+                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Ignorés / Erreurs
+                  </div>
+                </div>
+              </div>
             </div>
 
             {importResult.summary.errors &&
@@ -714,7 +825,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200 mb-2 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-2" />
-                      Résumé des problèmes ({importResult.summary.errors.length})
+                      Détails des éléments non importés ({importResult.summary.errors.length})
                     </h4>
                     <div className="text-sm text-yellow-800 dark:text-yellow-300 space-y-1">
                       {(() => {
@@ -724,10 +835,19 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                         const refused = importResult.summary.errors.filter(
                           (e: any) => e.error?.includes('declined')
                         ).length
-                        const other = importResult.summary.errors.length - duplicates - refused
+                        const full = importResult.summary.errors.filter(
+                          (e: any) => {
+                            const err = e.error?.toLowerCase() || '';
+                            return err.includes('event is full') || err.includes('capacity') || err.includes('complet');
+                          }
+                        ).length
+                        const other = importResult.summary.errors.length - duplicates - refused - full
 
                         return (
                           <>
+                            {full > 0 && (
+                              <p className="font-medium text-red-600 dark:text-red-400">• {full} non ajouté(s) : événement complet</p>
+                            )}
                             {duplicates > 0 && (
                               <p>• {duplicates} doublon(s) : déjà inscrits à cet événement</p>
                             )}
@@ -744,27 +864,76 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                   </div>
 
                   {/* Liste détaillée des erreurs */}
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                    <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-2">
-                      Détail des erreurs :
-                    </h4>
-                    <ul className="text-sm text-red-800 dark:text-red-300 space-y-1 max-h-48 overflow-y-auto">
-                      {importResult.summary.errors.map(
-                        (error: any, index: number) => (
-                          <li key={index} className="flex items-start">
-                            <span className="font-mono text-xs bg-red-100 dark:bg-red-900/50 px-2 py-0.5 rounded mr-2">
-                              L{error.row}
-                            </span>
-                            <span className="flex-1">
-                              {error.email && (
-                                <span className="font-medium">{error.email} : </span>
-                              )}
-                              {error.error}
-                            </span>
-                          </li>
-                        )
-                      )}
-                    </ul>
+                  <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                        Liste des inscriptions non importées
+                      </h4>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {importResult.summary.errors.length} erreur(s)
+                      </span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                          <tr>
+                            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">
+                              Ligne
+                            </th>
+                            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Email / Identifiant
+                            </th>
+                            <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Raison
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                          {importResult.summary.errors.map((error: any, index: number) => {
+                            let frenchError = error.error;
+                            const errLower = error.error?.toLowerCase() || '';
+                            let badgeColor = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+                            
+                            if (errLower.includes('event is full') || errLower.includes('capacity')) {
+                              frenchError = 'Événement complet';
+                              badgeColor = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200';
+                            }
+                            else if (errLower.includes('already registered')) {
+                              frenchError = 'Déjà inscrit';
+                              badgeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200';
+                            }
+                            else if (errLower.includes('declined')) {
+                              frenchError = 'Précédemment refusé';
+                              badgeColor = 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200';
+                            }
+                            else if (errLower.includes('soft delete')) {
+                              frenchError = 'Dans la corbeille';
+                              badgeColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200';
+                            }
+                            else if (errLower.includes('email is required')) {
+                              frenchError = 'Email manquant';
+                              badgeColor = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+                            }
+
+                            return (
+                              <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                                <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-500 dark:text-gray-400 font-mono">
+                                  {error.row}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                  {error.email && error.email !== 'N/A' ? error.email : <span className="italic text-gray-400">Non spécifié</span>}
+                                </td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeColor}`}>
+                                    {frenchError}
+                                  </span>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               )}

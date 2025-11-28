@@ -465,17 +465,22 @@ export const EventDetails: React.FC = () => {
     )
   }
 
-  // Utiliser les compteurs depuis les métadonnées backend (total cross-pages)
-  const approvedCount = registrationsMeta.statusCounts.approved
-  const awaitingCount = registrationsMeta.statusCounts.awaiting
-  const refusedCount = registrationsMeta.statusCounts.refused
+  // Utiliser les stats actives pour l'affichage global (Header, Sidebar)
+  const activeMeta = activeRegistrationsStats?.meta || {
+    total: 0,
+    statusCounts: { awaiting: 0, approved: 0, refused: 0 }
+  }
+
+  const approvedCount = activeMeta.statusCounts.approved
+  const awaitingCount = activeMeta.statusCounts.awaiting
+  const refusedCount = activeMeta.statusCounts.refused
 
   // Filtrer les onglets si l'événement est supprimé
   const allTabs = [
     { id: 'details' as TabType, label: 'Détails', icon: FileText },
     {
       id: 'registrations' as TabType,
-      label: `Inscriptions (${registrationsMeta.total})`,
+      label: `Inscriptions (${activeMeta.total})`,
       icon: Users,
     },
     { id: 'form' as TabType, label: 'Formulaire', icon: FormInput, disabledIfDeleted: true },
@@ -742,7 +747,7 @@ export const EventDetails: React.FC = () => {
                       Inscriptions totales
                     </span>
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {registrationsMeta.total}
+                      {activeMeta.total}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -856,6 +861,7 @@ export const EventDetails: React.FC = () => {
                 />
               }
               meta={registrationsMeta}
+              stats={activeMeta}
               // Server-side pagination props
               currentPage={registrationsMeta.page}
               pageSize={registrationsMeta.limit}

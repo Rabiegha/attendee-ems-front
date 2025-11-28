@@ -70,6 +70,14 @@ interface RegistrationsTableProps {
       refused: number
     }
   }
+  stats?: {
+    total: number
+    statusCounts: {
+      awaiting: number
+      approved: number
+      refused: number
+    }
+  }
   // Server-side pagination
   currentPage?: number
   pageSize?: number
@@ -145,6 +153,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   isDeletedTab,
   tabsElement,
   meta,
+  stats,
   currentPage,
   pageSize,
   totalPages,
@@ -226,7 +235,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         `L'inscription a été ${STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG].label.toLowerCase()}`
       )
       // Le nettoyage se fera automatiquement quand le serveur renverra la bonne valeur
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating status:', error)
       // Erreur: restaurer l'ancienne valeur
       setOptimisticStatusUpdates(prev => {
@@ -234,7 +243,18 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         next.delete(registrationId)
         return next
       })
-      toast.error('Erreur', 'Impossible de mettre à jour le statut')
+
+      let title = 'Erreur'
+      let message = 'Impossible de mettre à jour le statut'
+
+      if (error?.status === 409) {
+        title = 'Capacité atteinte'
+        message = "L'événement est complet. Impossible d'approuver ce participant."
+      } else if (error?.data?.message) {
+        message = error.data.message
+      }
+
+      toast.error(title, message)
     }
   }
 
@@ -290,9 +310,20 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         "L'inscription a été restaurée avec succès"
       )
       setRestoringRegistration(null)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error restoring registration:', error)
-      toast.error('Erreur', "Impossible de restaurer l'inscription")
+      
+      let title = 'Erreur'
+      let message = "Impossible de restaurer l'inscription"
+
+      if (error?.status === 409) {
+        title = 'Capacité atteinte'
+        message = "L'événement est complet. Impossible de restaurer une inscription approuvée."
+      } else if (error?.data?.message) {
+        message = error.data.message
+      }
+
+      toast.error(title, message)
     }
   }
 
@@ -328,9 +359,20 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       // Réinitialiser
       setBulkStatusModalOpen(false)
       setBulkStatusSelectedIds(new Set())
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du changement de statut:', error)
-      toast.error('Erreur lors du changement de statut')
+      
+      let title = 'Erreur'
+      let message = 'Erreur lors du changement de statut'
+
+      if (error?.status === 409) {
+        title = 'Capacité atteinte'
+        message = "L'événement est complet. Impossible d'approuver ces participants."
+      } else if (error?.data?.message) {
+        message = error.data.message
+      }
+
+      toast.error(title, message)
       throw error
     }
   }
@@ -803,7 +845,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
           <div className="text-sm text-gray-600 dark:text-gray-300">Total</div>
           <div className="text-2xl font-bold text-gray-900 dark:text-white">
-            {meta?.total || registrations.length}
+            {stats?.total ?? meta?.total ?? registrations.length}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
@@ -811,7 +853,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             En attente
           </div>
           <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-            {meta?.statusCounts.awaiting ||
+            {stats?.statusCounts.awaiting ?? meta?.statusCounts.awaiting ??
               registrations.filter((r) => r.status === 'awaiting').length}
           </div>
         </div>
@@ -820,7 +862,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             Approuvés
           </div>
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {meta?.statusCounts.approved ||
+            {stats?.statusCounts.approved ?? meta?.statusCounts.approved ??
               registrations.filter((r) => r.status === 'approved').length}
           </div>
         </div>
@@ -829,7 +871,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             Refusés
           </div>
           <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {meta?.statusCounts.refused ||
+            {stats?.statusCounts.refused ?? meta?.statusCounts.refused ??
               registrations.filter((r) => r.status === 'refused').length}
           </div>
         </div>

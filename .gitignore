@@ -17,6 +17,8 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+*/.DS_Store
+**/.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
@@ -30,6 +32,10 @@ dist-ssr
 .env.test.local
 .env.production.local
 .env.demo
+.env.publicdemo
+*.env
+!.env.example
+!.env.*.example
 
 # Testing
 coverage
@@ -45,4 +51,23 @@ public/mockServiceWorker.js
 
 # Windsurf
 .windsurf
+
+# Build & temp files
+*.tsbuildinfo
+.cache
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Logs & dumps
+*.log.*
+dump.*
+*.dump
+
+# Uploads (local dev)
+uploads/
+public/uploads/
 

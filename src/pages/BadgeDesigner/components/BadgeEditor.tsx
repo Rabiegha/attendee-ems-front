@@ -7,13 +7,23 @@ import {
   useDraggable, 
   PointerSensor,
   useSensor,
-  useSensors
+  useSensors,
+  Modifier,
+  useDndMonitor
 } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Plus } from 'lucide-react';
 import { BadgeElement, BadgeFormat } from '../../../shared/types/badge.types';
 import { mmToPx } from '../../../shared/utils/conversion';
 import { getTransformWithRotation } from '../../../shared/utils/transform';
+import { useCallback, useMemo } from 'react';
+
+interface SnapLine {
+  orientation: 'vertical' | 'horizontal';
+  position: number; // x or y in badge coordinates
+  start: number;
+  end: number;
+}
 
 interface BadgeEditorProps {
   format: BadgeFormat;
@@ -38,6 +48,78 @@ interface BadgeEditorProps {
   zoom?: number;
   symmetryPairs: Map<string, string>; // Add symmetry pairs
 }
+
+interface DraggableElementProps {
+  element: BadgeElement;
+  children: React.ReactNode;
+  isSelected: boolean;
+  elementRef: React.RefObject<HTMLDivElement>;
+  onElementClick: (id: string, e: React.MouseEvent) => void;
+  zoom: number;
+}
+
+const DraggableElement: React.FC<DraggableElementProps> = ({
+  element,
+  children,
+  isSelected,
+  elementRef,
+  onElementClick,
+  zoom
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: element.id,
+    data: { element }
+  });
+
+  // Adjust transform for zoom to ensure the element follows the mouse cursor 1:1
+  // Note: The transform passed here is already adjusted for zoom by the scaleModifier in DndContext
+  const style = {
+    position: 'absolute' as const,
+    left: element.x,
+    top: element.y,
+    width: `${element.width}px`,
+    height: `${element.height}px`,
+    transform: transform ? CSS.Translate.toString(transform) : undefined,
+    zIndex: isSelected ? 10 : 1,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={(node) => {
+        setNodeRef(node);
+        if (elementRef && 'current' in elementRef) {
+          (elementRef as any).current = node;
+        }
+      }}
+      style={{
+        ...style,
+        ...(isSelected && {
+          outline: `${Math.max(2, 2 / zoom)}px solid rgb(59, 130, 246)`,
+          outlineOffset: '0px'
+        })
+      }}
+      className="select-none"
+      onClick={(e) => onElementClick(element.id, e)}
+      {...attributes}
+    >
+      {/* Zone de contenu draggable */}
+      <div
+        className="w-full h-full cursor-move"
+        style={{ opacity: element.style.opacity ?? 1 }}
+        {...listeners}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
 
 export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   format,
@@ -77,6 +159,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   // Track dragging for symmetry
   const [activeDragElement, setActiveDragElement] = useState<BadgeElement | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [snapLines, setSnapLines] = useState<SnapLine[]>([]);
+  const snapLinesRef = useRef<SnapLine[]>([]);
 
   const backgroundInputRef = useRef<HTMLInputElement>(null);
 
@@ -213,69 +297,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     return undefined;
   }, [resizingElement, resizeHandle, resizeStartData]);
 
-  // DraggableElement component for @dnd-kit
-  const DraggableElement: React.FC<{
-    element: BadgeElement;
-    children: React.ReactNode;
-    isSelected: boolean;
-    elementRef: React.RefObject<HTMLDivElement>;
-  }> = ({ element, children, isSelected, elementRef }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      isDragging,
-    } = useDraggable({
-      id: element.id,
-      data: { element }
-    });
 
-    // IMPORTANT: Do NOT adjust transform for zoom!
-    // @dnd-kit's transform is already in the correct coordinate space
-    // since DndContext is inside the scaled container
-    
-    // Apply drag transform only, element rotation is applied to content
-    const style = {
-      position: 'absolute' as const,
-      left: element.x,
-      top: element.y,
-      width: `${element.width}px`,
-      height: `${element.height}px`,
-      transform: transform ? CSS.Translate.toString(transform) : undefined,
-      zIndex: isSelected ? 10 : 1,
-      opacity: isDragging ? 0.5 : 1,
-    };
-
-    return (
-      <div
-        ref={(node) => {
-          setNodeRef(node);
-          if (elementRef.current !== node) {
-            (elementRef as any).current = node;
-          }
-        }}
-        style={{
-          ...style,
-          ...(isSelected && {
-            outline: `${Math.max(2, 2 / zoom)}px solid rgb(59, 130, 246)`,
-            outlineOffset: '0px'
-          })
-        }}
-        className="select-none"
-        onClick={(e) => onElementClick(element.id, e)}
-        {...attributes}
-      >
-        {/* Zone de contenu draggable */}
-        <div
-          className="w-full h-full cursor-move"
-          {...listeners}
-        >
-          {children}
-        </div>
-      </div>
-    );
-  };
 
   // Render element content (can be used for both real elements and ghost elements)
   const renderElementContent = (element: BadgeElement) => {
@@ -290,6 +312,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             color: element.style.color,
             fontWeight: element.style.fontWeight,
             fontStyle: element.style.fontStyle,
+            textDecoration: element.style.textDecoration || 'none',
             textAlign: element.style.textAlign,
             transform: element.style.transform,
             transformOrigin: 'center center',
@@ -374,6 +397,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
           element={element}
           isSelected={isSelected}
           elementRef={elementRef}
+          onElementClick={onElementClick}
+          zoom={zoom}
         >
           {content}
         </DraggableElement>
@@ -426,6 +451,143 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   const badgeWidth = mmToPx(format.width);
   const badgeHeight = mmToPx(format.height);
 
+  // Scale modifier to convert screen pixels to badge pixels
+  const scaleModifier = useCallback<Modifier>(({ transform }) => {
+    return {
+      ...transform,
+      x: transform.x / zoom,
+      y: transform.y / zoom
+    };
+  }, [zoom]);
+
+  // Snap modifier
+  const snapModifier = useCallback<Modifier>(({ transform, active }) => {
+    if (!active) return transform;
+
+    const element = elements.find(el => el.id === active.id);
+    if (!element) return transform;
+
+    // Calculate current position in badge coordinates
+    // transform is already in badge pixels due to scaleModifier
+    const currentX = element.x + transform.x;
+    const currentY = element.y + transform.y;
+    const width = element.width;
+    const height = element.height;
+
+    const threshold = 5 / zoom; // 5px screen threshold converted to badge pixels
+    const newSnapLines: SnapLine[] = [];
+    
+    let correctionX = 0;
+    let correctionY = 0;
+
+    // Snap targets (vertical)
+    const verticalTargets = [
+      { pos: 0, start: 0, end: badgeHeight }, // Left edge of canvas
+      { pos: badgeWidth / 2, start: 0, end: badgeHeight }, // Center of canvas
+      { pos: badgeWidth, start: 0, end: badgeHeight }, // Right edge of canvas
+    ];
+
+    // Snap targets (horizontal)
+    const horizontalTargets = [
+      { pos: 0, start: 0, end: badgeWidth }, // Top edge of canvas
+      { pos: badgeHeight / 2, start: 0, end: badgeWidth }, // Center of canvas
+      { pos: badgeHeight, start: 0, end: badgeWidth }, // Bottom edge of canvas
+    ];
+
+    // Add other elements as targets
+    elements.forEach(el => {
+      if (el.id === element.id) return;
+      
+      // Vertical edges
+      verticalTargets.push(
+        { pos: el.x, start: Math.min(el.y, currentY), end: Math.max(el.y + el.height, currentY + height) },
+        { pos: el.x + el.width / 2, start: Math.min(el.y, currentY), end: Math.max(el.y + el.height, currentY + height) },
+        { pos: el.x + el.width, start: Math.min(el.y, currentY), end: Math.max(el.y + el.height, currentY + height) }
+      );
+
+      // Horizontal edges
+      horizontalTargets.push(
+        { pos: el.y, start: Math.min(el.x, currentX), end: Math.max(el.x + el.width, currentX + width) },
+        { pos: el.y + el.height / 2, start: Math.min(el.x, currentX), end: Math.max(el.x + el.width, currentX + width) },
+        { pos: el.y + el.height, start: Math.min(el.x, currentX), end: Math.max(el.x + el.width, currentX + width) }
+      );
+    });
+
+    // Check vertical snaps (X axis)
+    // Edges to check: Left, Center, Right of dragged element
+    const xPoints = [currentX, currentX + width / 2, currentX + width];
+    let minDeltaX = Infinity;
+    let bestSnapX: SnapLine | null = null;
+
+    xPoints.forEach((xPoint, index) => {
+      verticalTargets.forEach(target => {
+        const delta = target.pos - xPoint;
+        if (Math.abs(delta) < threshold && Math.abs(delta) < Math.abs(minDeltaX)) {
+          minDeltaX = delta;
+          // Calculate start/end for the line to cover both the target and the element
+          const startY = Math.min(target.start, currentY);
+          const endY = Math.max(target.end, currentY + height);
+          
+          bestSnapX = {
+            orientation: 'vertical',
+            position: target.pos,
+            start: startY - 10, // Extend a bit
+            end: endY + 10
+          };
+        }
+      });
+    });
+
+    if (bestSnapX) {
+      correctionX = minDeltaX;
+      newSnapLines.push(bestSnapX);
+    }
+
+    // Check horizontal snaps (Y axis)
+    // Edges to check: Top, Center, Bottom of dragged element
+    const yPoints = [currentY, currentY + height / 2, currentY + height];
+    let minDeltaY = Infinity;
+    let bestSnapY: SnapLine | null = null;
+
+    yPoints.forEach((yPoint, index) => {
+      horizontalTargets.forEach(target => {
+        const delta = target.pos - yPoint;
+        if (Math.abs(delta) < threshold && Math.abs(delta) < Math.abs(minDeltaY)) {
+          minDeltaY = delta;
+          // Calculate start/end for the line
+          const startX = Math.min(target.start, currentX);
+          const endX = Math.max(target.end, currentX + width);
+
+          bestSnapY = {
+            orientation: 'horizontal',
+            position: target.pos,
+            start: startX - 10,
+            end: endX + 10
+          };
+        }
+      });
+    });
+
+    if (bestSnapY) {
+      correctionY = minDeltaY;
+      newSnapLines.push(bestSnapY);
+    }
+
+    // Update snap lines state if changed
+    if (JSON.stringify(newSnapLines) !== JSON.stringify(snapLinesRef.current)) {
+      snapLinesRef.current = newSnapLines;
+      setTimeout(() => setSnapLines(newSnapLines), 0);
+    }
+
+    return {
+      ...transform,
+      x: transform.x + correctionX,
+      y: transform.y + correctionY
+    };
+  }, [elements, zoom, badgeWidth, badgeHeight]);
+
+  const modifiers = useMemo(() => [scaleModifier, snapModifier], [scaleModifier, snapModifier]);
+
   // Setup sensors for drag and drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -436,9 +598,9 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   );
 
   // Handle drag events
-  // IMPORTANT: @dnd-kit's transform and delta are already in the correct coordinate space
-  // (relative to the DndContext which is inside the scaled container).
-  // DO NOT divide by zoom or the drag will be multiplied when zoomed out!
+  // IMPORTANT: We MUST divide delta by zoom because the DndContext is inside a scaled container.
+  // The mouse events (delta) are in screen pixels.
+  // If zoom is 0.5, moving mouse 10px should move element 20px in local space to appear as 10px on screen.
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const elementId = active.id as string;
@@ -453,12 +615,16 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   };
 
   const handleDragMove = (event: DragMoveEvent) => {
-    const { delta } = event;
-    // NO zoom adjustment needed - see comment above handleDragStart
-    setDragOffset({ 
-      x: delta.x, 
-      y: delta.y 
-    });
+    const { active, delta } = event;
+    
+    // Optimization: only update state if the dragged element has a symmetry pair
+    // This prevents unnecessary re-renders for non-symmetric elements
+    if (symmetryPairs.has(active.id as string)) {
+      setDragOffset({ 
+        x: delta.x, 
+        y: delta.y 
+      });
+    }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -469,9 +635,11 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     // Reset drag state
     setActiveDragElement(null);
     setDragOffset({ x: 0, y: 0 });
+    setSnapLines([]);
+    snapLinesRef.current = [];
     
     if (element && onDragStop) {
-      // NO zoom adjustment needed - see comment above handleDragStart
+      // Delta is already adjusted for zoom by scaleModifier and includes snap correction
       onDragStop(elementId, null as any, { 
         x: element.x + delta.x, 
         y: element.y + delta.y 
@@ -529,6 +697,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
       <div className="relative">
         <DndContext
           sensors={sensors}
+          modifiers={modifiers}
           onDragStart={handleDragStart}
           onDragMove={handleDragMove}
           onDragEnd={handleDragEnd}
@@ -579,6 +748,20 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
 
           {/* Render elements */}
           {elements.map(renderElement)}
+
+          {/* Render Snap Lines */}
+          {snapLines.map((line, index) => (
+            <div
+              key={index}
+              className="absolute bg-red-500 z-50 pointer-events-none"
+              style={{
+                left: line.orientation === 'vertical' ? `${line.position}px` : `${line.start}px`,
+                top: line.orientation === 'horizontal' ? `${line.position}px` : `${line.start}px`,
+                width: line.orientation === 'vertical' ? `${Math.max(1, 1 / zoom)}px` : `${line.end - line.start}px`,
+                height: line.orientation === 'horizontal' ? `${Math.max(1, 1 / zoom)}px` : `${line.end - line.start}px`,
+              }}
+            />
+          ))}
 
           {/* Render symmetric clone during drag */}
           {symmetricClone && (

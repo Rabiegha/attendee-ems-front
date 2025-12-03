@@ -203,6 +203,7 @@ export const BadgeDesignerPage: React.FC = () => {
         color: '#000000',
         fontWeight: 'normal',
         fontStyle: 'normal',
+        textDecoration: 'none',
         textAlign: textAlign,
         transform: '',
         rotation: 0,
@@ -979,6 +980,7 @@ export const BadgeDesignerPage: React.FC = () => {
       {/* Right Sidebar */}
       <RightSidebar
         selectedElements={elements.filter(el => selectedElements.includes(el.id))}
+        badgeFormat={format}
         onUpdateElement={updateElement}
         onDeleteElement={deleteElement}
         onDuplicateElement={duplicateElement}

@@ -53,21 +53,24 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   return (
     <div className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col border-r border-gray-200 dark:border-gray-700 relative">
       {/* Titre */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
+      <div className="p-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+        <div className="flex items-center gap-2 mb-2">
           {onGoBack && (
             <Button
               onClick={onGoBack}
               variant="ghost"
               size="sm"
-              className="flex items-center gap-1"
+              className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 -ml-2"
+              title="Retour à la liste"
             >
-              <ArrowLeft size={16} />
-              Retour
+              <ArrowLeft size={18} className="text-gray-500 dark:text-gray-400" />
             </Button>
           )}
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">Créateur de Badges</h1>
+          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Éditeur</span>
         </div>
+        <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
+          Créateur de<br />Badges
+        </h1>
       </div>
 
       {/* Contenu scrollable */}

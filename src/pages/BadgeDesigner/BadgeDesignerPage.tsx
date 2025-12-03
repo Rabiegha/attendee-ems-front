@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { BadgeElement, BadgeFormat, BADGE_FORMATS, HistoryState } from '../../shared/types/badge.types';
 import { mmToPx } from '../../shared/utils/conversion';
 import { getTransformWithRotation } from '../../shared/utils/transform';
@@ -48,16 +49,13 @@ export const BadgeDesignerPage: React.FC = () => {
   // Symmetry pairs - maps parent ID to clone ID  
   const [symmetryPairs, setSymmetryPairs] = useState<Map<string, string>>(new Map());
   
-  // Zoom and view state
-  const [zoom, setZoom] = useState(0.4); // Zoom initial à 40% pour voir le badge en entier
-  const [canvasOffset, setCanvasOffset] = useState({ x: -999, y: -999 }); // Valeur temporaire pour cacher le badge initial
-  const [isPanning, setIsPanning] = useState(false);
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  // Current zoom level for display
+  const [currentZoom, setCurrentZoom] = useState(0.5);
 
   const badgeRef = useRef<HTMLDivElement>(null);
   const elementRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
   const backgroundInputRef = useRef<HTMLInputElement>(null);
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const transformRef = useRef<ReactZoomPanPinchRef>(null);
 
   // Save state to history
   const saveToHistory = useCallback((newElements: BadgeElement[], newBackground: string | null) => {
@@ -103,25 +101,12 @@ export const BadgeDesignerPage: React.FC = () => {
           setSymmetryPairs(new Map(data.symmetryPairs));
         }
         setTemplateName(loadedTemplate.name);
-        
-        // Centrer et ajuster le zoom après le chargement du template
-        setTimeout(() => {
-          fitToScreen();
-        }, 300);
       } catch (e) {
         console.error('Failed to load template from API:', e);
         toast.error('Erreur', 'Impossible de charger le template');
       }
     }
   }, [loadedTemplate]);
-
-  // Auto fit to screen on initial load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fitToScreen();
-    }, 300); // Augmenté à 300ms pour être sûr que le badge soit rendu
-    return () => clearTimeout(timer);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Helper function to measure text dimensions
   const measureText = (content: string, fontSize: number, fontFamily: string = 'Arial'): { width: number; height: number } => {
@@ -492,117 +477,21 @@ export const BadgeDesignerPage: React.FC = () => {
     }
   };
 
-  // Zoom and view functions (Figma-like)
-  const handleZoom = (newZoom: number, centerPoint?: { x: number; y: number }) => {
-    const minZoom = 0.1;
-    const maxZoom = 5;
-    const clampedZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
-    
-    if (centerPoint && canvasContainerRef.current && badgeRef.current) {
-      // Zoom towards a specific point (like mouse position)
-      const container = canvasContainerRef.current;
-      const containerRect = container.getBoundingClientRect();
-      const badgeRect = badgeRef.current.getBoundingClientRect();
-      
-      // Position de la souris relative au conteneur
-      const mouseX = centerPoint.x - containerRect.left;
-      const mouseY = centerPoint.y - containerRect.top;
-      
-      // Position actuelle du centre du badge dans le conteneur
-      const badgeCenterX = badgeRect.left - containerRect.left + badgeRect.width / 2;
-      const badgeCenterY = badgeRect.top - containerRect.top + badgeRect.height / 2;
-      
-      // Distance de la souris au centre du badge
-      const deltaX = mouseX - badgeCenterX;
-      const deltaY = mouseY - badgeCenterY;
-      
-      // Ratio de zoom
-      const zoomRatio = clampedZoom / zoom;
-      
-      // Calculer le nouvel offset pour que le point sous la souris reste fixe
-      const newOffsetX = canvasOffset.x - deltaX * (zoomRatio - 1);
-      const newOffsetY = canvasOffset.y - deltaY * (zoomRatio - 1);
-      
-      setCanvasOffset({ x: newOffsetX, y: newOffsetY });
-    }
-    
-    setZoom(clampedZoom);
+  // Zoom and view functions - Now handled by react-zoom-pan-pinch
+  const handleZoomIn = () => {
+    transformRef.current?.zoomIn(0.2);
   };
 
-  const handleWheelEvent = useCallback((e: WheelEvent) => {
-    // Zoom avec la molette simple (sans Ctrl)
-    e.preventDefault();
-    const zoomDelta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newZoom = zoom * zoomDelta;
-    handleZoom(newZoom, { x: e.clientX, y: e.clientY });
-  }, [zoom, handleZoom]);
-
-  // Attach wheel event listener with passive: false
-  useEffect(() => {
-    const canvasContainer = canvasContainerRef.current;
-    if (canvasContainer) {
-      canvasContainer.addEventListener('wheel', handleWheelEvent, { passive: false });
-      return () => {
-        canvasContainer.removeEventListener('wheel', handleWheelEvent);
-      };
-    }
-    return undefined;
-  }, [handleWheelEvent]);
+  const handleZoomOut = () => {
+    transformRef.current?.zoomOut(0.2);
+  };
 
   const resetView = () => {
-    setZoom(1);
-    setCanvasOffset({ x: 0, y: 0 });
+    transformRef.current?.resetTransform();
   };
 
   const fitToScreen = () => {
-    if (!canvasContainerRef.current || !badgeRef.current) return;
-    
-    const container = canvasContainerRef.current;
-    const containerRect = container.getBoundingClientRect();
-    
-    // Utiliser les dimensions réelles du badge depuis le format
-    const badgeWidth = mmToPx(format.width);
-    const badgeHeight = mmToPx(format.height);
-    
-    // Calculer le zoom pour que le badge rentre dans le conteneur avec une marge de 100px
-    const scaleX = (containerRect.width - 100) / badgeWidth;
-    const scaleY = (containerRect.height - 100) / badgeHeight;
-    const newZoom = Math.min(scaleX, scaleY);
-    
-    setZoom(newZoom);
-    // Le centrage est géré par flex center, on réinitialise juste l'offset pour déclencher l'opacity
-    setCanvasOffset({ x: 0, y: 0 });
-  };
-
-  const handleCanvasMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1 || (e.button === 0 && e.ctrlKey)) {
-      // Middle mouse button or Ctrl + left mouse button for panning
-      e.preventDefault();
-      setIsPanning(true);
-      setPanStart({ x: e.clientX - canvasOffset.x, y: e.clientY - canvasOffset.y });
-    } else {
-      handleBackgroundMouseDown(e);
-    }
-  };
-
-  const handleCanvasMouseMove = (e: React.MouseEvent) => {
-    if (isPanning) {
-      e.preventDefault();
-      setCanvasOffset({
-        x: e.clientX - panStart.x,
-        y: e.clientY - panStart.y
-      });
-    } else {
-      handleBackgroundMouseMove(e);
-    }
-  };
-
-  const handleCanvasMouseUp = () => {
-    if (isPanning) {
-      setIsPanning(false);
-    } else {
-      handleBackgroundMouseUp();
-    }
+    transformRef.current?.centerView(0.5);
   };
 
   // Handle format change
@@ -881,11 +770,6 @@ export const BadgeDesignerPage: React.FC = () => {
     // Drag start logic
   };
 
-  const handleDrag = (_id: string, _e: any, _data: { x: number; y: number }) => {
-    // Ne rien faire pendant le drag - dnd-kit gère l'animation visuellement
-    // On mettra à jour les coordonnées uniquement à la fin (handleDragStop)
-  };
-
   const handleDragStop = (id: string, _e: any, data: { x: number; y: number }) => {
     // Mise à jour finale de la position
     updateElement(id, { x: data.x, y: data.y });
@@ -924,58 +808,39 @@ export const BadgeDesignerPage: React.FC = () => {
         onDeleteTemplate={handleDeleteTemplate}
         isDeleting={isDeleting}
         isEditMode={templateId !== 'new'}
-        zoom={zoom}
-        onZoomIn={() => handleZoom(zoom * 1.2)}
-        onZoomOut={() => handleZoom(zoom / 1.2)}
+        zoom={currentZoom}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
         onResetView={resetView}
         onFitToScreen={fitToScreen}
       />
 
-      {/* Main Canvas */}
-      <div className="flex-1 flex flex-col">
-        <div 
-          ref={canvasContainerRef}
-          className="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-700 relative"
-          onMouseDown={handleCanvasMouseDown}
-          onMouseMove={handleCanvasMouseMove}
-          onMouseUp={handleCanvasMouseUp}
-          style={{ cursor: isPanning ? 'grabbing' : 'default' }}
-        >
-          <div 
-            className="absolute inset-0 flex items-center justify-center"
-            style={{
-              transform: `translate(${canvasOffset.x}px, ${canvasOffset.y}px) scale(${zoom})`,
-              transformOrigin: 'center center',
-              opacity: canvasOffset.x === -999 ? 0 : 1,
-              transition: 'opacity 0.1s'
-            }}
-          >
-            <BadgeEditor
-              format={format}
-              background={background}
-              elements={elements}
-              selectedElements={selectedElements}
-              badgeRef={badgeRef}
-              elementRefs={elementRefs}
-              onBackgroundMouseDown={handleBackgroundMouseDown}
-              onBackgroundMouseMove={handleBackgroundMouseMove}
-              onBackgroundMouseUp={handleBackgroundMouseUp}
-              onBackgroundUpload={handleBackgroundUpload}
-              onElementClick={handleElementClick}
-              onDragStart={handleDragStart}
-              onDrag={handleDrag}
-              onDragStop={handleDragStop}
-              onResize={handleResize}
-              isSelecting={isSelecting}
-              selectionStart={selectionStart}
-              selectionEnd={selectionEnd}
-              uploadedImages={uploadedImages}
-              zoom={zoom}
-              symmetryPairs={symmetryPairs}
-            />
-          </div>
-        </div>
-      </div>
+      {/* Main Canvas - zoom/pan managed by BadgeEditor */}
+      <BadgeEditor
+        format={format}
+        background={background}
+        elements={elements}
+        selectedElements={selectedElements}
+        badgeRef={badgeRef}
+        elementRefs={elementRefs}
+        onBackgroundMouseDown={handleBackgroundMouseDown}
+        onBackgroundMouseMove={handleBackgroundMouseMove}
+        onBackgroundMouseUp={handleBackgroundMouseUp}
+        onBackgroundUpload={handleBackgroundUpload}
+        onElementClick={handleElementClick}
+        onDragStart={handleDragStart}
+        onDragStop={handleDragStop}
+        onResize={handleResize}
+        isSelecting={isSelecting}
+        selectionStart={selectionStart}
+        selectionEnd={selectionEnd}
+        uploadedImages={uploadedImages}
+        symmetryPairs={symmetryPairs}
+        transformRef={transformRef}
+        initialZoom={0.5}
+        currentZoom={currentZoom}
+        onZoomChange={setCurrentZoom}
+      />
 
       {/* Right Sidebar */}
       <RightSidebar

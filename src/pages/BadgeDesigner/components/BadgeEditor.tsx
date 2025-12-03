@@ -1,15 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { 
-  DndContext, 
-  DragEndEvent, 
-  DragMoveEvent, 
-  DragStartEvent, 
-  useDraggable, 
-  PointerSensor,
-  useSensor,
-  useSensors
-} from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+import { TransformWrapper, TransformComponent, ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { Plus } from 'lucide-react';
 import { BadgeElement, BadgeFormat } from '../../../shared/types/badge.types';
 import { mmToPx } from '../../../shared/utils/conversion';
@@ -28,15 +18,17 @@ interface BadgeEditorProps {
   onBackgroundUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onElementClick: (id: string, e: React.MouseEvent) => void;
   onDragStart: (id: string, e: any, data: { x: number; y: number }) => void;
-  onDrag: (id: string, e: any, data: { x: number; y: number }) => void;
   onDragStop: (id: string, e: any, data: { x: number; y: number }) => void;
   onResize: (id: string, e: any, data: { size: { width: number; height: number }; position?: { x: number; y: number } }) => void;
   isSelecting: boolean;
   selectionStart: { x: number; y: number } | null;
   selectionEnd: { x: number; y: number } | null;
   uploadedImages: Map<string, { data: string; filename: string }>;
-  zoom?: number;
-  symmetryPairs: Map<string, string>; // Add symmetry pairs
+  symmetryPairs: Map<string, string>;
+  transformRef?: React.RefObject<ReactZoomPanPinchRef>;
+  initialZoom?: number;
+  currentZoom?: number;
+  onZoomChange?: (zoom: number) => void;
 }
 
 interface DraggableElementProps {
@@ -45,7 +37,9 @@ interface DraggableElementProps {
   isSelected: boolean;
   elementRef: React.RefObject<HTMLDivElement>;
   onElementClick: (id: string, e: React.MouseEvent) => void;
-  zoom: number;
+  onDragStart: (e: React.MouseEvent) => void;
+  isDragging: boolean;
+  dragOffset?: { x: number; y: number };
 }
 
 const DraggableElement: React.FC<DraggableElementProps> = ({
@@ -54,61 +48,38 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
   isSelected,
   elementRef,
   onElementClick,
-  zoom
+  onDragStart,
+  isDragging,
+  dragOffset
 }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    isDragging,
-  } = useDraggable({
-    id: element.id,
-    data: { element }
-  });
-
-  // Adjust transform for zoom to ensure the element follows the mouse cursor 1:1
-  const adjustedTransform = transform ? {
-    ...transform,
-    x: transform.x / zoom,
-    y: transform.y / zoom
-  } : null;
-
   const style = {
     position: 'absolute' as const,
-    left: element.x,
-    top: element.y,
-    width: `${element.width}px`,
-    height: `${element.height}px`,
-    transform: adjustedTransform ? CSS.Translate.toString(adjustedTransform) : undefined,
+    left: Math.round(element.x + (dragOffset?.x || 0)),
+    top: Math.round(element.y + (dragOffset?.y || 0)),
+    width: `${Math.round(element.width)}px`,
+    height: `${Math.round(element.height)}px`,
     zIndex: isSelected ? 10 : 1,
     opacity: isDragging ? 0.5 : 1,
   };
 
   return (
     <div
-      ref={(node) => {
-        setNodeRef(node);
-        if (elementRef && 'current' in elementRef) {
-          (elementRef as any).current = node;
-        }
-      }}
+      ref={elementRef}
       style={{
         ...style,
         ...(isSelected && {
-          outline: `${Math.max(2, 2 / zoom)}px solid rgb(59, 130, 246)`,
+          outline: '2px solid rgb(59, 130, 246)',
           outlineOffset: '0px'
         })
       }}
       className="select-none"
       onClick={(e) => onElementClick(element.id, e)}
-      {...attributes}
     >
       {/* Zone de contenu draggable */}
       <div
         className="w-full h-full cursor-move"
         style={{ opacity: element.style.opacity ?? 1 }}
-        {...listeners}
+        onMouseDown={onDragStart}
       >
         {children}
       </div>
@@ -129,15 +100,17 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   onBackgroundUpload,
   onElementClick,
   onDragStart,
-  onDrag: _onDrag, // Non utilisé pour éviter l'effet de rebond avec dnd-kit
   onDragStop,
   onResize,
   isSelecting,
   selectionStart,
   selectionEnd,
   uploadedImages,
-  zoom = 1,
-  symmetryPairs
+  symmetryPairs,
+  transformRef,
+  initialZoom = 0.5,
+  currentZoom,
+  onZoomChange
 }) => {
   const [resizingElement, setResizingElement] = useState<string | null>(null);
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
@@ -151,9 +124,17 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   } | null>(null);
   const [shiftPressed, setShiftPressed] = useState(false);
   
-  // Track dragging for symmetry
+  // Native drag system
+  const [draggingElementId, setDraggingElementId] = useState<string | null>(null);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number; elementX: number; elementY: number } | null>(null);
+  const [currentDragOffset, setCurrentDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [activeDragElement, setActiveDragElement] = useState<BadgeElement | null>(null);
   const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Snap guides
+  const [snapGuides, setSnapGuides] = useState<{ x?: number; y?: number }[]>([]);
+  const [snapTargetElements, setSnapTargetElements] = useState<string[]>([]);
+  const SNAP_THRESHOLD = 20; // pixels - distance d'attraction du snap
 
   const backgroundInputRef = useRef<HTMLInputElement>(null);
 
@@ -186,6 +167,14 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     
     const element = elements.find(el => el.id === elementId);
     if (!element) return;
+
+    // Get badge coordinates
+    const badgeRect = badgeRef.current?.getBoundingClientRect();
+    if (!badgeRect) return;
+
+    // Calculate mouse position RELATIVE to badge
+    const mouseXInBadge = e.clientX - badgeRect.left;
+    const mouseYInBadge = e.clientY - badgeRect.top;
     
     setResizingElement(elementId);
     setResizeHandle(handle);
@@ -194,17 +183,32 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
       y: element.y,
       width: element.width,
       height: element.height,
-      mouseX: e.clientX,
-      mouseY: e.clientY,
+      mouseX: mouseXInBadge,
+      mouseY: mouseYInBadge,
     });
   };
 
   const handleResizeMove = (e: MouseEvent) => {
     if (!resizingElement || !resizeHandle || !resizeStartData) return;
 
-    // Compenser le zoom dans les deltas
-    const deltaX = (e.clientX - resizeStartData.mouseX) / zoom;
-    const deltaY = (e.clientY - resizeStartData.mouseY) / zoom;
+    // Get current badge position
+    const badgeRect = badgeRef.current?.getBoundingClientRect();
+    if (!badgeRect) return;
+
+    // Calculate current mouse position RELATIVE to badge
+    const currentMouseXInBadge = e.clientX - badgeRect.left;
+    const currentMouseYInBadge = e.clientY - badgeRect.top;
+
+    // Get badge dimensions
+    const badgeWidth = mmToPx(format.width);
+    const badgeHeight = mmToPx(format.height);
+
+    // Calculate delta in BADGE COORDINATES (px)
+    const scaleX = badgeWidth / badgeRect.width;
+    const scaleY = badgeHeight / badgeRect.height;
+
+    const deltaX = (currentMouseXInBadge - resizeStartData.mouseX) * scaleX;
+    const deltaY = (currentMouseYInBadge - resizeStartData.mouseY) * scaleY;
 
     let newWidth = resizeStartData.width;
     let newHeight = resizeStartData.height;
@@ -374,6 +378,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
 
   const renderElement = (element: BadgeElement) => {
     const isSelected = selectedElements.includes(element.id);
+    const isSnapTarget = snapTargetElements.includes(element.id);
     
     if (!elementRefs.current.has(element.id)) {
       elementRefs.current.set(element.id, React.createRef());
@@ -391,27 +396,47 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
           isSelected={isSelected}
           elementRef={elementRef}
           onElementClick={onElementClick}
-          zoom={zoom}
+          onDragStart={(e) => handleElementDragStart(element.id, e)}
+          isDragging={draggingElementId === element.id}
+          dragOffset={draggingElementId === element.id ? currentDragOffset : undefined}
         >
           {content}
         </DraggableElement>
+        
+        {/* Snap target outline */}
+        {isSnapTarget && (
+          <div
+            className="absolute pointer-events-none border-2 border-blue-500"
+            style={{
+              left: element.x,
+              top: element.y,
+              width: `${element.width}px`,
+              height: `${element.height}px`,
+              zIndex: 9
+            }}
+          />
+        )}
         
         {/* Resize handles - en dehors de la zone draggable */}
         {isSelected && (
           <>
             {['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'].map(handle => {
-              const handleSize = Math.max(6, 8 / zoom); // Taille adaptée au zoom
+              const zoom = currentZoom || initialZoom;
+              const handleSize = 8 / zoom;
               const handleOffset = handleSize / 2;
+              const activeDragOffset = draggingElementId === element.id ? currentDragOffset : undefined;
               return (
                 <div
                   key={handle}
                   className={`absolute bg-blue-500 border border-white z-20`}
                   style={{
-                    ...getHandlePosition(handle, element, handleOffset),
+                    ...getHandlePosition(handle, element, handleOffset, activeDragOffset),
                     width: `${handleSize}px`,
                     height: `${handleSize}px`,
                     display: resizingElement && resizingElement !== element.id ? 'none' : 'block',
-                    cursor: `${handle}-resize`
+                    cursor: `${handle}-resize`,
+                    willChange: draggingElementId === element.id ? 'transform' : 'auto',
+                    transform: 'translateZ(0)'
                   }}
                   onMouseDown={(e) => {
                     e.stopPropagation(); // Empêche le drag
@@ -426,17 +451,19 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     );
   };
 
-  const getHandlePosition = (handle: string, element: BadgeElement, offset: number = 4) => {
+  const getHandlePosition = (handle: string, element: BadgeElement, offset: number = 4, dragOffset?: { x: number; y: number }) => {
     const { x, y, width, height } = element;
+    const dx = dragOffset?.x || 0;
+    const dy = dragOffset?.y || 0;
     switch (handle) {
-      case 'nw': return { top: y - offset, left: x - offset };
-      case 'ne': return { top: y - offset, left: x + width - offset };
-      case 'sw': return { top: y + height - offset, left: x - offset };
-      case 'se': return { top: y + height - offset, left: x + width - offset };
-      case 'n': return { top: y - offset, left: x + width / 2 - offset };
-      case 's': return { top: y + height - offset, left: x + width / 2 - offset };
-      case 'w': return { top: y + height / 2 - offset, left: x - offset };
-      case 'e': return { top: y + height / 2 - offset, left: x + width - offset };
+      case 'nw': return { top: Math.round(y + dy - offset), left: Math.round(x + dx - offset) };
+      case 'ne': return { top: Math.round(y + dy - offset), left: Math.round(x + dx + width - offset) };
+      case 'sw': return { top: Math.round(y + dy + height - offset), left: Math.round(x + dx - offset) };
+      case 'se': return { top: Math.round(y + dy + height - offset), left: Math.round(x + dx + width - offset) };
+      case 'n': return { top: Math.round(y + dy - offset), left: Math.round(x + dx + width / 2 - offset) };
+      case 's': return { top: Math.round(y + dy + height - offset), left: Math.round(x + dx + width / 2 - offset) };
+      case 'w': return { top: Math.round(y + dy + height / 2 - offset), left: Math.round(x + dx - offset) };
+      case 'e': return { top: Math.round(y + dy + height / 2 - offset), left: Math.round(x + dx + width - offset) };
       default: return {};
     }
   };
@@ -444,62 +471,262 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   const badgeWidth = mmToPx(format.width);
   const badgeHeight = mmToPx(format.height);
 
-  // Setup sensors for drag and drop
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // Minimum distance before drag starts
-      },
-    })
-  );
+  // Calculate snap positions
+  const calculateSnap = (x: number, y: number, width: number, height: number, elementId: string) => {
+    const guides: { x?: number; y?: number }[] = [];
+    const targetElements: string[] = [];
+    let snappedX = x;
+    let snappedY = y;
 
-  // Handle drag events
-  // IMPORTANT: We MUST divide delta by zoom because the DndContext is inside a scaled container.
-  // The mouse events (delta) are in screen pixels.
-  // If zoom is 0.5, moving mouse 10px should move element 20px in local space to appear as 10px on screen.
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event;
-    const elementId = active.id as string;
-    const element = elements.find(el => el.id === elementId);
-    if (element) {
-      setActiveDragElement(element);
-      setDragOffset({ x: 0, y: 0 });
-      if (onDragStart) {
-        onDragStart(elementId, null as any, { x: element.x, y: element.y });
+    // Badge guides (edges and center)
+    const badgeGuides = {
+      left: 0,
+      centerX: badgeWidth / 2,
+      right: badgeWidth,
+      top: 0,
+      centerY: badgeHeight / 2,
+      bottom: badgeHeight
+    };
+
+    // Element positions to check
+    const elementLeft = x;
+    const elementCenterX = x + width / 2;
+    const elementRight = x + width;
+    const elementTop = y;
+    const elementCenterY = y + height / 2;
+    const elementBottom = y + height;
+
+    // Snap to badge guides - X axis
+    if (Math.abs(elementLeft - badgeGuides.left) < SNAP_THRESHOLD) {
+      snappedX = badgeGuides.left;
+      guides.push({ x: badgeGuides.left });
+    } else if (Math.abs(elementCenterX - badgeGuides.centerX) < SNAP_THRESHOLD) {
+      snappedX = badgeGuides.centerX - width / 2;
+      guides.push({ x: badgeGuides.centerX });
+    } else if (Math.abs(elementRight - badgeGuides.right) < SNAP_THRESHOLD) {
+      snappedX = badgeGuides.right - width;
+      guides.push({ x: badgeGuides.right });
+    }
+
+    // Snap to badge guides - Y axis
+    if (Math.abs(elementTop - badgeGuides.top) < SNAP_THRESHOLD) {
+      snappedY = badgeGuides.top;
+      guides.push({ y: badgeGuides.top });
+    } else if (Math.abs(elementCenterY - badgeGuides.centerY) < SNAP_THRESHOLD) {
+      snappedY = badgeGuides.centerY - height / 2;
+      guides.push({ y: badgeGuides.centerY });
+    } else if (Math.abs(elementBottom - badgeGuides.bottom) < SNAP_THRESHOLD) {
+      snappedY = badgeGuides.bottom - height;
+      guides.push({ y: badgeGuides.bottom });
+    }
+
+    // Snap to other elements
+    elements.forEach(otherElement => {
+      if (otherElement.id === elementId) return;
+
+      const otherLeft = otherElement.x;
+      const otherCenterX = otherElement.x + otherElement.width / 2;
+      const otherRight = otherElement.x + otherElement.width;
+      const otherTop = otherElement.y;
+      const otherCenterY = otherElement.y + otherElement.height / 2;
+      const otherBottom = otherElement.y + otherElement.height;
+
+      let hasSnap = false;
+
+      // X axis alignment - edges
+      if (Math.abs(elementLeft - otherLeft) < SNAP_THRESHOLD) {
+        snappedX = otherLeft;
+        guides.push({ x: otherLeft });
+        hasSnap = true;
+      } else if (Math.abs(elementCenterX - otherCenterX) < SNAP_THRESHOLD) {
+        snappedX = otherCenterX - width / 2;
+        guides.push({ x: otherCenterX });
+        hasSnap = true;
+      } else if (Math.abs(elementRight - otherRight) < SNAP_THRESHOLD) {
+        snappedX = otherRight - width;
+        guides.push({ x: otherRight });
+        hasSnap = true;
       }
-    }
+      // X axis - snap adjacent (coller bord à bord)
+      else if (Math.abs(elementLeft - otherRight) < SNAP_THRESHOLD) {
+        snappedX = otherRight;
+        guides.push({ x: otherRight });
+        hasSnap = true;
+      } else if (Math.abs(elementRight - otherLeft) < SNAP_THRESHOLD) {
+        snappedX = otherLeft - width;
+        guides.push({ x: otherLeft });
+        hasSnap = true;
+      }
+
+      // Y axis alignment - edges
+      if (Math.abs(elementTop - otherTop) < SNAP_THRESHOLD) {
+        snappedY = otherTop;
+        guides.push({ y: otherTop });
+        hasSnap = true;
+      } else if (Math.abs(elementCenterY - otherCenterY) < SNAP_THRESHOLD) {
+        snappedY = otherCenterY - height / 2;
+        guides.push({ y: otherCenterY });
+        hasSnap = true;
+      } else if (Math.abs(elementBottom - otherBottom) < SNAP_THRESHOLD) {
+        snappedY = otherBottom - height;
+        guides.push({ y: otherBottom });
+        hasSnap = true;
+      }
+      // Y axis - snap adjacent (coller bord à bord)
+      else if (Math.abs(elementTop - otherBottom) < SNAP_THRESHOLD) {
+        snappedY = otherBottom;
+        guides.push({ y: otherBottom });
+        hasSnap = true;
+      } else if (Math.abs(elementBottom - otherTop) < SNAP_THRESHOLD) {
+        snappedY = otherTop - height;
+        guides.push({ y: otherTop });
+        hasSnap = true;
+      }
+
+      if (hasSnap) {
+        targetElements.push(otherElement.id);
+      }
+    });
+
+    setSnapGuides(guides);
+    setSnapTargetElements(targetElements);
+    return { x: snappedX, y: snappedY };
   };
 
-  const handleDragMove = (event: DragMoveEvent) => {
-    const { active, delta } = event;
-    
-    // Optimization: only update state if the dragged element has a symmetry pair
-    // This prevents unnecessary re-renders for non-symmetric elements
-    if (symmetryPairs.has(active.id as string)) {
-      setDragOffset({ 
-        x: delta.x / zoom, 
-        y: delta.y / zoom 
-      });
-    }
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, delta } = event;
-    const elementId = active.id as string;
+  // Native drag handlers
+  const handleElementDragStart = (elementId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     const element = elements.find(el => el.id === elementId);
+    if (!element) return;
+
+    // Select element immediately on mousedown
+    if (!selectedElements.includes(elementId)) {
+      onElementClick(elementId, e as any);
+    }
+
+    // Get badge coordinates
+    const badgeRect = badgeRef.current?.getBoundingClientRect();
+    if (!badgeRect) return;
+
+    // Calculate mouse position RELATIVE to badge (already accounts for zoom)
+    const mouseXInBadge = e.clientX - badgeRect.left;
+    const mouseYInBadge = e.clientY - badgeRect.top;
+
+    setDraggingElementId(elementId);
+    setDragStart({
+      x: mouseXInBadge,
+      y: mouseYInBadge,
+      elementX: element.x,
+      elementY: element.y
+    });
+    setActiveDragElement(element);
     
-    // Reset drag state
-    setActiveDragElement(null);
-    setDragOffset({ x: 0, y: 0 });
-    
-    if (element && onDragStop) {
-      // Adjust for zoom
-      onDragStop(elementId, null as any, { 
-        x: element.x + (delta.x / zoom), 
-        y: element.y + (delta.y / zoom) 
-      });
+    if (onDragStart) {
+      onDragStart(elementId, null as any, { x: element.x, y: element.y });
     }
   };
+
+  useEffect(() => {
+    if (!draggingElementId || !dragStart) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Get current badge position
+      const badgeRect = badgeRef.current?.getBoundingClientRect();
+      if (!badgeRect) return;
+
+      // Calculate current mouse position RELATIVE to badge
+      const currentMouseXInBadge = e.clientX - badgeRect.left;
+      const currentMouseYInBadge = e.clientY - badgeRect.top;
+
+      // Get badge dimensions
+      const badgeWidth = mmToPx(format.width);
+      const badgeHeight = mmToPx(format.height);
+
+      // Calculate delta in BADGE COORDINATES (px)
+      // Badge rect width/height includes zoom, so we need to convert back
+      const scaleX = badgeWidth / badgeRect.width;
+      const scaleY = badgeHeight / badgeRect.height;
+
+      const deltaX = (currentMouseXInBadge - dragStart.x) * scaleX;
+      const deltaY = (currentMouseYInBadge - dragStart.y) * scaleY;
+      
+      // Calculate raw position
+      let newX = dragStart.elementX + deltaX;
+      let newY = dragStart.elementY + deltaY;
+
+      // Apply snap if not holding shift
+      if (!shiftPressed && activeDragElement) {
+        const snapped = calculateSnap(newX, newY, activeDragElement.width, activeDragElement.height, draggingElementId);
+        newX = snapped.x;
+        newY = snapped.y;
+      } else {
+        setSnapGuides([]);
+        setSnapTargetElements([]);
+      }
+
+      // Update visual drag offset based on snapped position
+      const offsetX = newX - dragStart.elementX;
+      const offsetY = newY - dragStart.elementY;
+      setCurrentDragOffset({ x: offsetX, y: offsetY });
+
+      // Update drag offset for symmetry preview
+      if (symmetryPairs.has(draggingElementId)) {
+        setDragOffset({ x: offsetX, y: offsetY });
+      }
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      // Get current badge position
+      const badgeRect = badgeRef.current?.getBoundingClientRect();
+      if (!badgeRect) return;
+
+      // Calculate final mouse position RELATIVE to badge
+      const finalMouseXInBadge = e.clientX - badgeRect.left;
+      const finalMouseYInBadge = e.clientY - badgeRect.top;
+
+      // Get badge dimensions
+      const badgeWidth = mmToPx(format.width);
+      const badgeHeight = mmToPx(format.height);
+
+      // Calculate delta in BADGE COORDINATES (px)
+      const scaleX = badgeWidth / badgeRect.width;
+      const scaleY = badgeHeight / badgeRect.height;
+
+      const deltaX = (finalMouseXInBadge - dragStart.x) * scaleX;
+      const deltaY = (finalMouseYInBadge - dragStart.y) * scaleY;
+      
+      // Calculate raw position
+      let newX = dragStart.elementX + deltaX;
+      let newY = dragStart.elementY + deltaY;
+
+      // Apply snap if not holding shift (same as mousemove)
+      if (!shiftPressed && activeDragElement) {
+        const snapped = calculateSnap(newX, newY, activeDragElement.width, activeDragElement.height, draggingElementId);
+        newX = snapped.x;
+        newY = snapped.y;
+      }
+
+      if (onDragStop) {
+        onDragStop(draggingElementId, null as any, { x: newX, y: newY });
+      }
+
+      setDraggingElementId(null);
+      setDragStart(null);
+      setCurrentDragOffset({ x: 0, y: 0 });
+      setActiveDragElement(null);
+      setDragOffset({ x: 0, y: 0 });
+      setSnapGuides([]);
+      setSnapTargetElements([]);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [draggingElementId, dragStart, transformRef, symmetryPairs, onDragStop]);
 
   // Calculate symmetric clone position during drag
   const getSymmetricClone = () => {
@@ -547,17 +774,37 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   const symmetricClone = getSymmetricClone();
 
   return (
-    <div className="flex-1 flex items-center justify-center overflow-auto">
-      <div className="relative">
-        <DndContext
-          sensors={sensors}
-          onDragStart={handleDragStart}
-          onDragMove={handleDragMove}
-          onDragEnd={handleDragEnd}
+    <div className="flex-1 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-700">
+      <TransformWrapper
+          ref={transformRef}
+          initialScale={initialZoom}
+          minScale={0.1}
+          maxScale={5}
+          centerOnInit
+          wheel={{ step: 0.1 }}
+          panning={{ 
+            disabled: false,
+            velocityDisabled: true,
+            allowLeftClickPan: false,
+            allowRightClickPan: false
+          }}
+          doubleClick={{ disabled: true }}
+          onTransformed={(ref) => {
+            if (onZoomChange) {
+              onZoomChange(ref.state.scale);
+            }
+          }}
         >
-          <div
-            ref={badgeRef}
-            className="relative bg-white shadow-lg overflow-hidden"
+          <TransformComponent
+            wrapperStyle={{
+              width: '100%',
+              height: '100%',
+              padding: '20px 0',
+            }}
+          >
+            <div
+              ref={badgeRef}
+              className="relative bg-white shadow-lg overflow-hidden"
             style={{
               width: `${badgeWidth}px`,
               height: `${badgeHeight}px`,
@@ -578,13 +825,10 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
                 e.stopPropagation();
                 backgroundInputRef.current?.click();
               }}
-              style={{
-                fontSize: `${Math.max(12, 14 / zoom)}px` // Adapter la taille au zoom
-              }}
             >
               <div className="text-center">
                 <Plus 
-                  size={Math.max(32, 48 / zoom)} 
+                  size={48} 
                   className="mx-auto mb-2" 
                 />
                 <p>Cliquez pour ajouter un arrière-plan</p>
@@ -630,9 +874,39 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
               }}
             />
           )}
+
+          {/* Snap guides */}
+          {snapGuides.map((guide, index) => (
+            <React.Fragment key={index}>
+              {guide.x !== undefined && (
+                <div
+                  className="absolute pointer-events-none bg-blue-500"
+                  style={{
+                    left: `${guide.x}px`,
+                    top: 0,
+                    width: '1px',
+                    height: '100%',
+                    opacity: 0.6
+                  }}
+                />
+              )}
+              {guide.y !== undefined && (
+                <div
+                  className="absolute pointer-events-none bg-blue-500"
+                  style={{
+                    left: 0,
+                    top: `${guide.y}px`,
+                    width: '100%',
+                    height: '1px',
+                    opacity: 0.6
+                  }}
+                />
+              )}
+            </React.Fragment>
+          ))}
           </div>
-        </DndContext>
-      </div>
+        </TransformComponent>
+      </TransformWrapper>
     </div>
   );
 };

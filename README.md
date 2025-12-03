@@ -1,102 +1,111 @@
-# 🎯 EMS Frontend - Event Management System# Event Management System (EMS)
+# 🎯 EMS Frontend - Event Management System
 
-**Version**: 1.0.0-dev Un système de gestion d'événements B2B moderne et complet, construit avec React 18, TypeScript, et une architecture feature-sliced robuste.
-
-**Date**: 21 octobre 2025
-
-**Statut**: 🟢 Production Ready (90%)**🎯 Status : Version 1.0.0-dev - Système d'invitation fonctionnel !**
-
----> **Dernière mise à jour** : 13 octobre 2025
-
-> **Fonctionnalités principales** : ✅ Auth, ✅ RBAC, ✅ Events, ✅ Users, ✅ **Invitations complètes**
-
-## 📋 Vue d'ensemble
-
-## 🚀 Stack Technique
+**Version**: 1.0.0  
+**Status**: 🟢 Production Ready
 
 Application React moderne de gestion d'événements B2B multi-tenant avec authentification sécurisée, RBAC granulaire, et interface utilisateur responsive.
 
+---
+
+## 📋 Vue d'ensemble
+
+Système de gestion d'événements B2B moderne et complet, construit avec React 18, TypeScript, et une architecture feature-sliced robuste.
+
+> **Fonctionnalités principales** : ✅ Auth, ✅ RBAC, ✅ Events, ✅ Users, ✅ Attendees, ✅ Invitations
+
+---
+
+## 🚀 Stack Technique
+
 ### Core
 
-### 🏗️ Stack Technique- **React 18** avec TypeScript strict
+- **React 18** + **TypeScript** (strict mode)
+- **Vite** pour build ultra-rapide
+- **TailwindCSS** + **RadixUI** pour l'interface
+- **React Router v6** pour navigation
 
-- **Vite** pour le build et le développement
+### State Management
 
-- **React 18** + **TypeScript** (strict mode)- **Tailwind CSS** + **Radix UI** pour l'interface utilisateur
-
-- **Vite** pour build ultra-rapide- **React Router v6** pour la navigation
-
-- **RTK Query** pour state management et cache API
-
-- **TailwindCSS** + **RadixUI** pour l'interface### State Management
-
-- **React Router v6** pour navigation- **Redux Toolkit** + **RTK Query** pour la gestion d'état et le cache API
-
-- **CASL** pour RBAC côté client- Architecture **feature-sliced** avec séparation claire des responsabilités
-
-- **React Hook Form** + **Zod** pour formulaires
+- **Redux Toolkit** + **RTK Query** pour la gestion d'état et le cache API
+- Architecture **feature-sliced** avec séparation claire des responsabilités
 
 ### Authentification & Autorisation
 
----- **CASL** pour le contrôle d'accès basé sur les rôles (RBAC)
-
+- **CASL** pour le contrôle d'accès basé sur les rôles (RBAC)
 - Système de permissions granulaire avec "deny by default"
-
-## 🚀 Démarrage Rapide
 
 ### Formulaires & Validation
 
-### Prérequis- **React Hook Form** + **Zod** pour les formulaires typés
+- **React Hook Form** + **Zod** pour les formulaires typés
+- Validation côté client avec schémas TypeScript
 
-- Node.js 18+ (LTS recommandé)- Validation côté client avec schémas TypeScript
-
-- npm ou yarn
-
-- Backend EMS en cours d'exécution sur `http://localhost:3000`### Internationalisation
+### Internationalisation
 
 - **i18next** avec chargement lazy des namespaces
+- Support français et anglais
 
-### Installation- Support français et anglais
+### Tests & Qualité
 
-```bash### Tests & Qualité
-
-# 1. Installer les dépendances- **Vitest** + **React Testing Library** pour les tests unitaires
-
-npm install- **Playwright** pour les tests E2E
-
+- **Vitest** + **React Testing Library** pour les tests unitaires
+- **Playwright** pour les tests E2E
 - **Storybook** pour la documentation des composants
+- **ESLint** + **Prettier** + **Husky** pour la qualité du code
 
-# 2. Configurer l'environnement- **ESLint** + **Prettier** + **Husky** pour la qualité du code
-
-cp .env.example .env
-
-# Modifier VITE_API_URL si nécessaire### Mocking & Développement
+### Mocking & Développement
 
 - **MSW** (Mock Service Worker) pour les APIs mockées
 
-# 3. Démarrer le dev server
+---
 
-npm run dev## 🏗️ Architecture de Données
+## 🚀 Démarrage Rapide
 
+### Prérequis
+
+- Node.js 18+ (LTS recommandé)
+- npm ou yarn
+- Backend EMS en cours d'exécution sur `http://localhost:3000`
+
+### Installation
+
+```bash
+# 1. Installer les dépendances
+npm install
+
+# 2. Configurer l'environnement
+cp .env.example .env
+# Modifier les variables selon vos besoins
 ```
 
-### Modèle Attendees vs Registrations
+**📖 Guide de configuration complet** : [docs/CONFIGURATION_ENV.md](docs/CONFIGURATION_ENV.md)
 
-✅ Application disponible sur **http://localhost:5173**
+Ce guide détaillé explique :
+- ✅ Configuration de **toutes les variables d'environnement**
+- ✅ Comment obtenir une **clé Google Maps API** (optionnel)
+- ✅ Configuration **Sentry** pour le monitoring (optionnel)
+- ✅ Bonnes pratiques de sécurité
+- ✅ Configuration par environnement (dev/staging/prod)
+- ✅ Dépannage et validation
 
-Le système utilise une **architecture à deux niveaux** pour la gestion des participants :
+**Configuration minimale pour démarrer** :
+```env
+VITE_API_BASE_URL=http://localhost:3000
+VITE_APP_VERSION=1.0.0
+```
+
+```bash
+# 3. Démarrer le serveur de développement
+npm run dev
+```
+
+✅ **Application disponible sur** : http://localhost:5173
 
 ### Connexion Test
 
-- **Email**: `john.doe@system.com`#### 📊 **Attendees (Base Globale)**
+- **Email**: `admin@acme.com`
+- **Mot de passe**: `admin123`
+- **Rôle**: Administrator
 
-- **Mot de passe**: `admin123`- **Table globale** de tous les participants de l'organisation
-
-- **Rôle**: Super Administrator- **Profil unique** par personne avec informations personnelles
-
-- **Historique complet** de toutes les participations
-
----- **CRM intégré** avec suivi des interactions
+--- **CRM intégré** avec suivi des interactions
 
 ## 📚 Documentation```typescript
 

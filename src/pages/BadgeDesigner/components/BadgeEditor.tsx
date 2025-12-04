@@ -19,7 +19,8 @@ interface BadgeEditorProps {
   onElementClick: (id: string, e: React.MouseEvent) => void;
   onDragStart: (id: string, e: any, data: { x: number; y: number }) => void;
   onDragStop: (id: string, e: any, data: { x: number; y: number }) => void;
-  onResize: (id: string, e: any, data: { size: { width: number; height: number }; position?: { x: number; y: number } }) => void;
+  onResize: (id: string, e: any, data: { size: { width: number; height: number }; position?: { x: number; y: number } }, isResizing?: boolean) => void;
+  onSaveHistory?: () => void;
   isSelecting: boolean;
   selectionStart: { x: number; y: number } | null;
   selectionEnd: { x: number; y: number } | null;
@@ -130,6 +131,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   onDragStart,
   onDragStop,
   onResize,
+  onSaveHistory,
   isSelecting,
   selectionStart,
   selectionEnd,
@@ -149,6 +151,12 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     height: number;
     mouseX: number;
     mouseY: number;
+  } | null>(null);
+  const [lastResizeData, setLastResizeData] = useState<{
+    width: number;
+    height: number;
+    x: number;
+    y: number;
   } | null>(null);
   const [shiftPressed, setShiftPressed] = useState(false);
   
@@ -298,16 +306,35 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     newWidth = Math.max(10, newWidth);
     newHeight = Math.max(10, newHeight);
 
+    // Save last resize data for history
+    setLastResizeData({
+      width: newWidth,
+      height: newHeight,
+      x: newX,
+      y: newY
+    });
+
+    // During resize, skip history (isResizing=true)
     onResize(resizingElement, null, {
       size: { width: newWidth, height: newHeight },
       position: { x: newX, y: newY }
-    });
+    }, true);
   };
 
   const handleResizeEnd = () => {
+    // At end of resize, save final state to history
+    if (resizingElement && lastResizeData) {
+      // Call onResize with isResizing=false to save to history
+      onResize(resizingElement, null, {
+        size: { width: lastResizeData.width, height: lastResizeData.height },
+        position: { x: lastResizeData.x, y: lastResizeData.y }
+      }, false);
+    }
+    
     setResizingElement(null);
     setResizeHandle(null);
     setResizeStartData(null);
+    setLastResizeData(null);
   };
 
   useEffect(() => {
@@ -320,7 +347,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
       };
     }
     return undefined;
-  }, [resizingElement, resizeHandle, resizeStartData]);
+  }, [resizingElement, resizeHandle, resizeStartData, lastResizeData]);
 
 
 
@@ -348,7 +375,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             justifyContent: element.style.textAlign === 'center' ? 'center' : 
                           element.style.textAlign === 'right' ? 'flex-end' : 'flex-start',
             pointerEvents: 'none',
-            lineHeight: '1.2',
+            lineHeight: element.style.lineHeight !== undefined ? element.style.lineHeight : 1.2,
+            letterSpacing: element.style.letterSpacing !== undefined ? `${element.style.letterSpacing}px` : 'normal',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-word'
           }}

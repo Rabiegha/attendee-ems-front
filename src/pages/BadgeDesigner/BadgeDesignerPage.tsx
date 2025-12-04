@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
+import { AlertTriangle } from 'lucide-react';
 import { BadgeElement, BadgeFormat, BADGE_FORMATS, HistoryState } from '../../shared/types/badge.types';
 import { mmToPx } from '../../shared/utils/conversion';
 import { getTransformWithRotation } from '../../shared/utils/transform';
 import { BadgeEditor } from './components/BadgeEditor';
 import { LeftSidebar } from './components/LeftSidebar';
 import { RightSidebar } from './components/RightSidebar';
+import { Button } from '@/shared/ui/Button';
 import { 
   useGetBadgeTemplateQuery, 
   useCreateBadgeTemplateMutation, 
@@ -40,10 +42,11 @@ export const BadgeDesignerPage: React.FC = () => {
   const [isSelecting, setIsSelecting] = useState(false);
   const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null);
   const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null);
-  const [, setHistory] = useState<HistoryState[]>([]);
+  const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [templateName, setTemplateName] = useState('');
   const [copiedUrl, setCopiedUrl] = useState('');
+  const [clipboard, setClipboard] = useState<BadgeElement[]>([]);
   const [uploadedImages, setUploadedImages] = useState<Map<string, { data: string; filename: string }>>(new Map());
   
   // Symmetry pairs - maps parent ID to clone ID  
@@ -51,11 +54,40 @@ export const BadgeDesignerPage: React.FC = () => {
   
   // Current zoom level for display
   const [currentZoom, setCurrentZoom] = useState(0.5);
+  
+  // Track unsaved changes
+  const [isDirty, setIsDirty] = useState(false);
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  
+  // Track continuous actions (to avoid saving history on each pixel)
+  const [isContinuousAction, setIsContinuousAction] = useState(false);
+  const continuousActionRef = useRef<{ elements: BadgeElement[]; background: string | null } | null>(null);
 
   const badgeRef = useRef<HTMLDivElement>(null);
   const elementRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
   const backgroundInputRef = useRef<HTMLInputElement>(null);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
+  const saveTemplateRef = useRef<(() => Promise<void>) | null>(null);
+
+  // Track changes to mark as dirty
+  useEffect(() => {
+    if (history.length > 0) {
+      setIsDirty(true);
+    }
+  }, [elements, background, templateName]);
+
+  // Protection contre la fermeture de l'onglet/navigateur
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   // Save state to history
   const saveToHistory = useCallback((newElements: BadgeElement[], newBackground: string | null) => {
@@ -71,6 +103,100 @@ export const BadgeDesignerPage: React.FC = () => {
     });
     setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY - 1));
   }, [historyIndex]);
+
+  // Undo
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      const state = history[newIndex];
+      setElements(JSON.parse(JSON.stringify(state.elements)));
+      setBackground(state.background);
+      setHistoryIndex(newIndex);
+      // Keep selection - filter out IDs that no longer exist
+      setSelectedElements(prev => prev.filter(id => state.elements.some(el => el.id === id)));
+    }
+  }, [history, historyIndex]);
+
+  // Redo
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      const state = history[newIndex];
+      setElements(JSON.parse(JSON.stringify(state.elements)));
+      setBackground(state.background);
+      setHistoryIndex(newIndex);
+      // Keep selection - filter out IDs that no longer exist
+      setSelectedElements(prev => prev.filter(id => state.elements.some(el => el.id === id)));
+    }
+  }, [history, historyIndex]);
+
+  // Copy selected elements
+  const copyElements = useCallback(() => {
+    if (selectedElements.length === 0) return;
+    const elementsToCopy = elements.filter(el => selectedElements.includes(el.id));
+    setClipboard(JSON.parse(JSON.stringify(elementsToCopy)));
+  }, [selectedElements, elements]);
+
+  // Paste copied elements
+  const pasteElements = useCallback(() => {
+    if (clipboard.length === 0) return;
+    
+    const PASTE_OFFSET = 20; // Offset in pixels
+    const newElements: BadgeElement[] = clipboard.map(el => ({
+      ...el,
+      id: `${Date.now()}-${Math.random()}`,
+      x: el.x + PASTE_OFFSET,
+      y: el.y + PASTE_OFFSET
+    }));
+
+    const updatedElements = [...elements, ...newElements];
+    setElements(updatedElements);
+    setSelectedElements(newElements.map(el => el.id));
+    saveToHistory(updatedElements, background);
+  }, [clipboard, elements, background, saveToHistory]);
+
+  // Duplicate element
+  const duplicateElement = useCallback((id: string) => {
+    const element = elements.find(el => el.id === id);
+    if (element) {
+      const newElement: BadgeElement = {
+        ...element,
+        id: `element-${Date.now()}`,
+        x: element.x + 20,
+        y: element.y + 20
+      };
+      const newElements = [...elements, newElement];
+      setElements(newElements);
+      setSelectedElements([newElement.id]);
+      saveToHistory(newElements, background);
+    }
+  }, [elements, background, saveToHistory]);
+
+  // Duplicate multiple elements at once
+  const duplicateElements = useCallback((ids: string[]) => {
+    const elementsToDuplicate = elements.filter(el => ids.includes(el.id));
+    if (elementsToDuplicate.length === 0) return;
+
+    const newElements = [...elements];
+    const newIds: string[] = [];
+    let timeOffset = 0;
+
+    elementsToDuplicate.forEach(element => {
+      const newElement: BadgeElement = {
+        ...element,
+        id: `element-${Date.now() + timeOffset}`,
+        x: element.x + 20,
+        y: element.y + 20
+      };
+      newElements.push(newElement);
+      newIds.push(newElement.id);
+      timeOffset++; // Ensure unique IDs
+    });
+
+    setElements(newElements);
+    setSelectedElements(newIds);
+    saveToHistory(newElements, background);
+  }, [elements, background, saveToHistory]);
 
   // Load template from API when editing
   useEffect(() => {
@@ -101,10 +227,26 @@ export const BadgeDesignerPage: React.FC = () => {
           setSymmetryPairs(new Map(data.symmetryPairs));
         }
         setTemplateName(loadedTemplate.name);
+        
+        // Initialize history with loaded state
+        const initialState: HistoryState = {
+          elements: JSON.parse(JSON.stringify(elementsWithAspectRatio)),
+          background: data.background || null
+        };
+        setHistory([initialState]);
+        setHistoryIndex(0);
       } catch (e) {
         console.error('Failed to load template from API:', e);
         toast.error('Erreur', 'Impossible de charger le template');
       }
+    } else {
+      // Initialize history for new templates
+      const initialState: HistoryState = {
+        elements: [],
+        background: null
+      };
+      setHistory([initialState]);
+      setHistoryIndex(0);
     }
   }, [loadedTemplate]);
 
@@ -120,21 +262,35 @@ export const BadgeDesignerPage: React.FC = () => {
       // Ctrl/Cmd + S: Save
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        saveTemplate();
+        saveTemplateRef.current?.();
         return;
       }
 
-      // Ctrl/Cmd + Z: Undo (future feature)
+      // Ctrl/Cmd + Z: Undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        // TODO: Implement undo
+        undo();
         return;
       }
 
-      // Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y: Redo (future feature)
+      // Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y: Redo
       if ((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key === 'z' || e.key === 'y')) {
         e.preventDefault();
-        // TODO: Implement redo
+        redo();
+        return;
+      }
+
+      // Ctrl/Cmd + C: Copy
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        e.preventDefault();
+        copyElements();
+        return;
+      }
+
+      // Ctrl/Cmd + V: Paste
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        e.preventDefault();
+        pasteElements();
         return;
       }
 
@@ -232,7 +388,8 @@ export const BadgeDesignerPage: React.FC = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedElements, elements, background, saveToHistory]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedElements, elements, background, saveToHistory, undo, redo, copyElements, pasteElements, duplicateElement, duplicateElements]);
 
   // Helper function to measure text dimensions
   const measureText = (content: string, fontSize: number, fontFamily: string = 'Arial'): { width: number; height: number } => {
@@ -330,9 +487,9 @@ export const BadgeDesignerPage: React.FC = () => {
   };
 
   // Update element
-  const updateElement = (id: string, updates: Partial<BadgeElement>) => {
+  const updateElement = (id: string, updates: Partial<BadgeElement>, skipHistory = false): BadgeElement[] => {
     const element = elements.find(el => el.id === id);
-    if (!element) return;
+    if (!element) return elements;
     
     // NOTE: Ne plus recalculer automatiquement les dimensions quand le contenu change
     // L'utilisateur peut avoir manuellement redimensionné l'élément et on doit respecter ça
@@ -378,11 +535,15 @@ export const BadgeDesignerPage: React.FC = () => {
       updateSymmetryPair(updatedElement);
     }
     
-    saveToHistory(newElements, background);
+    if (!skipHistory) {
+      saveToHistory(newElements, background);
+    }
+    
+    return newElements;
   };
 
   // Batch update elements
-  const batchUpdateElements = (updates: Array<{ id: string; updates: Partial<BadgeElement> }>) => {
+  const batchUpdateElements = (updates: Array<{ id: string; updates: Partial<BadgeElement> }>, skipHistory = false) => {
     const newElements = elements.map(element => {
       const update = updates.find(u => u.id === element.id);
       if (update) {
@@ -406,7 +567,9 @@ export const BadgeDesignerPage: React.FC = () => {
       }
     });
     
-    saveToHistory(newElements, background);
+    if (!skipHistory) {
+      saveToHistory(newElements, background);
+    }
   };
 
   // Delete element
@@ -426,48 +589,7 @@ export const BadgeDesignerPage: React.FC = () => {
     saveToHistory(newElements, background);
   };
 
-  // Duplicate element
-  const duplicateElement = (id: string) => {
-    const element = elements.find(el => el.id === id);
-    if (element) {
-      const newElement: BadgeElement = {
-        ...element,
-        id: `element-${Date.now()}`,
-        x: element.x + 20,
-        y: element.y + 20
-      };
-      const newElements = [...elements, newElement];
-      setElements(newElements);
-      setSelectedElements([newElement.id]);
-      saveToHistory(newElements, background);
-    }
-  };
 
-  // Duplicate multiple elements at once
-  const duplicateElements = (ids: string[]) => {
-    const elementsToDuplicate = elements.filter(el => ids.includes(el.id));
-    if (elementsToDuplicate.length === 0) return;
-
-    const newElements = [...elements];
-    const newIds: string[] = [];
-    let timeOffset = 0;
-
-    elementsToDuplicate.forEach(element => {
-      const newElement: BadgeElement = {
-        ...element,
-        id: `element-${Date.now() + timeOffset}`,
-        x: element.x + 20,
-        y: element.y + 20
-      };
-      newElements.push(newElement);
-      newIds.push(newElement.id);
-      timeOffset++; // Ensure unique IDs
-    });
-
-    setElements(newElements);
-    setSelectedElements(newIds);
-    saveToHistory(newElements, background);
-  };
 
 
 
@@ -624,14 +746,6 @@ export const BadgeDesignerPage: React.FC = () => {
 
   const handleZoomOut = () => {
     transformRef.current?.zoomOut(0.2);
-  };
-
-  const resetView = () => {
-    transformRef.current?.resetTransform();
-  };
-
-  const fitToScreen = () => {
-    transformRef.current?.centerView(0.5);
   };
 
   // Handle format change
@@ -817,10 +931,12 @@ export const BadgeDesignerPage: React.FC = () => {
         // Update existing template
         await updateTemplate({ id: templateId, data: payload }).unwrap();
         toast.success('Succès', 'Template mis à jour avec succès');
+        setIsDirty(false);
       } else {
         // Create new template
         const result = await createTemplate(payload).unwrap();
         toast.success('Succès', 'Template créé avec succès');
+        setIsDirty(false);
         // Navigate to edit mode with the new template ID
         navigate(`/badges/designer/${result.id}`);
       }
@@ -829,6 +945,9 @@ export const BadgeDesignerPage: React.FC = () => {
       toast.error('Erreur', error?.data?.message || 'Erreur lors de la sauvegarde du template');
     }
   };
+
+  // Update ref when saveTemplate changes
+  saveTemplateRef.current = saveTemplate;
 
   // Delete template
   const handleDeleteTemplate = async () => {
@@ -850,7 +969,34 @@ export const BadgeDesignerPage: React.FC = () => {
 
   // Go back to list
   const handleGoBack = () => {
-    navigate('/badges');
+    if (isDirty) {
+      setPendingNavigation('/badges');
+      setShowUnsavedChangesModal(true);
+    } else {
+      navigate('/badges');
+    }
+  };
+
+  // Modal handlers
+  const handleStay = () => {
+    setShowUnsavedChangesModal(false);
+    setPendingNavigation(null);
+  };
+
+  const handleLeave = () => {
+    setIsDirty(false);
+    setShowUnsavedChangesModal(false);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+    }
+  };
+
+  const handleSaveAndLeave = async () => {
+    await saveTemplate();
+    setShowUnsavedChangesModal(false);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+    }
   };
 
   // Copy URL
@@ -1014,7 +1160,7 @@ export const BadgeDesignerPage: React.FC = () => {
     }
   };
 
-  const handleResize = (id: string, _e: any, data: { size: { width: number; height: number }; position?: { x: number; y: number } }) => {
+  const handleResize = (id: string, _e: any, data: { size: { width: number; height: number }; position?: { x: number; y: number } }, isResizing = true) => {
     const updates: Partial<BadgeElement> = {
       width: data.size.width,
       height: data.size.height
@@ -1025,7 +1171,8 @@ export const BadgeDesignerPage: React.FC = () => {
       updates.y = data.position.y;
     }
     
-    updateElement(id, updates);
+    // Update element (skip history during resize, save at end)
+    updateElement(id, updates, isResizing);
   };
 
   return (
@@ -1050,8 +1197,6 @@ export const BadgeDesignerPage: React.FC = () => {
         zoom={currentZoom}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
-        onResetView={resetView}
-        onFitToScreen={fitToScreen}
       />
 
       {/* Main Canvas - zoom/pan managed by BadgeEditor */}
@@ -1070,6 +1215,7 @@ export const BadgeDesignerPage: React.FC = () => {
         onDragStart={handleDragStart}
         onDragStop={handleDragStop}
         onResize={handleResize}
+        onSaveHistory={() => saveToHistory(elements, background)}
         isSelecting={isSelecting}
         selectionStart={selectionStart}
         selectionEnd={selectionEnd}
@@ -1094,6 +1240,13 @@ export const BadgeDesignerPage: React.FC = () => {
         symmetryPairs={symmetryPairs}
         onCreateSymmetry={createSymmetry}
         onBreakSymmetry={breakSymmetry}
+        onSaveHistory={() => saveToHistory(elements, background)}
+        canUndo={historyIndex > 0}
+        canRedo={historyIndex < history.length - 1}
+        onUndo={undo}
+        onRedo={redo}
+        historyIndex={historyIndex}
+        historyLength={history.length}
       />
 
       {/* Hidden background upload input */}
@@ -1104,6 +1257,51 @@ export const BadgeDesignerPage: React.FC = () => {
         onChange={handleBackgroundUpload}
         className="hidden"
       />
+
+      {/* Modal de confirmation de navigation */}
+      {showUnsavedChangesModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-6 transform transition-all">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Modifications non enregistrées
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Vous avez des modifications en attente. Si vous quittez cette page sans enregistrer, elles seront perdues.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={handleStay}
+                    className="order-3 sm:order-1"
+                  >
+                    Retour
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={handleLeave}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 order-2 sm:order-2"
+                  >
+                    Quitter
+                  </Button>
+                  <Button
+                    onClick={handleSaveAndLeave}
+                    disabled={isCreating || isUpdating}
+                    className="order-1 sm:order-3"
+                  >
+                    {isCreating || isUpdating ? 'Enregistrement...' : 'Sauvegarder'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

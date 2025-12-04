@@ -1,10 +1,11 @@
 import React from 'react';
 import { 
-  Trash2, RotateCcw, RotateCw, Copy, Shuffle, X,
+  Trash2, RotateCcw, RotateCw, Shuffle, X,
   AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
   AlignHorizontalSpaceAround, AlignVerticalSpaceAround,
   AlignStartVertical, AlignCenterVertical, AlignEndVertical,
-  AlignStartHorizontal, AlignEndHorizontal, AlignCenterHorizontal
+  AlignStartHorizontal, AlignEndHorizontal, AlignCenterHorizontal,
+  Undo2, Redo2, CopyPlus
 } from 'lucide-react';
 import { BadgeElement, BadgeFormat } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
@@ -15,14 +16,23 @@ interface RightSidebarProps {
   selectedElements: BadgeElement[];
   symmetryPairs: Map<string, string>;
   badgeFormat: BadgeFormat;
-  onUpdateElement: (id: string, updates: Partial<BadgeElement>) => void;
-  onBatchUpdateElements: (updates: Array<{ id: string; updates: Partial<BadgeElement> }>) => void;
+  onUpdateElement: (id: string, updates: Partial<BadgeElement>, skipHistory?: boolean) => void;
+  onBatchUpdateElements: (updates: Array<{ id: string; updates: Partial<BadgeElement> }>, skipHistory?: boolean) => void;
   onDeleteElement: (id: string) => void;
   onDeleteElements: (ids: string[]) => void;
   onDuplicateElement: (id: string) => void;
   onDuplicateElements: (ids: string[]) => void;
   onCreateSymmetry: () => void;
   onBreakSymmetry: () => void;
+  // Manual history save (for slider mouseup)
+  onSaveHistory?: () => void;
+  // History controls
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  historyIndex?: number;
+  historyLength?: number;
 }
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({
@@ -36,10 +46,23 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   onDeleteElement,
   onDuplicateElement,
   onCreateSymmetry,
-  onBreakSymmetry
+  onBreakSymmetry,
+  onSaveHistory,
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
+  historyIndex = 0,
+  historyLength = 0,
 }) => {
   const selectedElement = selectedElements.length === 1 ? selectedElements[0] : null;
   const multipleSelected = selectedElements.length > 1;
+  
+  // Track which slider is currently open
+  const [openSlider, setOpenSlider] = React.useState<string | null>(null);
+  
+  // Track if user is dragging a slider
+  const [isDraggingSlider, setIsDraggingSlider] = React.useState(false);
   
   // Check if any selected element has a symmetry pair
   const hasSymmetryPair = selectedElements.some(el => 
@@ -60,15 +83,47 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
 
   if (selectedElements.length === 0) {
     return (
-      <div className="w-64 bg-white dark:bg-gray-800 shadow-md p-4 border-l dark:border-gray-700">
-        <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
-          <p className="text-sm">Sélectionner un élément pour modifier ses propriétés</p>
+      <div className="w-64 bg-white dark:bg-gray-800 shadow-md border-l dark:border-gray-700 flex flex-col">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
+            <p className="text-sm">Sélectionner un élément pour modifier ses propriétés</p>
+          </div>
+        </div>
+
+        {/* Actions - Fixed en bas */}
+        <div className="border-t border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800">
+          <div className="flex items-center justify-center gap-2">
+            {/* Undo */}
+            <button
+              onClick={onUndo}
+              disabled={!canUndo}
+              title="Annuler (Ctrl+Z)"
+              className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            >
+              <Undo2 size={18} className="text-gray-700 dark:text-gray-300" />
+            </button>
+
+            {/* History counter */}
+            <div className="px-3 text-sm font-medium min-w-[60px] text-center text-gray-900 dark:text-gray-100">
+              {historyIndex + 1}/{historyLength || 1}
+            </div>
+
+            {/* Redo */}
+            <button
+              onClick={onRedo}
+              disabled={!canRedo}
+              title="Rétablir (Ctrl+Y)"
+              className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+            >
+              <Redo2 size={18} className="text-gray-700 dark:text-gray-300" />
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  const handleStyleUpdate = (property: string, value: any) => {
+  const handleStyleUpdate = (property: string, value: any, skipHistory = false) => {
     if (selectedElements.length === 1) {
       // Single element: use direct update
       const element = selectedElements[0];
@@ -86,7 +141,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         updates.height = Math.ceil(value * 1.5);
       }
       
-      onUpdateElement(element.id, updates);
+      onUpdateElement(element.id, updates, skipHistory);
     } else {
       // Multiple elements: use batch update
       const batchUpdates = selectedElements.map(element => {
@@ -107,7 +162,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         return { id: element.id, updates };
       });
       
-      onBatchUpdateElements(batchUpdates);
+      onBatchUpdateElements(batchUpdates, skipHistory);
     }
   };
 
@@ -325,7 +380,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   };
 
   return (
-    <div className="w-64 bg-white dark:bg-gray-800 shadow-md p-4 flex flex-col space-y-4 overflow-y-auto border-l dark:border-gray-700">
+    <div className="w-64 bg-white dark:bg-gray-800 shadow-md border-l dark:border-gray-700 flex flex-col">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {/* Header */}
       <div className="border-b dark:border-gray-700 pb-2">
         <h3 className="font-medium text-gray-800 dark:text-gray-200">
@@ -698,7 +754,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             className="flex items-center justify-center gap-1 text-xs px-2"
             title={multipleSelected ? `Dupliquer ${selectedElements.length} éléments` : 'Dupliquer'}
           >
-            <Copy size={16} className="flex-shrink-0" />
+            <CopyPlus size={16} className="flex-shrink-0" />
             <span className="truncate">Dupliquer</span>
           </Button>
           
@@ -791,9 +847,12 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         {/* Font Size - Text only */}
         {selectedElement?.type === 'text' && (
           <div>
-            <div className="flex justify-between items-center mb-1">
+            <div 
+              className="flex justify-between items-center mb-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded p-1 -m-1"
+              onClick={() => setOpenSlider(openSlider === 'fontSize' ? null : 'fontSize')}
+            >
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Taille</label>
-              <div className="flex items-center">
+              <div className="flex items-center gap-2">
                 <input
                   type="text"
                   value={selectedElement.style.fontSize ?? ''}
@@ -824,19 +883,150 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                       handleStyleUpdate('fontSize', Math.max(8, Math.min(200, numValue)));
                     }
                   }}
-                  className="w-16 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-1 py-0.5"
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-16 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1"
                 />
-                <span className="text-xs text-gray-500 ml-1">px</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">px</span>
               </div>
             </div>
-            <input
-              type="range"
-              min="8"
-              max="200"
-              value={selectedElement.style.fontSize || 70}
-              onChange={(e) => handleStyleUpdate('fontSize', parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-            />
+            {openSlider === 'fontSize' && (
+              <input
+                type="range"
+                min="8"
+                max="200"
+                value={selectedElement.style.fontSize || 70}
+                onMouseDown={() => setIsDraggingSlider(true)}
+                onChange={(e) => handleStyleUpdate('fontSize', parseInt(e.target.value), true)}
+                onMouseUp={() => {
+                  setIsDraggingSlider(false);
+                  onSaveHistory?.();
+                }}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mt-2"
+              />
+            )}
+          </div>
+        )}
+
+        {/* Line Height - Text only */}
+        {selectedElement?.type === 'text' && (
+          <div>
+            <div 
+              className="flex justify-between items-center mb-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded p-1 -m-1"
+              onClick={() => setOpenSlider(openSlider === 'lineHeight' ? null : 'lineHeight')}
+            >
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Interligne</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={selectedElement.style.lineHeight !== undefined ? selectedElement.style.lineHeight.toFixed(1) : '1.2'}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!isNaN(Number(value))) {
+                      handleStyleUpdate('lineHeight', parseFloat(value) || 1.2);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    const currentValue = selectedElement.style.lineHeight || 1.2;
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      handleStyleUpdate('lineHeight', Math.min(3, currentValue + 0.1));
+                    } else if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      handleStyleUpdate('lineHeight', Math.max(0.5, currentValue - 0.1));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || isNaN(Number(value))) {
+                      handleStyleUpdate('lineHeight', 1.2);
+                    } else {
+                      const numValue = parseFloat(value);
+                      handleStyleUpdate('lineHeight', Math.max(0.5, Math.min(3, numValue)));
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-16 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1"
+                />
+              </div>
+            </div>
+            {openSlider === 'lineHeight' && (
+              <input
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.1"
+                value={selectedElement.style.lineHeight || 1.2}
+                onMouseDown={() => setIsDraggingSlider(true)}
+                onChange={(e) => handleStyleUpdate('lineHeight', parseFloat(e.target.value), true)}
+                onMouseUp={() => {
+                  setIsDraggingSlider(false);
+                  onSaveHistory?.();
+                }}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mt-2"
+              />
+            )}
+          </div>
+        )}
+
+        {/* Letter Spacing - Text only */}
+        {selectedElement?.type === 'text' && (
+          <div>
+            <div 
+              className="flex justify-between items-center mb-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded p-1 -m-1"
+              onClick={() => setOpenSlider(openSlider === 'letterSpacing' ? null : 'letterSpacing')}
+            >
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Espacement</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={selectedElement.style.letterSpacing !== undefined ? selectedElement.style.letterSpacing.toFixed(1) : '0.0'}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!isNaN(Number(value))) {
+                      handleStyleUpdate('letterSpacing', parseFloat(value) || 0);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    const currentValue = selectedElement.style.letterSpacing || 0;
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      handleStyleUpdate('letterSpacing', Math.min(20, currentValue + 0.5));
+                    } else if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      handleStyleUpdate('letterSpacing', Math.max(-5, currentValue - 0.5));
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || isNaN(Number(value))) {
+                      handleStyleUpdate('letterSpacing', 0);
+                    } else {
+                      const numValue = parseFloat(value);
+                      handleStyleUpdate('letterSpacing', Math.max(-5, Math.min(20, numValue)));
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-16 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1"
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">px</span>
+              </div>
+            </div>
+            {openSlider === 'letterSpacing' && (
+              <input
+                type="range"
+                min="-5"
+                max="20"
+                step="0.5"
+                value={selectedElement.style.letterSpacing || 0}
+                onMouseDown={() => setIsDraggingSlider(true)}
+                onChange={(e) => handleStyleUpdate('letterSpacing', parseFloat(e.target.value), true)}
+                onMouseUp={() => {
+                  setIsDraggingSlider(false);
+                  onSaveHistory?.();
+                }}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mt-2"
+              />
+            )}
           </div>
         )}
 
@@ -952,82 +1142,73 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
 
         {/* Rotation */}
         <div>
-          <div className="flex justify-between items-center mb-1">
+          <div 
+            className="flex justify-between items-center mb-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded p-1 -m-1"
+            onClick={() => setOpenSlider(openSlider === 'rotation' ? null : 'rotation')}
+          >
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Rotation</label>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={() => {
-                  const currentRotation = selectedElement?.style.rotation || 0;
-                  handleStyleUpdate('rotation', currentRotation - 15);
+              <input
+                type="text"
+                value={selectedElement?.style.rotation ?? ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || value === '-') {
+                    handleStyleUpdate('rotation', value);
+                  } else if (!isNaN(Number(value))) {
+                    handleStyleUpdate('rotation', parseInt(value));
+                  }
                 }}
-                variant="outline"
-                size="sm"
-                className="h-6 w-6 p-0 flex items-center justify-center"
-              >
-                <RotateCcw size={12} />
-              </Button>
-              <div className="flex items-center">
-                <input
-                  type="text"
-                  value={selectedElement?.style.rotation ?? ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || value === '-') {
-                      handleStyleUpdate('rotation', value);
-                    } else if (!isNaN(Number(value))) {
-                      handleStyleUpdate('rotation', parseInt(value));
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    const currentValue = selectedElement?.style.rotation || 0;
-                    if (e.key === 'ArrowUp') {
-                      e.preventDefault();
-                      handleStyleUpdate('rotation', Math.min(180, currentValue + 1));
-                    } else if (e.key === 'ArrowDown') {
-                      e.preventDefault();
-                      handleStyleUpdate('rotation', Math.max(-180, currentValue - 1));
-                    }
-                  }}
-                  onBlur={(e) => {
-                    const value = e.target.value;
-                    if (value === '' || value === '-' || isNaN(Number(value))) {
-                      handleStyleUpdate('rotation', 0);
-                    } else {
-                      const numValue = parseInt(value);
-                      handleStyleUpdate('rotation', Math.max(-180, Math.min(180, numValue)));
-                    }
-                  }}
-                  className="w-16 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-1 py-0.5"
-                />
-              </div>
-              <Button
-                onClick={() => {
-                  const currentRotation = selectedElement?.style.rotation || 0;
-                  handleStyleUpdate('rotation', currentRotation + 15);
+                onKeyDown={(e) => {
+                  const currentValue = selectedElement?.style.rotation || 0;
+                  if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    handleStyleUpdate('rotation', Math.min(180, currentValue + 1));
+                  } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    handleStyleUpdate('rotation', Math.max(-180, currentValue - 1));
+                  }
                 }}
-                variant="outline"
-                size="sm"
-                className="h-6 w-6 p-0 flex items-center justify-center"
-              >
-                <RotateCw size={12} />
-              </Button>
+                onBlur={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || value === '-' || isNaN(Number(value))) {
+                    handleStyleUpdate('rotation', 0);
+                  } else {
+                    const numValue = parseInt(value);
+                    handleStyleUpdate('rotation', Math.max(-180, Math.min(180, numValue)));
+                  }
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-16 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1"
+              />
+              <span className="text-xs text-gray-500 dark:text-gray-400">°</span>
             </div>
           </div>
-          <input
-            type="range"
-            min="-180"
-            max="180"
-            value={selectedElement?.style.rotation || 0}
-            onChange={(e) => handleStyleUpdate('rotation', parseInt(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-          />
+          {openSlider === 'rotation' && (
+            <input
+              type="range"
+              min="-180"
+              max="180"
+              value={selectedElement?.style.rotation || 0}
+              onMouseDown={() => setIsDraggingSlider(true)}
+              onChange={(e) => handleStyleUpdate('rotation', parseInt(e.target.value), true)}
+              onMouseUp={() => {
+                setIsDraggingSlider(false);
+                onSaveHistory?.();
+              }}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mt-2"
+            />
+          )}
         </div>
 
         {/* Opacity */}
         <div>
-          <div className="flex justify-between items-center mb-1">
+          <div 
+            className="flex justify-between items-center mb-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded p-1 -m-1"
+            onClick={() => setOpenSlider(openSlider === 'opacity' ? null : 'opacity')}
+          >
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Opacité</label>
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <input
                 type="text"
                 value={selectedElement?.style.opacity !== undefined ? Math.round(selectedElement.style.opacity * 100) : ''}
@@ -1059,19 +1240,27 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     handleStyleUpdate('opacity', Math.max(0, Math.min(100, numValue)) / 100);
                   }
                 }}
-                className="w-16 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-1 py-0.5"
+                onClick={(e) => e.stopPropagation()}
+                className="w-16 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 py-1"
               />
-              <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">%</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">%</span>
             </div>
           </div>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={Math.round((selectedElement?.style.opacity ?? 1) * 100)}
-            onChange={(e) => handleStyleUpdate('opacity', parseInt(e.target.value) / 100)}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
-          />
+          {openSlider === 'opacity' && (
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={Math.round((selectedElement?.style.opacity ?? 1) * 100)}
+              onMouseDown={() => setIsDraggingSlider(true)}
+              onChange={(e) => handleStyleUpdate('opacity', parseInt(e.target.value) / 100, true)}
+              onMouseUp={() => {
+                setIsDraggingSlider(false);
+                onSaveHistory?.();
+              }}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 mt-2"
+            />
+          )}
         </div>
 
         {/* Z-Index */}
@@ -1083,6 +1272,37 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             onChange={(e) => handleStyleUpdate('zIndex', parseInt(e.target.value))}
             className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded p-2 text-sm"
           />
+        </div>
+      </div>
+      </div>
+
+      {/* Actions - Fixed en bas */}
+      <div className="border-t border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800">
+        <div className="flex items-center justify-center gap-2">
+          {/* Undo */}
+          <button
+            onClick={onUndo}
+            disabled={!canUndo}
+            title="Annuler (Ctrl+Z)"
+            className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+          >
+            <Undo2 size={18} className="text-gray-700 dark:text-gray-300" />
+          </button>
+
+          {/* History Counter */}
+          <div className="px-3 text-sm font-medium min-w-[60px] text-center text-gray-900 dark:text-gray-100">
+            {historyIndex + 1}/{historyLength || 1}
+          </div>
+
+          {/* Redo */}
+          <button
+            onClick={onRedo}
+            disabled={!canRedo}
+            title="Rétablir (Ctrl+Y)"
+            className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+          >
+            <Redo2 size={18} className="text-gray-700 dark:text-gray-300" />
+          </button>
         </div>
       </div>
     </div>

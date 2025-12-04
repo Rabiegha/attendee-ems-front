@@ -24,8 +24,6 @@ interface LeftSidebarProps {
   zoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onResetView: () => void;
-  onFitToScreen: () => void;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -46,9 +44,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   isEditMode = false,
   zoom,
   onZoomIn,
-  onZoomOut,
-  onResetView,
-  onFitToScreen
+  onZoomOut
 }) => {
   return (
     <div className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col border-r border-gray-200 dark:border-gray-700 relative">
@@ -190,9 +186,9 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         </div>
       </div>
 
-      {/* Variables EMS */}
+      {/* Variables */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-        <h3 className="font-medium mb-2 text-gray-800 dark:text-gray-200">Variables EMS</h3>
+        <h3 className="font-medium mb-2 text-gray-800 dark:text-gray-200">Variables</h3>
         <div className="space-y-1">
           {[
             { key: 'firstName', label: 'Prénom' },
@@ -200,14 +196,13 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             { key: 'company', label: 'Entreprise' },
             { key: 'email', label: 'Email' },
             { key: 'eventName', label: 'Événement' },
-            { key: 'attendeeId', label: 'ID Participant' }
           ].map(variable => (
             <button
               key={variable.key}
               onClick={() => onAddElement('text', `{{${variable.key}}}`)}
               className="w-full text-left px-2 py-1 text-xs bg-gray-50 hover:bg-gray-100 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-100 dark:border-gray-600 rounded border"
             >
-              {`{{${variable.key}}}`} - {variable.label}
+              {variable.label}
             </button>
           ))}
         </div>
@@ -215,13 +210,11 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       </div>
 
       {/* Zoom Controls - Fixed en bas */}
-      <div className="border-t border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800">
+      <div className="border-t border-gray-200 dark:border-gray-700 p-2 bg-white dark:bg-gray-800 flex justify-center">
         <ZoomControls
           zoom={zoom}
           onZoomIn={onZoomIn}
           onZoomOut={onZoomOut}
-          onResetView={onResetView}
-          onFitToScreen={onFitToScreen}
         />
       </div>
     </div>

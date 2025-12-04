@@ -106,6 +106,8 @@ export interface BadgeElement {
     textDecoration?: 'none' | 'underline' | 'line-through';
     opacity: number;
     zIndex: number;
+    lineHeight?: number;
+    letterSpacing?: number;
   };
   imageId?: string;
   aspectRatio?: number;

@@ -1,69 +1,41 @@
 import React from 'react';
-import { ZoomIn, ZoomOut, RotateCcw, Maximize2 } from 'lucide-react';
-import { Button } from '../../../shared/ui/Button';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 
 interface ZoomControlsProps {
   zoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
-  onResetView: () => void;
-  onFitToScreen: () => void;
 }
 
 export const ZoomControls: React.FC<ZoomControlsProps> = ({
   zoom,
   onZoomIn,
-  onZoomOut,
-  onResetView,
-  onFitToScreen
+  onZoomOut
 }) => {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <Button
+    <div className="flex items-center gap-2">
+      {/* Zoom Out */}
+      <button
         onClick={onZoomOut}
-        variant="outline"
-        size="sm"
-        className="p-2 flex-1"
         title="Zoom arrière"
+        className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
       >
-        <ZoomOut size={16} />
-      </Button>
-      
-      <div className="px-2 text-sm font-medium min-w-[60px] text-center text-gray-900 dark:text-gray-100">
+        <ZoomOut size={18} className="text-gray-700 dark:text-gray-300" />
+      </button>
+
+      {/* Zoom Percentage */}
+      <div className="px-3 text-sm font-medium min-w-[60px] text-center text-gray-900 dark:text-gray-100">
         {Math.round(zoom * 100)}%
       </div>
-      
-      <Button
+
+      {/* Zoom In */}
+      <button
         onClick={onZoomIn}
-        variant="outline"
-        size="sm"
-        className="p-2 flex-1"
         title="Zoom avant"
+        className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
       >
-        <ZoomIn size={16} />
-      </Button>
-      
-      <div className="w-px h-6 bg-gray-300 dark:bg-gray-600" />
-      
-      <Button
-        onClick={onResetView}
-        variant="outline"
-        size="sm"
-        className="p-2 flex-1"
-        title="Réinitialiser (100%)"
-      >
-        <RotateCcw size={16} />
-      </Button>
-      
-      <Button
-        onClick={onFitToScreen}
-        variant="outline"
-        size="sm"
-        className="p-2 flex-1"
-        title="Ajuster à l'écran"
-      >
-        <Maximize2 size={16} />
-      </Button>
+        <ZoomIn size={18} className="text-gray-700 dark:text-gray-300" />
+      </button>
     </div>
   );
 };

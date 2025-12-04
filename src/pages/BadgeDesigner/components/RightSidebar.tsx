@@ -1,8 +1,10 @@
 import React from 'react';
 import { 
-  Trash2, Eye, EyeOff, RotateCcw, RotateCw, Copy, ArrowUp, ArrowDown, Shuffle, X,
-  AlignLeft, AlignCenter, AlignRight, Bold, Type, Italic, Underline,
-  AlignHorizontalSpaceAround, AlignVerticalSpaceAround
+  Trash2, RotateCcw, RotateCw, Copy, Shuffle, X,
+  AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
+  AlignHorizontalSpaceAround, AlignVerticalSpaceAround,
+  AlignStartVertical, AlignCenterVertical, AlignEndVertical,
+  AlignStartHorizontal, AlignEndHorizontal, AlignCenterHorizontal
 } from 'lucide-react';
 import { BadgeElement, BadgeFormat } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
@@ -14,10 +16,11 @@ interface RightSidebarProps {
   symmetryPairs: Map<string, string>;
   badgeFormat: BadgeFormat;
   onUpdateElement: (id: string, updates: Partial<BadgeElement>) => void;
+  onBatchUpdateElements: (updates: Array<{ id: string; updates: Partial<BadgeElement> }>) => void;
   onDeleteElement: (id: string) => void;
+  onDeleteElements: (ids: string[]) => void;
   onDuplicateElement: (id: string) => void;
-  onMoveElement: (id: string, direction: 'up' | 'down') => void;
-  onToggleVisibility: (id: string) => void;
+  onDuplicateElements: (ids: string[]) => void;
   onCreateSymmetry: () => void;
   onBreakSymmetry: () => void;
 }
@@ -27,10 +30,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   symmetryPairs,
   badgeFormat,
   onUpdateElement,
+  onBatchUpdateElements,
+  onDeleteElements,
+  onDuplicateElements,
   onDeleteElement,
   onDuplicateElement,
-  onMoveElement,
-  onToggleVisibility,
   onCreateSymmetry,
   onBreakSymmetry
 }) => {
@@ -41,6 +45,18 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   const hasSymmetryPair = selectedElements.some(el => 
     symmetryPairs.has(el.id) || Array.from(symmetryPairs.values()).includes(el.id)
   );
+
+  // Helper: Execute action for single or multiple elements automatically
+  const executeAction = (
+    singleFn: (id: string) => void,
+    multipleFn: (ids: string[]) => void
+  ) => {
+    if (multipleSelected) {
+      multipleFn(selectedElements.map(el => el.id));
+    } else if (selectedElement) {
+      singleFn(selectedElement.id);
+    }
+  };
 
   if (selectedElements.length === 0) {
     return (
@@ -53,9 +69,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   }
 
   const handleStyleUpdate = (property: string, value: any) => {
-    selectedElements.forEach(element => {
+    if (selectedElements.length === 1) {
+      // Single element: use direct update
+      const element = selectedElements[0];
       const updates: any = {
-        style: { ...element.style, [property]: value }
+        style: { [property]: value }
       };
       
       // When rotation changes, also update the transform
@@ -69,7 +87,28 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
       }
       
       onUpdateElement(element.id, updates);
-    });
+    } else {
+      // Multiple elements: use batch update
+      const batchUpdates = selectedElements.map(element => {
+        const updates: any = {
+          style: { [property]: value }
+        };
+        
+        // When rotation changes, also update the transform
+        if (property === 'rotation') {
+          updates.style.transform = getTransformWithRotation(value, element.style.transform);
+        }
+        
+        // Ajuster automatiquement la hauteur quand on change la taille de police
+        if (property === 'fontSize' && element.type === 'text') {
+          updates.height = Math.ceil(value * 1.5);
+        }
+        
+        return { id: element.id, updates };
+      });
+      
+      onBatchUpdateElements(batchUpdates);
+    }
   };
 
   const handleContentUpdate = (content: string) => {
@@ -93,6 +132,198 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
     onUpdateElement(selectedElement.id, { y });
   };
 
+  // Multi-selection alignment functions
+  const handleAlignLeft = () => {
+    if (selectedElements.length === 0) return;
+    const leftmost = Math.min(...selectedElements.map(el => el.x));
+    onBatchUpdateElements(selectedElements.map(el => ({
+      id: el.id,
+      updates: { x: leftmost }
+    })));
+  };
+
+  const handleAlignRight = () => {
+    if (selectedElements.length === 0) return;
+    const rightmost = Math.max(...selectedElements.map(el => el.x + el.width));
+    onBatchUpdateElements(selectedElements.map(el => ({
+      id: el.id,
+      updates: { x: rightmost - el.width }
+    })));
+  };
+
+  const handleAlignTop = () => {
+    if (selectedElements.length === 0) return;
+    const topmost = Math.min(...selectedElements.map(el => el.y));
+    onBatchUpdateElements(selectedElements.map(el => ({
+      id: el.id,
+      updates: { y: topmost }
+    })));
+  };
+
+  const handleAlignBottom = () => {
+    if (selectedElements.length === 0) return;
+    const bottommost = Math.max(...selectedElements.map(el => el.y + el.height));
+    onBatchUpdateElements(selectedElements.map(el => ({
+      id: el.id,
+      updates: { y: bottommost - el.height }
+    })));
+  };
+
+  const handleAlignCenterHorizontal = () => {
+    if (selectedElements.length === 0) return;
+    const leftmost = Math.min(...selectedElements.map(el => el.x));
+    const rightmost = Math.max(...selectedElements.map(el => el.x + el.width));
+    const centerX = (leftmost + rightmost) / 2;
+    onBatchUpdateElements(selectedElements.map(el => ({
+      id: el.id,
+      updates: { x: centerX - el.width / 2 }
+    })));
+  };
+
+  const handleAlignCenterVertical = () => {
+    if (selectedElements.length === 0) return;
+    const topmost = Math.min(...selectedElements.map(el => el.y));
+    const bottommost = Math.max(...selectedElements.map(el => el.y + el.height));
+    const centerY = (topmost + bottommost) / 2;
+    onBatchUpdateElements(selectedElements.map(el => ({
+      id: el.id,
+      updates: { y: centerY - el.height / 2 }
+    })));
+  };
+
+  // Check alignment state for multi-selection
+  const isAlignmentActive = (type: 'left' | 'center-h' | 'right' | 'top' | 'center-v' | 'bottom') => {
+    if (selectedElements.length === 0) return false;
+    
+    const tolerance = 1; // pixels
+    
+    switch(type) {
+      case 'left':
+        const leftmost = Math.min(...selectedElements.map(el => el.x));
+        return selectedElements.every(el => Math.abs(el.x - leftmost) < tolerance);
+      
+      case 'right':
+        const rightmost = Math.max(...selectedElements.map(el => el.x + el.width));
+        return selectedElements.every(el => Math.abs((el.x + el.width) - rightmost) < tolerance);
+      
+      case 'center-h':
+        const lefts = selectedElements.map(el => el.x);
+        const rights = selectedElements.map(el => el.x + el.width);
+        const centerX = (Math.min(...lefts) + Math.max(...rights)) / 2;
+        return selectedElements.every(el => Math.abs((el.x + el.width / 2) - centerX) < tolerance);
+      
+      case 'top':
+        const topmost = Math.min(...selectedElements.map(el => el.y));
+        return selectedElements.every(el => Math.abs(el.y - topmost) < tolerance);
+      
+      case 'bottom':
+        const bottommost = Math.max(...selectedElements.map(el => el.y + el.height));
+        return selectedElements.every(el => Math.abs((el.y + el.height) - bottommost) < tolerance);
+      
+      case 'center-v':
+        const tops = selectedElements.map(el => el.y);
+        const bottoms = selectedElements.map(el => el.y + el.height);
+        const centerY = (Math.min(...tops) + Math.max(...bottoms)) / 2;
+        return selectedElements.every(el => Math.abs((el.y + el.height / 2) - centerY) < tolerance);
+      
+      default:
+        return false;
+    }
+  };
+
+  // Bulk style updates for multi-selection
+  const handleBulkStyleUpdate = (property: string, value: any) => {
+    const batchUpdates = selectedElements
+      .filter(element => {
+        // Only apply to text elements for text-specific styles
+        if ((property === 'fontSize' || property === 'fontFamily' || property === 'fontWeight' || 
+             property === 'fontStyle' || property === 'textDecoration' || property === 'textAlign') 
+            && element.type !== 'text') {
+          return false;
+        }
+        
+        // Only apply color to text/qrcode elements
+        if (property === 'color' && element.type !== 'text' && element.type !== 'qrcode') {
+          return false;
+        }
+        
+        return true;
+      })
+      .map(element => {
+        const updates: any = {
+          style: { [property]: value }
+        };
+        
+        // Adjust height for font size changes
+        if (property === 'fontSize' && element.type === 'text') {
+          updates.height = Math.ceil(value * 1.5);
+        }
+        
+        return { id: element.id, updates };
+      });
+    
+    if (batchUpdates.length > 0) {
+      onBatchUpdateElements(batchUpdates);
+    }
+  };
+
+  // Toggle style for multi-selection (bold, italic, underline)
+  const handleBulkStyleToggle = (property: 'fontWeight' | 'fontStyle' | 'textDecoration') => {
+    const textElements = selectedElements.filter(el => el.type === 'text');
+    if (textElements.length === 0) return;
+
+    // Determine the target value: if ALL elements have the active state, turn it off, otherwise turn it on for all
+    const getActiveValue = (prop: typeof property) => {
+      if (prop === 'fontWeight') return 'bold';
+      if (prop === 'fontStyle') return 'italic';
+      if (prop === 'textDecoration') return 'underline';
+      return undefined;
+    };
+
+    const getInactiveValue = (prop: typeof property) => {
+      if (prop === 'fontWeight') return 'normal';
+      if (prop === 'fontStyle') return 'normal';
+      if (prop === 'textDecoration') return 'none';
+      return undefined;
+    };
+
+    const activeValue = getActiveValue(property);
+    const inactiveValue = getInactiveValue(property);
+
+    // Check if ALL elements have the active state
+    const allActive = textElements.every(el => el.style[property] === activeValue);
+
+    // If all are active, turn off for all. Otherwise, turn on for all.
+    const targetValue = allActive ? inactiveValue : activeValue;
+
+    const batchUpdates = textElements.map(element => ({
+      id: element.id,
+      updates: {
+        style: { 
+          [property]: targetValue
+        }
+      }
+    }));
+
+    onBatchUpdateElements(batchUpdates);
+  };
+
+  // Helper function to check if a style property is active for all selected text elements
+  const isStyleActive = (property: 'fontWeight' | 'fontStyle' | 'textDecoration'): boolean => {
+    const textElements = selectedElements.filter(el => el.type === 'text');
+    if (textElements.length === 0) return false;
+
+    const getActiveValue = (prop: typeof property) => {
+      if (prop === 'fontWeight') return 'bold';
+      if (prop === 'fontStyle') return 'italic';
+      if (prop === 'textDecoration') return 'underline';
+      return undefined;
+    };
+
+    const activeValue = getActiveValue(property);
+    return textElements.every(el => el.style[property] === activeValue);
+  };
+
   return (
     <div className="w-64 bg-white dark:bg-gray-800 shadow-md p-4 flex flex-col space-y-4 overflow-y-auto border-l dark:border-gray-700">
       {/* Header */}
@@ -104,6 +335,277 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           }
         </h3>
       </div>
+
+      {/* Multi-Selection Panel */}
+      {multipleSelected && (
+        <div className="space-y-4 border-b dark:border-gray-700 pb-4">
+          {/* Alignment Tools */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Alignement</h4>
+            
+            {/* Horizontal Alignment */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 dark:text-gray-400">Horizontal</label>
+              <div className="grid grid-cols-3 gap-1">
+                <Button
+                  onClick={handleAlignTop}
+                  variant="outline"
+                  size="sm"
+                  className={`flex items-center justify-center gap-1 text-xs px-1 py-1.5 ${
+                    isAlignmentActive('top') 
+                      ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' 
+                      : ''
+                  }`}
+                  title="Aligner en haut"
+                >
+                  <AlignStartHorizontal size={14} />
+                </Button>
+                <Button
+                  onClick={handleAlignCenterVertical}
+                  variant="outline"
+                  size="sm"
+                  className={`flex items-center justify-center gap-1 text-xs px-1 py-1.5 ${
+                    isAlignmentActive('center-v') 
+                      ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' 
+                      : ''
+                  }`}
+                  title="Centrer verticalement"
+                >
+                  <AlignCenterHorizontal size={14} />
+                </Button>
+                <Button
+                  onClick={handleAlignBottom}
+                  variant="outline"
+                  size="sm"
+                  className={`flex items-center justify-center gap-1 text-xs px-1 py-1.5 ${
+                    isAlignmentActive('bottom') 
+                      ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' 
+                      : ''
+                  }`}
+                  title="Aligner en bas"
+                >
+                  <AlignEndHorizontal size={14} />
+                </Button>
+              </div>
+            </div>
+
+            {/* Vertical Alignment */}
+            <div className="space-y-1">
+              <label className="text-xs text-gray-500 dark:text-gray-400">Vertical</label>
+              <div className="grid grid-cols-3 gap-1">
+                <Button
+                  onClick={handleAlignLeft}
+                  variant="outline"
+                  size="sm"
+                  className={`flex items-center justify-center gap-1 text-xs px-1 py-1.5 ${
+                    isAlignmentActive('left') 
+                      ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' 
+                      : ''
+                  }`}
+                  title="Aligner à gauche"
+                >
+                  <AlignStartVertical size={14} />
+                </Button>
+                <Button
+                  onClick={handleAlignCenterHorizontal}
+                  variant="outline"
+                  size="sm"
+                  className={`flex items-center justify-center gap-1 text-xs px-1 py-1.5 ${
+                    isAlignmentActive('center-h') 
+                      ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' 
+                      : ''
+                  }`}
+                  title="Centrer horizontalement"
+                >
+                  <AlignCenterVertical size={14} />
+                </Button>
+                <Button
+                  onClick={handleAlignRight}
+                  variant="outline"
+                  size="sm"
+                  className={`flex items-center justify-center gap-1 text-xs px-1 py-1.5 ${
+                    isAlignmentActive('right') 
+                      ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-600 dark:text-blue-400' 
+                      : ''
+                  }`}
+                  title="Aligner à droite"
+                >
+                  <AlignEndVertical size={14} />
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Bulk Styling - Only if at least one text/qrcode element */}
+          {selectedElements.some(el => el.type === 'text' || el.type === 'qrcode') && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Style groupé</h4>
+              
+              {/* Color for text/qrcode elements */}
+              {selectedElements.some(el => el.type === 'text' || el.type === 'qrcode') && (
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Couleur</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      defaultValue="#000000"
+                      onChange={(e) => handleBulkStyleUpdate('color', e.target.value)}
+                      className="w-10 h-8 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      placeholder="#000000"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (/^#[0-9A-F]{6}$/i.test(value)) {
+                          handleBulkStyleUpdate('color', value);
+                        }
+                      }}
+                      className="flex-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Text Style - Only for text elements */}
+              {selectedElements.some(el => el.type === 'text') && (
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Style de texte</label>
+                  <div className="flex bg-gray-100 dark:bg-gray-900/50 rounded-md p-1 gap-1">
+                    <button
+                      onClick={() => handleBulkStyleToggle('fontWeight')}
+                      className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                        isStyleActive('fontWeight')
+                          ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                      title="Basculer gras"
+                    >
+                      <Bold size={16} />
+                    </button>
+                    
+                    <button
+                      onClick={() => handleBulkStyleToggle('fontStyle')}
+                      className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                        isStyleActive('fontStyle')
+                          ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                      title="Basculer italique"
+                    >
+                      <Italic size={16} />
+                    </button>
+
+                    <button
+                      onClick={() => handleBulkStyleToggle('textDecoration')}
+                      className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                        isStyleActive('textDecoration')
+                          ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                      title="Basculer souligné"
+                    >
+                      <Underline size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Text Align Horizontal - Only for text elements */}
+              {selectedElements.some(el => el.type === 'text') && (
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Alignement horizontal</label>
+                  <div className="flex bg-gray-100 dark:bg-gray-900/50 rounded-md p-1 gap-1">
+                    {[
+                      { value: 'left', icon: AlignLeft, label: 'Gauche' },
+                      { value: 'center', icon: AlignCenter, label: 'Centre' },
+                      { value: 'right', icon: AlignRight, label: 'Droite' }
+                    ].map((option) => {
+                      const textElements = selectedElements.filter(el => el.type === 'text');
+                      const isActive = textElements.length > 0 && textElements.every(el => (el.style.textAlign || 'left') === option.value);
+                      return (
+                        <button
+                          key={option.value}
+                          onClick={() => handleBulkStyleUpdate('textAlign', option.value)}
+                          className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                            isActive
+                              ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          title={option.label}
+                        >
+                          <option.icon size={16} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Text Align Vertical - Only for text elements */}
+              {selectedElements.some(el => el.type === 'text') && (
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Alignement vertical</label>
+                  <div className="flex bg-gray-100 dark:bg-gray-900/50 rounded-md p-1 gap-1">
+                    {[
+                      { value: 'flex-start', icon: AlignStartVertical, label: 'Haut' },
+                      { value: 'center', icon: AlignCenterVertical, label: 'Centre' },
+                      { value: 'flex-end', icon: AlignEndVertical, label: 'Bas' }
+                    ].map((option) => {
+                      const textElements = selectedElements.filter(el => el.type === 'text');
+                      const isActive = textElements.length > 0 && textElements.every(el => (el.style.alignItems || 'center') === option.value);
+                      return (
+                        <button
+                          key={option.value}
+                          onClick={() => handleBulkStyleUpdate('alignItems', option.value)}
+                          className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                            isActive
+                              ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          title={option.label}
+                        >
+                          <option.icon size={16} style={{ transform: 'rotate(90deg)' }} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Font Size - Only for text elements */}
+              {selectedElements.some(el => el.type === 'text') && (
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Taille de police</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="range"
+                      min="8"
+                      max="200"
+                      defaultValue="70"
+                      onChange={(e) => handleBulkStyleUpdate('fontSize', parseInt(e.target.value))}
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                    />
+                    <input
+                      type="number"
+                      min="8"
+                      max="200"
+                      placeholder="70"
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value) && value >= 8 && value <= 200) {
+                          handleBulkStyleUpdate('fontSize', value);
+                        }
+                      }}
+                      className="w-14 text-right text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-1 py-1"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Position Controls */}
       {selectedElement && (
@@ -186,67 +688,31 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         </div>
       )}
 
-      {/* Actions */}
+      {/* Actions - Available for both single and multi-selection */}
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-2">
-          {selectedElement && (
-            <>
-              <Button
-                onClick={() => onDuplicateElement(selectedElement.id)}
-                variant="outline"
-                size="sm"
-                className="flex items-center justify-center gap-1"
-              >
-                <Copy size={14} />
-                Dupliquer
-              </Button>
-              
-              <Button
-                onClick={() => onToggleVisibility(selectedElement.id)}
-                variant="outline"
-                size="sm"
-                className="flex items-center justify-center gap-1"
-              >
-                {selectedElement.visible ? <EyeOff size={14} /> : <Eye size={14} />}
-                {selectedElement.visible ? 'Masquer' : 'Afficher'}
-              </Button>
-            </>
-          )}
+          <Button
+            onClick={() => executeAction(onDuplicateElement, onDuplicateElements)}
+            variant="outline"
+            size="sm"
+            className="flex items-center justify-center gap-1 text-xs px-2"
+            title={multipleSelected ? `Dupliquer ${selectedElements.length} éléments` : 'Dupliquer'}
+          >
+            <Copy size={16} className="flex-shrink-0" />
+            <span className="truncate">Dupliquer</span>
+          </Button>
+          
+          <Button
+            onClick={() => executeAction(onDeleteElement, onDeleteElements)}
+            variant="destructive"
+            size="sm"
+            className="flex items-center justify-center gap-1 text-xs px-2"
+            title={multipleSelected ? `Supprimer ${selectedElements.length} éléments` : 'Supprimer'}
+          >
+            <Trash2 size={16} className="flex-shrink-0" />
+            <span className="truncate">Supprimer {multipleSelected ? `(${selectedElements.length})` : ''}</span>
+          </Button>
         </div>
-
-        {selectedElement && (
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              onClick={() => onMoveElement(selectedElement.id, 'up')}
-              variant="outline"
-              size="sm"
-              className="flex items-center justify-center gap-1"
-            >
-              <ArrowUp size={14} />
-              Monter
-            </Button>
-            
-            <Button
-              onClick={() => onMoveElement(selectedElement.id, 'down')}
-              variant="outline"
-              size="sm"
-              className="flex items-center justify-center gap-1"
-            >
-              <ArrowDown size={14} />
-              Descendre
-            </Button>
-          </div>
-        )}
-
-        <Button
-          onClick={() => selectedElements.forEach(el => onDeleteElement(el.id))}
-          variant="destructive"
-          size="sm"
-          className="w-full flex items-center justify-center gap-2"
-        >
-          <Trash2 size={14} />
-          Supprimer
-        </Button>
       </div>
 
       {/* Symmetry Controls */}
@@ -430,10 +896,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           </div>
         )}
 
-        {/* Text Align - Text only */}
+        {/* Text Align Horizontal - Text only */}
         {selectedElement?.type === 'text' && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alignement</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alignement horizontal</label>
             <div className="flex bg-gray-100 dark:bg-gray-900/50 rounded-md p-1 gap-1">
               {[
                 { value: 'left', icon: AlignLeft, label: 'Gauche' },
@@ -451,6 +917,33 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                   title={option.label}
                 >
                   <option.icon size={18} />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Text Align Vertical - Text only */}
+        {selectedElement?.type === 'text' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alignement vertical</label>
+            <div className="flex bg-gray-100 dark:bg-gray-900/50 rounded-md p-1 gap-1">
+              {[
+                { value: 'flex-start', icon: AlignStartVertical, label: 'Haut' },
+                { value: 'center', icon: AlignCenterVertical, label: 'Centre' },
+                { value: 'flex-end', icon: AlignEndVertical, label: 'Bas' }
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleStyleUpdate('alignItems', option.value)}
+                  className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                    (selectedElement.style.alignItems || 'center') === option.value
+                      ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  title={option.label}
+                >
+                  <option.icon size={18} style={{ transform: 'rotate(90deg)' }} />
                 </button>
               ))}
             </div>

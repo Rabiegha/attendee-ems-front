@@ -39,7 +39,7 @@ interface DraggableElementProps {
   onElementClick: (id: string, e: React.MouseEvent) => void;
   onDragStart: (e: React.MouseEvent) => void;
   isDragging: boolean;
-  dragOffset?: { x: number; y: number };
+  dragOffset?: { x: number; y: number } | undefined;
 }
 
 const DraggableElement: React.FC<DraggableElementProps> = ({
@@ -52,6 +52,8 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
   isDragging,
   dragOffset
 }) => {
+  const [mouseDownPos, setMouseDownPos] = React.useState<{ x: number; y: number } | null>(null);
+
   const style = {
     position: 'absolute' as const,
     left: Math.round(element.x + (dragOffset?.x || 0)),
@@ -60,6 +62,32 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
     height: `${Math.round(element.height)}px`,
     zIndex: isSelected ? 10 : 1,
     opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Ignore middle mouse button (used for panning)
+    if (e.button === 1) return;
+    
+    setMouseDownPos({ x: e.clientX, y: e.clientY });
+    onDragStart(e);
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Ignore middle mouse button (used for panning)
+    if (e.button === 1) return;
+    
+    // Only trigger click if the mouse hasn't moved (not a drag)
+    if (mouseDownPos) {
+      const distance = Math.sqrt(
+        Math.pow(e.clientX - mouseDownPos.x, 2) + 
+        Math.pow(e.clientY - mouseDownPos.y, 2)
+      );
+      // If mouse moved less than 5 pixels, consider it a click
+      if (distance < 5) {
+        onElementClick(element.id, e);
+      }
+    }
+    setMouseDownPos(null);
   };
 
   return (
@@ -73,13 +101,13 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
         })
       }}
       className="select-none"
-      onClick={(e) => onElementClick(element.id, e)}
+      onClick={handleClick}
     >
       {/* Zone de contenu draggable */}
       <div
         className="w-full h-full cursor-move"
         style={{ opacity: element.style.opacity ?? 1 }}
-        onMouseDown={onDragStart}
+        onMouseDown={handleMouseDown}
       >
         {children}
       </div>
@@ -316,7 +344,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             textTransform: element.style.textTransform,
             overflow: 'visible', // Important: like old system
             display: 'flex',
-            alignItems: 'center',
+            alignItems: element.style.alignItems || 'center',
             justifyContent: element.style.textAlign === 'center' ? 'center' : 
                           element.style.textAlign === 'right' ? 'flex-end' : 'flex-start',
             pointerEvents: 'none',
@@ -379,6 +407,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   const renderElement = (element: BadgeElement) => {
     const isSelected = selectedElements.includes(element.id);
     const isSnapTarget = snapTargetElements.includes(element.id);
+    const isDraggingOther = draggingElementId !== null && draggingElementId !== element.id;
+    const isPartOfDragGroup = isSelected && isDraggingOther && selectedElements.includes(draggingElementId || '');
     
     if (!elementRefs.current.has(element.id)) {
       elementRefs.current.set(element.id, React.createRef());
@@ -387,6 +417,9 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     const elementRef = elementRefs.current.get(element.id)!;
 
     const content = renderElementContent(element);
+
+    // Apply drag offset to all selected elements when one is being dragged
+    const effectiveDragOffset = (draggingElementId === element.id || isPartOfDragGroup) ? currentDragOffset : undefined;
 
     return (
       <>
@@ -398,7 +431,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
           onElementClick={onElementClick}
           onDragStart={(e) => handleElementDragStart(element.id, e)}
           isDragging={draggingElementId === element.id}
-          dragOffset={draggingElementId === element.id ? currentDragOffset : undefined}
+          dragOffset={effectiveDragOffset}
         >
           {content}
         </DraggableElement>
@@ -424,7 +457,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
               const zoom = currentZoom || initialZoom;
               const handleSize = 8 / zoom;
               const handleOffset = handleSize / 2;
-              const activeDragOffset = draggingElementId === element.id ? currentDragOffset : undefined;
+              const activeDragOffset = effectiveDragOffset;
               return (
                 <div
                   key={handle}
@@ -523,6 +556,9 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     // Snap to other elements
     elements.forEach(otherElement => {
       if (otherElement.id === elementId) return;
+      
+      // Skip elements that are part of the same selection group being dragged
+      if (selectedElements.length > 1 && selectedElements.includes(otherElement.id)) return;
 
       const otherLeft = otherElement.x;
       const otherCenterX = otherElement.x + otherElement.width / 2;
@@ -599,7 +635,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     const element = elements.find(el => el.id === elementId);
     if (!element) return;
 
-    // Select element immediately on mousedown
+    // Select element immediately on mousedown ONLY if it's not already in a multi-selection
+    // This preserves multi-selection when starting to drag
     if (!selectedElements.includes(elementId)) {
       onElementClick(elementId, e as any);
     }

@@ -108,6 +108,132 @@ export const BadgeDesignerPage: React.FC = () => {
     }
   }, [loadedTemplate]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      // Ctrl/Cmd + S: Save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveTemplate();
+        return;
+      }
+
+      // Ctrl/Cmd + Z: Undo (future feature)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        // TODO: Implement undo
+        return;
+      }
+
+      // Ctrl/Cmd + Shift + Z or Ctrl/Cmd + Y: Redo (future feature)
+      if ((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key === 'z' || e.key === 'y')) {
+        e.preventDefault();
+        // TODO: Implement redo
+        return;
+      }
+
+      // Delete or Backspace: Delete selected elements
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
+        if (selectedElements.length > 0) {
+          // Delete all selected elements at once
+          const idsToDelete = new Set(selectedElements);
+          const newElements = elements.filter(el => !idsToDelete.has(el.id));
+          setElements(newElements);
+          setSelectedElements([]);
+          saveToHistory(newElements, background);
+        }
+        return;
+      }
+
+      // Ctrl/Cmd + D: Duplicate selected elements
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        e.preventDefault();
+        if (selectedElements.length > 1) {
+          duplicateElements(selectedElements);
+        } else if (selectedElements.length === 1) {
+          duplicateElement(selectedElements[0]);
+        }
+        return;
+      }
+
+      // Ctrl/Cmd + A: Select all elements
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+        e.preventDefault();
+        setSelectedElements(elements.map(el => el.id));
+        return;
+      }
+
+      // Escape: Deselect all
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setSelectedElements([]);
+        return;
+      }
+
+      // Arrow keys: Move selected elements
+      if (selectedElements.length > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        
+        // Shift key multiplies movement by 10 for faster movement
+        const moveAmount = e.shiftKey ? 10 : 1;
+        let deltaX = 0;
+        let deltaY = 0;
+
+        switch (e.key) {
+          case 'ArrowUp':
+            deltaY = -moveAmount;
+            break;
+          case 'ArrowDown':
+            deltaY = moveAmount;
+            break;
+          case 'ArrowLeft':
+            deltaX = -moveAmount;
+            break;
+          case 'ArrowRight':
+            deltaX = moveAmount;
+            break;
+        }
+
+        // Batch update all selected elements
+        const newElements = elements.map(element => {
+          if (selectedElements.includes(element.id)) {
+            return {
+              ...element,
+              x: element.x + deltaX,
+              y: element.y + deltaY
+            };
+          }
+          return element;
+        });
+
+        setElements(newElements);
+        saveToHistory(newElements, background);
+
+        // Update symmetry pairs for all moved elements
+        selectedElements.forEach(elementId => {
+          const updatedElement = newElements.find(el => el.id === elementId);
+          if (updatedElement) {
+            updateSymmetryPair(updatedElement);
+          }
+        });
+        
+        return;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedElements, elements, background, saveToHistory]);
+
   // Helper function to measure text dimensions
   const measureText = (content: string, fontSize: number, fontFamily: string = 'Arial'): { width: number; height: number } => {
     // Créer un élément temporaire pour mesurer le texte
@@ -208,43 +334,14 @@ export const BadgeDesignerPage: React.FC = () => {
     const element = elements.find(el => el.id === id);
     if (!element) return;
     
-    // Si le contenu change et que c'est un texte, recalculer les dimensions automatiquement
-    if (updates.content !== undefined && element.type === 'text') {
-      const newContent = updates.content;
-      const isVariable = newContent.includes('{{') && newContent.includes('}}');
-      const fontSize = updates.style?.fontSize || element.style.fontSize || 70;
-      const fontFamily = updates.style?.fontFamily || element.style.fontFamily || 'Arial';
-      const badgeWidth = mmToPx(format.width);
-      
-      if (isVariable) {
-        // Variables : garder 90% de la largeur du badge
-        updates.width = badgeWidth * 0.9;
-        updates.x = badgeWidth * 0.05;
-        updates.height = Math.ceil(fontSize * 1.5);
-      } else {
-        // Texte libre : mesurer la taille réelle du texte
-        const measured = measureText(newContent, fontSize, fontFamily);
-        updates.width = measured.width;
-        updates.height = measured.height;
-      }
-    }
+    // NOTE: Ne plus recalculer automatiquement les dimensions quand le contenu change
+    // L'utilisateur peut avoir manuellement redimensionné l'élément et on doit respecter ça
     
-    // Si la taille de police change et que c'est un texte, recalculer les dimensions
+    // Si la taille de police change et que c'est un texte, recalculer seulement la hauteur
     if (updates.style?.fontSize !== undefined && element.type === 'text') {
       const fontSize = updates.style.fontSize;
-      const fontFamily = updates.style.fontFamily || element.style.fontFamily || 'Arial';
-      const content = updates.content || element.content;
-      const isVariable = content.includes('{{') && content.includes('}}');
-      const badgeWidth = mmToPx(format.width);
-      
-      if (isVariable) {
-        updates.width = badgeWidth * 0.9;
-        updates.height = Math.ceil(fontSize * 1.5);
-      } else {
-        const measured = measureText(content, fontSize, fontFamily);
-        updates.width = measured.width;
-        updates.height = measured.height;
-      }
+      // Ne modifier que la hauteur, pas la largeur
+      updates.height = Math.ceil(fontSize * 1.5);
     }
     
     // Si la police change et que c'est un texte libre, recalculer les dimensions
@@ -261,8 +358,17 @@ export const BadgeDesignerPage: React.FC = () => {
       }
     }
     
+    // Merge style properties intelligently to avoid overwriting the entire style object
+    const mergedUpdates = { ...updates };
+    if (updates.style) {
+      const element = elements.find(el => el.id === id);
+      if (element) {
+        mergedUpdates.style = { ...element.style, ...updates.style };
+      }
+    }
+    
     const newElements = elements.map(el => 
-      el.id === id ? { ...el, ...updates } : el
+      el.id === id ? { ...el, ...mergedUpdates } : el
     );
     setElements(newElements);
     
@@ -275,11 +381,48 @@ export const BadgeDesignerPage: React.FC = () => {
     saveToHistory(newElements, background);
   };
 
+  // Batch update elements
+  const batchUpdateElements = (updates: Array<{ id: string; updates: Partial<BadgeElement> }>) => {
+    const newElements = elements.map(element => {
+      const update = updates.find(u => u.id === element.id);
+      if (update) {
+        // Merge style properties intelligently to avoid overwriting the entire style object
+        const mergedUpdates = { ...update.updates };
+        if (update.updates.style) {
+          mergedUpdates.style = { ...element.style, ...update.updates.style };
+        }
+        return { ...element, ...mergedUpdates };
+      }
+      return element;
+    });
+    
+    setElements(newElements);
+    
+    // Update symmetry pairs for all updated elements
+    updates.forEach(({ id }) => {
+      const updatedElement = newElements.find(el => el.id === id);
+      if (updatedElement) {
+        updateSymmetryPair(updatedElement);
+      }
+    });
+    
+    saveToHistory(newElements, background);
+  };
+
   // Delete element
   const deleteElement = (id: string) => {
     const newElements = elements.filter(el => el.id !== id);
     setElements(newElements);
     setSelectedElements(prev => prev.filter(selectedId => selectedId !== id));
+    saveToHistory(newElements, background);
+  };
+
+  // Delete multiple elements at once
+  const deleteElements = (ids: string[]) => {
+    const idsSet = new Set(ids);
+    const newElements = elements.filter(el => !idsSet.has(el.id));
+    setElements(newElements);
+    setSelectedElements([]);
     saveToHistory(newElements, background);
   };
 
@@ -300,36 +443,33 @@ export const BadgeDesignerPage: React.FC = () => {
     }
   };
 
-  // Move element
-  const moveElement = (id: string, direction: 'up' | 'down') => {
-    const index = elements.findIndex(el => el.id === id);
-    if (index === -1) return;
+  // Duplicate multiple elements at once
+  const duplicateElements = (ids: string[]) => {
+    const elementsToDuplicate = elements.filter(el => ids.includes(el.id));
+    if (elementsToDuplicate.length === 0) return;
 
     const newElements = [...elements];
-    if (direction === 'up' && index > 0) {
-      const temp = newElements[index];
-      const prev = newElements[index - 1];
-      if (temp && prev) {
-        newElements[index] = prev;
-        newElements[index - 1] = temp;
-      }
-    } else if (direction === 'down' && index < newElements.length - 1) {
-      const temp = newElements[index];
-      const next = newElements[index + 1];
-      if (temp && next) {
-        newElements[index] = next;
-        newElements[index + 1] = temp;
-      }
-    }
+    const newIds: string[] = [];
+    let timeOffset = 0;
+
+    elementsToDuplicate.forEach(element => {
+      const newElement: BadgeElement = {
+        ...element,
+        id: `element-${Date.now() + timeOffset}`,
+        x: element.x + 20,
+        y: element.y + 20
+      };
+      newElements.push(newElement);
+      newIds.push(newElement.id);
+      timeOffset++; // Ensure unique IDs
+    });
 
     setElements(newElements);
+    setSelectedElements(newIds);
     saveToHistory(newElements, background);
   };
 
-  // Toggle visibility
-  const toggleVisibility = (id: string) => {
-    updateElement(id, { visible: !elements.find(el => el.id === id)?.visible });
-  };
+
 
   // Symmetry functions (from original badge generator)
   const createSymmetry = () => {
@@ -724,11 +864,23 @@ export const BadgeDesignerPage: React.FC = () => {
 
   // Selection handlers
   const handleBackgroundMouseDown = (e: React.MouseEvent) => {
+    // Ignore middle mouse button (used for panning)
+    if (e.button === 1) return;
+    
     if (e.target === badgeRef.current) {
       const rect = badgeRef.current.getBoundingClientRect();
+      const badgeWidth = mmToPx(format.width);
+      const badgeHeight = mmToPx(format.height);
+      
+      // Convert screen coordinates to badge coordinates
+      const scaleX = badgeWidth / rect.width;
+      const scaleY = badgeHeight / rect.height;
+      const mouseXInBadge = (e.clientX - rect.left) * scaleX;
+      const mouseYInBadge = (e.clientY - rect.top) * scaleY;
+      
       setIsSelecting(true);
-      setSelectionStart({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-      setSelectionEnd({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      setSelectionStart({ x: mouseXInBadge, y: mouseYInBadge });
+      setSelectionEnd({ x: mouseXInBadge, y: mouseYInBadge });
       
       if (!e.shiftKey && !e.ctrlKey) {
         setSelectedElements([]);
@@ -740,12 +892,62 @@ export const BadgeDesignerPage: React.FC = () => {
     if (isSelecting && selectionStart) {
       const rect = badgeRef.current?.getBoundingClientRect();
       if (rect) {
-        setSelectionEnd({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+        const badgeWidth = mmToPx(format.width);
+        const badgeHeight = mmToPx(format.height);
+        
+        // Convert screen coordinates to badge coordinates
+        const scaleX = badgeWidth / rect.width;
+        const scaleY = badgeHeight / rect.height;
+        const mouseXInBadge = (e.clientX - rect.left) * scaleX;
+        const mouseYInBadge = (e.clientY - rect.top) * scaleY;
+        
+        setSelectionEnd({ x: mouseXInBadge, y: mouseYInBadge });
       }
     }
   };
 
   const handleBackgroundMouseUp = () => {
+    if (isSelecting && selectionStart && selectionEnd) {
+      // Calculate selection rectangle
+      const selectionRect = {
+        left: Math.min(selectionStart.x, selectionEnd.x),
+        top: Math.min(selectionStart.y, selectionEnd.y),
+        right: Math.max(selectionStart.x, selectionEnd.x),
+        bottom: Math.max(selectionStart.y, selectionEnd.y)
+      };
+
+      // Find elements that intersect with selection rectangle
+      const selectedIds = elements
+        .filter(element => {
+          const elementRect = {
+            left: element.x,
+            top: element.y,
+            right: element.x + element.width,
+            bottom: element.y + element.height
+          };
+
+          // Check for intersection
+          return !(
+            elementRect.right < selectionRect.left ||
+            elementRect.left > selectionRect.right ||
+            elementRect.bottom < selectionRect.top ||
+            elementRect.top > selectionRect.bottom
+          );
+        })
+        .map(element => element.id);
+
+      // Update selection
+      if (selectedIds.length > 0) {
+        setSelectedElements(prev => {
+          // If shift/ctrl, add to existing selection
+          if (prev.length > 0 && selectionStart) {
+            return [...new Set([...prev, ...selectedIds])];
+          }
+          return selectedIds;
+        });
+      }
+    }
+
     setIsSelecting(false);
     setSelectionStart(null);
     setSelectionEnd(null);
@@ -754,6 +956,9 @@ export const BadgeDesignerPage: React.FC = () => {
   // Element interaction handlers
   const handleElementClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    
+    // Ignore middle mouse button (used for panning)
+    if (e.button === 1) return;
     
     if (e.shiftKey || e.ctrlKey) {
       setSelectedElements(prev => 
@@ -771,8 +976,42 @@ export const BadgeDesignerPage: React.FC = () => {
   };
 
   const handleDragStop = (id: string, _e: any, data: { x: number; y: number }) => {
-    // Mise à jour finale de la position
-    updateElement(id, { x: data.x, y: data.y });
+    // Get the dragged element
+    const draggedElement = elements.find(el => el.id === id);
+    if (!draggedElement) return;
+
+    // Calculate delta movement
+    const deltaX = data.x - draggedElement.x;
+    const deltaY = data.y - draggedElement.y;
+
+    // If multiple elements are selected, move them all together
+    if (selectedElements.length > 1 && selectedElements.includes(id)) {
+      // Batch update all selected elements
+      const newElements = elements.map(element => {
+        if (selectedElements.includes(element.id)) {
+          return {
+            ...element,
+            x: element.x + deltaX,
+            y: element.y + deltaY
+          };
+        }
+        return element;
+      });
+      
+      setElements(newElements);
+      saveToHistory(newElements, background);
+      
+      // Update symmetry pairs for all moved elements
+      selectedElements.forEach(elementId => {
+        const updatedElement = newElements.find(el => el.id === elementId);
+        if (updatedElement) {
+          updateSymmetryPair(updatedElement);
+        }
+      });
+    } else {
+      // Single element drag
+      updateElement(id, { x: data.x, y: data.y });
+    }
   };
 
   const handleResize = (id: string, _e: any, data: { size: { width: number; height: number }; position?: { x: number; y: number } }) => {
@@ -847,10 +1086,11 @@ export const BadgeDesignerPage: React.FC = () => {
         selectedElements={elements.filter(el => selectedElements.includes(el.id))}
         badgeFormat={format}
         onUpdateElement={updateElement}
+        onBatchUpdateElements={batchUpdateElements}
         onDeleteElement={deleteElement}
+        onDeleteElements={deleteElements}
         onDuplicateElement={duplicateElement}
-        onMoveElement={moveElement}
-        onToggleVisibility={toggleVisibility}
+        onDuplicateElements={duplicateElements}
         symmetryPairs={symmetryPairs}
         onCreateSymmetry={createSymmetry}
         onBreakSymmetry={breakSymmetry}

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   Upload,
   FileSpreadsheet,
@@ -6,13 +6,17 @@ import {
   CheckCircle2,
   Download,
   Trash2,
+  AlertTriangle,
+  XCircle,
+  Info,
 } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { ModalSteps } from '@/shared/ui/ModalSteps'
 import * as XLSX from 'xlsx'
 import { useToast } from '@/shared/hooks/useToast'
-import { useImportExcelRegistrationsMutation } from '../api/registrationsApi'
+import { useImportExcelRegistrationsMutation, useGetRegistrationsQuery } from '../api/registrationsApi'
+import { useGetEventByIdQuery } from '@/features/events/api/eventsApi'
 
 interface ImportExcelModalProps {
   isOpen: boolean
@@ -23,6 +27,10 @@ interface ImportExcelModalProps {
 
 interface ParsedRow {
   [key: string]: any
+  _rowIndex?: number // Index de la ligne dans le fichier Excel
+  _conflictType?: 'duplicate' | 'capacity' | 'deleted' | null // Type de conflit
+  _existingData?: any // Données existantes si conflit
+  _selected?: boolean // Sélectionné pour remplacement
 }
 
 // Mapping des colonnes possibles (insensible à la casse et aux accents)
@@ -81,19 +89,23 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const [allData, setAllData] = useState<ParsedRow[]>([]) // Toutes les données du fichier
   const [headers, setHeaders] = useState<string[]>([])
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({})
-  const [step, setStep] = useState<'upload' | 'preview' | 'conflicts' | 'success'>('upload')
+  const [step, setStep] = useState<'upload' | 'preview' | 'success'>('upload')
   const [importResult, setImportResult] = useState<any | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null) // ← Stocker le fichier
-  const [conflicts, setConflicts] = useState<any[]>([]) // ← Doublons détectés
-  const [selectedConflicts, setSelectedConflicts] = useState<Set<number>>(new Set()) // ← Lignes à remplacer
-  const [firstImportResult, setFirstImportResult] = useState<any | null>(null) // ← Stocker le premier résultat complet
+  const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
+  // Récupérer les données de l'événement et les inscriptions existantes (y compris supprimées)
+  const { data: eventData } = useGetEventByIdQuery(eventId, { skip: !isOpen })
+  const { data: existingRegistrationsData } = useGetRegistrationsQuery(
+    { eventId, page: 1, limit: 10000 }, // Retirer isActive pour obtenir toutes les inscriptions
+    { skip: !isOpen }
+  )
+
   // Mapper les étapes à des numéros pour l'animation
-  const getStepNumber = (stepName: 'upload' | 'preview' | 'conflicts' | 'success'): number => {
-    const stepMap = { upload: 0, preview: 1, conflicts: 2, success: 3 }
+  const getStepNumber = (stepName: 'upload' | 'preview' | 'success'): number => {
+    const stepMap = { upload: 0, preview: 1, success: 2 }
     return stepMap[stepName]
   }
 
@@ -101,11 +113,79 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const [importExcelRegistrations, { isLoading: isImporting }] =
     useImportExcelRegistrationsMutation()
 
+  // Fonction pour extraire l'email d'une ligne
+  const getEmailFromRow = (row: ParsedRow): string | null => {
+    const emailKey = Object.keys(row).find((key) =>
+      ['email', 'Email', 'E-mail', 'e-mail', 'mail'].includes(key)
+    )
+    return emailKey ? String(row[emailKey]).toLowerCase().trim() : null
+  }
+
+  // Détecter les conflits après parsing du fichier
+  const detectConflicts = (parsedData: ParsedRow[]) => {
+    if (!eventData || !existingRegistrationsData) {
+      return parsedData
+    }
+
+    const capacity = eventData.capacity
+    const currentApprovedCount = existingRegistrationsData.meta.statusCounts.approved || 0
+    const existingEmails = new Set(
+      existingRegistrationsData.data
+        .filter((reg) => reg.deletedAt === null) // Actifs uniquement
+        .map((reg) => reg.attendee?.email?.toLowerCase().trim())
+    )
+    const deletedEmails = new Set(
+      existingRegistrationsData.data
+        .filter((reg) => reg.deletedAt !== null) // Soft deleted
+        .map((reg) => reg.attendee?.email?.toLowerCase().trim())
+    )
+
+    let availableSpots = capacity ? capacity - currentApprovedCount : Infinity
+    
+    return parsedData.map((row, index) => {
+      const email = getEmailFromRow(row)
+      
+      if (!email) {
+        return { ...row, _rowIndex: index, _conflictType: null }
+      }
+
+      // Vérifier si email existe dans les soft-deleted
+      if (deletedEmails.has(email)) {
+        const existingReg = existingRegistrationsData.data.find(
+          (r) => r.attendee?.email?.toLowerCase().trim() === email && r.deletedAt !== null
+        )
+        return {
+          ...row,
+          _rowIndex: index,
+          _conflictType: 'deleted' as const,
+          _existingData: existingReg,
+          _selected: false,
+        }
+      }
+
+      // Vérifier si email existe déjà (actif)
+      if (existingEmails.has(email)) {
+        const existingReg = existingRegistrationsData.data.find(
+          (r) => r.attendee?.email?.toLowerCase().trim() === email && r.deletedAt === null
+        )
+        return {
+          ...row,
+          _rowIndex: index,
+          _conflictType: 'duplicate' as const,
+          _existingData: existingReg,
+          _selected: false,
+        }
+      }
+
+      // Toutes les nouvelles inscriptions : pas de conflit, non sélectionnées par défaut
+      return { ...row, _rowIndex: index, _conflictType: null, _selected: false }
+    })
+  }
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setSelectedFile(file)
     parseExcelFile(file)
   }
 
@@ -155,8 +235,11 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
       setHeaders(headerRow)
       setColumnMapping(detectedMapping)
-      setAllData(parsedData) // Stocker toutes les données
-      setPreview(parsedData) // Aperçu de toutes les lignes
+      
+      // Détecter les conflits immédiatement
+      const dataWithConflicts = detectConflicts(parsedData)
+      setAllData(dataWithConflicts)
+      setPreview(dataWithConflicts)
       setStep('preview')
     } catch (error) {
       console.error('Error parsing Excel:', error)
@@ -173,8 +256,34 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     setIsProcessing(true)
 
     try {
+      // Séparer les lignes selon leur type (toutes doivent être sélectionnées)
+      const normalRows = allData.filter((row) => !row._conflictType && row._selected)
+      const duplicateRows = allData.filter(
+        (row) => row._conflictType === 'duplicate' && row._selected
+      )
+      const deletedRows = allData.filter(
+        (row) => row._conflictType === 'deleted' && row._selected
+      )
+      const capacityRows = allData.filter((row) => row._conflictType === 'capacity' && row._selected)
+      const capacityRowsNotSelected = allData.filter((row) => row._conflictType === 'capacity' && !row._selected)
+
+      // Combiner les lignes à importer (toutes sélectionnées)
+      const rowsToImport = [...normalRows, ...duplicateRows, ...deletedRows, ...capacityRows]
+
+      if (rowsToImport.length === 0) {
+        toast.error('Erreur', 'Aucune ligne sélectionnée pour l\'import')
+        setIsProcessing(false)
+        return
+      }
+
+      // Nettoyer les métadonnées internes avant l'export
+      const cleanedData = rowsToImport.map((row) => {
+        const { _rowIndex, _conflictType, _existingData, _selected, ...cleanRow } = row
+        return cleanRow
+      })
+
       // Générer un fichier Excel
-      const ws = XLSX.utils.json_to_sheet(allData, { header: headers })
+      const ws = XLSX.utils.json_to_sheet(cleanedData, { header: headers })
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Import')
       const excelBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
@@ -185,32 +294,14 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       })
 
-      // NOUVELLE APPROCHE: Import direct avec replaceExisting=true
-      // Cela va:
-      // - Remplacer les inscriptions existantes (déjà inscrits)
-      // - Restaurer les soft-deleted
-      // - Créer les nouvelles inscriptions jusqu'à la capacité
+      // Import avec replaceExisting=true pour gérer les doublons et restaurations
       const result = await importExcelRegistrations({
         eventId,
         file: fileToImport,
         autoApprove: true,
-        replaceExisting: true, // ← Tout de suite avec replaceExisting=true
+        replaceExisting: true,
       }).unwrap()
 
-      // Vérifier s'il y a encore des erreurs de conflit
-      // (ne devrait pas arriver car replaceExisting=true)
-      const duplicateErrors = result.summary.errors?.filter(
-        (e: any) => 
-          e.error?.toLowerCase().includes('already registered') || 
-          e.error?.toLowerCase().includes('previously deleted')
-      ) || []
-
-      if (duplicateErrors.length > 0) {
-        // Des conflits persistent (ne devrait pas arriver)
-        console.warn('Des conflits persistent malgré replaceExisting=true:', duplicateErrors);
-      }
-
-      // Afficher directement le résultat
       setImportResult(result)
       setStep('success')
 
@@ -220,25 +311,27 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
       const { created, updated, restored, skipped, errors } = result.summary
       
+      const conflictsIgnored = capacityRowsNotSelected.length + 
+        allData.filter((row) => !row._selected).length
+
       if (errors && errors.length > 0) {
         toast.warning(
-          'Import terminé avec des erreurs',
-          `${created} créées, ${updated} màj, ${restored || 0} restaurées, ${skipped} ignorées. ${errors.length} erreur(s).`
+          'Import terminé avec des avertissements',
+          `${created} créées, ${updated} màj, ${restored || 0} restaurées, ${skipped} ignorées${conflictsIgnored > 0 ? `, ${conflictsIgnored} conflits non résolus` : ''}`
         )
       } else {
         toast.success(
           'Import réussi !',
-          `${created} créées, ${updated} màj, ${restored || 0} restaurées, ${skipped} ignorées`
+          `${created} créées, ${updated} màj, ${restored || 0} restaurées${conflictsIgnored > 0 ? `, ${conflictsIgnored} conflits ignorés` : ''}`
         )
       }
     } catch (error: any) {
       console.error('Import error:', error)
 
-      // Erreur 404 = endpoint non implémenté
       if (error?.status === 404) {
         toast.error(
           'Fonctionnalité en cours de développement',
-          "L'endpoint d'import Excel backend n'est pas encore activé. Contactez l'administrateur."
+          "L'endpoint d'import Excel backend n'est pas encore activé."
         )
       } else {
         const errorMessage =
@@ -257,183 +350,147 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     setAllData([])
     setHeaders([])
     setColumnMapping({})
-    setSelectedFile(null)
-    setConflicts([])
-    setSelectedConflicts(new Set())
-    setFirstImportResult(null)
     setStep('upload')
     setImportResult(null)
     onClose()
   }
 
-  const handleApplyReplacements = async () => {
-    if (selectedConflicts.size === 0) {
-      // Aucune ligne sélectionnée → Utiliser le premier résultat
-      setImportResult(firstImportResult)
-      setStep('success')
-      toast.info('Import terminé', 'Aucun conflit résolu')
-      return
-    }
-
-    setIsProcessing(true)
-
-    try {
-      // Récupérer les emails des conflits sélectionnés
-      const selectedConflictEmails = Array.from(selectedConflicts).map(
-        (index) => conflicts[index].email?.toLowerCase().trim()
-      )
-
-      console.log('=== DÉBUT REMPLACEMENT ===');
-      console.log('Conflits sélectionnés:', selectedConflicts.size);
-      console.log('Emails sélectionnés:', selectedConflictEmails);
-
-      // Séparer les restaurations des mises à jour
-      const restorationEmails = Array.from(selectedConflicts)
-        .filter((index) => conflicts[index].error?.toLowerCase().includes('previously deleted'))
-        .map((index) => conflicts[index].email?.toLowerCase().trim());
-      
-      const updateEmails = selectedConflictEmails.filter(email => !restorationEmails.includes(email));
-      
-      console.log('Restaurations à faire:', restorationEmails.length);
-      console.log('Mises à jour à faire:', updateEmails.length);
-
-      // NOUVELLE LOGIQUE:
-      // 1. Les inscriptions créées lors du premier import (firstImportResult.summary.created)
-      //    doivent être RÉDUITES si on restaure des soft-deleted
-      // 2. Calculer combien de places sont vraiment disponibles après restauration
-      
-      const createdInFirstImport = firstImportResult?.summary?.created || 0;
-      const restorationCount = restorationEmails.length;
-      
-      // Si on restaure N personnes, on doit enlever N personnes créées lors du premier import
-      const adjustedCreations = Math.max(0, createdInFirstImport - restorationCount);
-      
-      console.log(`Premier import a créé: ${createdInFirstImport}`);
-      console.log(`Restaurations demandées: ${restorationCount}`);
-      console.log(`Créations ajustées: ${adjustedCreations} (différence: ${createdInFirstImport - adjustedCreations} à supprimer)`);
-
-      // ÉTAPE 1: Si des restaurations sont demandées ET que le premier import a créé des inscriptions,
-      // il faut supprimer le nombre équivalent d'inscriptions pour faire de la place
-      if (restorationCount > 0 && createdInFirstImport > 0) {
-        const toDelete = Math.min(restorationCount, createdInFirstImport);
-        console.warn(`⚠️ ATTENTION: ${toDelete} inscriptions du premier import devraient être supprimées pour faire place aux restaurations`);
-        
-        // Avertir l'utilisateur
-        const overage = toDelete;
-        toast.warning(
-          'Dépassement de capacité',
-          `L'événement dépassera sa capacité de ${overage} place(s) car ${createdInFirstImport} personne(s) ont déjà été ajoutées lors de la détection des conflits.`,
-          { duration: 8000 }
-        );
-      }
-
-      // Filtrer allData : SEULEMENT les conflits sélectionnés
-      const dataToImport = allData.filter((row) => {
-        const rowEmail = Object.keys(row).find((key) =>
-          ['email', 'Email', 'E-mail', 'e-mail', 'mail'].includes(key)
-        )
-        const email = rowEmail ? String(row[rowEmail]).toLowerCase().trim() : null;
-        return email && selectedConflictEmails.includes(email);
-      });
-
-      console.log(`Données à importer: ${dataToImport.length} lignes (conflits seulement)`);
-
-      // Créer un nouveau fichier Excel avec seulement les conflits sélectionnés
-      const ws = XLSX.utils.json_to_sheet(dataToImport)
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Replacements')
-      const excelBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' })
-      const blob = new Blob([excelBuffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-      const replacementFile = new File([blob], 'replacements.xlsx', {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      })
-
-      console.log('Sending replacement file with replaceExisting=true');
-      console.log('EventId:', eventId);
-
-      // Import avec replaceExisting=true
-      const replacementResult = await importExcelRegistrations({
-        eventId,
-        file: replacementFile,
-        autoApprove: true,
-        replaceExisting: true,
-      }).unwrap()
-
-      console.log('=== RÉSULTAT REMPLACEMENT ===');
-      console.log('Résultat brut:', replacementResult);
-      console.log('Created:', replacementResult.summary.created);
-      console.log('Updated:', replacementResult.summary.updated);
-      console.log('Restored:', replacementResult.summary.restored);
-      console.log('Errors:', replacementResult.summary.errors);
-
-      // Fusionner les résultats : 
-      // - Garder les créations du premier import (personnes déjà ajoutées)
-      // - Ajouter les restaurations/mises à jour du second import
-      // - Garder TOUTES les erreurs du premier import (sauf les conflits résolus)
-      const resolvedEmails = new Set(selectedConflictEmails)
-      const unresolvedErrors = (firstImportResult?.summary?.errors || []).filter(
-        (e: any) => !resolvedEmails.has(e.email?.toLowerCase().trim())
-      )
-
-      const mergedResult = {
-        ...replacementResult,
-        summary: {
-          // Les créations du premier import (déjà en base)
-          created: firstImportResult?.summary?.created || 0,
-          // Les mises à jour du second import
-          updated: replacementResult.summary.updated || 0,
-          // Les restaurations du second import
-          restored: replacementResult.summary.restored || 0,
-          // Les erreurs non résolues + les nouvelles erreurs du second import
-          skipped: unresolvedErrors.length + (replacementResult.summary.errors?.length || 0),
-          errors: [...unresolvedErrors, ...(replacementResult.summary.errors || [])],
-        }
-      }
-
-      setImportResult(mergedResult)
-      setStep('success')
-
-      if (onImportSuccess) {
-        onImportSuccess(mergedResult)
-      }
-
-      const restoredCount = replacementResult.summary.restored || 0
-      const updatedCount = replacementResult.summary.updated || 0
-      const message = restoredCount > 0 
-        ? `${updatedCount} mise(s) à jour, ${restoredCount} restauration(s)`
-        : `${updatedCount} inscription(s) mise(s) à jour`
-
-      toast.success('Remplacements appliqués !', message)
-    } catch (error: any) {
-      console.error('Replacement error:', error)
-      toast.error('Erreur', 'Échec du remplacement des doublons')
-    } finally {
-      setIsProcessing(false)
-    }
+  const handleRemoveRow = (indexToRemove: number) => {
+    const newData = allData.filter((_, index) => index !== indexToRemove)
+    // Recalculer les conflits après suppression
+    const dataWithConflicts = detectConflicts(newData)
+    setAllData(dataWithConflicts)
+    setPreview(dataWithConflicts)
   }
 
-  const toggleConflictSelection = (index: number) => {
-    const newSelection = new Set(selectedConflicts)
-    if (newSelection.has(index)) {
-      newSelection.delete(index)
-    } else {
-      newSelection.add(index)
+  const handleCellChange = (rowIndex: number, header: string, value: string) => {
+    const newData = [...allData]
+    newData[rowIndex] = {
+      ...newData[rowIndex],
+      [header]: value,
     }
-    setSelectedConflicts(newSelection)
+    // Recalculer les conflits après modification (surtout si email changé)
+    const dataWithConflicts = detectConflicts(newData)
+    setAllData(dataWithConflicts)
+    setPreview(dataWithConflicts)
+  }
+
+  const toggleRowSelection = (rowIndex: number, shiftKey: boolean = false) => {
+    const newData = [...allData]
+    
+    // Si Shift est pressé et qu'il y a un dernier index cliqué, sélectionner la plage
+    if (shiftKey && lastClickedIndex !== null) {
+      const start = Math.min(lastClickedIndex, rowIndex)
+      const end = Math.max(lastClickedIndex, rowIndex)
+      const newSelectionState = !newData[rowIndex]._selected
+      
+      // Sélectionner/désélectionner toute la plage
+      for (let i = start; i <= end; i++) {
+        newData[i] = {
+          ...newData[i],
+          _selected: newSelectionState,
+        }
+      }
+    } else {
+      // Comportement normal : toggle une seule ligne
+      newData[rowIndex] = {
+        ...newData[rowIndex],
+        _selected: !newData[rowIndex]._selected,
+      }
+    }
+    
+    // Mettre à jour le dernier index cliqué
+    setLastClickedIndex(rowIndex)
+    
+    // Recalculer les sélections en fonction de la capacité disponible
+    const recalculatedData = recalculateSelections(newData)
+    setAllData(recalculatedData)
+    setPreview(recalculatedData)
+  }
+
+  // Recalculer dynamiquement le type de conflit selon les sélections et la capacité
+  const recalculateSelections = (data: ParsedRow[]) => {
+    if (!eventData || !existingRegistrationsData) {
+      return data
+    }
+
+    const capacity = eventData.capacity
+    // Compter UNIQUEMENT les inscriptions actives (non supprimées)
+    const currentApprovedCount = existingRegistrationsData.data.filter(
+      (reg) => reg.deletedAt === null && reg.status === 'approved'
+    ).length
+    const availableSpots = capacity ? capacity - currentApprovedCount : Infinity
+
+    // Sauvegarder les types originaux avant modification (detectConflicts)
+    const deletedEmails = new Set(
+      existingRegistrationsData.data
+        .filter((reg) => reg.deletedAt !== null)
+        .map((reg) => reg.attendee?.email?.toLowerCase().trim())
+    )
+    
+    const existingEmails = new Set(
+      existingRegistrationsData.data
+        .filter((reg) => reg.deletedAt === null)
+        .map((reg) => reg.attendee?.email?.toLowerCase().trim())
+    )
+
+    // Compter les nouvelles inscriptions ET les restaurations sélectionnées
+    // Les deux consomment des places, seuls les doublons ne consomment pas de places (ils remplacent)
+    let selectedCount = 0
+
+    return data.map((row) => {
+      const email = getEmailFromRow(row)
+      const isDeleted = email ? deletedEmails.has(email) : false
+      const isDuplicate = email ? existingEmails.has(email) : false
+
+      // Les doublons ne consomment pas de places - toujours jaunes
+      if (isDuplicate) {
+        return { ...row, _conflictType: 'duplicate' as const }
+      }
+
+      // Pour les nouvelles inscriptions ET les restaurations
+      if (row._selected) {
+        selectedCount++
+        // Vérifier si cette sélection est dans la limite des places disponibles
+        if (selectedCount <= availableSpots) {
+          // Dans la capacité → garder le type original
+          if (isDeleted) {
+            return { ...row, _conflictType: 'deleted' as const }
+          }
+          return { ...row, _conflictType: null }
+        } else {
+          // Hors capacité → marquer comme capacity (rouge)
+          return { ...row, _conflictType: 'capacity' as const }
+        }
+      } else {
+        // Non sélectionnée → remettre le type original
+        if (isDeleted) {
+          return { ...row, _conflictType: 'deleted' as const }
+        }
+        return { ...row, _conflictType: null }
+      }
+    })
   }
 
   const selectAllConflicts = () => {
-    setSelectedConflicts(new Set(conflicts.map((_, i) => i)))
+    const newData = allData.map((row) => {
+      return { ...row, _selected: true }
+    })
+    const recalculatedData = recalculateSelections(newData)
+    setAllData(recalculatedData)
+    setPreview(recalculatedData)
   }
 
   const deselectAllConflicts = () => {
-    setSelectedConflicts(new Set())
+    const newData = allData.map((row) => {
+      return { ...row, _selected: false }
+    })
+    const recalculatedData = recalculateSelections(newData)
+    setAllData(recalculatedData)
+    setPreview(recalculatedData)
   }
 
   const downloadTemplate = () => {
-    // Créer un fichier Excel template
     const templateData = [
       ['prénom', 'nom', 'email', 'téléphone', 'entreprise', 'poste', 'pays', 'mode'],
     ]
@@ -442,22 +499,6 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Inscriptions')
     XLSX.writeFile(wb, 'template_inscriptions.xlsx')
-  }
-
-  const handleRemoveRow = (indexToRemove: number) => {
-    const newData = allData.filter((_, index) => index !== indexToRemove)
-    setAllData(newData)
-    setPreview(newData)
-  }
-
-  const handleCellChange = (rowIndex: number, header: string, value: string) => {
-    const newData = [...allData]
-    newData[rowIndex] = {
-      ...newData[rowIndex],
-      [header]: value
-    }
-    setAllData(newData)
-    setPreview(newData)
   }
 
   return (
@@ -554,31 +595,102 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
         {step === 'preview' && (
           <>
+            {/* Résumé du fichier */}
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
               <div className="flex items-start">
                 <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 mr-3" />
-                <div>
+                <div className="flex-1">
                   <h4 className="text-sm font-medium text-green-900 dark:text-green-200">
                     Fichier analysé avec succès
                   </h4>
                   <p className="text-sm text-green-800 dark:text-green-300 mt-1">
                     {allData.length} inscriptions détectées •{' '}
                     {Object.keys(columnMapping).length} colonnes reconnues
-                    automatiquement
                   </p>
                 </div>
               </div>
             </div>
 
+            {/* Légende des conflits */}
+            {(() => {
+              const duplicateCount = allData.filter(r => r._conflictType === 'duplicate').length
+              const deletedCount = allData.filter(r => r._conflictType === 'deleted').length
+              const capacityCount = allData.filter(r => r._conflictType === 'capacity').length
+              // Compter TOUTES les lignes sélectionnées (nouvelles + restaurations) sauf doublons
+              const selectedCount = allData.filter(r => r._selected && r._conflictType !== 'duplicate' && r._conflictType !== 'capacity').length
+              const capacity = eventData?.capacity || 0
+              // Compter UNIQUEMENT les inscriptions actives (non supprimées)
+              const currentApprovedCount = existingRegistrationsData?.data.filter(
+                (reg: any) => reg.deletedAt === null && reg.status === 'approved'
+              ).length || 0
+              const availableSpots = capacity ? capacity - currentApprovedCount : Infinity
+              const remainingSpots = availableSpots - selectedCount
+
+              return (
+                <div className="space-y-3">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
+                          Sélectionnez les inscriptions à importer
+                        </h4>
+                        <p className="text-xs text-blue-800 dark:text-blue-300 mb-3">
+                          Places disponibles : {remainingSpots >= 0 ? remainingSpots : 0} / {availableSpots} • 
+                          Capacité événement : {capacity} • Actuellement inscrits : {currentApprovedCount}
+                        </p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-4 h-4 bg-green-50 dark:bg-green-700 border border-green-300 dark:border-green-500 rounded"></div>
+                            <span className="text-blue-800 dark:text-blue-200">Sélectionnées ({selectedCount})</span>
+                          </div>
+                          {capacityCount > 0 && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 bg-red-100 dark:bg-red-600 border border-red-300 dark:border-red-400 rounded"></div>
+                              <span className="text-blue-800 dark:text-blue-200">Capacité dépassée ({capacityCount})</span>
+                            </div>
+                          )}
+                          {duplicateCount > 0 && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 bg-yellow-100 dark:bg-yellow-600 border border-yellow-400 dark:border-yellow-400 rounded"></div>
+                              <span className="text-blue-800 dark:text-blue-200">{duplicateCount} Doublon(s)</span>
+                            </div>
+                          )}
+                          {deletedCount > 0 && (
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 bg-purple-100 dark:bg-purple-600 border border-purple-300 dark:border-purple-400 rounded"></div>
+                              <span className="text-blue-800 dark:text-blue-200">{deletedCount} À restaurer</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                          <Button size="sm" variant="ghost" onClick={selectAllConflicts}>
+                            Tout sélectionner
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={deselectAllConflicts}>
+                            Tout désélectionner
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Tableau avec conflits inline */}
             <div>
               <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
                 Aperçu des données ({preview.length} lignes) :
               </h4>
               <div className="overflow-x-auto max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16 min-w-[64px]">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12">
+                        {/* Checkbox pour conflits */}
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">
                         {/* Actions */}
                       </th>
                       {headers.map((header, index) => (
@@ -597,33 +709,79 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                     </tr>
                   </thead>
                   <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                    {preview.map((row, rowIndex) => (
-                      <tr key={rowIndex}>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
-                          <button
-                            onClick={() => handleRemoveRow(rowIndex)}
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
-                            title="Supprimer cette ligne"
-                          >
-                            <Trash2 className="h-5 w-5 min-w-[20px] min-h-[20px]" />
-                          </button>
-                        </td>
-                        {headers.map((header, colIndex) => (
-                          <td
-                            key={colIndex}
-                            className="px-2 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap"
-                          >
+                    {preview.map((row, rowIndex) => {
+                      const conflictType = row._conflictType
+                      let rowClass = ''
+                      let icon = null
+                      let tooltip = ''
+
+                      if (conflictType === 'duplicate') {
+                        rowClass = 'bg-yellow-100 dark:bg-yellow-600/30'
+                        icon = <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-200" />
+                        tooltip = 'Email déjà inscrit - Sélectionnez pour remplacer'
+                      } else if (conflictType === 'deleted') {
+                        rowClass = 'bg-purple-100 dark:bg-purple-600/30'
+                        icon = <AlertTriangle className="h-4 w-4 text-purple-600 dark:text-purple-300" />
+                        tooltip = 'Inscription supprimée - Sélectionnez pour restaurer'
+                      } else if (conflictType === 'capacity') {
+                        // Capacité dépassée → rouge
+                        rowClass = 'bg-red-100 dark:bg-red-600/30'
+                        icon = <XCircle className="h-4 w-4 text-red-600 dark:text-red-300" />
+                        tooltip = 'Capacité dépassée - Décochez d\'autres lignes pour importer celle-ci'
+                      } else {
+                        // Nouvelle inscription : verte si sélectionnée, blanche sinon
+                        if (row._selected) {
+                          rowClass = 'bg-green-50 dark:bg-green-700/30'
+                        } else {
+                          rowClass = 'bg-white dark:bg-gray-900'
+                        }
+                      }
+
+                      return (
+                        <tr key={rowIndex} className={rowClass}>
+                          <td className="px-4 py-3 text-center">
                             <input
-                              type="text"
-                              value={row[header]?.toString() || ''}
-                              onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
-                              className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
-                              placeholder="-"
+                              type="checkbox"
+                              checked={row._selected === true}
+                              onChange={(e) => toggleRowSelection(rowIndex, e.nativeEvent.shiftKey)}
+                              className="h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
+                              title={
+                                conflictType === 'duplicate' 
+                                  ? tooltip 
+                                  : conflictType === 'deleted' 
+                                    ? tooltip 
+                                    : conflictType === 'capacity' 
+                                      ? 'Sélection dépasse la capacité - Décochez d\'autres lignes' 
+                                      : 'Sélectionner pour importer (Shift+clic pour sélection multiple)'
+                              }
                             />
                           </td>
-                        ))}
-                      </tr>
-                    ))}
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                            <button
+                              onClick={() => handleRemoveRow(rowIndex)}
+                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+                              title="Supprimer cette ligne"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </td>
+                          {headers.map((header, colIndex) => (
+                            <td
+                              key={colIndex}
+                              className="px-2 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap"
+                            >
+                              <input
+                                type="text"
+                                value={row[header]?.toString() || ''}
+                                onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
+                                className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
+                                placeholder="-"
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -654,117 +812,46 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 onClick={handleImport}
                 disabled={isProcessing || isImporting}
               >
-                {isProcessing || isImporting
-                  ? 'Import en cours...'
-                  : `Importer ${allData.length} inscriptions`}
-              </Button>
-            </div>
-          </>
-        )}
-
-        {/* Nouvelle étape : Résolution des conflits */}
-        {step === 'conflicts' && (
-          <>
-            <div className="space-y-4">
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                <div className="flex items-start">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
-                      {conflicts.length} conflit(s) détecté(s)
-                    </h4>
-                    <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
-                      Certaines inscriptions existent déjà ou sont dans la corbeille. Sélectionnez celles que vous souhaitez remplacer ou restaurer.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions groupées */}
-              <div className="flex justify-between items-center">
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {selectedConflicts.size} / {conflicts.length} sélectionné(s)
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={selectAllConflicts}
-                  >
-                    Tout sélectionner
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={deselectAllConflicts}
-                  >
-                    Tout désélectionner
-                  </Button>
-                </div>
-              </div>
-
-              {/* Liste des conflits */}
-              <div className="max-h-96 overflow-y-auto space-y-3">
-                {conflicts.map((conflict: any, index: number) => (
-                  <div
-                    key={index}
-                    className={`border rounded-lg p-4 transition-colors ${
-                      selectedConflicts.has(index)
-                        ? 'border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-                    }`}
-                  >
-                    <label className="flex items-start cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedConflicts.has(index)}
-                        onChange={() => toggleConflictSelection(index)}
-                        className="mt-1 h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
-                      />
-                      <div className="ml-3 flex-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-gray-900 dark:text-white">
-                            {conflict.email}
-                          </span>
-                          {conflict.error?.toLowerCase().includes('previously deleted') ? (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200">
-                              Supprimé (Corbeille)
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200">
-                              Déjà inscrit
+                {isProcessing || isImporting ? (
+                  'Import en cours...'
+                ) : (
+                  <span className="flex items-center gap-2">
+                    Importer
+                    {(() => {
+                      const newCount = allData.filter(r => !r._conflictType && r._selected).length
+                      const duplicateCount = allData.filter(r => r._conflictType === 'duplicate' && r._selected).length
+                      const restoredCount = allData.filter(r => r._conflictType === 'deleted' && r._selected).length
+                      const capacityCount = allData.filter(r => r._conflictType === 'capacity' && r._selected).length
+                      const total = newCount + duplicateCount + restoredCount + capacityCount
+                      
+                      return (
+                        <>
+                          <span>{total}</span>
+                          {newCount > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100">
+                              {newCount}✓
                             </span>
                           )}
-                        </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                          Ligne {conflict.row} • {conflict.error?.toLowerCase().includes('previously deleted') ? 'Sera restauré et mis à jour' : 'Sera remplacé par les nouvelles données'}
-                        </p>
-                      </div>
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-between pt-4">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  // Utiliser le premier résultat d'import (sans les remplacements)
-                  setImportResult(firstImportResult)
-                  setStep('success')
-                  toast.info('Import terminé', 'Conflits ignorés')
-                }}
-              >
-                Ignorer les conflits
-              </Button>
-              <Button
-                onClick={handleApplyReplacements}
-                disabled={isProcessing || selectedConflicts.size === 0}
-              >
-                {isProcessing
-                  ? 'Traitement en cours...'
-                  : `Remplacer/Restaurer ${selectedConflicts.size} inscription(s)`}
+                          {duplicateCount > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-600 dark:text-yellow-100">
+                              {duplicateCount}↻
+                            </span>
+                          )}
+                          {restoredCount > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-100 text-purple-700 dark:bg-purple-600 dark:text-purple-100">
+                              {restoredCount}⟲
+                            </span>
+                          )}
+                          {capacityCount > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700 dark:bg-red-600 dark:text-red-100">
+                              {capacityCount}!
+                            </span>
+                          )}
+                        </>
+                      )
+                    })()}
+                  </span>
+                )}
               </Button>
             </div>
           </>
@@ -809,7 +896,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 )}
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-center border border-gray-200 dark:border-gray-700">
                   <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                    {importResult.summary.skipped}
+                    {importResult.summary.skipped || 0}
                   </div>
                   <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
                     Ignorés / Erreurs

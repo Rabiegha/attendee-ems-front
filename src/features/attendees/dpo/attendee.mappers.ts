@@ -24,16 +24,18 @@ export const mapAttendeeDTOtoDPO = (dto: AttendeeDTO): AttendeeDPO => {
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
 
-    // Statistics
-    totalEvents: dto.statistics?.total_events,
-    totalRegistrations: dto.statistics?.total_registrations,
-    checkedInCount: dto.statistics?.checked_in,
-    lastEventAt: dto.statistics?.last_event_at,
+    // Statistics - always defined even if 0
+    totalEvents: dto.statistics?.total_events ?? 0,
+    totalRegistrations: dto.statistics?.total_registrations ?? 0,
+    checkedInCount: dto.statistics?.checked_in ?? 0,
 
     // Computed properties
     displayName: `${dto.first_name} ${dto.last_name}`.trim() || dto.email,
     canCheckIn: dto.is_active, // Active users can check in
   }
+  
+  // Optional fields
+  if (dto.statistics?.last_event_at) dpo.lastEventAt = dto.statistics.last_event_at
 
   if (dto.phone) dpo.phone = dto.phone
   if (dto.company) dpo.company = dto.company

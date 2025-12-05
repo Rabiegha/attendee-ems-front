@@ -15,11 +15,26 @@ export const DesignerToolbox: React.FC<DesignerToolboxProps> = ({ onElementAdd }
     const element: BadgeElement = {
       id: generateId(),
       type: 'text',
+      content: 'Nouveau texte',
       x: 50,
       y: 50,
       width: 150,
       height: 40,
+      visible: true,
       rotation: 0,
+      style: {
+        fontFamily: 'Arial, sans-serif',
+        fontSize: 16,
+        color: '#000000',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
+        transform: '',
+        rotation: 0,
+        opacity: 1,
+        zIndex: 1,
+        textDecoration: 'none'
+      },
       properties: {
         content: 'Nouveau texte',
         fontSize: 16,
@@ -36,11 +51,26 @@ export const DesignerToolbox: React.FC<DesignerToolboxProps> = ({ onElementAdd }
     const element: BadgeElement = {
       id: generateId(),
       type: 'image',
+      content: '',
       x: 50,
       y: 100,
       width: 100,
       height: 100,
+      visible: true,
       rotation: 0,
+      style: {
+        fontFamily: 'Arial',
+        fontSize: 16,
+        color: '#000000',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
+        transform: '',
+        rotation: 0,
+        opacity: 1,
+        zIndex: 1,
+        textDecoration: 'none'
+      },
       properties: {
         src: '',
         alt: 'Image',
@@ -54,11 +84,26 @@ export const DesignerToolbox: React.FC<DesignerToolboxProps> = ({ onElementAdd }
     const element: BadgeElement = {
       id: generateId(),
       type: 'qr',
+      content: '{{attendeeId}}',
       x: 200,
       y: 50,
       width: 80,
       height: 80,
+      visible: true,
       rotation: 0,
+      style: {
+        fontFamily: 'Arial',
+        fontSize: 16,
+        color: '#000000',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
+        transform: '',
+        rotation: 0,
+        opacity: 1,
+        zIndex: 1,
+        textDecoration: 'none'
+      },
       properties: {
         data: '{{attendeeId}}',
         errorCorrectionLevel: 'M'
@@ -71,11 +116,26 @@ export const DesignerToolbox: React.FC<DesignerToolboxProps> = ({ onElementAdd }
     const element: BadgeElement = {
       id: generateId(),
       type: 'shape',
+      content: '',
       x: 50,
       y: 200,
       width: 120,
       height: 60,
+      visible: true,
       rotation: 0,
+      style: {
+        fontFamily: 'Arial',
+        fontSize: 16,
+        color: '#3B82F6',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
+        transform: '',
+        rotation: 0,
+        opacity: 1,
+        zIndex: 0,
+        textDecoration: 'none'
+      },
       properties: {
         backgroundColor: '#3B82F6',
         borderRadius: 0,
@@ -90,11 +150,26 @@ export const DesignerToolbox: React.FC<DesignerToolboxProps> = ({ onElementAdd }
     const element: BadgeElement = {
       id: generateId(),
       type: 'shape',
+      content: '',
       x: 200,
       y: 200,
       width: 80,
       height: 80,
+      visible: true,
       rotation: 0,
+      style: {
+        fontFamily: 'Arial',
+        fontSize: 16,
+        color: '#10B981',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
+        transform: '',
+        rotation: 0,
+        opacity: 1,
+        zIndex: 0,
+        textDecoration: 'none'
+      },
       properties: {
         backgroundColor: '#10B981',
         borderRadius: 50, // 50% for circle
@@ -109,11 +184,26 @@ export const DesignerToolbox: React.FC<DesignerToolboxProps> = ({ onElementAdd }
     const element: BadgeElement = {
       id: generateId(),
       type: 'shape',
+      content: '',
       x: 50,
       y: 300,
       width: 200,
       height: 2,
+      visible: true,
       rotation: 0,
+      style: {
+        fontFamily: 'Arial',
+        fontSize: 16,
+        color: '#6B7280',
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textAlign: 'left',
+        transform: '',
+        rotation: 0,
+        opacity: 1,
+        zIndex: 0,
+        textDecoration: 'none'
+      },
       properties: {
         backgroundColor: '#6B7280',
         borderRadius: 0

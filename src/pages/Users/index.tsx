@@ -132,8 +132,8 @@ export function UsersPage() {
     // Filtre par rôle (single select)
     if (selectedRoleId && selectedRoleId !== 'all') {
       users = users.filter((user) => {
-        const userRoles = user.roles || []
-        return userRoles.some((r: any) => r.id === selectedRoleId || r.role_id === selectedRoleId)
+        // user.role is the correct property, not user.roles
+        return user.role?.id === selectedRoleId
       })
     }
 
@@ -647,10 +647,8 @@ export function UsersPage() {
               />
             }
             // Server-side pagination
-            manualPagination={true}
+            enablePagination={true}
             pageSize={usersData?.limit || 10}
-            currentPage={usersData?.page || 1}
-            pageCount={usersData ? Math.ceil(usersData.total / usersData.limit) : 1}
             totalItems={usersData?.total || 0}
             onPageChange={(page: number) => {
               dispatch(setFilters({ page }))

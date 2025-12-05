@@ -145,7 +145,7 @@ export function ChangePasswordPage() {
                   {...register('currentPassword')}
                   type={showCurrentPassword ? 'text' : 'password'}
                   placeholder="Saisissez votre mot de passe temporaire"
-                  error={errors.currentPassword?.message || undefined}
+                  error={!!errors.currentPassword?.message}
                   leftIcon={<Lock className="h-5 w-5" />}
                   rightIcon={
                     <button
@@ -179,7 +179,7 @@ export function ChangePasswordPage() {
                   {...register('newPassword')}
                   type={showNewPassword ? 'text' : 'password'}
                   placeholder="Nouveau mot de passe sécurisé"
-                  error={errors.newPassword?.message || undefined}
+                  error={!!errors.newPassword?.message}
                   leftIcon={<Lock className="h-5 w-5" />}
                   rightIcon={
                     <button
@@ -247,7 +247,7 @@ export function ChangePasswordPage() {
                   {...register('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Confirmez votre nouveau mot de passe"
-                  error={errors.confirmPassword?.message || undefined}
+                  error={!!errors.confirmPassword?.message}
                   leftIcon={<Lock className="h-5 w-5" />}
                   rightIcon={
                     <button

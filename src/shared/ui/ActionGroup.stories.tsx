@@ -155,6 +155,7 @@ export const MultipleActions: Story = {
 
 // Exemple dans un formulaire
 export const InFormExample: Story = {
+  args: { children: null },
   render: () => (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
       <h2 className="text-heading-md mb-4">Créer un événement</h2>

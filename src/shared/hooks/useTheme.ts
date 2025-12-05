@@ -14,7 +14,7 @@ export const useTheme = () => {
   useEffect(() => {
     const root = window.document.documentElement
 
-    const applyTheme = (newTheme: Theme) => {
+    const applyTheme = (newTheme: Theme): string => {
       root.classList.remove('light', 'dark')
 
       if (newTheme === 'system') {
@@ -47,6 +47,8 @@ export const useTheme = () => {
 
       return () => mediaQuery.removeEventListener('change', handleChange)
     }
+    
+    return undefined
   }, [theme])
 
   const setThemeWithTransition = (newTheme: Theme) => {

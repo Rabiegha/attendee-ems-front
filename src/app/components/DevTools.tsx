@@ -14,7 +14,7 @@ export const DevTools: React.FC = () => {
   const [useRandom, setUseRandom] = useState(devConfig.useRandomDelay)
 
   // N'afficher qu'en développement
-  if (process.env.NODE_ENV !== 'development') {
+  if (import.meta.env.MODE !== 'development') {
     return null
   }
 

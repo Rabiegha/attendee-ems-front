@@ -91,8 +91,7 @@ export async function bootstrapAuth() {
         .dispatch(
           authApi.endpoints.refresh.initiate(undefined, { 
             track: false,
-            forceRefetch: true, // Force un vrai appel réseau sans cache
-          })
+          } as any)
         )
         .unwrap()
 

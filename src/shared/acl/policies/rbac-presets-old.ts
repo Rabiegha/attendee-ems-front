@@ -172,7 +172,8 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
         },
       ]
 
-    case 'DEVELOPER':
+    // Deprecated roles - kept for backward compatibility
+    case 'DEVELOPER' as any:
       return [
         // Accès au dashboard de base
         { action: 'read', subject: 'Organization', conditions: { id: orgId } },
@@ -200,7 +201,7 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
         },
       ]
 
-    case 'GRAPHIC_DESIGNER':
+    case 'GRAPHIC_DESIGNER' as any:
       return [
         // Accès au dashboard de base
         { action: 'read', subject: 'Organization', conditions: { id: orgId } },
@@ -228,7 +229,7 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
         },
       ]
 
-    case 'JOURNALIST':
+    case 'JOURNALIST' as any:
       return [
         // Accès au dashboard de base
         { action: 'read', subject: 'Organization', conditions: { id: orgId } },
@@ -251,7 +252,7 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
         },
       ]
 
-    case 'EDITOR':
+    case 'EDITOR' as any:
       return [
         // Accès au dashboard de base
         { action: 'read', subject: 'Organization', conditions: { id: orgId } },

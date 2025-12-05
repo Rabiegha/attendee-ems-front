@@ -126,6 +126,7 @@ export const BadgeDesignerPage: React.FC = () => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       const state = history[newIndex];
+      if (!state) return;
       setElements(JSON.parse(JSON.stringify(state.elements)));
       setBackground(state.background);
       // Restore symmetry pairs
@@ -141,6 +142,7 @@ export const BadgeDesignerPage: React.FC = () => {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
       const state = history[newIndex];
+      if (!state) return;
       setElements(JSON.parse(JSON.stringify(state.elements)));
       setBackground(state.background);
       // Restore symmetry pairs
@@ -340,7 +342,7 @@ export const BadgeDesignerPage: React.FC = () => {
         e.preventDefault();
         if (selectedElements.length > 1) {
           duplicateElements(selectedElements);
-        } else if (selectedElements.length === 1) {
+        } else if (selectedElements.length === 1 && selectedElements[0]) {
           duplicateElement(selectedElements[0]);
         }
         return;
@@ -1069,15 +1071,15 @@ export const BadgeDesignerPage: React.FC = () => {
   height: ${el.height || 'auto'}px;`;
       
       if (el.type === 'text') {
-        css += `\n  font-size: ${el.fontSize || 16}px;
-  font-weight: ${el.fontWeight || 'normal'};
-  text-align: ${el.textAlign || 'left'};
-  color: ${el.color || '#000000'};`;
-        if (el.fontFamily) css += `\n  font-family: ${el.fontFamily};`;
+        css += `\n  font-size: ${el.style?.fontSize || 16}px;
+  font-weight: ${el.style?.fontWeight || 'normal'};
+  text-align: ${el.style?.textAlign || 'left'};
+  color: ${el.style?.color || '#000000'};`;
+        if (el.style?.fontFamily) css += `\n  font-family: ${el.style.fontFamily};`;
         if (el.style?.textTransform) css += `\n  text-transform: ${el.style.textTransform};`;
       }
       
-      if (el.borderRadius) css += `\n  border-radius: ${el.borderRadius};`;
+      if (el.properties?.borderRadius) css += `\n  border-radius: ${el.properties.borderRadius};`;
       if (el.style?.rotation) css += `\n  transform: rotate(${el.style.rotation}deg);`;
       if (el.style?.opacity !== undefined) css += `\n  opacity: ${el.style.opacity};`;
       

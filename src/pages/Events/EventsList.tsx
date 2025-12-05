@@ -21,7 +21,7 @@ import {
   Eye,
 } from 'lucide-react'
 import { useToast } from '@/shared/hooks/useToast'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { selectUser, selectOrgId } from '@/features/auth/model/sessionSlice'
 import {
   SearchInput,
@@ -38,6 +38,7 @@ import {
   useDeleteEventMutation,
   useBulkDeleteEventsMutation,
   useBulkExportEventsMutation,
+  eventsApi,
 } from '@/features/events/api/eventsApi'
 import { useGetTagsQuery, type Tag } from '@/features/tags'
 import type { EventStatus } from '@/features/events/types'
@@ -48,6 +49,7 @@ import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
 
 const EventsList = () => {
   const toast = useToast()
+  const dispatch = useDispatch()
 
   // Get user from Redux
   const user = useSelector(selectUser)
@@ -78,10 +80,6 @@ const EventsList = () => {
   const [bulkDeleteEvents] = useBulkDeleteEventsMutation()
   const [bulkExportEvents] = useBulkExportEventsMutation()
 
-  const handleRefresh = () => {
-    dispatch(eventsApi.util.invalidateTags(['Events']))
-  }
-
   // Get user role for RBAC
   const userRole = user?.roles?.[0] || 'VIEWER'
   const isSuperAdmin = userRole === 'SUPER_ADMIN'
@@ -100,7 +98,8 @@ const EventsList = () => {
 
     // Filter by check-in
     if (hasCheckinFilter && hasCheckinFilter !== 'all') {
-      const hasCheckin = event.enableCheckin || false
+      // TODO: Add enableCheckin property to EventDPO
+      const hasCheckin = (event as any).enableCheckin || false
       if (hasCheckinFilter === 'yes' && !hasCheckin) return false
       if (hasCheckinFilter === 'no' && hasCheckin) return false
     }

@@ -22,7 +22,7 @@ const initialState: EventsUIState = {
   filters: {
     page: 1,
     limit: 20,
-    sortBy: 'startDate',
+    sortBy: 'start_at',
     sortOrder: 'asc',
   },
   searchQuery: '',
@@ -50,7 +50,6 @@ export const eventsSlice = createSlice({
 
     setSelectedTags: (state, action: PayloadAction<string[]>) => {
       state.selectedTags = action.payload
-      state.filters.tags = action.payload
       state.filters.page = 1
     },
 
@@ -62,7 +61,6 @@ export const eventsSlice = createSlice({
       } else {
         state.selectedTags.push(tag)
       }
-      state.filters.tags = state.selectedTags
       state.filters.page = 1
     },
 

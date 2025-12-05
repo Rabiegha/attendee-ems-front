@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { forceAuthCleanup } from '@/shared/lib/auth-recovery'
 import { Button } from '@/shared/ui/Button'
+import { LoadingSpinner } from '@/shared/ui/LoadingSpinner'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
 
 /**

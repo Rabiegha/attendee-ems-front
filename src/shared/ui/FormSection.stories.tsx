@@ -92,6 +92,7 @@ export const RequiredSection: Story = {
 
 // Formulaire complet avec plusieurs sections
 export const MultiSectionForm: Story = {
+  args: { children: null },
   render: () => (
     <form className="space-y-8">
       <FormSection

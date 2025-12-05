@@ -16,7 +16,7 @@ interface RightSidebarProps {
   selectedElements: BadgeElement[];
   symmetryPairs: Map<string, string>;
   badgeFormat: BadgeFormat;
-  onUpdateElement: (id: string, updates: Partial<BadgeElement>, skipHistory?: boolean) => void;
+  onUpdateElement: (id: string, updates: Partial<BadgeElement>, skipHistory?: boolean, _unused?: boolean) => void;
   onBatchUpdateElements: (updates: Array<{ id: string; updates: Partial<BadgeElement> }>, skipHistory?: boolean) => void;
   onDeleteElement: (id: string) => void;
   onDeleteElements: (ids: string[]) => void;
@@ -123,10 +123,12 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
     );
   }
 
-  const handleStyleUpdate = (property: string, value: any, skipHistory = false) => {
+  const handleStyleUpdate = (property: string, value: any, skipHistory = false, _unused?: boolean) => {
     if (selectedElements.length === 1) {
       // Single element: use direct update
       const element = selectedElements[0];
+      if (!element) return;
+      
       const updates: any = {
         style: { [property]: value }
       };
@@ -287,7 +289,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   };
 
   // Bulk style updates for multi-selection
-  const handleBulkStyleUpdate = (property: string, value: any) => {
+  const handleBulkStyleUpdate = (property: string, value: any, skipHistory = false, _unused?: boolean) => {
     const batchUpdates = selectedElements
       .filter(element => {
         // Only apply to text elements for text-specific styles
@@ -318,7 +320,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
       });
     
     if (batchUpdates.length > 0) {
-      onBatchUpdateElements(batchUpdates);
+      onBatchUpdateElements(batchUpdates, skipHistory);
     }
   };
 
@@ -355,9 +357,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
       id: element.id,
       updates: {
         style: { 
+          ...element.style,
           [property]: targetValue
         }
-      }
+      } as Partial<BadgeElement>
     }));
 
     onBatchUpdateElements(batchUpdates);

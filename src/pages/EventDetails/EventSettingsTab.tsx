@@ -122,19 +122,19 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   }, [blocker])
 
   const handleStay = () => {
-    blocker.reset()
+    if (blocker) blocker.reset?.()
   }
 
   const handleLeave = () => {
-    blocker.proceed()
+    if (blocker) blocker.proceed?.()
   }
 
   const handleSaveAndLeave = async () => {
     const success = await handleSaveChanges(false)
     if (success) {
-      blocker.proceed()
+      if (blocker) blocker.proceed?.()
     } else {
-      blocker.reset()
+      if (blocker) blocker.reset?.()
     }
   }
 
@@ -152,6 +152,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
 
   // État pour la suppression (double confirmation)
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0)
+  const [deleteResult, setDeleteResult] = useState<any>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false)
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)

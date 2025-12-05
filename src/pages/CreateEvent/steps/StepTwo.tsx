@@ -86,9 +86,10 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
             onPlaceSelect={(place) => {
               const updates: Partial<CreateEventFormData> = {
                 address_formatted: place.formatted_address,
-                latitude: place.latitude,
-                longitude: place.longitude,
               }
+              
+              if (place.latitude !== undefined) updates.latitude = place.latitude
+              if (place.longitude !== undefined) updates.longitude = place.longitude
               
               if (place.street) updates.address_street = place.street
               if (place.city) updates.address_city = place.city
@@ -112,7 +113,6 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
         {/* Barre de recherche */}
         <div className="mb-3">
           <SearchInput
-            id="search_users"
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Rechercher par nom ou email..."

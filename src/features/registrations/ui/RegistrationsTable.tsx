@@ -813,7 +813,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           setFilterValues({})
         }}
         showResetButton={searchQuery !== '' || Object.keys(filterValues).length > 0}
-        onRefresh={onRefresh}
+        {...(onRefresh && { onRefresh })}
         showRefreshButton={!!onRefresh}
       >
         <SearchInput
@@ -897,10 +897,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               : 'Aucune inscription trouvée'
           }
           // Server-side pagination
-          manualPagination={true}
+          enablePagination={true}
           pageSize={pageSize || 50}
-          currentPage={currentPage || 1}
-          pageCount={totalPages || 1}
           totalItems={meta?.total || 0}
           onPageChange={onPageChange || (() => {})}
           onPageSizeChange={onPageSizeChange || (() => {})}
@@ -952,7 +950,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           onClose={() => setBadgeDownloadRegistration(null)}
           registration={badgeDownloadRegistration}
           eventId={eventId}
-          currentBadgeTemplateId={eventBadgeTemplateId}
+          currentBadgeTemplateId={eventBadgeTemplateId ?? null}
         />
       )}
 

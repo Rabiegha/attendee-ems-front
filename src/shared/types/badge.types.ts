@@ -85,13 +85,15 @@ export type BadgeFormat = {
 // Badge element (from original badge generator)
 export interface BadgeElement {
   id: string;
-  type: 'text' | 'qrcode' | 'image';
+  type: 'text' | 'qrcode' | 'image' | 'qr' | 'shape';
   content: string;
   x: number;
   y: number;
   width: number;
   height: number;
   visible: boolean;
+  rotation?: number;
+  properties?: any;
   style: {
     fontFamily: string;
     fontSize: number;
@@ -108,6 +110,7 @@ export interface BadgeElement {
     zIndex: number;
     lineHeight?: number;
     letterSpacing?: number;
+    alignItems?: 'flex-start' | 'center' | 'flex-end';
   };
   imageId?: string;
   aspectRatio?: number;

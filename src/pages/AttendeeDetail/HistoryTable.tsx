@@ -225,9 +225,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         enableColumnVisibility={true}
         emptyMessage="Aucune participation trouvée"
         // Server-side pagination
-        manualPagination={true}
-        pageCount={totalPages ?? 1}
-        currentPage={currentPage ?? 1}
+        enablePagination={true}
         totalItems={totalItems ?? 0}
         pageSize={pageSize ?? 10}
         {...(onPageChange && { onPageChange })}

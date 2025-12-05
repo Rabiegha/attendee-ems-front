@@ -81,6 +81,9 @@ interface DataTableProps<TData, TValue> {
   // Pagination
   pageSize?: number
   enablePagination?: boolean
+  totalItems?: number
+  onPageChange?: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
   // Column features
   enableColumnOrdering?: boolean
   enableColumnVisibility?: boolean
@@ -92,6 +95,8 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean
   // Empty state
   emptyMessage?: string
+  // Misc
+  rowKey?: string
 }
 
 // Composant pour les en-têtes draggables

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useBlocker } from 'react-router-dom';
 import { ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { AlertTriangle } from 'lucide-react';
 import { BadgeElement, BadgeFormat, BADGE_FORMATS, HistoryState } from '../../shared/types/badge.types';
@@ -17,7 +17,7 @@ import {
 } from '@/services/api/badge-templates.api';
 import { useToast } from '@/shared/hooks/useToast';
 
-const MAX_HISTORY = 50;
+const MAX_HISTORY = 99;
 
 export const BadgeDesignerPage: React.FC = () => {
   // Router hooks
@@ -59,23 +59,36 @@ export const BadgeDesignerPage: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
-  
-  // Track continuous actions (to avoid saving history on each pixel)
-  const [isContinuousAction, setIsContinuousAction] = useState(false);
-  const continuousActionRef = useRef<{ elements: BadgeElement[]; background: string | null } | null>(null);
 
   const badgeRef = useRef<HTMLDivElement>(null);
   const elementRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
   const backgroundInputRef = useRef<HTMLInputElement>(null);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
   const saveTemplateRef = useRef<(() => Promise<void>) | null>(null);
+  const hasLoadedTemplateRef = useRef(false);
 
-  // Track changes to mark as dirty
+  // Protection contre la navigation interne avec useBlocker
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && (
+        currentLocation.pathname !== nextLocation.pathname || 
+        currentLocation.search !== nextLocation.search
+      )
+  );
+
   useEffect(() => {
-    if (history.length > 0) {
-      setIsDirty(true);
+    if (blocker.state === 'blocked') {
+      setShowUnsavedChangesModal(true);
+    } else {
+      setShowUnsavedChangesModal(false);
     }
-  }, [elements, background, templateName]);
+  }, [blocker]);
+
+  // Détection des changements : dirty si on a plus d'une entrée d'historique (initial + modifications)
+  useEffect(() => {
+    // Si l'historique a plus d'une entrée, il y a eu des modifications
+    setIsDirty(history.length > 1);
+  }, [history.length]);
 
   // Protection contre la fermeture de l'onglet/navigateur
   useEffect(() => {
@@ -90,10 +103,14 @@ export const BadgeDesignerPage: React.FC = () => {
   }, [isDirty]);
 
   // Save state to history
-  const saveToHistory = useCallback((newElements: BadgeElement[], newBackground: string | null) => {
+  const saveToHistory = useCallback((newElements: BadgeElement[], newBackground: string | null, newSymmetryPairs?: Map<string, string>) => {
+    // Use provided symmetryPairs or current state
+    const pairsToSave = newSymmetryPairs !== undefined ? newSymmetryPairs : symmetryPairs;
+    
     const newState: HistoryState = {
       elements: JSON.parse(JSON.stringify(newElements)),
-      background: newBackground
+      background: newBackground,
+      symmetryPairs: Array.from(pairsToSave.entries()) // Convert Map to array for serialization
     };
 
     setHistory(prev => {
@@ -102,7 +119,7 @@ export const BadgeDesignerPage: React.FC = () => {
       return newHistory.slice(-MAX_HISTORY);
     });
     setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY - 1));
-  }, [historyIndex]);
+  }, [historyIndex, symmetryPairs]);
 
   // Undo
   const undo = useCallback(() => {
@@ -111,6 +128,8 @@ export const BadgeDesignerPage: React.FC = () => {
       const state = history[newIndex];
       setElements(JSON.parse(JSON.stringify(state.elements)));
       setBackground(state.background);
+      // Restore symmetry pairs
+      setSymmetryPairs(new Map(state.symmetryPairs || []));
       setHistoryIndex(newIndex);
       // Keep selection - filter out IDs that no longer exist
       setSelectedElements(prev => prev.filter(id => state.elements.some(el => el.id === id)));
@@ -124,6 +143,8 @@ export const BadgeDesignerPage: React.FC = () => {
       const state = history[newIndex];
       setElements(JSON.parse(JSON.stringify(state.elements)));
       setBackground(state.background);
+      // Restore symmetry pairs
+      setSymmetryPairs(new Map(state.symmetryPairs || []));
       setHistoryIndex(newIndex);
       // Keep selection - filter out IDs that no longer exist
       setSelectedElements(prev => prev.filter(id => state.elements.some(el => el.id === id)));
@@ -198,8 +219,11 @@ export const BadgeDesignerPage: React.FC = () => {
     saveToHistory(newElements, background);
   }, [elements, background, saveToHistory]);
 
-  // Load template from API when editing
+  // Load template from API when editing (only once at mount)
   useEffect(() => {
+    // Skip if already loaded
+    if (hasLoadedTemplateRef.current) return;
+    
     if (loadedTemplate?.template_data) {
       try {
         const data = loadedTemplate.template_data;
@@ -228,27 +252,34 @@ export const BadgeDesignerPage: React.FC = () => {
         }
         setTemplateName(loadedTemplate.name);
         
-        // Initialize history with loaded state
+        // Initialize history with loaded state including symmetryPairs
+        const initialSymmetryPairs = data.symmetryPairs ? new Map(data.symmetryPairs) : new Map();
         const initialState: HistoryState = {
           elements: JSON.parse(JSON.stringify(elementsWithAspectRatio)),
-          background: data.background || null
+          background: data.background || null,
+          symmetryPairs: Array.from(initialSymmetryPairs.entries())
         };
         setHistory([initialState]);
         setHistoryIndex(0);
+        
+        // Mark as loaded to prevent re-loading after save
+        hasLoadedTemplateRef.current = true;
       } catch (e) {
         console.error('Failed to load template from API:', e);
         toast.error('Erreur', 'Impossible de charger le template');
       }
-    } else {
-      // Initialize history for new templates
+    } else if (templateId === 'new') {
+      // Initialize history for new templates (only once)
       const initialState: HistoryState = {
         elements: [],
-        background: null
+        background: null,
+        symmetryPairs: []
       };
       setHistory([initialState]);
       setHistoryIndex(0);
+      hasLoadedTemplateRef.current = true;
     }
-  }, [loadedTemplate]);
+  }, [loadedTemplate, templateId, toast]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -298,12 +329,8 @@ export const BadgeDesignerPage: React.FC = () => {
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
         if (selectedElements.length > 0) {
-          // Delete all selected elements at once
-          const idsToDelete = new Set(selectedElements);
-          const newElements = elements.filter(el => !idsToDelete.has(el.id));
-          setElements(newElements);
-          setSelectedElements([]);
-          saveToHistory(newElements, background);
+          // Use deleteElements to handle symmetry pairs
+          deleteElements(selectedElements);
         }
         return;
       }
@@ -358,6 +385,78 @@ export const BadgeDesignerPage: React.FC = () => {
         }
 
         // Batch update all selected elements
+        const badgeWidth = mmToPx(format.width);
+        const badgeHeight = mmToPx(format.height);
+        const centerX = badgeWidth / 2;
+        const centerY = badgeHeight / 2;
+        
+        // Calculate all symmetry updates first
+        const symmetryUpdates = new Map<string, Partial<BadgeElement>>();
+        
+        selectedElements.forEach(elementId => {
+          const element = elements.find(el => el.id === elementId);
+          if (!element) return;
+          
+          const updatedElement = {
+            ...element,
+            x: element.x + deltaX,
+            y: element.y + deltaY
+          };
+          
+          // Check if this element is a parent in a symmetry pair
+          const cloneId = symmetryPairs.get(elementId);
+          if (cloneId) {
+            const parentCenterX = updatedElement.x + updatedElement.width / 2;
+            const parentCenterY = updatedElement.y + updatedElement.height / 2;
+            
+            const cloneCenterX = 2 * centerX - parentCenterX;
+            const cloneCenterY = 2 * centerY - parentCenterY;
+            
+            const cloneX = cloneCenterX - updatedElement.width / 2;
+            const cloneY = cloneCenterY - updatedElement.height / 2;
+            
+            symmetryUpdates.set(cloneId, {
+              x: Math.round(cloneX),
+              y: Math.round(cloneY),
+              width: updatedElement.width,
+              height: updatedElement.height,
+              style: {
+                ...updatedElement.style,
+                rotation: (updatedElement.style.rotation || 0) + 180,
+                transform: getTransformWithRotation((updatedElement.style.rotation || 0) + 180, updatedElement.style.transform)
+              }
+            });
+          }
+          
+          // Check if this element is a clone in a symmetry pair
+          for (const [parentId, cloneIdInPair] of symmetryPairs.entries()) {
+            if (cloneIdInPair === elementId) {
+              const cloneCenterX = updatedElement.x + updatedElement.width / 2;
+              const cloneCenterY = updatedElement.y + updatedElement.height / 2;
+              
+              const parentCenterX = 2 * centerX - cloneCenterX;
+              const parentCenterY = 2 * centerY - cloneCenterY;
+              
+              const parentX = parentCenterX - updatedElement.width / 2;
+              const parentY = parentCenterY - updatedElement.height / 2;
+              
+              symmetryUpdates.set(parentId, {
+                x: Math.round(parentX),
+                y: Math.round(parentY),
+                width: updatedElement.width,
+                height: updatedElement.height,
+                style: {
+                  ...updatedElement.style,
+                  rotation: (updatedElement.style.rotation || 0) - 180,
+                  transform: getTransformWithRotation((updatedElement.style.rotation || 0) - 180, updatedElement.style.transform)
+                }
+              });
+              break;
+            }
+          }
+        });
+        
+        // Apply all updates in one synchronous setElements call
         const newElements = elements.map(element => {
           if (selectedElements.includes(element.id)) {
             return {
@@ -366,19 +465,14 @@ export const BadgeDesignerPage: React.FC = () => {
               y: element.y + deltaY
             };
           }
+          if (symmetryUpdates.has(element.id)) {
+            return { ...element, ...symmetryUpdates.get(element.id) };
+          }
           return element;
         });
 
         setElements(newElements);
         saveToHistory(newElements, background);
-
-        // Update symmetry pairs for all moved elements
-        selectedElements.forEach(elementId => {
-          const updatedElement = newElements.find(el => el.id === elementId);
-          if (updatedElement) {
-            updateSymmetryPair(updatedElement);
-          }
-        });
         
         return;
       }
@@ -524,16 +618,87 @@ export const BadgeDesignerPage: React.FC = () => {
       }
     }
     
-    const newElements = elements.map(el => 
-      el.id === id ? { ...el, ...mergedUpdates } : el
-    );
-    setElements(newElements);
+    // Calculate symmetry pair updates BEFORE setElements
+    const badgeWidth = mmToPx(format.width);
+    const badgeHeight = mmToPx(format.height);
+    const centerX = badgeWidth / 2;
+    const centerY = badgeHeight / 2;
     
-    // Update symmetry pair if needed
-    const updatedElement = newElements.find(el => el.id === id);
-    if (updatedElement) {
-      updateSymmetryPair(updatedElement);
+    const updatedElement = { ...element, ...mergedUpdates };
+    let symmetryUpdate: { id: string; updates: Partial<BadgeElement> } | null = null;
+    
+    // Check if this element is a parent in a symmetry pair
+    const cloneId = symmetryPairs.get(id);
+    if (cloneId) {
+      // Calculate symmetric position for clone
+      const parentCenterX = updatedElement.x + updatedElement.width / 2;
+      const parentCenterY = updatedElement.y + updatedElement.height / 2;
+      
+      const cloneCenterX = 2 * centerX - parentCenterX;
+      const cloneCenterY = 2 * centerY - parentCenterY;
+      
+      const cloneX = cloneCenterX - updatedElement.width / 2;
+      const cloneY = cloneCenterY - updatedElement.height / 2;
+      
+      symmetryUpdate = {
+        id: cloneId,
+        updates: {
+          x: Math.round(cloneX),
+          y: Math.round(cloneY),
+          width: updatedElement.width,
+          height: updatedElement.height,
+          style: {
+            ...updatedElement.style,
+            rotation: (updatedElement.style.rotation || 0) + 180,
+            transform: getTransformWithRotation((updatedElement.style.rotation || 0) + 180, updatedElement.style.transform)
+          }
+        }
+      };
     }
+    
+    // Check if this element is a clone in a symmetry pair
+    for (const [parentId, cloneIdInPair] of symmetryPairs.entries()) {
+      if (cloneIdInPair === id) {
+        // Calculate symmetric position for parent
+        const cloneCenterX = updatedElement.x + updatedElement.width / 2;
+        const cloneCenterY = updatedElement.y + updatedElement.height / 2;
+        
+        const parentCenterX = 2 * centerX - cloneCenterX;
+        const parentCenterY = 2 * centerY - cloneCenterY;
+        
+        const parentX = parentCenterX - updatedElement.width / 2;
+        const parentY = parentCenterY - updatedElement.height / 2;
+        
+        symmetryUpdate = {
+          id: parentId,
+          updates: {
+            x: Math.round(parentX),
+            y: Math.round(parentY),
+            width: updatedElement.width,
+            height: updatedElement.height,
+            style: {
+              ...updatedElement.style,
+              rotation: (updatedElement.style.rotation || 0) - 180,
+              transform: getTransformWithRotation((updatedElement.style.rotation || 0) - 180, updatedElement.style.transform)
+            }
+          }
+        };
+        break;
+      }
+    }
+    
+    // Update both parent and clone in a SINGLE synchronous setElements call
+    const newElements = elements.map(el => {
+      if (el.id === id) {
+        return { ...el, ...mergedUpdates };
+      }
+      if (symmetryUpdate && el.id === symmetryUpdate.id) {
+        return { ...el, ...symmetryUpdate.updates };
+      }
+      return el;
+    });
+    
+    setElements(newElements);
     
     if (!skipHistory) {
       saveToHistory(newElements, background);
@@ -544,6 +709,79 @@ export const BadgeDesignerPage: React.FC = () => {
 
   // Batch update elements
   const batchUpdateElements = (updates: Array<{ id: string; updates: Partial<BadgeElement> }>, skipHistory = false) => {
+    const badgeWidth = mmToPx(format.width);
+    const badgeHeight = mmToPx(format.height);
+    const centerX = badgeWidth / 2;
+    const centerY = badgeHeight / 2;
+    
+    // Calculate all symmetry updates first
+    const symmetryUpdates = new Map<string, Partial<BadgeElement>>();
+    
+    updates.forEach(({ id, updates: elementUpdates }) => {
+      const element = elements.find(el => el.id === id);
+      if (!element) return;
+      
+      const mergedUpdates = { ...elementUpdates };
+      if (elementUpdates.style) {
+        mergedUpdates.style = { ...element.style, ...elementUpdates.style };
+      }
+      
+      const updatedElement = { ...element, ...mergedUpdates };
+      
+      // Check if this element is a parent in a symmetry pair
+      const cloneId = symmetryPairs.get(id);
+      if (cloneId) {
+        const parentCenterX = updatedElement.x + updatedElement.width / 2;
+        const parentCenterY = updatedElement.y + updatedElement.height / 2;
+        
+        const cloneCenterX = 2 * centerX - parentCenterX;
+        const cloneCenterY = 2 * centerY - parentCenterY;
+        
+        const cloneX = cloneCenterX - updatedElement.width / 2;
+        const cloneY = cloneCenterY - updatedElement.height / 2;
+        
+        symmetryUpdates.set(cloneId, {
+          x: Math.round(cloneX),
+          y: Math.round(cloneY),
+          width: updatedElement.width,
+          height: updatedElement.height,
+          style: {
+            ...updatedElement.style,
+            rotation: (updatedElement.style.rotation || 0) + 180,
+            transform: getTransformWithRotation((updatedElement.style.rotation || 0) + 180, updatedElement.style.transform)
+          }
+        });
+      }
+      
+      // Check if this element is a clone in a symmetry pair
+      for (const [parentId, cloneIdInPair] of symmetryPairs.entries()) {
+        if (cloneIdInPair === id) {
+          const cloneCenterX = updatedElement.x + updatedElement.width / 2;
+          const cloneCenterY = updatedElement.y + updatedElement.height / 2;
+          
+          const parentCenterX = 2 * centerX - cloneCenterX;
+          const parentCenterY = 2 * centerY - cloneCenterY;
+          
+          const parentX = parentCenterX - updatedElement.width / 2;
+          const parentY = parentCenterY - updatedElement.height / 2;
+          
+          symmetryUpdates.set(parentId, {
+            x: Math.round(parentX),
+            y: Math.round(parentY),
+            width: updatedElement.width,
+            height: updatedElement.height,
+            style: {
+              ...updatedElement.style,
+              rotation: (updatedElement.style.rotation || 0) - 180,
+              transform: getTransformWithRotation((updatedElement.style.rotation || 0) - 180, updatedElement.style.transform)
+            }
+          });
+          break;
+        }
+      }
+    });
+    
+    // Apply all updates in one synchronous setElements call
     const newElements = elements.map(element => {
       const update = updates.find(u => u.id === element.id);
       if (update) {
@@ -554,18 +792,13 @@ export const BadgeDesignerPage: React.FC = () => {
         }
         return { ...element, ...mergedUpdates };
       }
+      if (symmetryUpdates.has(element.id)) {
+        return { ...element, ...symmetryUpdates.get(element.id) };
+      }
       return element;
     });
     
     setElements(newElements);
-    
-    // Update symmetry pairs for all updated elements
-    updates.forEach(({ id }) => {
-      const updatedElement = newElements.find(el => el.id === id);
-      if (updatedElement) {
-        updateSymmetryPair(updatedElement);
-      }
-    });
     
     if (!skipHistory) {
       saveToHistory(newElements, background);
@@ -574,19 +807,63 @@ export const BadgeDesignerPage: React.FC = () => {
 
   // Delete element
   const deleteElement = (id: string) => {
-    const newElements = elements.filter(el => el.id !== id);
+    const idsToDelete = new Set<string>([id]);
+    
+    // If element is part of a symmetry pair, delete both elements
+    const newSymmetryPairs = new Map(symmetryPairs);
+    
+    // Check if it's a parent - add clone to deletion
+    if (newSymmetryPairs.has(id)) {
+      const cloneId = newSymmetryPairs.get(id)!;
+      idsToDelete.add(cloneId);
+      newSymmetryPairs.delete(id);
+    }
+    
+    // Check if it's a clone - add parent to deletion
+    for (const [parentId, cloneId] of newSymmetryPairs.entries()) {
+      if (cloneId === id) {
+        idsToDelete.add(parentId);
+        newSymmetryPairs.delete(parentId);
+        break;
+      }
+    }
+    
+    const newElements = elements.filter(el => !idsToDelete.has(el.id));
     setElements(newElements);
-    setSelectedElements(prev => prev.filter(selectedId => selectedId !== id));
-    saveToHistory(newElements, background);
+    setSymmetryPairs(newSymmetryPairs);
+    setSelectedElements(prev => prev.filter(selectedId => !idsToDelete.has(selectedId)));
+    saveToHistory(newElements, background, newSymmetryPairs);
   };
 
   // Delete multiple elements at once
   const deleteElements = (ids: string[]) => {
-    const idsSet = new Set(ids);
-    const newElements = elements.filter(el => !idsSet.has(el.id));
+    const idsToDelete = new Set<string>(ids);
+    
+    // For each element to delete, if it's part of a symmetry pair, add the pair to deletion
+    const newSymmetryPairs = new Map(symmetryPairs);
+    
+    ids.forEach(id => {
+      // Check if it's a parent - add clone to deletion
+      if (newSymmetryPairs.has(id)) {
+        const cloneId = newSymmetryPairs.get(id)!;
+        idsToDelete.add(cloneId);
+        newSymmetryPairs.delete(id);
+      }
+      
+      // Check if it's a clone - add parent to deletion
+      for (const [parentId, cloneId] of newSymmetryPairs.entries()) {
+        if (cloneId === id) {
+          idsToDelete.add(parentId);
+          newSymmetryPairs.delete(parentId);
+        }
+      }
+    });
+    
+    const newElements = elements.filter(el => !idsToDelete.has(el.id));
     setElements(newElements);
+    setSymmetryPairs(newSymmetryPairs);
     setSelectedElements([]);
-    saveToHistory(newElements, background);
+    saveToHistory(newElements, background, newSymmetryPairs);
   };
 
 
@@ -641,7 +918,8 @@ export const BadgeDesignerPage: React.FC = () => {
     
     setElements(newElements);
     setSymmetryPairs(newSymmetryPairs);
-    saveToHistory(newElements, background);
+    // Save to history with new symmetry pairs
+    saveToHistory(newElements, background, newSymmetryPairs);
   };
 
   const breakSymmetry = () => {
@@ -663,80 +941,8 @@ export const BadgeDesignerPage: React.FC = () => {
     });
     
     setSymmetryPairs(newSymmetryPairs);
-  };
-
-  const updateSymmetryPair = (updatedElement: BadgeElement) => {
-    const badgeWidth = mmToPx(format.width);
-    const badgeHeight = mmToPx(format.height);
-    const centerX = badgeWidth / 2;
-    const centerY = badgeHeight / 2;
-    
-    // Check if this element is a parent in a symmetry pair
-    const cloneId = symmetryPairs.get(updatedElement.id);
-    if (cloneId) {
-      // Update the clone to maintain central symmetry
-      setElements(prev => prev.map(el => {
-        if (el.id === cloneId) {
-          // Calculate symmetric position
-          const parentCenterX = updatedElement.x + updatedElement.width / 2;
-          const parentCenterY = updatedElement.y + updatedElement.height / 2;
-          
-          const cloneCenterX = 2 * centerX - parentCenterX;
-          const cloneCenterY = 2 * centerY - parentCenterY;
-          
-          const cloneX = cloneCenterX - updatedElement.width / 2;
-          const cloneY = cloneCenterY - updatedElement.height / 2;
-          
-          return {
-            ...el,
-            x: Math.round(cloneX),
-            y: Math.round(cloneY),
-            width: updatedElement.width,
-            height: updatedElement.height,
-            style: {
-              ...updatedElement.style,
-              rotation: (updatedElement.style.rotation || 0) + 180,
-              transform: getTransformWithRotation((updatedElement.style.rotation || 0) + 180, updatedElement.style.transform)
-            }
-          };
-        }
-        return el;
-      }));
-    }
-    
-    // Check if this element is a clone in a symmetry pair
-    for (const [parentId, cloneIdInPair] of symmetryPairs.entries()) {
-      if (cloneIdInPair === updatedElement.id) {
-        // Update the parent to maintain central symmetry
-        setElements(prev => prev.map(el => {
-          if (el.id === parentId) {
-            // Calculate symmetric position
-            const cloneCenterX = updatedElement.x + updatedElement.width / 2;
-            const cloneCenterY = updatedElement.y + updatedElement.height / 2;
-            
-            const parentCenterX = 2 * centerX - cloneCenterX;
-            const parentCenterY = 2 * centerY - cloneCenterY;
-            
-            const parentX = parentCenterX - updatedElement.width / 2;
-            const parentY = parentCenterY - updatedElement.height / 2;
-            
-            return {
-              ...el,
-              x: Math.round(parentX),
-              y: Math.round(parentY),
-              width: updatedElement.width,
-              height: updatedElement.height,
-              style: {
-                ...updatedElement.style,
-                rotation: (updatedElement.style.rotation || 0) - 180,
-                transform: getTransformWithRotation((updatedElement.style.rotation || 0) - 180, updatedElement.style.transform)
-              }
-            };
-          }
-          return el;
-        }));
-      }
-    }
+    // Save to history when breaking symmetry
+    saveToHistory(elements, background, newSymmetryPairs);
   };
 
   // Zoom and view functions - Now handled by react-zoom-pan-pinch
@@ -932,11 +1138,27 @@ export const BadgeDesignerPage: React.FC = () => {
         await updateTemplate({ id: templateId, data: payload }).unwrap();
         toast.success('Succès', 'Template mis à jour avec succès');
         setIsDirty(false);
+        // Réinitialiser l'historique à l'état actuel après sauvegarde
+        const newInitialState: HistoryState = {
+          elements: JSON.parse(JSON.stringify(elements)),
+          background,
+          symmetryPairs: Array.from(symmetryPairs.entries())
+        };
+        setHistory([newInitialState]);
+        setHistoryIndex(0);
       } else {
         // Create new template
         const result = await createTemplate(payload).unwrap();
         toast.success('Succès', 'Template créé avec succès');
         setIsDirty(false);
+        // Réinitialiser l'historique à l'état actuel après sauvegarde
+        const newInitialState: HistoryState = {
+          elements: JSON.parse(JSON.stringify(elements)),
+          background,
+          symmetryPairs: Array.from(symmetryPairs.entries())
+        };
+        setHistory([newInitialState]);
+        setHistoryIndex(0);
         // Navigate to edit mode with the new template ID
         navigate(`/badges/designer/${result.id}`);
       }
@@ -979,6 +1201,9 @@ export const BadgeDesignerPage: React.FC = () => {
 
   // Modal handlers
   const handleStay = () => {
+    if (blocker.state === 'blocked') {
+      blocker.reset();
+    }
     setShowUnsavedChangesModal(false);
     setPendingNavigation(null);
   };
@@ -986,7 +1211,9 @@ export const BadgeDesignerPage: React.FC = () => {
   const handleLeave = () => {
     setIsDirty(false);
     setShowUnsavedChangesModal(false);
-    if (pendingNavigation) {
+    if (blocker.state === 'blocked') {
+      blocker.proceed();
+    } else if (pendingNavigation) {
       navigate(pendingNavigation);
     }
   };
@@ -994,7 +1221,9 @@ export const BadgeDesignerPage: React.FC = () => {
   const handleSaveAndLeave = async () => {
     await saveTemplate();
     setShowUnsavedChangesModal(false);
-    if (pendingNavigation) {
+    if (blocker.state === 'blocked') {
+      blocker.proceed();
+    } else if (pendingNavigation) {
       navigate(pendingNavigation);
     }
   };
@@ -1130,9 +1359,85 @@ export const BadgeDesignerPage: React.FC = () => {
     const deltaX = data.x - draggedElement.x;
     const deltaY = data.y - draggedElement.y;
 
+    // Check if element actually moved (avoid saving history on simple click)
+    const hasMoved = Math.abs(deltaX) > 0.1 || Math.abs(deltaY) > 0.1;
+    if (!hasMoved) return;
+
     // If multiple elements are selected, move them all together
     if (selectedElements.length > 1 && selectedElements.includes(id)) {
       // Batch update all selected elements
+      const badgeWidth = mmToPx(format.width);
+      const badgeHeight = mmToPx(format.height);
+      const centerX = badgeWidth / 2;
+      const centerY = badgeHeight / 2;
+      
+      // Calculate all symmetry updates first
+      const symmetryUpdates = new Map<string, Partial<BadgeElement>>();
+      
+      selectedElements.forEach(elementId => {
+        const element = elements.find(el => el.id === elementId);
+        if (!element) return;
+        
+        const updatedElement = {
+          ...element,
+          x: element.x + deltaX,
+          y: element.y + deltaY
+        };
+        
+        // Check if this element is a parent in a symmetry pair
+        const cloneId = symmetryPairs.get(elementId);
+        if (cloneId) {
+          const parentCenterX = updatedElement.x + updatedElement.width / 2;
+          const parentCenterY = updatedElement.y + updatedElement.height / 2;
+          
+          const cloneCenterX = 2 * centerX - parentCenterX;
+          const cloneCenterY = 2 * centerY - parentCenterY;
+          
+          const cloneX = cloneCenterX - updatedElement.width / 2;
+          const cloneY = cloneCenterY - updatedElement.height / 2;
+          
+          symmetryUpdates.set(cloneId, {
+            x: Math.round(cloneX),
+            y: Math.round(cloneY),
+            width: updatedElement.width,
+            height: updatedElement.height,
+            style: {
+              ...updatedElement.style,
+              rotation: (updatedElement.style.rotation || 0) + 180,
+              transform: getTransformWithRotation((updatedElement.style.rotation || 0) + 180, updatedElement.style.transform)
+            }
+          });
+        }
+        
+        // Check if this element is a clone in a symmetry pair
+        for (const [parentId, cloneIdInPair] of symmetryPairs.entries()) {
+          if (cloneIdInPair === elementId) {
+            const cloneCenterX = updatedElement.x + updatedElement.width / 2;
+            const cloneCenterY = updatedElement.y + updatedElement.height / 2;
+            
+            const parentCenterX = 2 * centerX - cloneCenterX;
+            const parentCenterY = 2 * centerY - cloneCenterY;
+            
+            const parentX = parentCenterX - updatedElement.width / 2;
+            const parentY = parentCenterY - updatedElement.height / 2;
+            
+            symmetryUpdates.set(parentId, {
+              x: Math.round(parentX),
+              y: Math.round(parentY),
+              width: updatedElement.width,
+              height: updatedElement.height,
+              style: {
+                ...updatedElement.style,
+                rotation: (updatedElement.style.rotation || 0) - 180,
+                transform: getTransformWithRotation((updatedElement.style.rotation || 0) - 180, updatedElement.style.transform)
+              }
+            });
+            break;
+          }
+        }
+      });
+      
+      // Apply all updates in one synchronous setElements call
       const newElements = elements.map(element => {
         if (selectedElements.includes(element.id)) {
           return {
@@ -1141,19 +1446,14 @@ export const BadgeDesignerPage: React.FC = () => {
             y: element.y + deltaY
           };
         }
+        if (symmetryUpdates.has(element.id)) {
+          return { ...element, ...symmetryUpdates.get(element.id) };
+        }
         return element;
       });
       
       setElements(newElements);
       saveToHistory(newElements, background);
-      
-      // Update symmetry pairs for all moved elements
-      selectedElements.forEach(elementId => {
-        const updatedElement = newElements.find(el => el.id === elementId);
-        if (updatedElement) {
-          updateSymmetryPair(updatedElement);
-        }
-      });
     } else {
       // Single element drag
       updateElement(id, { x: data.x, y: data.y });

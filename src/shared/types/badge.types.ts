@@ -122,6 +122,7 @@ export type UploadedImage = {
 export type HistoryState = {
   elements: BadgeElement[];
   background: string | null;
+  symmetryPairs: [string, string][]; // Array of [parentId, cloneId] pairs
 };
 
 export interface BadgeDesignDimensions {

@@ -369,31 +369,116 @@ const createSymmetry = () => {
 
 ### Mise à jour automatique
 
-Quand un élément parent bouge, son clone est mis à jour automatiquement :
+Quand un élément parent bouge, son clone est mis à jour **de manière synchrone** pour éviter les bugs avec l'historique :
 
 ```typescript
-const updateSymmetryPair = (updatedElement: BadgeElement) => {
-  const cloneId = symmetryPairs.get(updatedElement.id);
-  if (!cloneId) return;
+const updateElement = (id: string, updates: Partial<BadgeElement>, skipHistory = false) => {
+  // Vérifier si cet élément est dans une paire symétrique
+  const isParent = symmetryPairs.has(id);
+  const cloneId = isParent ? symmetryPairs.get(id) : null;
   
-  // Recalculer position symétrique
-  const parentCenterX = updatedElement.x + updatedElement.width / 2;
-  const parentCenterY = updatedElement.y + updatedElement.height / 2;
+  // Si c'est un parent, calculer les updates du clone de manière synchrone
+  const cloneUpdates = cloneId ? calculateSymmetricClone(id, updates) : null;
+  
+  // Appliquer toutes les mises à jour dans un seul setElements
+  const newElements = elements.map(el => {
+    if (el.id === id) {
+      return mergeElementUpdates(el, updates);
+    }
+    if (cloneId && el.id === cloneId && cloneUpdates) {
+      return mergeElementUpdates(el, cloneUpdates);
+    }
+    return el;
+  });
+  
+  setElements(newElements);
+  
+  if (!skipHistory) {
+    saveToHistory(newElements, background);
+  }
+};
+
+const calculateSymmetricClone = (parentId: string, updates: Partial<BadgeElement>) => {
+  const parent = elements.find(el => el.id === parentId);
+  if (!parent) return null;
+  
+  const centerX = badgeWidth / 2;
+  const centerY = badgeHeight / 2;
+  
+  // Appliquer les updates au parent
+  const updatedParent = { ...parent, ...updates };
+  
+  // Calculer position symétrique
+  const parentCenterX = updatedParent.x + updatedParent.width / 2;
+  const parentCenterY = updatedParent.y + updatedParent.height / 2;
   
   const cloneCenterX = 2 * centerX - parentCenterX;
   const cloneCenterY = 2 * centerY - parentCenterY;
   
-  // Mettre à jour le clone
-  updateElement(cloneId, {
-    x: cloneCenterX - updatedElement.width / 2,
-    y: cloneCenterY - updatedElement.height / 2,
+  return {
+    x: cloneCenterX - updatedParent.width / 2,
+    y: cloneCenterY - updatedParent.height / 2,
+    width: updatedParent.width,
+    height: updatedParent.height,
     style: {
-      rotation: (updatedElement.style.rotation || 0) + 180,
-      transform: getTransformWithRotation(rotation + 180, transform)
+      ...updatedParent.style,
+      rotation: (updatedParent.style.rotation || 0) + 180,
+      transform: getTransformWithRotation(
+        (updatedParent.style.rotation || 0) + 180,
+        updatedParent.style.transform
+      )
     }
-  });
+  };
 };
 ```
+
+**Important** : Tous les calculs sont faits **avant** `setElements` pour garantir la cohérence avec l'historique Undo/Redo.
+
+### Suppression en cascade
+
+Quand on supprime un élément d'une paire symétrique, **les deux éléments** sont supprimés :
+
+```typescript
+const deleteElement = (id: string) => {
+  const idsToDelete = new Set([id]);
+  
+  // Si c'est un parent, ajouter le clone
+  if (symmetryPairs.has(id)) {
+    idsToDelete.add(symmetryPairs.get(id)!);
+  }
+  
+  // Si c'est un clone, trouver et ajouter le parent
+  for (const [parentId, cloneId] of symmetryPairs.entries()) {
+    if (cloneId === id) {
+      idsToDelete.add(parentId);
+      break;
+    }
+  }
+  
+  // Supprimer les éléments et nettoyer symmetryPairs
+  const newElements = elements.filter(el => !idsToDelete.has(el.id));
+  const newSymmetryPairs = new Map(symmetryPairs);
+  idsToDelete.forEach(idToDelete => {
+    newSymmetryPairs.delete(idToDelete);
+    // Nettoyer si c'était un clone
+    for (const [parentId, cloneId] of newSymmetryPairs.entries()) {
+      if (cloneId === idToDelete) {
+        newSymmetryPairs.delete(parentId);
+      }
+    }
+  });
+  
+  setElements(newElements);
+  setSymmetryPairs(newSymmetryPairs);
+  setSelectedElements(prev => prev.filter(selectedId => !idsToDelete.has(selectedId)));
+  saveToHistory(newElements, background, newSymmetryPairs);
+};
+```
+
+**Avantages** :
+- ✅ Pas d'éléments orphelins
+- ✅ Comportement intuitif
+- ✅ symmetryPairs toujours cohérent
 
 ### Preview pendant le drag
 
@@ -495,32 +580,41 @@ export const pxToMm = (px: number): number => {
 interface HistoryState {
   elements: BadgeElement[];
   background: string | null;
-  timestamp: number;
+  symmetryPairs: [string, string][]; // Paires parent->clone sérialisées
 }
 
+const MAX_HISTORY = 99; // Capacité maximale de l'historique
 const [history, setHistory] = useState<HistoryState[]>([]);
 const [historyIndex, setHistoryIndex] = useState(-1);
 ```
 
 ### Sauvegarde
 
-Chaque action importante sauvegarde l'état :
+Chaque action importante sauvegarde l'état, incluant les paires de symétrie :
 
 ```typescript
-const saveToHistory = (elements: BadgeElement[], background: string | null) => {
-  const newState = { elements, background, timestamp: Date.now() };
+const saveToHistory = (
+  elements: BadgeElement[], 
+  background: string | null,
+  newSymmetryPairs?: Map<string, string>
+) => {
+  const pairsToSave = newSymmetryPairs !== undefined ? newSymmetryPairs : symmetryPairs;
   
-  // Supprimer les états "redo" si on fait une nouvelle action
-  const newHistory = history.slice(0, historyIndex + 1);
-  newHistory.push(newState);
+  const newState: HistoryState = {
+    elements: JSON.parse(JSON.stringify(elements)), // Deep clone
+    background,
+    symmetryPairs: Array.from(pairsToSave.entries()) // Map -> Array
+  };
   
-  // Limiter à 50 états
-  if (newHistory.length > 50) {
-    newHistory.shift();
-  }
+  setHistory(prev => {
+    // Supprimer les états "redo" si on fait une nouvelle action
+    const newHistory = prev.slice(0, historyIndex + 1);
+    newHistory.push(newState);
+    // Limiter à MAX_HISTORY états (99)
+    return newHistory.slice(-MAX_HISTORY);
+  });
   
-  setHistory(newHistory);
-  setHistoryIndex(newHistory.length - 1);
+  setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY - 1));
 };
 ```
 
@@ -529,35 +623,244 @@ const saveToHistory = (elements: BadgeElement[], background: string | null) => {
 ```typescript
 const undo = () => {
   if (historyIndex > 0) {
-    const prevState = history[historyIndex - 1];
-    setElements(prevState.elements);
-    setBackground(prevState.background);
-    setHistoryIndex(historyIndex - 1);
+    const newIndex = historyIndex - 1;
+    const state = history[newIndex];
+    
+    // Restaurer l'état complet
+    setElements(JSON.parse(JSON.stringify(state.elements)));
+    setBackground(state.background);
+    setSymmetryPairs(new Map(state.symmetryPairs || [])); // Array -> Map
+    setHistoryIndex(newIndex);
+    
+    // Filtrer la sélection (garder uniquement les IDs qui existent encore)
+    setSelectedElements(prev => 
+      prev.filter(id => state.elements.some(el => el.id === id))
+    );
   }
 };
 
 const redo = () => {
   if (historyIndex < history.length - 1) {
-    const nextState = history[historyIndex + 1];
-    setElements(nextState.elements);
-    setBackground(nextState.background);
-    setHistoryIndex(historyIndex + 1);
+    const newIndex = historyIndex + 1;
+    const state = history[newIndex];
+    
+    // Restaurer l'état complet
+    setElements(JSON.parse(JSON.stringify(state.elements)));
+    setBackground(state.background);
+    setSymmetryPairs(new Map(state.symmetryPairs || [])); // Array -> Map
+    setHistoryIndex(newIndex);
+    
+    // Filtrer la sélection
+    setSelectedElements(prev => 
+      prev.filter(id => state.elements.some(el => el.id === id))
+    );
   }
 };
 ```
 
-## Optimisations de performance
+### Optimisation : skipHistory pour les interactions continues
 
-### 1. Debounce sur les inputs texte
+Pour éviter de créer une entrée d'historique à chaque micro-changement (ex: slider, color picker), on utilise le flag `skipHistory` :
 
 ```typescript
+const updateElement = (
+  id: string, 
+  updates: Partial<BadgeElement>,
+  skipHistory = false
+) => {
+  // Appliquer les mises à jour
+  const newElements = elements.map(el => 
+    el.id === id ? { ...el, ...updates } : el
+  );
+  setElements(newElements);
+  
+  // Sauvegarder seulement si pas en mode skipHistory
+  if (!skipHistory) {
+    saveToHistory(newElements, background);
+  }
+};
+```
+
+**Usage** :
+- Pendant le drag d'un slider : `skipHistory=true` (update visuel seulement)
+- Sur `onMouseUp` du slider : `onSaveHistory()` (sauvegarde une seule entrée)
+- Pendant la saisie texte : `skipHistory=true` (update visuel)
+- Sur `onBlur` du textarea : `onSaveHistory()` (sauvegarde une seule entrée)
+
+Résultat : **Une seule entrée d'historique** par action complète, pas 50 micro-changements !
+
+## Protection contre la perte de données
+
+### useBlocker - Navigation interne
+
+Protection contre la navigation vers d'autres pages de l'application :
+
+```typescript
+import { useBlocker } from 'react-router-dom';
+
+// Détection des changements non sauvegardés
+const isDirty = history.length > 1; // Plus d'une entrée = modifications
+
+// Bloquer la navigation si des changements existent
+const blocker = useBlocker(
+  ({ currentLocation, nextLocation }) =>
+    isDirty && (
+      currentLocation.pathname !== nextLocation.pathname || 
+      currentLocation.search !== nextLocation.search
+    )
+);
+
+// Afficher le modal quand bloqué
+useEffect(() => {
+  if (blocker.state === 'blocked') {
+    setShowUnsavedChangesModal(true);
+  }
+}, [blocker]);
+
+// Actions du modal
+const handleStay = () => blocker.reset(); // Annuler la navigation
+const handleLeave = () => {
+  setIsDirty(false);
+  blocker.proceed(); // Continuer la navigation
+};
+const handleSaveAndLeave = async () => {
+  await saveTemplate();
+  blocker.proceed(); // Sauvegarder puis naviguer
+};
+```
+
+### beforeunload - Fermeture navigateur
+
+Protection contre la fermeture de l'onglet ou du navigateur :
+
+```typescript
+useEffect(() => {
+  const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    if (isDirty) {
+      e.preventDefault();
+      e.returnValue = ''; // Déclenche le message natif du navigateur
+    }
+  };
+  
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+}, [isDirty]);
+```
+
+### Détection des changements
+
+Au lieu de comparer des snapshots JSON (coûteux et complexe), on utilise la **longueur de l'historique** :
+
+```typescript
+// Détection simple et fiable
+useEffect(() => {
+  setIsDirty(history.length > 1); // 1 = état initial, >1 = modifications
+}, [history.length]);
+```
+
+**Avantages** :
+- ✅ Simple et fiable
+- ✅ Pas de comparaison JSON coûteuse
+- ✅ Cohérent avec le système d'historique
+- ✅ Se reset automatiquement après sauvegarde (historique -> 1 entrée)
+
+### Reset après sauvegarde
+
+Après une sauvegarde réussie, l'historique est réinitialisé pour considérer l'état actuel comme "propre" :
+
+```typescript
+const saveTemplate = async () => {
+  // ... sauvegarde API ...
+  
+  // Réinitialiser l'historique à l'état actuel
+  const newInitialState: HistoryState = {
+    elements: JSON.parse(JSON.stringify(elements)),
+    background,
+    symmetryPairs: Array.from(symmetryPairs.entries())
+  };
+  setHistory([newInitialState]);
+  setHistoryIndex(0);
+  setIsDirty(false); // Plus de changements non sauvegardés
+};
+```
+
+### Modal de confirmation
+
+Modal élégant avec 3 options (même style que EventSettingsTab) :
+
+```tsx
+{showUnsavedChangesModal && (
+  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-6">
+      <div className="flex items-start gap-4">
+        <div className="flex-shrink-0 h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30">
+          <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+            Modifications non enregistrées
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Vous avez des modifications en attente. Si vous quittez cette page sans enregistrer, 
+            elles seront perdues.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-end">
+            <Button variant="outline" onClick={handleStay}>Retour</Button>
+            <Button variant="ghost" onClick={handleLeave} className="text-red-600">
+              Quitter sans sauvegarder
+            </Button>
+            <Button onClick={handleSaveAndLeave}>Sauvegarder</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+```
+
+## Optimisations de performance
+
+### 1. skipHistory sur les interactions continues
+
+Au lieu de debouncing, on utilise `skipHistory` + événements de fin (onBlur, onMouseUp) :
+
+```typescript
+// ❌ ANCIEN : Debouncing avec setTimeout
 const debouncedUpdate = useCallback(
   debounce((id: string, content: string) => {
     onUpdateElement(id, { content });
   }, 300),
   []
 );
+
+// ✅ NOUVEAU : skipHistory + onBlur
+<textarea
+  value={content}
+  onChange={(e) => handleContentUpdate(e.target.value, true)} // skipHistory=true
+  onBlur={() => onSaveHistory?.()} // Sauvegarde au focus out
+/>
+
+// Color picker
+<input
+  type="color"
+  onChange={(e) => handleStyleUpdate('color', e.target.value, true)} // skipHistory=true
+  onBlur={() => onSaveHistory?.()} // Sauvegarde au blur
+/>
+
+// Slider
+<input
+  type="range"
+  onChange={(e) => handleStyleUpdate('fontSize', e.target.value, true)} // skipHistory=true
+  onMouseUp={() => onSaveHistory?.()} // Sauvegarde au mouseup
+/>
 ```
+
+**Avantages** :
+- ✅ Pas de délai perçu par l'utilisateur
+- ✅ Feedback visuel immédiat
+- ✅ Une seule entrée d'historique par action complète
+- ✅ Pattern cohérent pour tous les contrôles
 
 ### 2. Set pour les opérations bulk
 

@@ -166,9 +166,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
     }
   };
 
-  const handleContentUpdate = (content: string) => {
+  const handleContentUpdate = (content: string, skipHistory = false) => {
     if (selectedElement) {
-      onUpdateElement(selectedElement.id, { content });
+      onUpdateElement(selectedElement.id, { content }, skipHistory);
     }
   };
 
@@ -505,7 +505,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     <input
                       type="color"
                       defaultValue="#000000"
-                      onChange={(e) => handleBulkStyleUpdate('color', e.target.value)}
+                      onChange={(e) => handleBulkStyleUpdate('color', e.target.value, false, true)}
+                      onBlur={() => onSaveHistory?.()}
                       className="w-10 h-8 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
                     />
                     <input
@@ -514,7 +515,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                       onChange={(e) => {
                         const value = e.target.value;
                         if (/^#[0-9A-F]{6}$/i.test(value)) {
-                          handleBulkStyleUpdate('color', value);
+                          handleBulkStyleUpdate('color', value, true);
                         }
                       }}
                       className="flex-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 text-xs"
@@ -678,7 +679,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === '' || !isNaN(Number(value))) {
-                    onUpdateElement(selectedElement.id, { x: value === '' ? 0 : parseInt(value) });
+                    onUpdateElement(selectedElement.id, { x: value === '' ? 0 : parseInt(value) }, false, true);
                   }
                 }}
                 onKeyDown={(e) => {
@@ -701,7 +702,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === '' || !isNaN(Number(value))) {
-                    onUpdateElement(selectedElement.id, { y: value === '' ? 0 : parseInt(value) });
+                    onUpdateElement(selectedElement.id, { y: value === '' ? 0 : parseInt(value) }, false, true);
                   }
                 }}
                 onKeyDown={(e) => {
@@ -813,7 +814,8 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contenu</label>
           <textarea
             value={selectedElement.content}
-            onChange={(e) => handleContentUpdate(e.target.value)}
+            onChange={(e) => handleContentUpdate(e.target.value, true)}
+            onBlur={() => onSaveHistory?.()}
             className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded p-2 text-sm resize-none"
             rows={3}
             placeholder={selectedElement.type === 'qrcode' ? 'URL ou texte pour QR Code' : 'Texte à afficher'}
@@ -1038,13 +1040,14 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               <input
                 type="color"
                 value={selectedElement.style.color || '#000000'}
-                onChange={(e) => handleStyleUpdate('color', e.target.value)}
+                onChange={(e) => handleStyleUpdate('color', e.target.value, true)}
+                onBlur={() => onSaveHistory?.()}
                 className="w-12 h-8 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
               />
               <input
                 type="text"
                 value={selectedElement.style.color || '#000000'}
-                onChange={(e) => handleStyleUpdate('color', e.target.value)}
+                onChange={(e) => handleStyleUpdate('color', e.target.value, false, true)}
                 className="flex-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded px-2 text-sm"
               />
             </div>
@@ -1154,9 +1157,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 onChange={(e) => {
                   const value = e.target.value;
                   if (value === '' || value === '-') {
-                    handleStyleUpdate('rotation', value);
+                    handleStyleUpdate('rotation', value, false, true);
                   } else if (!isNaN(Number(value))) {
-                    handleStyleUpdate('rotation', parseInt(value));
+                    handleStyleUpdate('rotation', parseInt(value), false, true);
                   }
                 }}
                 onKeyDown={(e) => {

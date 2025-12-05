@@ -97,7 +97,7 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
       style={{
         ...style,
         ...(isSelected && {
-          outline: '2px solid rgb(59, 130, 246)',
+          outline: '4px solid rgb(59, 130, 246)',
           outlineOffset: '0px'
         })
       }}
@@ -438,6 +438,19 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     const isDraggingOther = draggingElementId !== null && draggingElementId !== element.id;
     const isPartOfDragGroup = isSelected && isDraggingOther && selectedElements.includes(draggingElementId || '');
     
+    // Check if this element is a symmetric pair of a selected element
+    const isSymmetricPairSelected = selectedElements.some(selectedId => {
+      // Check if selected element is parent and this is its clone
+      const cloneId = symmetryPairs.get(selectedId);
+      if (cloneId === element.id) return true;
+      
+      // Check if selected element is clone and this is its parent
+      const parentId = getParentId(selectedId);
+      if (parentId === element.id) return true;
+      
+      return false;
+    });
+    
     if (!elementRefs.current.has(element.id)) {
       elementRefs.current.set(element.id, React.createRef());
     }
@@ -450,9 +463,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     const effectiveDragOffset = (draggingElementId === element.id || isPartOfDragGroup) ? currentDragOffset : undefined;
 
     return (
-      <>
+      <React.Fragment key={element.id}>
         <DraggableElement
-          key={element.id}
           element={element}
           isSelected={isSelected}
           elementRef={elementRef}
@@ -464,10 +476,24 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
           {content}
         </DraggableElement>
         
+        {/* Symmetric pair highlight (purple ring when paired element is selected) */}
+        {isSymmetricPairSelected && !isSelected && (
+          <div
+            className="absolute pointer-events-none ring-4 ring-purple-500"
+            style={{
+              left: element.x,
+              top: element.y,
+              width: `${element.width}px`,
+              height: `${element.height}px`,
+              zIndex: 9
+            }}
+          />
+        )}
+        
         {/* Snap target outline */}
         {isSnapTarget && (
           <div
-            className="absolute pointer-events-none border-2 border-blue-500"
+            className="absolute pointer-events-none border-[3px] border-blue-500"
             style={{
               left: element.x,
               top: element.y,
@@ -488,7 +514,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
               const activeDragOffset = effectiveDragOffset;
               return (
                 <div
-                  key={handle}
+                  key={`${element.id}-${handle}`}
                   className={`absolute bg-blue-500 border border-white z-20`}
                   style={{
                     ...getHandlePosition(handle, element, handleOffset, activeDragOffset),
@@ -508,7 +534,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             })}
           </>
         )}
-      </>
+      </React.Fragment>
     );
   };
 
@@ -794,11 +820,9 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   }, [draggingElementId, dragStart, transformRef, symmetryPairs, onDragStop]);
 
   // Calculate symmetric clone position during drag
-  const getSymmetricClone = () => {
-    if (!activeDragElement) return null;
-    
+  const getSymmetricClone = (element: BadgeElement, offset: { x: number; y: number }) => {
     // Check if this element has a symmetric pair
-    const cloneId = symmetryPairs.get(activeDragElement.id);
+    const cloneId = symmetryPairs.get(element.id);
     if (!cloneId) return null;
     
     const badgeWidth = mmToPx(format.width);
@@ -807,36 +831,123 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     const centerY = badgeHeight / 2;
     
     // Calculate parent position with drag offset
-    // NO zoom adjustment - dragOffset is already in correct coordinate space
-    const parentX = activeDragElement.x + dragOffset.x;
-    const parentY = activeDragElement.y + dragOffset.y;
-    const parentCenterX = parentX + activeDragElement.width / 2;
-    const parentCenterY = parentY + activeDragElement.height / 2;
+    const parentX = element.x + offset.x;
+    const parentY = element.y + offset.y;
+    const parentCenterX = parentX + element.width / 2;
+    const parentCenterY = parentY + element.height / 2;
     
     // Calculate symmetric position
     const cloneCenterX = 2 * centerX - parentCenterX;
     const cloneCenterY = 2 * centerY - parentCenterY;
-    const cloneX = cloneCenterX - activeDragElement.width / 2;
-    const cloneY = cloneCenterY - activeDragElement.height / 2;
+    const cloneX = cloneCenterX - element.width / 2;
+    const cloneY = cloneCenterY - element.height / 2;
     
     // Calculate the transform with rotation + flip for 180°
-    const cloneRotation = (activeDragElement.style.rotation || 0) + 180;
-    const cloneTransform = getTransformWithRotation(cloneRotation, activeDragElement.style.transform);
+    const cloneRotation = (element.style.rotation || 0) + 180;
+    const cloneTransform = getTransformWithRotation(cloneRotation, element.style.transform);
     
     return {
-      ...activeDragElement,
+      ...element,
       id: cloneId,
       x: Math.round(cloneX),
       y: Math.round(cloneY),
       style: {
-        ...activeDragElement.style,
+        ...element.style,
         rotation: cloneRotation,
         transform: cloneTransform
       }
     };
   };
 
-  const symmetricClone = getSymmetricClone();
+  // Find parent element if this element is a clone
+  const getParentId = (elementId: string): string | null => {
+    for (const [parentId, cloneId] of symmetryPairs.entries()) {
+      if (cloneId === elementId) return parentId;
+    }
+    return null;
+  };
+
+  // Calculate symmetric parent position during drag (when dragging a clone)
+  const getSymmetricParent = (element: BadgeElement, offset: { x: number; y: number }) => {
+    // Check if this element is a clone (find its parent)
+    const parentId = getParentId(element.id);
+    if (!parentId) return null;
+    
+    const badgeWidth = mmToPx(format.width);
+    const badgeHeight = mmToPx(format.height);
+    const centerX = badgeWidth / 2;
+    const centerY = badgeHeight / 2;
+    
+    // Calculate clone position with drag offset
+    const cloneX = element.x + offset.x;
+    const cloneY = element.y + offset.y;
+    const cloneCenterX = cloneX + element.width / 2;
+    const cloneCenterY = cloneY + element.height / 2;
+    
+    // Calculate symmetric parent position (inverse operation)
+    const parentCenterX = 2 * centerX - cloneCenterX;
+    const parentCenterY = 2 * centerY - cloneCenterY;
+    const parentX = parentCenterX - element.width / 2;
+    const parentY = parentCenterY - element.height / 2;
+    
+    // Calculate the transform with rotation - 180° (reverse)
+    const parentRotation = (element.style.rotation || 0) - 180;
+    const parentTransform = getTransformWithRotation(parentRotation, element.style.transform);
+    
+    return {
+      ...element,
+      id: parentId,
+      x: Math.round(parentX),
+      y: Math.round(parentY),
+      style: {
+        ...element.style,
+        rotation: parentRotation,
+        transform: parentTransform
+      }
+    };
+  };
+
+  // Get all symmetric clones for currently dragged elements
+  const getSymmetricClones = () => {
+    if (!draggingElementId) return [];
+    
+    const clones: BadgeElement[] = [];
+    
+    // If dragging multiple selected elements
+    if (selectedElements.includes(draggingElementId)) {
+      selectedElements.forEach(selectedId => {
+        const element = elements.find(el => el.id === selectedId);
+        if (element) {
+          // Try to get clone (if this is a parent)
+          const clone = getSymmetricClone(element, currentDragOffset);
+          if (clone) {
+            clones.push(clone);
+          } else {
+            // Try to get parent (if this is a clone)
+            const parent = getSymmetricParent(element, currentDragOffset);
+            if (parent) clones.push(parent);
+          }
+        }
+      });
+    } else {
+      // Single element drag
+      if (activeDragElement) {
+        // Try to get clone (if this is a parent)
+        const clone = getSymmetricClone(activeDragElement, dragOffset);
+        if (clone) {
+          clones.push(clone);
+        } else {
+          // Try to get parent (if this is a clone)
+          const parent = getSymmetricParent(activeDragElement, dragOffset);
+          if (parent) clones.push(parent);
+        }
+      }
+    }
+    
+    return clones;
+  };
+
+  const symmetricClones = getSymmetricClones();
 
   return (
     <div className="flex-1 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-700">
@@ -909,28 +1020,55 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
           )}
 
           {/* Render elements */}
-          {elements.map(renderElement)}
+          {elements
+            .filter(element => {
+              // If we're dragging, hide the symmetric pair elements (they'll be rendered as symmetricClones)
+              if (draggingElementId) {
+                // Check if this element is a clone of the dragged element
+                const cloneId = symmetryPairs.get(draggingElementId);
+                if (element.id === cloneId) return false;
+                
+                // Check if this element is the parent of the dragged clone
+                const parentId = getParentId(draggingElementId);
+                if (element.id === parentId) return false;
+                
+                // Check if this element is a clone of any selected element being dragged
+                for (const selectedId of selectedElements) {
+                  if (selectedElements.includes(draggingElementId || '')) {
+                    const selectedCloneId = symmetryPairs.get(selectedId);
+                    if (element.id === selectedCloneId) return false;
+                    
+                    // Check if this element is the parent of any selected clone being dragged
+                    const selectedParentId = getParentId(selectedId);
+                    if (element.id === selectedParentId) return false;
+                  }
+                }
+              }
+              return true;
+            })
+            .map(renderElement)}
 
-          {/* Render symmetric clone during drag */}
-          {symmetricClone && (
+          {/* Render symmetric clones during drag */}
+          {symmetricClones.map(clone => (
             <div
-              className="absolute pointer-events-none ring-2 ring-purple-500 opacity-70"
+              key={`clone-${clone.id}`}
+              className="absolute pointer-events-none ring-4 ring-purple-500 opacity-70"
               style={{
-                left: symmetricClone.x,
-                top: symmetricClone.y,
-                width: `${symmetricClone.width}px`,
-                height: `${symmetricClone.height}px`,
+                left: clone.x,
+                top: clone.y,
+                width: `${clone.width}px`,
+                height: `${clone.height}px`,
                 zIndex: 1000
               }}
             >
-              {renderElementContent(symmetricClone)}
+              {renderElementContent(clone)}
             </div>
-          )}
+          ))}
 
           {/* Selection rectangle */}
           {isSelecting && selectionStart && selectionEnd && (
             <div
-              className="absolute border-2 border-blue-500 bg-blue-100 bg-opacity-20 pointer-events-none"
+              className="absolute border-[3px] border-blue-500 bg-blue-100 bg-opacity-20 pointer-events-none"
               style={{
                 left: `${Math.min(selectionStart.x, selectionEnd.x)}px`,
                 top: `${Math.min(selectionStart.y, selectionEnd.y)}px`,

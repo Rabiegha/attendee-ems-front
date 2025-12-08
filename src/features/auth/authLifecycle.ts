@@ -82,18 +82,29 @@ export async function bootstrapAuth() {
 
   // Créer une nouvelle promesse de bootstrap
   bootstrapPromise = (async () => {
+    // Timeout de sécurité : forcer la fin du bootstrap après 10 secondes
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        console.warn('[AUTH] Bootstrap timeout - forcing completion')
+        resolve(null)
+      }, 10000)
+    })
+
     // Toujours tenter le refresh - le cookie HttpOnly n'est pas accessible via document.cookie
     // Le backend répondra 401 si le cookie n'existe pas ou est invalide
     try {
       // console.log('[AUTH] Attempting to restore session from refresh token...')
       // Force le refresh sans utiliser le cache - ajout de forceRefetch pour éviter le cache RTK
-      const res: any = await store
+      const refreshPromise = store
         .dispatch(
           authApi.endpoints.refresh.initiate(undefined, { 
             track: false,
           } as any)
         )
         .unwrap()
+
+      // Utiliser Promise.race pour timeout
+      const res: any = await Promise.race([refreshPromise, timeoutPromise])
 
       if (res?.access_token) {
         // console.log('[AUTH] Session restored successfully')

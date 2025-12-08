@@ -309,7 +309,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
         onImportSuccess(result)
       }
 
-      const { created, updated, restored, skipped, errors } = result.summary
+      const { created, updated, skipped, errors } = result.summary
+      const restored = (result.summary as any).restored || 0
       
       const conflictsIgnored = capacityRowsNotSelected.length + 
         allData.filter((row) => !row._selected).length
@@ -317,12 +318,12 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       if (errors && errors.length > 0) {
         toast.warning(
           'Import terminé avec des avertissements',
-          `${created} créées, ${updated} màj, ${restored || 0} restaurées, ${skipped} ignorées${conflictsIgnored > 0 ? `, ${conflictsIgnored} conflits non résolus` : ''}`
+          `${created} créées, ${updated} màj, ${restored} restaurées, ${skipped} ignorées${conflictsIgnored > 0 ? `, ${conflictsIgnored} conflits non résolus` : ''}`
         )
       } else {
         toast.success(
           'Import réussi !',
-          `${created} créées, ${updated} màj, ${restored || 0} restaurées${conflictsIgnored > 0 ? `, ${conflictsIgnored} conflits ignorés` : ''}`
+          `${created} créées, ${updated} màj, ${restored} restaurées${conflictsIgnored > 0 ? `, ${conflictsIgnored} conflits ignorés` : ''}`
         )
       }
     } catch (error: any) {
@@ -378,6 +379,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const toggleRowSelection = (rowIndex: number, shiftKey: boolean = false) => {
     const newData = [...allData]
     
+    if (!newData[rowIndex]) return
+    
     // Si Shift est pressé et qu'il y a un dernier index cliqué, sélectionner la plage
     if (shiftKey && lastClickedIndex !== null) {
       const start = Math.min(lastClickedIndex, rowIndex)
@@ -386,9 +389,11 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       
       // Sélectionner/désélectionner toute la plage
       for (let i = start; i <= end; i++) {
-        newData[i] = {
-          ...newData[i],
-          _selected: newSelectionState,
+        if (newData[i]) {
+          newData[i] = {
+            ...newData[i],
+            _selected: newSelectionState,
+          }
         }
       }
     } else {
@@ -743,7 +748,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                             <input
                               type="checkbox"
                               checked={row._selected === true}
-                              onChange={(e) => toggleRowSelection(rowIndex, e.nativeEvent.shiftKey)}
+                              onChange={(e) => toggleRowSelection(rowIndex, (e.nativeEvent as MouseEvent).shiftKey)}
                               className="h-4 w-4 text-blue-600 dark:text-blue-400 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
                               title={
                                 conflictType === 'duplicate' 
@@ -867,7 +872,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 Import terminé !
               </h3>
               
-              <div className={`grid gap-4 mb-6 ${importResult.summary.restored > 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+              <div className={`grid gap-4 mb-6 ${(importResult.summary as any).restored > 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
                 <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center border border-green-100 dark:border-green-800">
                   <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {importResult.summary.created}
@@ -884,10 +889,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                     Mis à jour
                   </div>
                 </div>
-                {importResult.summary.restored > 0 && (
+                {(importResult.summary as any).restored > 0 && (
                   <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg text-center border border-purple-100 dark:border-purple-800">
                     <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      {importResult.summary.restored}
+                      {(importResult.summary as any).restored}
                     </div>
                     <div className="text-sm font-medium text-purple-800 dark:text-purple-300">
                       Restaurés

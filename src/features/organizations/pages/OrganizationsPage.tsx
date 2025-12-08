@@ -327,14 +327,12 @@ export const OrganizationsPage: React.FC = () => {
             : 'Informations sur votre organisation et votre équipe'
         }
         icon={Building2}
-        badge={
-          isSuperAdmin
-            ? {
-                text: 'Super Admin',
-                variant: 'purple',
-              }
-            : undefined
-        }
+        {...(isSuperAdmin && {
+          badge: {
+            text: 'Super Admin',
+            variant: 'purple' as const,
+          },
+        })}
         actions={
           isSuperAdmin ? (
             <Can do="manage" on="Organization">

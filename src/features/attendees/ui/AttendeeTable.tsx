@@ -367,10 +367,8 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         }}
         emptyMessage="Aucun participant trouvé"
         // Server-side pagination
-        manualPagination={true}
+        enablePagination={true}
         pageSize={pageSize || 50}
-        currentPage={currentPage || 1}
-        pageCount={totalPages || 1}
         totalItems={totalItems || 0}
         onPageChange={onPageChange || (() => {})}
         onPageSizeChange={onPageSizeChange || (() => {})}

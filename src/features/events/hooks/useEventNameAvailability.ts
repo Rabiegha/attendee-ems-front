@@ -16,7 +16,7 @@ export function useEventNameAvailability(
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   const [checkName] = useLazyCheckEventNameAvailabilityQuery()
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
 
   useEffect(() => {
     // Reset si le nom est vide ou trop court

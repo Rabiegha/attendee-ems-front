@@ -62,6 +62,7 @@ export interface CreateEventDPO {
   startDate: string // ISO string from form
   endDate: string // ISO string from form
   location?: string // Optionnel
+  locationType?: 'physical' | 'online' | 'hybrid'
   maxAttendees?: number // Optionnel (sans limite par défaut)
   status?: EventStatus // Optionnel (sera 'published' par défaut)
   tags?: string[]

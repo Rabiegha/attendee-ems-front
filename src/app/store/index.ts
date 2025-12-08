@@ -51,7 +51,7 @@ export const store = configureStore({
     })
       .concat(rootApi.middleware),
       // .concat(apiDelayMiddleware), // Désactivé - middleware de délai en dev
-  devTools: process.env.NODE_ENV !== 'production',
+  devTools: import.meta.env.MODE !== 'production',
 })
 
 // Enable listener behavior for the store

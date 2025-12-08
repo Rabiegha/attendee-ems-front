@@ -76,65 +76,44 @@ function scheduleProactiveRefresh() {
 export async function bootstrapAuth() {
   // Si un bootstrap est déjà en cours, retourner la même promesse
   if (bootstrapPromise) {
-    // console.log('[AUTH] Bootstrap already in progress, waiting...')
     return bootstrapPromise
   }
 
+  // TOUJOURS marquer le bootstrap comme terminé IMMÉDIATEMENT
+  // Cela évite le chargement infini si quelque chose plante
+  try {
+    const { setBootstrapCompleted } = await import('@/features/auth/model/sessionSlice')
+    store.dispatch(setBootstrapCompleted())
+  } catch (e) {
+    console.error('[BOOTSTRAP] Failed to set bootstrap completed:', e)
+  }
+  
   // Créer une nouvelle promesse de bootstrap
   bootstrapPromise = (async () => {
-    // Timeout de sécurité : forcer la fin du bootstrap après 10 secondes
-    const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => {
-        console.warn('[AUTH] Bootstrap timeout - forcing completion')
-        resolve(null)
-      }, 10000)
-    })
-
     // Toujours tenter le refresh - le cookie HttpOnly n'est pas accessible via document.cookie
     // Le backend répondra 401 si le cookie n'existe pas ou est invalide
     try {
-      // console.log('[AUTH] Attempting to restore session from refresh token...')
-      // Force le refresh sans utiliser le cache - ajout de forceRefetch pour éviter le cache RTK
-      const refreshPromise = store
-        .dispatch(
-          authApi.endpoints.refresh.initiate(undefined, { 
-            track: false,
-          } as any)
+      const res: any = await Promise.race([
+        store.dispatch(
+          authApi.endpoints.refresh.initiate(undefined, { track: false } as any)
+        ).unwrap(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Bootstrap timeout')), 3000)
         )
-        .unwrap()
-
-      // Utiliser Promise.race pour timeout
-      const res: any = await Promise.race([refreshPromise, timeoutPromise])
-
+      ])
+      
       if (res?.access_token) {
-        // console.log('[AUTH] Session restored successfully')
         store.dispatch(
           setSession({ token: res.access_token, expiresInSec: res.expires_in })
         )
         broadcastToken(res.access_token, res.expires_in)
         scheduleProactiveRefresh()
       } else {
-        // Pas de token reçu, s'assurer que la session est vide
-        // console.log('[AUTH] No access token received, clearing session')
         store.dispatch(clearSession())
       }
     } catch (error: any) {
-      // 401 au bootstrap = comportement normal (pas de refresh token ou expiré)
-      // On ne log que si ce n'est pas un 401
-      if (error?.status !== 401) {
-        console.warn('[AUTH] Bootstrap refresh failed:', error?.status || error?.message)
-      }
-      // CRITIQUE : Nettoyer la session en cas d'échec du refresh
-      // Cela garantit que l'utilisateur ne reste pas dans un état "fantôme"
+      // Pas de refresh token = redirection vers login (comportement normal)
       store.dispatch(clearSession())
-    }
-    // Mark bootstrap as completed in every case so UI won't get stuck
-    // (previously missing — when no token is present we never left bootstrapping state)
-    try {
-      const { setBootstrapCompleted } = await import('@/features/auth/model/sessionSlice')
-      store.dispatch(setBootstrapCompleted())
-    } catch (e) {
-      // best-effort, ignore failures
     }
   })()
 

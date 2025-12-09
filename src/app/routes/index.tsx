@@ -29,6 +29,7 @@ import PublicRegistration from '@/pages/PublicRegistration'
 import { PrivacyPolicyPage } from '@/pages/PrivacyPolicy'
 import { BadgeDesigner } from '@/pages/BadgeDesigner'
 import { BadgeDesignerPage } from '@/pages/BadgeDesigner/BadgeDesignerPage'
+import { SentryTestPage } from '@/pages/SentryTest'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -156,6 +157,10 @@ export const router = createBrowserRouter([
             ),
           },
         ],
+      },
+      {
+        path: 'sentry-test',
+        element: <SentryTestPage />,
       },
     ],
   },

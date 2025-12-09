@@ -16,6 +16,9 @@ if (import.meta.env.VITE_SENTRY_DSN) {
         maskAllText: true,
         blockAllMedia: true,
       }),
+      Sentry.consoleLoggingIntegration({
+        levels: ['log', 'info', 'warn', 'error'],
+      }),
     ],
     // Performance Monitoring
     tracesSampleRate: 0.1, // 10% of transactions for performance
@@ -25,7 +28,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     replaysSessionSampleRate: 0.1, // 10% of normal sessions
     replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors
     
-    // Logs
+    // Enable Logs
     enableLogs: true,
     
     // Filter out non-critical errors

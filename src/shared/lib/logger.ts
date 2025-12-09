@@ -12,7 +12,7 @@ class Logger {
     if (import.meta.env.PROD) {
       Sentry.captureMessage(message, {
         level: 'info',
-        extra: data,
+        ...(data && { extra: data }),
       });
     } else {
       console.log(message, data || '');
@@ -26,7 +26,7 @@ class Logger {
     if (import.meta.env.PROD) {
       Sentry.captureMessage(message, {
         level: 'warning',
-        extra: data,
+        ...(data && { extra: data }),
       });
     } else {
       console.warn(message, data || '');

@@ -3,7 +3,15 @@ import { logger } from '@/shared/lib/logger';
 
 export function SentryTestPage() {
   const testInfo = () => {
-    logger.info('Test info log from Sentry test page', { 
+    // Test avec Sentry.logger.info (pour Logs feature)
+    Sentry.logger.info('Test info log from Sentry test page', { 
+      timestamp: new Date().toISOString(),
+      action: 'test_info_button',
+      log_source: 'sentry_test'
+    });
+    
+    // Test avec logger wrapper (pour compatibility)
+    logger.info('Test info via wrapper', { 
       timestamp: new Date().toISOString(),
       action: 'test_info_button' 
     });
@@ -45,7 +53,7 @@ export function SentryTestPage() {
               onClick={testInfo}
               className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
             >
-              📘 Test Info Log
+              📘 Test Info Log !!
             </button>
 
             <button

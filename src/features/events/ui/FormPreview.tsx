@@ -10,23 +10,25 @@ import { useCreatePublicRegistrationMutation } from '../api/publicEventsApi'
 interface FormPreviewProps {
   event: EventDPO
   fields: FormField[]
-  testMode?: boolean // Si true, le formulaire est fonctionnel
+  functional?: boolean // Si true, le formulaire est fonctionnel (soumission réelle)
   submitButtonText?: string
   submitButtonColor?: string
   showTitle?: boolean
   showDescription?: boolean
   isDarkMode?: boolean
+  onSuccess?: () => void // Callback après inscription réussie
 }
 
 export const FormPreview: React.FC<FormPreviewProps> = ({
   event,
   fields,
-  testMode = false,
+  functional = false,
   submitButtonText = "S'inscrire",
   submitButtonColor = '#4F46E5',
   showTitle = true,
   showDescription = true,
   isDarkMode = false,
+  onSuccess,
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -41,7 +43,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!testMode) return
+    if (!functional) return
 
     setIsSubmitting(true)
 
@@ -105,9 +107,9 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
         requestData.answers = answers
       }
 
-      // Add source tracking (test_form when in test mode, public_form otherwise)
-      if (testMode) {
-        requestData.source = 'test_form'
+      // Add source tracking (public_form when functional, or just preview)
+      if (functional) {
+        requestData.source = 'public_form'
       }
 
       // Utiliser le public_token de l'événement pour la route publique
@@ -127,6 +129,11 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
         'Inscription réussie !',
         'Votre inscription a été enregistrée'
       )
+      
+      // Appeler le callback de succès si fourni
+      if (onSuccess) {
+        onSuccess()
+      }
     } catch (error: any) {
       console.error("Erreur lors de l'inscription:", error)
 
@@ -161,7 +168,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors duration-200'
 
     const value = formData[field.id] || ''
-    const disabled = !testMode || isSubmitted
+    const disabled = !functional || isSubmitted
 
     switch (field.type) {
       case 'textarea':
@@ -308,7 +315,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
               Inscription confirmée !
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Votre inscription a été enregistrée avec succès (mode test)
+              Votre inscription a été enregistrée avec succès
             </p>
             <Button variant="outline" onClick={resetForm} type="button">
               Nouvelle inscription
@@ -320,11 +327,6 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Inscription à l'événement
               </h3>
-              {testMode && (
-                <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
-                  Mode Test
-                </span>
-              )}
             </div>
 
             {fields.length === 0 ? (
@@ -362,7 +364,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
               <button
                 type="submit"
                 disabled={
-                  !testMode ||
+                  !functional ||
                   isSubmitting ||
                   event.status === 'cancelled' ||
                   event.status === 'registration_closed' ||
@@ -382,20 +384,6 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
                         : submitButtonText}
               </button>
             </div>
-
-            {testMode && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                * Ce formulaire est en mode test - Les inscriptions ne
-                seront pas réellement enregistrées
-              </p>
-            )}
-
-            {!testMode && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                * Champs obligatoires - Activez le mode test pour essayer le
-                formulaire
-              </p>
-            )}
           </>
         )}
       </form>

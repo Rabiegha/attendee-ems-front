@@ -24,15 +24,18 @@ import {
   Users,
   FileText,
   Upload,
+  UserPlus,
   ArrowLeft,
   Settings,
   FormInput,
   Zap,
+  XCircle,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
+import { AddParticipantForm } from '@/features/registrations/ui/AddParticipantForm'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
 import {
   FormBuilder,
@@ -54,6 +57,7 @@ export const EventDetails: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl || 'details')
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false)
 
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
@@ -301,9 +305,6 @@ export const EventDetails: React.FC = () => {
       ...finalConfig,
     })
   }
-
-  // Mode test pour le formulaire (permet de tester les inscriptions)
-  const [isFormTestMode, setIsFormTestMode] = useState(false)
 
   const {
     data: registrationsResponse,
@@ -830,6 +831,14 @@ export const EventDetails: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-end space-x-3">
               <Button
+                onClick={() => setIsAddParticipantModalOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                <span>Ajouter un participant</span>
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => setIsImportModalOpen(true)}
                 className="flex items-center space-x-2"
               >
@@ -902,23 +911,12 @@ export const EventDetails: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Aperçu en temps réel
                 </h3>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isFormTestMode}
-                    onChange={(e) => setIsFormTestMode(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Mode Test
-                  </span>
-                </label>
               </div>
               <div className="sticky top-6">
                 <FormPreview
                   event={event}
                   fields={formFields}
-                  testMode={isFormTestMode}
+                  functional={true}
                   submitButtonText={submitButtonText}
                   submitButtonColor={submitButtonColor}
                   showTitle={showTitle}
@@ -957,6 +955,38 @@ export const EventDetails: React.FC = () => {
         currentEndDate={event.endDate}
         onStatusChange={handleStatusChange}
       />
+
+      {/* Modal Ajouter un participant */}
+      {isAddParticipantModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Ajouter un participant
+              </h2>
+              <button
+                onClick={() => setIsAddParticipantModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6">
+              <AddParticipantForm
+                fields={formFields}
+                eventId={event.id}
+                publicToken={event.publicToken}
+                submitButtonText="Ajouter"
+                submitButtonColor={submitButtonColor}
+                onSuccess={() => {
+                  setIsAddParticipantModalOpen(false)
+                  refetchRegistrations()
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </PageContainer>
   )

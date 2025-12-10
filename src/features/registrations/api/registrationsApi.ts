@@ -173,6 +173,11 @@ export const registrationsApi = rootApi.injectEndpoints({
           event_attendee_type_id?: string
           answers?: Record<string, any>
           source?: 'public_form' | 'test_form' | 'manual' | 'import'
+          // Admin fields for manual registration
+          admin_status?: 'awaiting' | 'approved' | 'refused' | 'cancelled'
+          admin_is_checked_in?: boolean
+          admin_checked_in_at?: string
+          admin_registered_at?: string
         }
       }
     >({

@@ -173,7 +173,13 @@ export const LoginPage: React.FC = () => {
 
       // Messages d'erreur personnalisés basés sur le statut
       if (status === 401) {
-        setLastError(t('login.invalid_credentials'))
+        console.log('[LOGIN] 401 Error details:', err);
+        const errorMessage = err?.data?.detail || err?.data?.message;
+        if (errorMessage === 'Account deactivated' || errorMessage === 'User not found or inactive') {
+          setLastError(t('login.account_deactivated'))
+        } else {
+          setLastError(t('login.invalid_credentials'))
+        }
       } else if (status === 429) {
         setLastError(t('login.too_many_attempts'))
       } else if (status >= 500) {

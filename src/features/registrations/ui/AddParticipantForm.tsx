@@ -90,13 +90,6 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
         admin_registered_at: new Date(registeredAt).toISOString(),
       }
 
-      console.log('🔍 Dates envoyées au backend:', {
-        registeredAt_input: registeredAt,
-        registeredAt_ISO: requestData.admin_registered_at,
-        checkedInAt_input: isCheckedIn ? checkedInAt : 'N/A',
-        checkedInAt_ISO: requestData.admin_checked_in_at,
-      })
-
       if (registrationData.attendee_type) {
         requestData.event_attendee_type_id = registrationData.attendee_type
       }

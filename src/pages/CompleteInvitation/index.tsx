@@ -362,19 +362,30 @@ export const CompleteInvitationPage: React.FC = () => {
 
               {/* Indicateur de force du mot de passe */}
               {formData.password && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${passwordStrength.color}`}
-                        style={{
-                          width: `${(passwordStrength.strength / 5) * 100}%`,
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      Force du mot de passe
+                    </span>
+                    <span className={`text-xs font-semibold ${
+                      passwordStrength.strength <= 2 ? 'text-red-600 dark:text-red-400' :
+                      passwordStrength.strength <= 4 ? 'text-yellow-600 dark:text-yellow-400' :
+                      'text-green-600 dark:text-green-400'
+                    }`}>
                       {passwordStrength.label}
                     </span>
+                  </div>
+                  <div className="flex gap-1.5">
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        className={`h-2 flex-1 rounded-full transition-all duration-300 ${
+                          i < passwordStrength.strength
+                            ? passwordStrength.color
+                            : 'bg-gray-200 dark:bg-gray-700'
+                        }`}
+                      />
+                    ))}
                   </div>
                 </div>
               )}

@@ -165,7 +165,7 @@ export function UsersPage() {
   }
 
   const handleInviteUser = () => {
-    navigate('/users/invite')
+    navigate('/invitations')
   }
 
   const handleTabChange = (tabId: string) => {

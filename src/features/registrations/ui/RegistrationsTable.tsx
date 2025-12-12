@@ -541,10 +541,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       {
         id: 'date',
         header: "Date d'inscription",
-        accessorKey: 'createdAt',
+        accessorKey: 'invitedAt',
         cell: ({ row }) => (
           <div className="cursor-pointer text-sm text-gray-500 dark:text-gray-400" onClick={() => handleRowClick(row.original)}>
-            {formatDateTime(row.original.createdAt)}
+            {formatDateTime(row.original.invitedAt || row.original.createdAt)}
           </div>
         ),
       },

@@ -79,7 +79,7 @@
 
   body {
     @apply bg-background text-foreground;
-    overflow-y: scroll; /* Force la scrollbar pour éviter les sauts */
+    overflow-y: auto; /* Scrollbar uniquement si nécessaire */
   }
 
   #root {

@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { User, Lock, Mail, CheckCircle, AlertCircle } from 'lucide-react'
+import {
+  User,
+  Lock,
+  Mail,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  EyeOff,
+} from 'lucide-react'
 import { FormField } from '@/shared/ui/FormField'
 import { Button } from '@/shared/ui/Button'
 import { Card } from '@/shared/ui/Card'
@@ -37,6 +45,9 @@ export const CompleteInvitationPage: React.FC = () => {
     password: '',
     confirmPassword: '',
   })
+
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const [errors, setErrors] = useState<Partial<CompleteInvitationFormData>>({})
 
@@ -349,15 +360,26 @@ export const CompleteInvitationPage: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 z-10" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) =>
                     handleInputChange('password', e.target.value)
                   }
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Créez un mot de passe sécurisé"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
 
               {/* Indicateur de force du mot de passe */}
@@ -399,15 +421,26 @@ export const CompleteInvitationPage: React.FC = () => {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 z-10" />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={(e) =>
                     handleInputChange('confirmPassword', e.target.value)
                   }
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Confirmez votre mot de passe"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </FormField>
 
@@ -431,10 +464,15 @@ export const CompleteInvitationPage: React.FC = () => {
 
             <div className="pt-4 text-center">
               <p className="text-sm text-gray-500 flex items-center justify-center">
-                <AlertCircle className="w-4 h-4" />
-                <span className="ml-2">
-                  En créant votre compte, vous acceptez nos conditions
-                  d'utilisation
+                <AlertCircle className="w-4 h-4 mr-2" />
+                <span>
+                  En créant votre compte, vous acceptez nos{' '}
+                  <a
+                    href="#"
+                    className="text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    conditions d'utilisation
+                  </a>
                 </span>
               </p>
             </div>

@@ -13,7 +13,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { PageContainer } from '@/shared/ui/PageContainer'
-import { LoadingSpinner, EventDetailsSkeleton } from '@/shared/ui'
+import { LoadingSpinner, EventDetailsSkeleton, Modal } from '@/shared/ui'
 import { Tabs, type TabItem } from '@/shared/ui'
 import {
   Edit,
@@ -957,36 +957,24 @@ export const EventDetails: React.FC = () => {
       />
 
       {/* Modal Ajouter un participant */}
-      {isAddParticipantModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Ajouter un participant
-              </h2>
-              <button
-                onClick={() => setIsAddParticipantModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <XCircle className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="p-6">
-              <AddParticipantForm
-                fields={formFields}
-                eventId={event.id}
-                publicToken={event.publicToken}
-                submitButtonText="Ajouter"
-                submitButtonColor={submitButtonColor}
-                onSuccess={() => {
-                  setIsAddParticipantModalOpen(false)
-                  refetchRegistrations()
-                }}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={isAddParticipantModalOpen}
+        onClose={() => setIsAddParticipantModalOpen(false)}
+        title="Ajouter un participant"
+        maxWidth="4xl"
+      >
+        <AddParticipantForm
+          fields={formFields}
+          eventId={event.id}
+          publicToken={event.publicToken}
+          submitButtonText="Ajouter"
+          submitButtonColor={submitButtonColor}
+          onSuccess={() => {
+            setIsAddParticipantModalOpen(false)
+            refetchRegistrations()
+          }}
+        />
+      </Modal>
       </div>
     </PageContainer>
   )

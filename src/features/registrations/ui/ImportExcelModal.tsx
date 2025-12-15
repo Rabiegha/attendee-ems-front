@@ -12,10 +12,11 @@ import {
 } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
+import { Input } from '@/shared/ui/Input'
 import { ModalSteps } from '@/shared/ui/ModalSteps'
 import * as XLSX from 'xlsx'
 import { useToast } from '@/shared/hooks/useToast'
-import { useImportExcelRegistrationsMutation, useGetRegistrationsQuery } from '../api/registrationsApi'
+import { useImportExcelRegistrationsMutation, useGetRegistrationsQuery, useGetRegistrationTemplateMutation } from '../api/registrationsApi'
 import { useGetEventByIdQuery } from '@/features/events/api/eventsApi'
 
 interface ImportExcelModalProps {
@@ -50,6 +51,9 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   ],
   country: ['pays', 'country', 'nation', 'state'],
   attendanceType: ['mode', 'attendance_type', 'type', 'participation', 'attendance'],
+  status: ['statut', 'status', 'state', 'etat', 'état'],
+  registrationDate: ['date d\'inscription', 'registration_date', 'created_at', 'date inscription', 'inscrit le'],
+  checkInDate: ['check-in', 'checkin', 'date de check-in', 'checked_in_at', 'présence', 'presence', 'checked'],
 }
 
 function normalizeColumnName(colName: string): string {
@@ -112,6 +116,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   // Mutation API pour l'import Excel
   const [importExcelRegistrations, { isLoading: isImporting }] =
     useImportExcelRegistrationsMutation()
+  const [getRegistrationTemplate] = useGetRegistrationTemplateMutation()
 
   // Fonction pour extraire l'email d'une ligne
   const getEmailFromRow = (row: ParsedRow): string | null => {
@@ -495,15 +500,21 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     setPreview(recalculatedData)
   }
 
-  const downloadTemplate = () => {
-    const templateData = [
-      ['prénom', 'nom', 'email', 'téléphone', 'entreprise', 'poste', 'pays', 'mode'],
-    ]
-
-    const ws = XLSX.utils.aoa_to_sheet(templateData)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Inscriptions')
-    XLSX.writeFile(wb, 'template_inscriptions.xlsx')
+  const downloadTemplate = async () => {
+    try {
+      const blob = await getRegistrationTemplate().unwrap()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'template_inscriptions.xlsx'
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error('Failed to download template:', error)
+      toast.error('Erreur lors du téléchargement du modèle')
+    }
   }
 
   return (
@@ -588,6 +599,15 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 </li>
                 <li>
                   • <strong>Mode</strong> : mode, attendance_type (onsite/online)
+                </li>
+                <li>
+                  • <strong>Statut</strong> : statut, status
+                </li>
+                <li>
+                  • <strong>Date d'inscription</strong> : date d'inscription, created_at
+                </li>
+                <li>
+                  • <strong>Check-in</strong> : check-in, présence, checked_in_at
                 </li>
               </ul>
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
@@ -690,7 +710,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
               </h4>
               <div className="overflow-x-auto max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                  <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-20">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12">
                         {/* Checkbox pour conflits */}
@@ -770,20 +790,113 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                               <Trash2 className="h-5 w-5" />
                             </button>
                           </td>
-                          {headers.map((header, colIndex) => (
-                            <td
-                              key={colIndex}
-                              className="px-2 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap"
-                            >
-                              <input
-                                type="text"
-                                value={row[header]?.toString() || ''}
-                                onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
-                                className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
-                                placeholder="-"
-                              />
-                            </td>
-                          ))}
+                          {headers.map((header, colIndex) => {
+                            const fieldName = columnMapping[header]
+                            
+                            if (fieldName === 'status') {
+                              const currentValue = row[header]?.toString().toLowerCase();
+                              // Default to 'pending' if empty or invalid
+                              const selectValue = (currentValue && ['approved', 'pending', 'refused', 'cancelled', 'checked_in'].includes(currentValue)) 
+                                ? currentValue 
+                                : 'pending';
+
+                              return (
+                                <td key={colIndex} className="px-2 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                                  <select
+                                    value={selectValue}
+                                    onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
+                                    className="w-full min-w-[120px] bg-transparent border border-gray-200 dark:border-gray-700 hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
+                                  >
+                                    <option value="pending" className="bg-white dark:bg-gray-800">En attente</option>
+                                    <option value="approved" className="bg-white dark:bg-gray-800">Approuvé</option>
+                                    <option value="refused" className="bg-white dark:bg-gray-800">Refusé</option>
+                                    <option value="cancelled" className="bg-white dark:bg-gray-800">Annulé</option>
+                                    <option value="checked_in" className="bg-white dark:bg-gray-800">Présent</option>
+                                  </select>
+                                </td>
+                              )
+                            }
+
+                            if (fieldName === 'attendanceType') {
+                              return (
+                                <td key={colIndex} className="px-2 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                                  <select
+                                    value={row[header]?.toString().toLowerCase() || ''}
+                                    onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
+                                    className="w-full min-w-[120px] bg-transparent border border-gray-200 dark:border-gray-700 hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
+                                  >
+                                    <option value="" className="bg-white dark:bg-gray-800">-</option>
+                                    <option value="onsite" className="bg-white dark:bg-gray-800">Présentiel</option>
+                                    <option value="online" className="bg-white dark:bg-gray-800">Distanciel</option>
+                                    <option value="hybrid" className="bg-white dark:bg-gray-800">Hybride</option>
+                                  </select>
+                                </td>
+                              )
+                            }
+
+                            if (fieldName === 'registrationDate' || fieldName === 'checkInDate') {
+                              // Helper to format value for datetime-local input (YYYY-MM-DDTHH:mm)
+                              const formatForInput = (val: any) => {
+                                if (!val) return '';
+
+                                // Special handling for Check-in boolean values to show current date
+                                if (fieldName === 'checkInDate') {
+                                  const strVal = String(val).toLowerCase().trim();
+                                  const booleanTrue = ['yes', 'oui', 'checked', 'present', 'présent', 'ok', 'true', 'vrai', '1', 'checkedin', 'checked_in'];
+                                  if (booleanTrue.some(v => strVal === v || strVal.includes(v))) {
+                                    return new Date().toISOString().slice(0, 16);
+                                  }
+                                }
+
+                                // If it's already in a compatible format, return it
+                                if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) return val;
+                                
+                                // Handle Excel serial dates (numbers like 45000.5)
+                                // Excel base date is Dec 30, 1899. Unix epoch is Jan 1, 1970.
+                                // Difference is 25569 days.
+                                if (typeof val === 'number' || (typeof val === 'string' && !isNaN(Number(val)) && Number(val) > 20000)) {
+                                  const serial = Number(val);
+                                  // Convert Excel serial date to JS timestamp
+                                  // (serial - 25569) * 86400 * 1000
+                                  const date = new Date(Math.round((serial - 25569) * 86400 * 1000));
+                                  if (!isNaN(date.getTime())) {
+                                    return date.toISOString().slice(0, 16);
+                                  }
+                                }
+                                
+                                const date = new Date(val);
+                                if (isNaN(date.getTime())) return '';
+                                
+                                return date.toISOString().slice(0, 16); // Keep YYYY-MM-DDTHH:mm
+                              };
+
+                              return (
+                                <td key={colIndex} className="px-2 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap">
+                                  <Input
+                                    type="datetime-local"
+                                    value={formatForInput(row[header])}
+                                    onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
+                                    className="min-w-[160px] h-8 py-1 text-sm"
+                                  />
+                                </td>
+                              )
+                            }
+
+                            return (
+                              <td
+                                key={colIndex}
+                                className="px-2 py-2 text-sm text-gray-900 dark:text-white whitespace-nowrap"
+                              >
+                                <input
+                                  type="text"
+                                  value={row[header]?.toString() || ''}
+                                  onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
+                                  className="w-full min-w-[100px] bg-transparent border border-transparent hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
+                                  placeholder="-"
+                                />
+                              </td>
+                            )
+                          })}
                         </tr>
                       )
                     })}

@@ -378,6 +378,24 @@ export const registrationsApi = rootApi.injectEndpoints({
       ],
     }),
 
+    getRegistrationTemplate: builder.mutation<Blob, void>({
+      query: () => ({
+        url: '/registrations/template',
+        method: 'GET',
+        responseHandler: async (response) => {
+          if (!response.ok) {
+            const text = await response.text()
+            try {
+              return JSON.parse(text)
+            } catch {
+              return { error: text, status: response.status }
+            }
+          }
+          return response.blob()
+        },
+      }),
+    }),
+
     downloadBadge: builder.mutation<
       Blob,
       { eventId: string; registrationId: string; format: 'pdf' | 'html' | 'image' }
@@ -411,4 +429,5 @@ export const {
   useGenerateBadgesBulkMutation,
   useGenerateBadgeMutation,
   useDownloadBadgeMutation,
+  useGetRegistrationTemplateMutation,
 } = registrationsApi

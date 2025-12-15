@@ -476,18 +476,20 @@ export function UsersPage() {
             >
               <Edit2 className="h-4 w-4 shrink-0" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDeleteUser(user)
-              }}
-              title="Désactiver"
-              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
-            >
-              <Trash2 className="h-4 w-4 shrink-0" />
-            </Button>
+            {user.id !== currentUser?.id && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteUser(user)
+                }}
+                title="Désactiver"
+                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
+              >
+                <Trash2 className="h-4 w-4 shrink-0" />
+              </Button>
+            )}
           </>
         )
       }),

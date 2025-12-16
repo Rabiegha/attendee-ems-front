@@ -12,6 +12,7 @@ import {
   Mail,
   Building2,
   CreditCard,
+  Tag,
 } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
@@ -56,6 +57,13 @@ const navigation = [
     icon: Users,
     action: 'read' as const,
     subject: 'Attendee' as const,
+  },
+  {
+    name: 'navigation.attendee_types',
+    href: ROUTES.ATTENDEE_TYPES,
+    icon: Tag,
+    action: 'read' as const,
+    subject: 'Organization' as const,
   },
   {
     name: 'navigation.users',

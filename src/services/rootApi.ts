@@ -128,6 +128,7 @@ export const rootApi = createApi({
   tagTypes: [
     'Attendees',
     'Attendee',
+    'AttendeeTypes',
     'Events',
     'Event',
     'Users',

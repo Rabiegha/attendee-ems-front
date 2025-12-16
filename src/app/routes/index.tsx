@@ -15,6 +15,7 @@ import { CreateEventPage } from '@/pages/CreateEvent'
 import { Attendees } from '@/pages/Attendees'
 import { AttendeeDetail } from '@/pages/AttendeeDetail'
 import { UsersPage } from '@/pages/Users'
+import { AttendeeTypesPage } from '@/pages/AttendeeTypes'
 import { RolePermissionsAdmin } from '@/pages/RolePermissionsAdmin'
 import { ChangePasswordPage } from '@/pages/ChangePassword'
 import { LoginPage } from '@/pages/Login'
@@ -110,6 +111,14 @@ export const router = createBrowserRouter([
         element: (
           <GuardedRoute action="read" subject="User">
             <UsersPage />
+          </GuardedRoute>
+        ),
+      },
+      {
+        path: 'attendee-types',
+        element: (
+          <GuardedRoute action="read" subject="Organization">
+            <AttendeeTypesPage />
           </GuardedRoute>
         ),
       },

@@ -52,6 +52,7 @@ export const ROUTES = {
   EVENTS: '/events',
   EVENT_DETAILS: (id: string) => `/events/${id}`,
   ATTENDEES: '/attendees',
+  ATTENDEE_TYPES: '/attendee-types',
   USERS: '/users',
   ROLES_PERMISSIONS: '/roles-permissions',
   BADGES: '/badges',

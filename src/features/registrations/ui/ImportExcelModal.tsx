@@ -96,6 +96,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   const [step, setStep] = useState<'upload' | 'preview' | 'success'>('upload')
   const [importResult, setImportResult] = useState<any | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
@@ -185,6 +186,28 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       // Toutes les nouvelles inscriptions : pas de conflit, non sélectionnées par défaut
       return { ...row, _rowIndex: index, _conflictType: null, _selected: false }
     })
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const file = e.dataTransfer.files?.[0]
+    if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+      parseExcelFile(file)
+    } else if (file) {
+      toast.error('Format de fichier non supporté. Veuillez utiliser un fichier Excel (.xlsx ou .xls)')
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -552,7 +575,14 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 text-center hover:border-blue-500 dark:hover:border-blue-400 transition-colors cursor-pointer"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors cursor-pointer ${
+                isDragging
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400'
+              }`}
             >
               <input
                 ref={fileInputRef}

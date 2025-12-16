@@ -5,6 +5,7 @@ import { useToast } from '@/shared/hooks/useToast'
 import { formatDate } from '@/shared/lib/utils'
 
 interface EventSettings {
+  id: string
   name: string
   description?: string
   start_at: string
@@ -19,11 +20,23 @@ interface EventSettings {
   is_dark_mode?: boolean
 }
 
+interface AttendeeType {
+  id: string
+  event_id: string
+  attendee_type_id: string
+  attendeeType: {
+    id: string
+    name: string
+    color_hex: string
+  }
+}
+
 const PublicRegistration: React.FC = () => {
   const { token } = useParams<{ token: string }>()
   const toast = useToast()
 
   const [event, setEvent] = useState<EventSettings | null>(null)
+  const [attendeeTypes, setAttendeeTypes] = useState<AttendeeType[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<Record<string, string | boolean>>({})
@@ -53,6 +66,25 @@ const PublicRegistration: React.FC = () => {
 
         const data = await response.json()
         setEvent(data)
+
+        // Si l'événement a des champs de type attendee_type, charger les types
+        const hasAttendeeTypeField = data.registration_fields?.some((f: any) => f.type === 'attendee_type')
+        if (hasAttendeeTypeField) {
+          try {
+            // Utiliser l'endpoint public pour récupérer les types de participants
+            // Note: Il faudra peut-être créer cet endpoint côté backend s'il n'existe pas
+            // Pour l'instant on essaie de récupérer via l'endpoint existant si possible ou on simule
+            // En réalité, on devrait avoir un endpoint public pour ça: /public/events/:token/attendee-types
+            const typesResponse = await fetch(`${apiUrl}/public/events/${token}/attendee-types`)
+            if (typesResponse.ok) {
+              const typesData = await typesResponse.json()
+              setAttendeeTypes(typesData)
+            }
+          } catch (e) {
+            console.error("Erreur lors du chargement des types de participants", e)
+          }
+        }
+
       } catch (err) {
         console.error('Erreur de chargement:', err)
         setError(err instanceof Error ? err.message : 'Erreur de chargement')
@@ -253,6 +285,23 @@ const PublicRegistration: React.FC = () => {
                 </option>
               )
             )}
+          </select>
+        )
+      case 'attendee_type':
+        return (
+          <select
+            value={stringValue}
+            onChange={(e) => handleInputChange(field.id, e.target.value)}
+            required={field.required}
+            disabled={disabled}
+            className={baseClasses}
+          >
+            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
+            {attendeeTypes.map((type) => (
+              <option key={type.id} value={type.attendee_type_id} className="dark:bg-gray-700 dark:text-white">
+                {type.attendeeType.name}
+              </option>
+            ))}
           </select>
         )
       default:

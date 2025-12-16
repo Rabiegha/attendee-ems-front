@@ -30,9 +30,11 @@ import {
   FormInput,
   Zap,
   XCircle,
+  Tag,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
+import { EventAttendeeTypesTab } from './EventAttendeeTypesTab'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
 import { AddParticipantForm } from '@/features/registrations/ui/AddParticipantForm'
@@ -46,7 +48,7 @@ import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 
-type TabType = 'details' | 'registrations' | 'form' | 'settings'
+type TabType = 'details' | 'registrations' | 'form' | 'settings' | 'attendee-types'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -62,7 +64,7 @@ export const EventDetails: React.FC = () => {
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'form', 'settings'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'form', 'settings', 'attendee-types'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -484,6 +486,7 @@ export const EventDetails: React.FC = () => {
       label: `Inscriptions (${activeMeta.total})`,
       icon: Users,
     },
+    { id: 'attendee-types' as TabType, label: 'Types de participants', icon: Tag },
     { id: 'form' as TabType, label: 'Formulaire', icon: FormInput, disabledIfDeleted: true },
     { id: 'settings' as TabType, label: 'Paramètres', icon: Settings, disabledIfDeleted: true },
   ]
@@ -882,6 +885,10 @@ export const EventDetails: React.FC = () => {
               }}
             />
           </div>
+        )}
+
+        {activeTab === 'attendee-types' && (
+          <EventAttendeeTypesTab event={event} />
         )}
 
         {activeTab === 'form' && (

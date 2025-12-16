@@ -7,6 +7,20 @@ import {
   mapCreateEventDPOtoDTO,
   mapUpdateEventDPOtoDTO,
 } from '../dpo/event.mappers'
+import { AttendeeType } from '../../attendee-types/api/attendeeTypesApi'
+
+export interface EventAttendeeType {
+  id: string
+  event_id: string
+  org_id: string
+  attendee_type_id: string
+  capacity: number | null
+  color_hex: string | null
+  text_color_hex: string | null
+  created_at: string
+  updated_at: string
+  attendeeType: AttendeeType
+}
 
 export interface EventsListParams {
   page?: number
@@ -204,6 +218,28 @@ export const eventsApi = rootApi.injectEndpoints({
         { type: 'Events', id: 'LIST' },
       ],
     }),
+
+    getEventAttendeeTypes: builder.query<EventAttendeeType[], string>({
+      query: (eventId) => `/events/${eventId}/attendee-types`,
+      providesTags: (_result, _error, eventId) => [{ type: 'EventAttendeeTypes' as const, id: eventId }],
+    }),
+
+    addEventAttendeeType: builder.mutation<EventAttendeeType, { eventId: string; attendeeTypeId: string }>({
+      query: ({ eventId, attendeeTypeId }) => ({
+        url: `/events/${eventId}/attendee-types`,
+        method: 'POST',
+        body: { attendeeTypeId },
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventAttendeeTypes', id: eventId }],
+    }),
+
+    removeEventAttendeeType: builder.mutation<void, { eventId: string; eventAttendeeTypeId: string }>({
+      query: ({ eventId, eventAttendeeTypeId }) => ({
+        url: `/events/${eventId}/attendee-types/${eventAttendeeTypeId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventAttendeeTypes', id: eventId }],
+    }),
   }),
   overrideExisting: false,
 })
@@ -220,4 +256,7 @@ export const {
   useChangeEventStatusMutation,
   useBulkDeleteEventsMutation,
   useBulkExportEventsMutation,
+  useGetEventAttendeeTypesQuery,
+  useAddEventAttendeeTypeMutation,
+  useRemoveEventAttendeeTypeMutation,
 } = eventsApi

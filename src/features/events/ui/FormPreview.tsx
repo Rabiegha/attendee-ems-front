@@ -6,6 +6,7 @@ import { formatDate } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/hooks/useToast'
 import { useCreatePublicRegistrationMutation } from '../api/publicEventsApi'
+import { useGetEventAttendeeTypesQuery } from '../api/eventsApi'
 
 interface FormPreviewProps {
   event: EventDPO
@@ -35,6 +36,9 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const toast = useToast()
   const [createPublicRegistration] = useCreatePublicRegistrationMutation()
+  
+  // Fetch attendee types for the event
+  const { data: eventAttendeeTypes } = useGetEventAttendeeTypesQuery(event.id)
 
   const handleInputChange = (fieldId: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }))
@@ -200,6 +204,23 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
                 </option>
               )
             )}
+          </select>
+        )
+      case 'attendee_type':
+        return (
+          <select
+            value={value}
+            onChange={(e) => handleInputChange(field.id, e.target.value)}
+            className={baseClasses}
+            required={field.required}
+            disabled={disabled}
+          >
+            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
+            {eventAttendeeTypes?.map((type) => (
+              <option key={type.id} value={type.attendee_type_id} className="dark:bg-gray-700 dark:text-white">
+                {type.attendeeType.name}
+              </option>
+            ))}
           </select>
         )
       default:

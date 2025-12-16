@@ -165,40 +165,38 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
   // ===== CATÉGORIE : ÉVÉNEMENT =====
   {
     id: 'attendee_type',
-    key: 'attendee_type',
+    key: 'event_attendee_type_id',
     label: 'Type de participant',
-    placeholder: 'Sélectionnez un type',
+    placeholder: 'Sélectionnez votre type',
     type: 'attendee_type',
     icon: Users,
     category: 'event',
-    description:
-      'Type de participant (Staff, Partenaire, Invité...) - Réservé aux administrateurs',
-    required: false,
-    registrationField: 'eventAttendeeTypeId',
-    visibleInPublicForm: false, // ❌ Jamais visible pour le public
+    description: 'Type de participant (lié aux types configurés)',
+    required: true,
+    registrationField: 'event_attendee_type_id',
+    visibleInPublicForm: true,
     visibleInAdminForm: true,
     visibleInAttendeeTable: true,
     visibleInExport: true,
-    adminOnly: true,
   },
   {
     id: 'attendance_type',
     key: 'attendance_type',
-    label: 'Question à choix multiple',
-    placeholder: 'Sélectionnez une option',
+    label: 'Mode de participation',
+    placeholder: 'Sur place / En ligne',
     type: 'select',
-    icon: List,
+    icon: Building2,
     category: 'event',
-    description: "Question à choix multiple personnalisable",
-    required: false,
-    registrationField: 'attendanceType',
+    description: 'Présentiel ou distanciel',
+    required: true,
+    registrationField: 'attendance_type',
     visibleInPublicForm: true,
     visibleInAdminForm: true,
-    visibleInAttendeeTable: false,
+    visibleInAttendeeTable: true,
     visibleInExport: true,
     options: [
-      { value: 'option1', label: 'Option 1' },
-      { value: 'option2', label: 'Option 2' },
+      { label: 'Sur place', value: 'onsite' },
+      { label: 'En ligne', value: 'online' },
     ],
   },
 
@@ -296,7 +294,7 @@ export function getFieldById(id: string): PredefinedFieldTemplate | undefined {
  * Créer une instance de champ personnalisé
  */
 export function createCustomField(
-  type: 'text' | 'textarea' | 'select',
+  type: 'text' | 'textarea' | 'select' | 'attendee_type',
   label: string,
   key?: string
 ): PredefinedFieldTemplate {
@@ -313,7 +311,7 @@ export function createCustomField(
     label,
     placeholder: `Saisissez ${label.toLowerCase()}`,
     type,
-    icon: type === 'textarea' ? MessageSquare : type === 'select' ? List : User,
+    icon: type === 'textarea' ? MessageSquare : type === 'select' ? List : type === 'attendee_type' ? Users : User,
     category: 'custom',
     description: `Champ personnalisé : ${label}`,
     required: false,
@@ -326,6 +324,15 @@ export function createCustomField(
 
   if (type === 'select') {
     return { ...baseField, options: [] } as PredefinedFieldTemplate
+  }
+
+  if (type === 'attendee_type') {
+    return {
+      ...baseField,
+      registrationField: 'event_attendee_type_id',
+      storeInAnswers: false,
+      visibleInAttendeeTable: true,
+    } as PredefinedFieldTemplate
   }
 
   return baseField as PredefinedFieldTemplate

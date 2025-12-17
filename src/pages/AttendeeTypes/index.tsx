@@ -202,15 +202,18 @@ export function AttendeeTypesPage() {
         header: 'Statut',
         cell: ({ row }) => {
           const type = row.original
+          
+          if (type.is_active) {
+            return (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200">
+                Actif
+              </span>
+            )
+          }
+          
           return (
-            <span
-              className={`px-2 py-1 text-xs rounded-full ${
-                type.is_active
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-              }`}
-            >
-              {type.is_active ? 'Actif' : 'Inactif'}
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200">
+              Inactif
             </span>
           )
         },
@@ -356,6 +359,14 @@ export function AttendeeTypesPage() {
         title="Types de participants"
         description="Gérez les différents types de participants pour votre organisation"
         icon={Tag}
+        actions={
+          <Can do="update" on="Organization">
+            <Button onClick={handleOpenCreateModal}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nouveau type
+            </Button>
+          </Can>
+        }
       />
 
       {/* Section FilterBar */}
@@ -371,13 +382,6 @@ export function AttendeeTypesPage() {
             value={searchQuery}
             onChange={setSearchQuery}
           />
-
-          <Can I="create" a="Organization">
-            <Button onClick={handleOpenCreateModal}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau type
-            </Button>
-          </Can>
         </FilterBar>
       </PageSection>
 

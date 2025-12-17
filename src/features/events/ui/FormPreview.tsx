@@ -102,8 +102,8 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       }
 
       // Add registration-specific data
-      if (registrationData.attendee_type) {
-        requestData.attendee_type = registrationData.attendee_type
+      if (registrationData.event_attendee_type_id) {
+        requestData.event_attendee_type_id = registrationData.event_attendee_type_id
       }
 
       // Add custom answers
@@ -113,7 +113,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
 
       // Add source tracking (public_form when functional, or just preview)
       if (functional) {
-        requestData.source = 'public_form'
+        requestData.source = 'test_form'
       }
 
       // Utiliser le public_token de l'événement pour la route publique
@@ -217,7 +217,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
           >
             <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
             {eventAttendeeTypes?.map((type) => (
-              <option key={type.id} value={type.attendee_type_id} className="dark:bg-gray-700 dark:text-white">
+              <option key={type.id} value={type.id} className="dark:bg-gray-700 dark:text-white">
                 {type.attendeeType.name}
               </option>
             ))}

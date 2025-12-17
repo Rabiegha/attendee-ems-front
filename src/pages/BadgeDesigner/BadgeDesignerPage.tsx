@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useBlocker } from 'react-router-dom';
+import { useParams, useNavigate, useBlocker, useLocation } from 'react-router-dom';
 import { ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { AlertTriangle } from 'lucide-react';
 import { BadgeElement, BadgeFormat, BADGE_FORMATS, HistoryState } from '../../shared/types/badge.types';
@@ -9,6 +9,7 @@ import { BadgeEditor } from './components/BadgeEditor';
 import { LeftSidebar } from './components/LeftSidebar';
 import { RightSidebar } from './components/RightSidebar';
 import { Button } from '@/shared/ui/Button';
+import { Modal } from '@/shared/ui/Modal';
 import { 
   useGetBadgeTemplateQuery, 
   useCreateBadgeTemplateMutation, 
@@ -23,6 +24,7 @@ export const BadgeDesignerPage: React.FC = () => {
   // Router hooks
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
   
   // API hooks
@@ -45,7 +47,6 @@ export const BadgeDesignerPage: React.FC = () => {
   const [history, setHistory] = useState<HistoryState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [templateName, setTemplateName] = useState('');
-  const [copiedUrl, setCopiedUrl] = useState('');
   const [clipboard, setClipboard] = useState<BadgeElement[]>([]);
   const [uploadedImages, setUploadedImages] = useState<Map<string, { data: string; filename: string }>>(new Map());
   
@@ -58,19 +59,21 @@ export const BadgeDesignerPage: React.FC = () => {
   // Track unsaved changes
   const [isDirty, setIsDirty] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
   const badgeRef = useRef<HTMLDivElement>(null);
   const elementRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(new Map());
   const backgroundInputRef = useRef<HTMLInputElement>(null);
   const transformRef = useRef<ReactZoomPanPinchRef>(null);
-  const saveTemplateRef = useRef<(() => Promise<void>) | null>(null);
+  const saveTemplateRef = useRef<((options?: { exitAfterSave?: boolean }) => Promise<void>) | null>(null);
   const hasLoadedTemplateRef = useRef(false);
+  const isSavingRef = useRef(false);
 
   // Protection contre la navigation interne avec useBlocker
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
-      isDirty && (
+      !isSavingRef.current && isDirty && (
         currentLocation.pathname !== nextLocation.pathname || 
         currentLocation.search !== nextLocation.search
       )
@@ -89,6 +92,11 @@ export const BadgeDesignerPage: React.FC = () => {
     // Si l'historique a plus d'une entrée, il y a eu des modifications
     setIsDirty(history.length > 1);
   }, [history.length]);
+
+  // Reset isSavingRef when location changes
+  useEffect(() => {
+    isSavingRef.current = false;
+  }, [location]);
 
   // Protection contre la fermeture de l'onglet/navigateur
   useEffect(() => {
@@ -1090,7 +1098,7 @@ export const BadgeDesignerPage: React.FC = () => {
   };
 
   // Save template to API
-  const saveTemplate = async () => {
+  const saveTemplate = async (options: { exitAfterSave?: boolean } = {}) => {
     if (!templateName.trim()) {
       toast.error('Erreur', 'Veuillez entrer un nom pour le template');
       return;
@@ -1148,6 +1156,11 @@ export const BadgeDesignerPage: React.FC = () => {
         };
         setHistory([newInitialState]);
         setHistoryIndex(0);
+
+        if (options.exitAfterSave) {
+          isSavingRef.current = true;
+          navigate('/badges');
+        }
       } else {
         // Create new template
         const result = await createTemplate(payload).unwrap();
@@ -1161,8 +1174,16 @@ export const BadgeDesignerPage: React.FC = () => {
         };
         setHistory([newInitialState]);
         setHistoryIndex(0);
-        // Navigate to edit mode with the new template ID
-        navigate(`/badges/designer/${result.id}`);
+        
+        // Bypass blocker for redirection
+        isSavingRef.current = true;
+        
+        if (options.exitAfterSave) {
+          navigate('/badges');
+        } else {
+          // Navigate to edit mode with the new template ID
+          navigate(`/badges/designer/${result.id}`);
+        }
       }
     } catch (error: any) {
       console.error('Error saving template:', error);
@@ -1174,16 +1195,18 @@ export const BadgeDesignerPage: React.FC = () => {
   saveTemplateRef.current = saveTemplate;
 
   // Delete template
-  const handleDeleteTemplate = async () => {
+  const handleDeleteTemplate = () => {
     if (!templateId || templateId === 'new') return;
-    
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce template ?')) {
-      return;
-    }
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteTemplate = async () => {
+    if (!templateId) return;
 
     try {
       await deleteTemplate(templateId).unwrap();
       toast.success('Succès', 'Template supprimé avec succès');
+      setShowDeleteModal(false);
       navigate('/badges');
     } catch (error: any) {
       console.error('Error deleting template:', error);
@@ -1228,15 +1251,6 @@ export const BadgeDesignerPage: React.FC = () => {
     } else if (pendingNavigation) {
       navigate(pendingNavigation);
     }
-  };
-
-  // Copy URL
-  const copyUrl = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopiedUrl(url);
-      setTimeout(() => setCopiedUrl(''), 3000);
-    });
   };
 
   // Selection handlers
@@ -1488,9 +1502,8 @@ export const BadgeDesignerPage: React.FC = () => {
         onImageUpload={handleImageUpload}
         templateName={templateName}
         onTemplateNameChange={setTemplateName}
-        onSaveTemplate={saveTemplate}
-        copiedUrl={copiedUrl}
-        onCopyUrl={copyUrl}
+        onSaveTemplate={() => saveTemplate()}
+        onSaveAndExit={() => saveTemplate({ exitAfterSave: true })}
         isSaving={isCreating || isUpdating}
         onGoBack={handleGoBack}
         onDeleteTemplate={handleDeleteTemplate}
@@ -1604,6 +1617,35 @@ export const BadgeDesignerPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Supprimer le template"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600 dark:text-gray-300">
+            Êtes-vous sûr de vouloir supprimer ce template ? Cette action est irréversible.
+          </p>
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteTemplate}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Suppression...' : 'Supprimer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

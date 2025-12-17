@@ -35,6 +35,8 @@ export interface TableSelectorOption<T = string> {
   description?: string
   icon?: LucideIcon
   color?: 'gray' | 'red' | 'yellow' | 'green' | 'blue' | 'indigo' | 'purple' | 'pink' | 'orange'
+  hexColor?: string
+  textHexColor?: string
 }
 
 interface TableSelectorProps<T = string> {
@@ -101,6 +103,8 @@ export function TableSelector<T = string>({
 
   const CurrentIcon = currentOption?.icon
   const currentColor = currentOption?.color || 'gray'
+  const currentHexColor = currentOption?.hexColor
+  const currentTextHexColor = currentOption?.textHexColor || 'white'
 
   // Gérer le changement de statut
   const handleChange = async (newValue: T) => {
@@ -154,9 +158,8 @@ export function TableSelector<T = string>({
       setDropdownStyle({
         position: 'fixed',
         left: `${rect.left}px`,
-        top: shouldShowAbove
-          ? `${rect.top - dropdownHeight - 4}px`
-          : `${rect.bottom + 4}px`,
+        top: shouldShowAbove ? 'auto' : `${rect.bottom + 4}px`,
+        bottom: shouldShowAbove ? `${window.innerHeight - rect.top + 4}px` : 'auto',
         width: `${Math.max(dropdownWidth, rect.width)}px`,
         zIndex: 9999,
       })
@@ -178,12 +181,13 @@ export function TableSelector<T = string>({
         className={cn(
           'inline-flex items-center gap-1 rounded-full font-medium transition-all',
           sizeClasses,
-          COLOR_CLASSES[currentColor],
-          !disabled && !isUpdating && HOVER_CLASSES[currentColor],
+          !currentHexColor && COLOR_CLASSES[currentColor],
+          !currentHexColor && !disabled && !isUpdating && HOVER_CLASSES[currentColor],
           !disabled && !isUpdating && 'cursor-pointer',
           (disabled || isUpdating) && 'opacity-50 cursor-not-allowed',
           isUpdating && 'animate-pulse'
         )}
+        style={currentHexColor ? { backgroundColor: currentHexColor, color: currentTextHexColor } : undefined}
       >
         {CurrentIcon && <CurrentIcon className="h-3 w-3 shrink-0" />}
         <span className="truncate">

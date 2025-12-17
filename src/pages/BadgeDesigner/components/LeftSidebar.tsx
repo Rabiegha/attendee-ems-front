@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, ImageIcon, Save, Link, ArrowLeft, Trash2 } from 'lucide-react';
+import { Plus, ImageIcon, Save, ArrowLeft, Trash2 } from 'lucide-react';
 import { BadgeFormat, BADGE_FORMATS } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
 import { ZoomControls } from './ZoomControls';
@@ -13,8 +13,7 @@ interface LeftSidebarProps {
   templateName: string;
   onTemplateNameChange: (name: string) => void;
   onSaveTemplate: () => void;
-  copiedUrl: string;
-  onCopyUrl: () => void;
+  onSaveAndExit?: () => void;
   isSaving?: boolean;
   onGoBack?: () => void;
   onDeleteTemplate?: () => void;
@@ -35,8 +34,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   templateName,
   onTemplateNameChange,
   onSaveTemplate,
-  copiedUrl,
-  onCopyUrl,
+  onSaveAndExit,
   isSaving = false,
   onGoBack,
   onDeleteTemplate,
@@ -49,23 +47,20 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   return (
     <div className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col border-r border-gray-200 dark:border-gray-700 relative">
       {/* Titre */}
-      <div className="p-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <div className="flex items-center gap-2 mb-2">
-          {onGoBack && (
-            <Button
-              onClick={onGoBack}
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 -ml-2"
-              title="Retour à la liste"
-            >
-              <ArrowLeft size={18} className="text-gray-500 dark:text-gray-400" />
-            </Button>
-          )}
-          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Éditeur</span>
-        </div>
-        <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
-          Créateur de<br />Badges
+      <div className="h-14 px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center gap-3 shrink-0">
+        {onGoBack && (
+          <Button
+            onClick={onGoBack}
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 shrink-0"
+            title="Retour à la liste"
+          >
+            <ArrowLeft size={20} className="text-gray-600 dark:text-gray-300" />
+          </Button>
+        )}
+        <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+          Éditeur de Badges
         </h1>
       </div>
 
@@ -110,6 +105,19 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
 
+          {onSaveAndExit && (
+            <Button 
+              onClick={onSaveAndExit}
+              disabled={!templateName.trim() || isSaving}
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              size="sm"
+            >
+              <Save size={16} />
+              Sauvegarder et quitter
+            </Button>
+          )}
+
           {isEditMode && onDeleteTemplate && (
             <Button 
               onClick={onDeleteTemplate}
@@ -121,22 +129,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               <Trash2 size={16} />
               {isDeleting ? 'Suppression...' : 'Supprimer'}
             </Button>
-          )}
-
-          <Button 
-            onClick={onCopyUrl}
-            variant="outline"
-            className="w-full flex items-center justify-center gap-2"
-            size="sm"
-          >
-            <Link size={16} />
-            Copier URL
-          </Button>
-          
-          {copiedUrl && (
-            <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
-              URL copiée !
-            </div>
           )}
         </div>
       </div>
@@ -196,6 +188,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             { key: 'company', label: 'Entreprise' },
             { key: 'email', label: 'Email' },
             { key: 'eventName', label: 'Événement' },
+            { key: 'attendeeType', label: 'Type de participant' },
           ].map(variable => (
             <button
               key={variable.key}

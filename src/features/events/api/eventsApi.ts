@@ -17,9 +17,13 @@ export interface EventAttendeeType {
   capacity: number | null
   color_hex: string | null
   text_color_hex: string | null
+  is_active: boolean
   created_at: string
   updated_at: string
   attendeeType: AttendeeType
+  _count?: {
+    registrations: number
+  }
 }
 
 export interface EventsListParams {
@@ -240,6 +244,15 @@ export const eventsApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventAttendeeTypes', id: eventId }],
     }),
+
+    updateEventAttendeeType: builder.mutation<EventAttendeeType, { eventId: string; eventAttendeeTypeId: string; data: { color_hex?: string; text_color_hex?: string; capacity?: number } }>({
+      query: ({ eventId, eventAttendeeTypeId, data }) => ({
+        url: `/events/${eventId}/attendee-types/${eventAttendeeTypeId}`,
+        method: 'PUT',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventAttendeeTypes', id: eventId }],
+    }),
   }),
   overrideExisting: false,
 })
@@ -259,4 +272,5 @@ export const {
   useGetEventAttendeeTypesQuery,
   useAddEventAttendeeTypeMutation,
   useRemoveEventAttendeeTypeMutation,
+  useUpdateEventAttendeeTypeMutation,
 } = eventsApi

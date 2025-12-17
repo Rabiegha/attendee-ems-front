@@ -15,6 +15,7 @@ import {
   Award,
   RotateCcw,
   UserCheck,
+  Users,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button, TableSelector, type TableSelectorOption, ActionButtons } from '@/shared/ui'
@@ -36,6 +37,7 @@ import {
   useBulkUpdateRegistrationStatusMutation,
   useBulkCheckInMutation,
 } from '../api/registrationsApi'
+import { EventAttendeeType } from '@/features/events/api/eventsApi'
 import { useToast } from '@/shared/hooks/useToast'
 import { EditRegistrationModal } from './EditRegistrationModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
@@ -44,6 +46,7 @@ import { PermanentDeleteRegistrationModal } from './PermanentDeleteRegistrationM
 import { QrCodeModal } from './QrCodeModal'
 import { BadgePreviewModal } from './BadgePreviewModal'
 import { BulkStatusChangeModal } from './BulkStatusChangeModal'
+import { BulkAttendeeTypeChangeModal } from './BulkAttendeeTypeChangeModal'
 import { createBulkActions } from '@/shared/ui/BulkActions'
 import {
   getRegistrationFullName,
@@ -84,6 +87,8 @@ interface RegistrationsTableProps {
   totalPages?: number
   onPageChange?: (page: number) => void
   onPageSizeChange?: (pageSize: number) => void
+  eventAttendeeTypes?: EventAttendeeType[]
+  isLoadingAttendeeTypes?: boolean
 }
 
 const STATUS_CONFIG = {
@@ -159,11 +164,15 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   totalPages,
   onPageChange,
   onPageSizeChange,
+  eventAttendeeTypes,
+  isLoadingAttendeeTypes = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterValues, setFilterValues] = useState<FilterValues>({})
   const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false)
   const [bulkStatusSelectedIds, setBulkStatusSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkTypeModalOpen, setBulkTypeModalOpen] = useState(false)
+  const [bulkTypeSelectedIds, setBulkTypeSelectedIds] = useState<Set<string>>(new Set())
   const [editingRegistration, setEditingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [deletingRegistration, setDeletingRegistration] =
@@ -192,6 +201,18 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         { value: 'cancelled', label: 'Annulés' },
       ],
     },
+    attendeeType: {
+      label: 'Type de participant',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous les types' },
+        { value: 'none', label: 'Aucun' },
+        ...(eventAttendeeTypes?.map(type => ({
+          value: type.attendee_type_id,
+          label: type.is_active ? type.attendeeType.name : `${type.attendeeType.name} (Désactivé)`
+        })) || [])
+      ],
+    },
     checkin: {
       label: 'Check-in',
       type: 'radio' as const,
@@ -202,6 +223,22 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       ],
     },
   }
+
+  // Options pour le sélecteur de type dans le tableau
+  const attendeeTypeOptions: TableSelectorOption<string>[] = useMemo(() => {
+    const options = eventAttendeeTypes?.map(type => ({
+      value: type.id, // ID de la liaison event_attendee_type
+      label: type.attendeeType.name,
+      hexColor: type.color_hex || type.attendeeType.color_hex || '#9ca3af',
+      textHexColor: type.text_color_hex || type.attendeeType.text_color_hex || '#ffffff',
+      description: !type.is_active ? 'Désactivé' : undefined
+    })) || []
+    
+    return [
+      { value: 'none', label: 'Aucun', color: 'gray' },
+      ...options
+    ]
+  }, [eventAttendeeTypes])
 
   // Optimistic updates: stocke temporairement les nouveaux status avant confirmation serveur
   const [optimisticStatusUpdates, setOptimisticStatusUpdates] = useState<Map<string, string>>(new Map())
@@ -255,6 +292,25 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       }
 
       toast.error(title, message)
+    }
+  }
+
+  const handleAttendeeTypeChange = async (
+    registrationId: string,
+    newEventAttendeeTypeId: string
+  ) => {
+    try {
+      await updateRegistration({
+        id: registrationId,
+        eventId,
+        data: {
+          eventAttendeeTypeId: newEventAttendeeTypeId === 'none' ? null : newEventAttendeeTypeId
+        }
+      }).unwrap()
+      toast.success('Type mis à jour', 'Le type de participant a été modifié')
+    } catch (error) {
+      console.error('Error updating attendee type:', error)
+      toast.error('Erreur', "Impossible de mettre à jour le type")
     }
   }
 
@@ -377,9 +433,38 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     }
   }
 
+  const handleBulkAttendeeTypeChange = async (attendeeTypeId: string) => {
+    try {
+      // On utilise updateRegistration en boucle car il n'y a pas encore de mutation bulk pour le type
+      // TODO: Créer une mutation bulkUpdateAttendeeType pour optimiser
+      await Promise.all(
+        Array.from(bulkTypeSelectedIds).map((id) =>
+          updateRegistration({
+            id,
+            eventId,
+            data: {
+              eventAttendeeTypeId: attendeeTypeId === 'none' ? null : attendeeTypeId
+            }
+          }).unwrap()
+        )
+      )
+      
+      toast.success(`${bulkTypeSelectedIds.size} inscription(s) mise(s) à jour`)
+      
+      // Réinitialiser
+      setBulkTypeModalOpen(false)
+      setBulkTypeSelectedIds(new Set())
+    } catch (error) {
+      console.error('Erreur lors du changement de type:', error)
+      toast.error('Erreur', "Impossible de mettre à jour les types")
+      throw error
+    }
+  }
+
   // Extraction des valeurs de filtres
   const statusFilter = (filterValues.status as string) || 'all'
   const checkinFilter = (filterValues.checkin as string) || 'all'
+  const attendeeTypeFilter = (filterValues.attendeeType as string) || 'all'
 
   // 1. Recherche floue (Fuzzy Search)
   const searchResults = useFuzzySearch(
@@ -404,9 +489,15 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         (checkinFilter === 'checked' && reg.checkedInAt) ||
         (checkinFilter === 'not_checked' && !reg.checkedInAt)
 
-      return matchesStatus && matchesCheckin
+      const matchesAttendeeType = 
+        attendeeTypeFilter === 'all' || 
+        (attendeeTypeFilter === 'none' && !reg.eventAttendeeTypeId) ||
+        reg.eventAttendeeTypeId === attendeeTypeFilter || // Si on filtre par ID de liaison
+        (reg.eventAttendeeType?.attendeeType?.id === attendeeTypeFilter) // Si on filtre par ID de type
+
+      return matchesStatus && matchesCheckin && matchesAttendeeType
     })
-  }, [searchResults, statusFilter, checkinFilter])
+  }, [searchResults, statusFilter, checkinFilter, attendeeTypeFilter])
 
   // Columns definition
   const columns = useMemo<ColumnDef<RegistrationDPO>[]>(
@@ -453,6 +544,42 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             )}
           </div>
         ),
+      },
+      {
+        id: 'attendeeType',
+        header: 'Type',
+        accessorFn: (row) => row.eventAttendeeType?.attendeeType?.name || 'Aucun',
+        cell: ({ row }) => {
+          const currentTypeId = row.original.eventAttendeeType?.id || 'none'
+          
+          // S'assurer que l'option actuelle existe dans la liste pour l'affichage correct
+          // (Même si la liste globale est en cours de chargement ou si le type est manquant)
+          const currentOptionExists = attendeeTypeOptions.some(o => o.value === currentTypeId)
+          
+          let displayOptions = attendeeTypeOptions
+          if (!currentOptionExists && row.original.eventAttendeeType) {
+            displayOptions = [
+              ...attendeeTypeOptions,
+              {
+                value: row.original.eventAttendeeType.id,
+                label: row.original.eventAttendeeType.attendeeType.name,
+                hexColor: row.original.eventAttendeeType.color_hex || row.original.eventAttendeeType.attendeeType.color_hex,
+                textHexColor: row.original.eventAttendeeType.attendeeType.text_color_hex || '#ffffff',
+              }
+            ]
+          }
+
+          return (
+            <TableSelector
+              value={currentTypeId}
+              options={displayOptions}
+              onChange={(newValue) => handleAttendeeTypeChange(row.original.id, newValue)}
+              disabled={isUpdating || (isLoadingAttendeeTypes && !eventAttendeeTypes)}
+              loadingText="..."
+              size="sm"
+            />
+          )
+        },
       },
       {
         id: 'status',
@@ -693,6 +820,19 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           setBulkStatusSelectedIds(selectedIds)
           setBulkStatusModalOpen(true)
           // Ne pas throw d'erreur ici car on ouvre juste la modale
+        }
+      })
+
+      // Changer le type avec sélecteur
+      actions.push({
+        id: 'change-type',
+        label: 'Changer le type',
+        icon: <Users className="h-4 w-4" />,
+        variant: 'outline' as const,
+        skipClearSelection: true,
+        onClick: async (selectedIds: Set<string>) => {
+          setBulkTypeSelectedIds(selectedIds)
+          setBulkTypeModalOpen(true)
         }
       })
 
@@ -962,6 +1102,17 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         }}
         onConfirm={handleBulkStatusChange}
         selectedCount={bulkStatusSelectedIds.size}
+      />
+
+      <BulkAttendeeTypeChangeModal
+        isOpen={bulkTypeModalOpen}
+        onClose={() => {
+          setBulkTypeModalOpen(false)
+          setBulkTypeSelectedIds(new Set())
+        }}
+        onConfirm={handleBulkAttendeeTypeChange}
+        selectedCount={bulkTypeSelectedIds.size}
+        attendeeTypes={eventAttendeeTypes || []}
       />
     </div>
   )

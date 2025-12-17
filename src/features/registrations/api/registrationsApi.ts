@@ -210,14 +210,32 @@ export const registrationsApi = rootApi.injectEndpoints({
             country?: string
           }
           answers?: Record<string, any>
+          eventAttendeeTypeId?: string | null
+          attendanceType?: 'onsite' | 'online' | 'hybrid'
+          status?: string
         }
       }
     >({
-      query: ({ id, data }) => ({
-        url: `/registrations/${id}`,
-        method: 'PATCH',
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Map camelCase to snake_case for API
+        const payload: any = { ...data }
+        
+        if (data.eventAttendeeTypeId !== undefined) {
+          payload.event_attendee_type_id = data.eventAttendeeTypeId
+          delete payload.eventAttendeeTypeId
+        }
+        
+        if (data.attendanceType !== undefined) {
+          payload.attendance_type = data.attendanceType
+          delete payload.attendanceType
+        }
+
+        return {
+          url: `/registrations/${id}`,
+          method: 'PATCH',
+          body: payload,
+        }
+      },
       transformResponse: (response: RegistrationDTO) =>
         mapRegistrationDTOtoDPO(response),
       invalidatesTags: (_result, _error, { id, eventId }) => [

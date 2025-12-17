@@ -11,6 +11,15 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     attendanceType: dto.attendance_type,
     answers: dto.answers,
     eventAttendeeTypeId: dto.event_attendee_type_id || null,
+    eventAttendeeType: dto.eventAttendeeType ? {
+      id: dto.eventAttendeeType.id,
+      color_hex: dto.eventAttendeeType.color_hex,
+      attendeeType: {
+        id: dto.eventAttendeeType.attendeeType.id,
+        name: dto.eventAttendeeType.attendeeType.name,
+        color_hex: dto.eventAttendeeType.attendeeType.color_hex
+      }
+    } : null,
     badgeTemplateId: dto.badge_template_id || null,
     invitedAt: dto.invited_at || null,
     confirmedAt: dto.confirmed_at || null,

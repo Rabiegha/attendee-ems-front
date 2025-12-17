@@ -4,6 +4,7 @@ import {
   useGetEventByIdQuery,
   useUpdateRegistrationFieldsMutation,
   useUpdateEventMutation,
+  useGetEventAttendeeTypesQuery,
 } from '@/features/events/api/eventsApi'
 import {
   useGetRegistrationsQuery,
@@ -92,6 +93,14 @@ export const EventDetails: React.FC = () => {
     isLoading: eventLoading,
     error,
   } = useGetEventByIdQuery(id!)
+  
+  const { 
+    data: eventAttendeeTypes, 
+    isLoading: isLoadingAttendeeTypes 
+  } = useGetEventAttendeeTypesQuery(id!, {
+    skip: !id
+  })
+
   const [updateRegistrationFields] = useUpdateRegistrationFieldsMutation()
   const [updateEvent] = useUpdateEventMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
@@ -865,6 +874,8 @@ export const EventDetails: React.FC = () => {
               eventBadgeTemplateId={event?.badgeTemplateId ?? null}
               onRefresh={() => refetchRegistrations()}
               isDeletedTab={registrationsActiveTab === 'deleted'}
+              eventAttendeeTypes={eventAttendeeTypes}
+              isLoadingAttendeeTypes={isLoadingAttendeeTypes}
               tabsElement={
                 <Tabs
                   items={registrationsTabs}

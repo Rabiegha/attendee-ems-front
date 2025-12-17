@@ -8,6 +8,15 @@ export interface RegistrationDTO {
   attendance_type: 'onsite' | 'online' | 'hybrid'
   answers: Record<string, any> | null
   event_attendee_type_id?: string | null
+  eventAttendeeType?: {
+    id: string
+    color_hex?: string | null
+    attendeeType: {
+      id: string
+      name: string
+      color_hex: string
+    }
+  } | null
   badge_template_id?: string | null
   invited_at?: string | null
   confirmed_at?: string | null

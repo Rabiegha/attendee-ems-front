@@ -16,7 +16,7 @@ export interface AttendeeType {
 }
 
 export interface CreateAttendeeTypeDto {
-  code: string
+  code?: string
   name: string
   color_hex?: string
   text_color_hex?: string
@@ -69,6 +69,14 @@ export const attendeeTypesApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: ['AttendeeTypes'],
     }),
+
+    checkAttendeeTypeName: builder.query<{ available: boolean; name: string }, { orgId: string; name: string; excludeId?: string }>({
+      query: ({ orgId, name, excludeId }) => {
+        const params = new URLSearchParams({ name })
+        if (excludeId) params.append('excludeId', excludeId)
+        return `/orgs/${orgId}/attendee-types/check-name?${params.toString()}`
+      },
+    }),
   }),
 })
 
@@ -78,4 +86,5 @@ export const {
   useCreateAttendeeTypeMutation,
   useUpdateAttendeeTypeMutation,
   useDeleteAttendeeTypeMutation,
+  useLazyCheckAttendeeTypeNameQuery,
 } = attendeeTypesApi

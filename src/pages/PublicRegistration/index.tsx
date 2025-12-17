@@ -78,7 +78,8 @@ const PublicRegistration: React.FC = () => {
             const typesResponse = await fetch(`${apiUrl}/public/events/${token}/attendee-types`)
             if (typesResponse.ok) {
               const typesData = await typesResponse.json()
-              setAttendeeTypes(typesData)
+              // Filtrer uniquement les types actifs
+              setAttendeeTypes(typesData.filter((t: any) => t.is_active !== false))
             }
           } catch (e) {
             console.error("Erreur lors du chargement des types de participants", e)
@@ -166,7 +167,8 @@ const PublicRegistration: React.FC = () => {
 
       const payload = {
         attendee,
-        attendance_type: 'onsite', // Valeur par défaut
+        attendance_type: registrationData.attendance_type || 'onsite',
+        source: 'public_form',
         ...registrationData,
         answers: Object.keys(answers).length > 0 ? answers : undefined,
       }
@@ -298,7 +300,7 @@ const PublicRegistration: React.FC = () => {
           >
             <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
             {attendeeTypes.map((type) => (
-              <option key={type.id} value={type.attendee_type_id} className="dark:bg-gray-700 dark:text-white">
+              <option key={type.id} value={type.id} className="dark:bg-gray-700 dark:text-white">
                 {type.attendeeType.name}
               </option>
             ))}

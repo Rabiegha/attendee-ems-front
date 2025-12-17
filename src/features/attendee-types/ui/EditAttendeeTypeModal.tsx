@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { Modal, Button, Input, FormField } from '@/shared/ui'
-import type { AttendeeType, UpdateAttendeeTypeDto } from '../api/attendeeTypesApi'
+import { type AttendeeType, type UpdateAttendeeTypeDto } from '../api/attendeeTypesApi'
+import { useAttendeeTypeNameAvailability } from '../hooks/useAttendeeTypeNameAvailability'
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 
 interface EditAttendeeTypeModalProps {
   isOpen: boolean
@@ -24,6 +26,11 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
     icon: '',
   })
 
+  const { isChecking, isAvailable, errorMessage } = useAttendeeTypeNameAvailability(
+    formData.name,
+    type?.id
+  )
+
   useEffect(() => {
     if (type) {
       setFormData({
@@ -39,12 +46,19 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
   const handleSave = async () => {
     if (!type) return
 
+    if (isAvailable === false) {
+      return
+    }
+
     setIsSaving(true)
     try {
       await onUpdate(type.id, formData)
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving attendee type:', error)
+      if (error?.data?.message) {
+        alert(error.data.message)
+      }
     } finally {
       setIsSaving(false)
     }
@@ -58,14 +72,11 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
         <FormField label="Code" required>
           <Input
             value={formData.code}
-            onChange={(e) =>
-              setFormData({ ...formData, code: e.target.value.toUpperCase() })
-            }
-            placeholder="VIP"
-            className="uppercase"
+            disabled
+            className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Lettres minuscules, chiffres et underscores uniquement
+            Le code ne peut pas être modifié
           </p>
         </FormField>
 
@@ -77,6 +88,28 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
             }
             placeholder="VIP"
           />
+          {formData.name && formData.name !== type.name && (
+            <>
+              {isChecking && (
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Vérification de la disponibilité...</span>
+                </div>
+              )}
+              {!isChecking && isAvailable === true && (
+                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mt-1">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Ce nom est disponible</span>
+                </div>
+              )}
+              {!isChecking && (isAvailable === false || errorMessage) && (
+                <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 mt-1">
+                  <XCircle className="h-4 w-4" />
+                  <span>{errorMessage || 'Ce nom est déjà utilisé'}</span>
+                </div>
+              )}
+            </>
+          )}
         </FormField>
 
         <div className="grid grid-cols-2 gap-4">

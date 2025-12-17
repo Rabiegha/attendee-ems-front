@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { Modal, Button, Input, FormField } from '@/shared/ui'
-import type { CreateAttendeeTypeDto } from '../api/attendeeTypesApi'
+import { type CreateAttendeeTypeDto } from '../api/attendeeTypesApi'
+import { useAttendeeTypeNameAvailability } from '../hooks/useAttendeeTypeNameAvailability'
+import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 
 interface CreateAttendeeTypeModalProps {
   isOpen: boolean
@@ -14,7 +16,6 @@ export const CreateAttendeeTypeModal: React.FC<CreateAttendeeTypeModalProps> = (
   onCreate,
 }) => {
   const [formData, setFormData] = useState<CreateAttendeeTypeDto>({
-    code: '',
     name: '',
     color_hex: '#4F46E5',
     text_color_hex: '#FFFFFF',
@@ -22,18 +23,19 @@ export const CreateAttendeeTypeModal: React.FC<CreateAttendeeTypeModalProps> = (
   })
   const [isCreating, setIsCreating] = useState(false)
 
+  const { isChecking, isAvailable, errorMessage } = useAttendeeTypeNameAvailability(formData.name)
+
   const handleChange = (field: keyof CreateAttendeeTypeDto, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleCodeChange = (value: string) => {
-    // Force uppercase
-    handleChange('code', value.toUpperCase())
-  }
-
   const handleCreate = async () => {
-    if (!formData.code || !formData.name) {
-      alert('Code et nom sont requis')
+    if (!formData.name) {
+      alert('Le nom est requis')
+      return
+    }
+
+    if (isAvailable === false) {
       return
     }
 
@@ -42,15 +44,17 @@ export const CreateAttendeeTypeModal: React.FC<CreateAttendeeTypeModalProps> = (
       await onCreate(formData)
       // Reset form
       setFormData({
-        code: '',
         name: '',
         color_hex: '#4F46E5',
         text_color_hex: '#FFFFFF',
         icon: '',
       })
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating attendee type:', error)
+      if (error?.data?.message) {
+        alert(error.data.message)
+      }
     } finally {
       setIsCreating(false)
     }
@@ -63,21 +67,34 @@ export const CreateAttendeeTypeModal: React.FC<CreateAttendeeTypeModalProps> = (
       title="Créer un nouveau type de participant"
     >
       <div className="space-y-4">
-        <FormField label="Code" required>
-          <Input
-            value={formData.code}
-            onChange={(e) => handleCodeChange(e.target.value)}
-            placeholder="VIP"
-            maxLength={10}
-          />
-        </FormField>
-
         <FormField label="Nom" required>
           <Input
             value={formData.name}
             onChange={(e) => handleChange('name', e.target.value)}
             placeholder="VIP"
           />
+          {formData.name && (
+            <>
+              {isChecking && (
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Vérification de la disponibilité...</span>
+                </div>
+              )}
+              {!isChecking && isAvailable === true && (
+                <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 mt-1">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Ce nom est disponible</span>
+                </div>
+              )}
+              {!isChecking && (isAvailable === false || errorMessage) && (
+                <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 mt-1">
+                  <XCircle className="h-4 w-4" />
+                  <span>{errorMessage || 'Ce nom est déjà utilisé'}</span>
+                </div>
+              )}
+            </>
+          )}
         </FormField>
 
         <FormField label="Couleur de fond">
@@ -112,15 +129,6 @@ export const CreateAttendeeTypeModal: React.FC<CreateAttendeeTypeModalProps> = (
           </div>
         </FormField>
 
-        <FormField label="Icône (optionnel)">
-          <Input
-            value={formData.icon}
-            onChange={(e) => handleChange('icon', e.target.value)}
-            placeholder="★"
-            maxLength={2}
-          />
-        </FormField>
-
         {/* Preview */}
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Aperçu :</div>
@@ -131,7 +139,6 @@ export const CreateAttendeeTypeModal: React.FC<CreateAttendeeTypeModalProps> = (
               color: formData.text_color_hex,
             }}
           >
-            {formData.icon && <span>{formData.icon}</span>}
             <span>{formData.name || 'Nom du type'}</span>
           </div>
         </div>
@@ -144,7 +151,7 @@ export const CreateAttendeeTypeModal: React.FC<CreateAttendeeTypeModalProps> = (
         <Button
           variant="default"
           onClick={handleCreate}
-          disabled={isCreating || !formData.code || !formData.name}
+          disabled={isCreating || !formData.name}
         >
           {isCreating ? 'Création...' : 'Créer'}
         </Button>

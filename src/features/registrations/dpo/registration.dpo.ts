@@ -8,6 +8,15 @@ export interface RegistrationDPO {
   attendanceType: 'onsite' | 'online' | 'hybrid'
   answers: Record<string, any> | null
   eventAttendeeTypeId?: string | null
+  eventAttendeeType?: {
+    id: string
+    color_hex?: string | null
+    attendeeType: {
+      id: string
+      name: string
+      color_hex: string
+    }
+  } | null
   badgeTemplateId?: string | null
   invitedAt?: string | null
   confirmedAt?: string | null

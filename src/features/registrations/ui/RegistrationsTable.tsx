@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ColumnDef } from '@tanstack/react-table'
 import {
@@ -244,6 +244,44 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [optimisticStatusUpdates, setOptimisticStatusUpdates] = useState<Map<string, string>>(new Map())
   // Optimistic updates pour les types de participants
   const [optimisticTypeUpdates, setOptimisticTypeUpdates] = useState<Map<string, string>>(new Map())
+
+  // Nettoyage automatique des mises à jour optimistes quand les valeurs serveur correspondent
+  useEffect(() => {
+    // Nettoyer les mises à jour de statut optimistes
+    const statusToClean: string[] = []
+    optimisticStatusUpdates.forEach((optimisticValue, registrationId) => {
+      const registration = registrations.find(r => r.id === registrationId)
+      if (registration && registration.status === optimisticValue) {
+        statusToClean.push(registrationId)
+      }
+    })
+    
+    if (statusToClean.length > 0) {
+      setOptimisticStatusUpdates(prev => {
+        const next = new Map(prev)
+        statusToClean.forEach(id => next.delete(id))
+        return next
+      })
+    }
+
+    // Nettoyer les mises à jour de type optimistes
+    const typeToClean: string[] = []
+    optimisticTypeUpdates.forEach((optimisticValue, registrationId) => {
+      const registration = registrations.find(r => r.id === registrationId)
+      const serverTypeId = registration?.eventAttendeeType?.id || 'none'
+      if (serverTypeId === optimisticValue) {
+        typeToClean.push(registrationId)
+      }
+    })
+    
+    if (typeToClean.length > 0) {
+      setOptimisticTypeUpdates(prev => {
+        const next = new Map(prev)
+        typeToClean.forEach(id => next.delete(id))
+        return next
+      })
+    }
+  }, [registrations, optimisticStatusUpdates, optimisticTypeUpdates])
 
   const [updateStatus] = useUpdateRegistrationStatusMutation()
   const [updateRegistration, { isLoading: isUpdating }] =
@@ -567,18 +605,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           const serverTypeId = row.original.eventAttendeeType?.id || 'none'
           const currentTypeId = optimisticType || serverTypeId
           
-          // Si on a une valeur optimiste ET que le serveur a renvoyé la même valeur, on peut nettoyer
-          if (optimisticType && serverTypeId === optimisticType) {
-            // Nettoyer de manière asynchrone pour éviter les updates pendant le render
-            Promise.resolve().then(() => {
-              setOptimisticTypeUpdates(prev => {
-                const next = new Map(prev)
-                next.delete(row.original.id)
-                return next
-              })
-            })
-          }
-          
           // S'assurer que l'option actuelle existe dans la liste pour l'affichage correct
           // (Même si la liste globale est en cours de chargement ou si le type est manquant)
           const currentOptionExists = attendeeTypeOptions.some(o => o.value === currentTypeId)
@@ -616,18 +642,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           // Utiliser la valeur optimiste si disponible, sinon la valeur serveur
           const optimisticStatus = optimisticStatusUpdates.get(row.original.id)
           const displayedStatus = optimisticStatus || row.original.status
-          
-          // Si on a une valeur optimiste ET que le serveur a renvoyé la même valeur, on peut nettoyer
-          if (optimisticStatus && row.original.status === optimisticStatus) {
-            // Nettoyer de manière asynchrone pour éviter les updates pendant le render
-            Promise.resolve().then(() => {
-              setOptimisticStatusUpdates(prev => {
-                const next = new Map(prev)
-                next.delete(row.original.id)
-                return next
-              })
-            })
-          }
           
           if (isDeletedTab) {
             // Affichage simple pour les inscriptions supprimées

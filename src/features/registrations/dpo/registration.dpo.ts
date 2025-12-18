@@ -11,10 +11,12 @@ export interface RegistrationDPO {
   eventAttendeeType?: {
     id: string
     color_hex?: string | null
+    text_color_hex?: string | null
     attendeeType: {
       id: string
       name: string
       color_hex: string
+      text_color_hex: string | null
     }
   } | null
   badgeTemplateId?: string | null

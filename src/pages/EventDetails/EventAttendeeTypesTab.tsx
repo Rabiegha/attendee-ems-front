@@ -22,7 +22,7 @@ import { CreateAttendeeTypeModal } from '@/features/attendee-types/ui/CreateAtte
 
 interface AttendeeTypeItemProps {
   type: AttendeeType
-  eventType?: EventAttendeeType
+  eventType?: EventAttendeeType | undefined
   isSelected: boolean
   onToggle: () => void
   onColorChange: (color: string) => void

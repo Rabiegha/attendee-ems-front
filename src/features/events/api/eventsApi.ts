@@ -225,7 +225,7 @@ export const eventsApi = rootApi.injectEndpoints({
 
     getEventAttendeeTypes: builder.query<EventAttendeeType[], string>({
       query: (eventId) => `/events/${eventId}/attendee-types`,
-      providesTags: (_result, _error, eventId) => [{ type: 'EventAttendeeTypes' as const, id: eventId }],
+      providesTags: (_result, _error, eventId) => [{ type: 'AttendeeTypes', id: eventId }],
     }),
 
     addEventAttendeeType: builder.mutation<EventAttendeeType, { eventId: string; attendeeTypeId: string }>({
@@ -234,7 +234,7 @@ export const eventsApi = rootApi.injectEndpoints({
         method: 'POST',
         body: { attendeeTypeId },
       }),
-      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventAttendeeTypes', id: eventId }],
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'AttendeeTypes', id: eventId }],
     }),
 
     removeEventAttendeeType: builder.mutation<void, { eventId: string; eventAttendeeTypeId: string }>({
@@ -242,7 +242,7 @@ export const eventsApi = rootApi.injectEndpoints({
         url: `/events/${eventId}/attendee-types/${eventAttendeeTypeId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventAttendeeTypes', id: eventId }],
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'AttendeeTypes', id: eventId }],
     }),
 
     updateEventAttendeeType: builder.mutation<EventAttendeeType, { eventId: string; eventAttendeeTypeId: string; data: { color_hex?: string; text_color_hex?: string; capacity?: number } }>({
@@ -251,7 +251,7 @@ export const eventsApi = rootApi.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventAttendeeTypes', id: eventId }],
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'AttendeeTypes', id: eventId }],
     }),
   }),
   overrideExisting: false,

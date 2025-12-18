@@ -87,7 +87,7 @@ interface RegistrationsTableProps {
   totalPages?: number
   onPageChange?: (page: number) => void
   onPageSizeChange?: (pageSize: number) => void
-  eventAttendeeTypes?: EventAttendeeType[]
+  eventAttendeeTypes?: EventAttendeeType[] | undefined
   isLoadingAttendeeTypes?: boolean
 }
 
@@ -231,11 +231,11 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       label: type.attendeeType.name,
       hexColor: type.color_hex || type.attendeeType.color_hex || '#9ca3af',
       textHexColor: type.text_color_hex || type.attendeeType.text_color_hex || '#ffffff',
-      description: !type.is_active ? 'Désactivé' : undefined
+      ...(type.is_active ? {} : { description: 'Désactivé' as const })
     })) || []
     
     return [
-      { value: 'none', label: 'Aucun', color: 'gray' },
+      { value: 'none', label: 'Aucun', color: 'gray' as const },
       ...options
     ]
   }, [eventAttendeeTypes])
@@ -591,7 +591,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                 value: row.original.eventAttendeeType.id,
                 label: row.original.eventAttendeeType.attendeeType.name,
                 hexColor: row.original.eventAttendeeType.color_hex || row.original.eventAttendeeType.attendeeType.color_hex,
-                textHexColor: row.original.eventAttendeeType.attendeeType.text_color_hex || '#ffffff',
+                textHexColor: row.original.eventAttendeeType.text_color_hex || row.original.eventAttendeeType.attendeeType.text_color_hex || '#ffffff',
               }
             ]
           }

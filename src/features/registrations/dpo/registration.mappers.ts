@@ -13,11 +13,13 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     eventAttendeeTypeId: dto.event_attendee_type_id || null,
     eventAttendeeType: dto.eventAttendeeType ? {
       id: dto.eventAttendeeType.id,
-      color_hex: dto.eventAttendeeType.color_hex,
+      color_hex: dto.eventAttendeeType.color_hex ?? null,
+      text_color_hex: dto.eventAttendeeType.text_color_hex ?? null,
       attendeeType: {
         id: dto.eventAttendeeType.attendeeType.id,
         name: dto.eventAttendeeType.attendeeType.name,
-        color_hex: dto.eventAttendeeType.attendeeType.color_hex
+        color_hex: dto.eventAttendeeType.attendeeType.color_hex,
+        text_color_hex: dto.eventAttendeeType.attendeeType.text_color_hex,
       }
     } : null,
     badgeTemplateId: dto.badge_template_id || null,

@@ -43,11 +43,14 @@ export function useAttendeeTypeNameAvailability(
 
     timeoutRef.current = setTimeout(async () => {
       try {
-        const result = await checkName({
+        const params: { orgId: string; name: string; excludeId?: string } = {
           orgId: currentOrg.id,
           name: name.trim(),
-          excludeId
-        }).unwrap()
+        }
+        if (excludeId) {
+          params.excludeId = excludeId
+        }
+        const result = await checkName(params).unwrap()
         
         setIsAvailable(result.available)
         

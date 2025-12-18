@@ -241,7 +241,7 @@ export const registrationsApi = rootApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id, eventId }) => [
         { type: 'Attendee', id },
         { type: 'Attendee', id: `EVENT-${eventId}` },
-        { type: 'EventAttendeeTypes', id: eventId }, // Invalider pour mettre à jour les compteurs
+        { type: 'AttendeeTypes', id: eventId }, // Invalider pour mettre à jour les compteurs
       ],
     }),
 

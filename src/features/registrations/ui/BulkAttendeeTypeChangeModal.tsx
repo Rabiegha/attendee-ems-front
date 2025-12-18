@@ -36,7 +36,7 @@ export const BulkAttendeeTypeChangeModal: React.FC<BulkAttendeeTypeChangeModalPr
     }
   }
 
-  // Ajouter l'option "Aucun" à la liste
+  // Ajouter l'option "Aucun" à la liste et filtrer les types désactivés
   const allOptions = [
     {
       id: 'none',
@@ -44,12 +44,14 @@ export const BulkAttendeeTypeChangeModal: React.FC<BulkAttendeeTypeChangeModalPr
       color_hex: '#9ca3af',
       is_active: true,
     },
-    ...attendeeTypes.map(t => ({
-      id: t.id, // ID de la liaison event_attendee_type
-      name: t.attendeeType.name,
-      color_hex: t.color_hex || t.attendeeType.color_hex,
-      is_active: t.is_active,
-    }))
+    ...attendeeTypes
+      .filter(t => t.attendeeType.is_active) // Ne garder que les types actifs
+      .map(t => ({
+        id: t.id, // ID de la liaison event_attendee_type
+        name: t.attendeeType.name,
+        color_hex: t.color_hex || t.attendeeType.color_hex,
+        is_active: t.is_active,
+      }))
   ]
 
   return (

@@ -31,6 +31,14 @@ import {
   ColumnPinningState,
   Column,
 } from '@tanstack/react-table'
+
+// Déclaration pour étendre les types de TanStack Table avec notre fonction de tri personnalisée
+declare module '@tanstack/react-table' {
+  interface SortingFns {
+    caseInsensitive: any
+  }
+}
+
 import {
   DndContext,
   KeyboardSensor,
@@ -67,6 +75,20 @@ import { Button } from '../Button'
 import { Checkbox } from '../Checkbox'
 import { cn } from '@/shared/lib/utils'
 import { BulkActions, type BulkAction } from '../BulkActions'
+
+// Fonction de tri insensible à la casse pour les chaînes de caractères
+const caseInsensitiveSort = (rowA: any, rowB: any, columnId: string) => {
+  const a = rowA.getValue(columnId)
+  const b = rowB.getValue(columnId)
+  
+  // Si les valeurs ne sont pas des chaînes, utiliser le tri par défaut
+  if (typeof a !== 'string' || typeof b !== 'string') {
+    return a === b ? 0 : a > b ? 1 : -1
+  }
+  
+  // Tri insensible à la casse
+  return a.toLowerCase().localeCompare(b.toLowerCase())
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -347,6 +369,9 @@ export function DataTable<TData, TValue>({
     onColumnOrderChange: setColumnOrder,
     onColumnPinningChange: setColumnPinning,
     enableRowSelection,
+    sortingFns: {
+      caseInsensitive: caseInsensitiveSort,
+    },
     state: {
       sorting,
       columnFilters,

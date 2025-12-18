@@ -207,9 +207,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       options: [
         { value: 'all', label: 'Tous les types' },
         { value: 'none', label: 'Aucun' },
-        ...(eventAttendeeTypes?.map(type => ({
+        ...(eventAttendeeTypes?.filter(type => type.attendeeType.is_active).map(type => ({
           value: type.attendee_type_id,
-          label: type.is_active ? type.attendeeType.name : `${type.attendeeType.name} (Désactivé)`
+          label: type.attendeeType.name
         })) || [])
       ],
     },
@@ -226,12 +226,12 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
   // Options pour le sélecteur de type dans le tableau
   const attendeeTypeOptions: TableSelectorOption<string>[] = useMemo(() => {
-    const options = eventAttendeeTypes?.map(type => ({
+    // Ne garder que les types actifs pour les options du sélecteur
+    const options = eventAttendeeTypes?.filter(type => type.attendeeType.is_active).map(type => ({
       value: type.id, // ID de la liaison event_attendee_type
       label: type.attendeeType.name,
       hexColor: type.color_hex || type.attendeeType.color_hex || '#9ca3af',
       textHexColor: type.text_color_hex || type.attendeeType.text_color_hex || '#ffffff',
-      ...(type.is_active ? {} : { description: 'Désactivé' as const })
     })) || []
     
     return [
@@ -557,6 +557,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         id: 'participant',
         header: 'Participant',
         accessorFn: (row) => getRegistrationFullName(row),
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div className="cursor-pointer" onClick={() => handleRowClick(row.original)}>
             <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -575,6 +576,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         id: 'contact',
         header: 'Contact',
         accessorFn: (row) => getRegistrationEmail(row),
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div className="cursor-pointer space-y-1" onClick={() => handleRowClick(row.original)}>
             <div className="text-sm text-gray-900 dark:text-white flex items-center">
@@ -599,6 +601,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         id: 'attendeeType',
         header: 'Type',
         accessorFn: (row) => row.eventAttendeeType?.attendeeType?.name || 'Aucun',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           // Utiliser la valeur optimiste si disponible, sinon la valeur serveur
           const optimisticType = optimisticTypeUpdates.get(row.original.id)
@@ -611,6 +614,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           
           let displayOptions = attendeeTypeOptions
           if (!currentOptionExists && row.original.eventAttendeeType) {
+            // Le type actuel n'est pas dans la liste (probablement désactivé)
+            // On l'ajoute uniquement pour cet utilisateur avec une indication
             displayOptions = [
               ...attendeeTypeOptions,
               {
@@ -618,6 +623,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                 label: row.original.eventAttendeeType.attendeeType.name,
                 hexColor: row.original.eventAttendeeType.color_hex || row.original.eventAttendeeType.attendeeType.color_hex,
                 textHexColor: row.original.eventAttendeeType.text_color_hex || row.original.eventAttendeeType.attendeeType.text_color_hex || '#ffffff',
+                description: 'Type désactivé' as const
               }
             ]
           }

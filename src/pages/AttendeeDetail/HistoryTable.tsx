@@ -66,6 +66,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           id: 'event',
           header: 'Événement',
           accessorFn: (row) => row.event.name,
+          sortingFn: 'caseInsensitive',
           cell: ({ row }) => (
             <div className="cursor-pointer" onClick={() => handleEventClick(row.original.event.id)}>
               <div className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">

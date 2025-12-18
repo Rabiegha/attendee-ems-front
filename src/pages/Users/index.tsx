@@ -240,6 +240,7 @@ export function UsersPage() {
         id: 'user',
         header: 'Utilisateur',
         accessorFn: (row) => `${row.first_name || ''} ${row.last_name || ''} ${row.email}`,
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const user = row.original
           return (
@@ -268,6 +269,7 @@ export function UsersPage() {
         id: 'role',
         header: 'Rôle',
         accessorKey: 'role.name',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const user = row.original
           

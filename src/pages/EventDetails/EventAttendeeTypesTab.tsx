@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { 
   useGetAttendeeTypesQuery,
   useCreateAttendeeTypeMutation,
@@ -39,6 +39,12 @@ const ColorEditorModal = ({
 }: ColorEditorModalProps) => {
   const [bgColor, setBgColor] = useState(backgroundColor)
   const [txtColor, setTxtColor] = useState(textColor)
+
+  // Synchroniser les états locaux quand les props changent
+  useEffect(() => {
+    setBgColor(backgroundColor)
+    setTxtColor(textColor)
+  }, [backgroundColor, textColor, isOpen])
 
   if (!isOpen) return null
 
@@ -266,6 +272,9 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
     if (!globalTypes) return []
 
     return globalTypes.filter((type) => {
+      // N'afficher que les types actifs
+      if (!type.is_active) return false
+      
       const eventType = eventTypes?.find((et) => et.attendee_type_id === type.id)
       const isSelected = !!eventType
 
@@ -346,13 +355,13 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
     }
   }
 
-  const openColorEditor = (eventType: EventAttendeeType, typeName: string) => {
+  const openColorEditor = (eventType: EventAttendeeType, globalType: AttendeeType) => {
     setColorEditorState({
       isOpen: true,
       eventTypeId: eventType.id,
-      typeName,
-      backgroundColor: eventType.color_hex || '#9ca3af',
-      textColor: eventType.text_color_hex || '#ffffff'
+      typeName: globalType.name,
+      backgroundColor: eventType.color_hex || globalType.color_hex || '#9ca3af',
+      textColor: eventType.text_color_hex || globalType.text_color_hex || '#ffffff'
     })
   }
 
@@ -420,7 +429,7 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
                   eventType={eventType}
                   isSelected={isSelected}
                   onToggle={() => handleToggle(type.id, eventType?.id)}
-                  onEditColors={() => eventType && openColorEditor(eventType, type.name)}
+                  onEditColors={() => eventType && openColorEditor(eventType, type)}
                 />
               )
             })}

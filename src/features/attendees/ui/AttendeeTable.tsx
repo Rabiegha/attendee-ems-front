@@ -151,6 +151,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         id: 'participant',
         header: 'Participant',
         accessorFn: (row) => row.displayName,
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div 
             className="cursor-pointer"
@@ -171,6 +172,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         id: 'contact',
         header: 'Contact',
         accessorKey: 'email',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div 
             className="cursor-pointer"
@@ -191,6 +193,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         id: 'company',
         header: 'Entreprise',
         accessorKey: 'company',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div 
             className="cursor-pointer"

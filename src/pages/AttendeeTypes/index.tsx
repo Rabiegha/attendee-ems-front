@@ -176,6 +176,7 @@ export function AttendeeTypesPage() {
       {
         accessorKey: 'name',
         header: 'Type',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const type = row.original
           return (
@@ -332,6 +333,7 @@ export function AttendeeTypesPage() {
       {
         accessorKey: 'name',
         header: 'Type',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const type = row.original
           return (

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import { 
   useGetAttendeeTypesQuery,
   useCreateAttendeeTypeMutation,
@@ -13,20 +13,134 @@ import {
   type EventAttendeeType
 } from '@/features/events/api/eventsApi'
 import { EventDPO } from '@/features/events/dpo/event.dpo'
-import { Loader2, Check, Plus, Palette, Edit2 } from 'lucide-react'
+import { Loader2, Check, Plus, Pen, X } from 'lucide-react'
 import { useToast } from '@/shared/hooks/useToast'
 import { SearchInput, Button } from '@/shared/ui'
 import { FilterBar, FilterButton } from '@/shared/ui/FilterBar'
 import type { FilterValues } from '@/shared/ui/FilterBar/types'
 import { CreateAttendeeTypeModal } from '@/features/attendee-types/ui/CreateAttendeeTypeModal'
 
+interface ColorEditorModalProps {
+  isOpen: boolean
+  onClose: () => void
+  typeName: string
+  backgroundColor: string
+  textColor: string
+  onSave: (bgColor: string, textColor: string) => void
+}
+
+const ColorEditorModal = ({ 
+  isOpen, 
+  onClose, 
+  typeName, 
+  backgroundColor, 
+  textColor, 
+  onSave 
+}: ColorEditorModalProps) => {
+  const [bgColor, setBgColor] = useState(backgroundColor)
+  const [txtColor, setTxtColor] = useState(textColor)
+
+  if (!isOpen) return null
+
+  const handleSave = () => {
+    onSave(bgColor, txtColor)
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+      <div 
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Modifier les couleurs
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Preview */}
+          <div className="flex justify-center">
+            <span
+              className="px-4 py-2 rounded-full text-sm font-medium"
+              style={{ backgroundColor: bgColor, color: txtColor }}
+            >
+              {typeName}
+            </span>
+          </div>
+
+          {/* Background Color */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Couleur de fond
+            </label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="color"
+                value={bgColor}
+                onChange={(e) => setBgColor(e.target.value)}
+                className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+              />
+              <input
+                type="text"
+                value={bgColor}
+                onChange={(e) => setBgColor(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="#000000"
+              />
+            </div>
+          </div>
+
+          {/* Text Color */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Couleur du texte
+            </label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="color"
+                value={txtColor}
+                onChange={(e) => setTxtColor(e.target.value)}
+                className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+              />
+              <input
+                type="text"
+                value={txtColor}
+                onChange={(e) => setTxtColor(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="#FFFFFF"
+              />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button variant="ghost" onClick={onClose}>
+              Annuler
+            </Button>
+            <Button onClick={handleSave}>
+              Enregistrer
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface AttendeeTypeItemProps {
   type: AttendeeType
   eventType?: EventAttendeeType | undefined
   isSelected: boolean
   onToggle: () => void
-  onColorChange: (color: string) => void
-  onTextColorChange: (color: string) => void
+  onEditColors: () => void
 }
 
 const AttendeeTypeItem = ({
@@ -34,36 +148,10 @@ const AttendeeTypeItem = ({
   eventType,
   isSelected,
   onToggle,
-  onColorChange,
-  onTextColorChange,
+  onEditColors,
 }: AttendeeTypeItemProps) => {
-  const [color, setColor] = useState(eventType?.color_hex || type.color_hex || '#9ca3af')
-  const [textColor, setTextColor] = useState(eventType?.text_color_hex || type.text_color_hex || '#ffffff')
-
-  useEffect(() => {
-    setColor(eventType?.color_hex || type.color_hex || '#9ca3af')
-    setTextColor(eventType?.text_color_hex || type.text_color_hex || '#ffffff')
-  }, [eventType?.color_hex, eventType?.text_color_hex, type.color_hex, type.text_color_hex])
-
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setColor(e.target.value)
-  }
-
-  const handleTextColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTextColor(e.target.value)
-  }
-
-  const handleBlur = () => {
-    if (eventType && color !== eventType.color_hex) {
-      onColorChange(color)
-    }
-  }
-
-  const handleTextBlur = () => {
-    if (eventType && textColor !== eventType.text_color_hex) {
-      onTextColorChange(textColor)
-    }
-  }
+  const backgroundColor = eventType?.color_hex || type.color_hex || '#9ca3af'
+  const textColor = eventType?.text_color_hex || type.text_color_hex || '#ffffff'
 
   return (
     <div
@@ -77,64 +165,26 @@ const AttendeeTypeItem = ({
         }
       `}
     >
-      {/* Color Indicator / Picker */}
-      <div 
-        className="mr-4 flex-shrink-0"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {isSelected && eventType ? (
-          <div className="relative">
-            <div
-              className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 shadow-sm flex items-center justify-center transition-transform group-hover:scale-105 cursor-pointer"
-              style={{ backgroundColor: color }}
-            >
-              <Palette className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 drop-shadow-md transition-opacity" />
-            </div>
-            <input
-              type="color"
-              value={color}
-              onChange={handleColorChange}
-              onBlur={handleBlur}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              title="Modifier la couleur pour cet événement"
-            />
-          </div>
-        ) : (
-          <div
-            className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800 shadow-sm"
-            style={{ backgroundColor: type.color_hex || '#9ca3af' }}
-          />
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1" onClick={(e) => e.stopPropagation()}>
-        {isSelected && eventType ? (
-          <div className="relative inline-block group">
-            <span 
-              className="font-medium block cursor-pointer hover:opacity-80 transition-opacity"
-              style={{ color: textColor }}
-              title="Cliquer pour modifier la couleur du texte"
-            >
-              {type.name}
-            </span>
-            <Edit2 className="absolute -right-5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity pointer-events-none" style={{ color: textColor }} />
-            <input
-              type="color"
-              value={textColor}
-              onChange={handleTextColorChange}
-              onBlur={handleTextBlur}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              title="Modifier la couleur du texte pour cet événement"
-            />
-          </div>
-        ) : (
-          <span 
-            className="font-medium text-gray-900 dark:text-white block"
-            style={type.text_color_hex ? { color: type.text_color_hex } : undefined}
+      {/* Badge avec couleurs */}
+      <div className="flex-1 flex items-center space-x-3">
+        <span
+          className="px-3 py-1.5 rounded-full text-sm font-medium"
+          style={{ backgroundColor, color: textColor }}
+        >
+          {type.name}
+        </span>
+        
+        {isSelected && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onEditColors()
+            }}
+            className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Modifier les couleurs"
           >
-            {type.name}
-          </span>
+            <Pen className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          </button>
         )}
       </div>
       
@@ -145,7 +195,7 @@ const AttendeeTypeItem = ({
             <Check className="h-4 w-4 text-white" />
           </div>
         ) : (
-          <div className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600" />
+          <div className="w-6 h-6 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-blue-400 transition-colors" />
         )}
       </div>
     </div>
@@ -162,6 +212,19 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
   const [searchQuery, setSearchQuery] = useState('')
   const [filterValues, setFilterValues] = useState<FilterValues>({})
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [colorEditorState, setColorEditorState] = useState<{
+    isOpen: boolean
+    eventTypeId: string | null
+    typeName: string
+    backgroundColor: string
+    textColor: string
+  }>({
+    isOpen: false,
+    eventTypeId: null,
+    typeName: '',
+    backgroundColor: '#9ca3af',
+    textColor: '#ffffff'
+  })
 
   const { 
     data: globalTypes, 
@@ -267,29 +330,35 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
     }
   }
 
-  const handleColorChange = async (eventTypeId: string, color: string) => {
+  const handleColorChange = async (eventTypeId: string, bgColor: string, txtColor: string) => {
     try {
       await updateType({
         eventId: event.id,
         eventAttendeeTypeId: eventTypeId,
-        data: { color_hex: color }
+        data: { 
+          color_hex: bgColor,
+          text_color_hex: txtColor
+        }
       }).unwrap()
-      toast.success('Couleur mise à jour')
+      toast.success('Couleurs mises à jour')
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour de la couleur')
+      toast.error('Erreur lors de la mise à jour des couleurs')
     }
   }
 
-  const handleTextColorChange = async (eventTypeId: string, color: string) => {
-    try {
-      await updateType({
-        eventId: event.id,
-        eventAttendeeTypeId: eventTypeId,
-        data: { text_color_hex: color }
-      }).unwrap()
-      toast.success('Couleur du texte mise à jour')
-    } catch (error) {
-      toast.error('Erreur lors de la mise à jour de la couleur du texte')
+  const openColorEditor = (eventType: EventAttendeeType, typeName: string) => {
+    setColorEditorState({
+      isOpen: true,
+      eventTypeId: eventType.id,
+      typeName,
+      backgroundColor: eventType.color_hex || '#9ca3af',
+      textColor: eventType.text_color_hex || '#ffffff'
+    })
+  }
+
+  const handleSaveColors = (bgColor: string, txtColor: string) => {
+    if (colorEditorState.eventTypeId) {
+      handleColorChange(colorEditorState.eventTypeId, bgColor, txtColor)
     }
   }
 
@@ -351,8 +420,7 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
                   eventType={eventType}
                   isSelected={isSelected}
                   onToggle={() => handleToggle(type.id, eventType?.id)}
-                  onColorChange={(color) => eventType && handleColorChange(eventType.id, color)}
-                  onTextColorChange={(color) => eventType && handleTextColorChange(eventType.id, color)}
+                  onEditColors={() => eventType && openColorEditor(eventType, type.name)}
                 />
               )
             })}
@@ -365,6 +433,15 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
           </div>
         </div>
       </div>
+
+      <ColorEditorModal
+        isOpen={colorEditorState.isOpen}
+        onClose={() => setColorEditorState({ ...colorEditorState, isOpen: false })}
+        typeName={colorEditorState.typeName}
+        backgroundColor={colorEditorState.backgroundColor}
+        textColor={colorEditorState.textColor}
+        onSave={handleSaveColors}
+      />
 
       <CreateAttendeeTypeModal
         isOpen={isCreateModalOpen}

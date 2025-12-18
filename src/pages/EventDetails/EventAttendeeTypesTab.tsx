@@ -13,7 +13,7 @@ import {
   type EventAttendeeType
 } from '@/features/events/api/eventsApi'
 import { EventDPO } from '@/features/events/dpo/event.dpo'
-import { Loader2, Check, Plus, Palette } from 'lucide-react'
+import { Loader2, Check, Plus, Palette, Edit2 } from 'lucide-react'
 import { useToast } from '@/shared/hooks/useToast'
 import { SearchInput, Button } from '@/shared/ui'
 import { FilterBar, FilterButton } from '@/shared/ui/FilterBar'
@@ -26,6 +26,7 @@ interface AttendeeTypeItemProps {
   isSelected: boolean
   onToggle: () => void
   onColorChange: (color: string) => void
+  onTextColorChange: (color: string) => void
 }
 
 const AttendeeTypeItem = ({
@@ -34,20 +35,33 @@ const AttendeeTypeItem = ({
   isSelected,
   onToggle,
   onColorChange,
+  onTextColorChange,
 }: AttendeeTypeItemProps) => {
   const [color, setColor] = useState(eventType?.color_hex || type.color_hex || '#9ca3af')
+  const [textColor, setTextColor] = useState(eventType?.text_color_hex || type.text_color_hex || '#ffffff')
 
   useEffect(() => {
     setColor(eventType?.color_hex || type.color_hex || '#9ca3af')
-  }, [eventType?.color_hex, type.color_hex])
+    setTextColor(eventType?.text_color_hex || type.text_color_hex || '#ffffff')
+  }, [eventType?.color_hex, eventType?.text_color_hex, type.color_hex, type.text_color_hex])
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setColor(e.target.value)
   }
 
+  const handleTextColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTextColor(e.target.value)
+  }
+
   const handleBlur = () => {
     if (eventType && color !== eventType.color_hex) {
       onColorChange(color)
+    }
+  }
+
+  const handleTextBlur = () => {
+    if (eventType && textColor !== eventType.text_color_hex) {
+      onTextColorChange(textColor)
     }
   }
 
@@ -94,10 +108,34 @@ const AttendeeTypeItem = ({
       </div>
 
       {/* Content */}
-      <div className="flex-1">
-        <span className="font-medium text-gray-900 dark:text-white block">
-          {type.name}
-        </span>
+      <div className="flex-1" onClick={(e) => e.stopPropagation()}>
+        {isSelected && eventType ? (
+          <div className="relative inline-block group">
+            <span 
+              className="font-medium block cursor-pointer hover:opacity-80 transition-opacity"
+              style={{ color: textColor }}
+              title="Cliquer pour modifier la couleur du texte"
+            >
+              {type.name}
+            </span>
+            <Edit2 className="absolute -right-5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-0 group-hover:opacity-60 transition-opacity pointer-events-none" style={{ color: textColor }} />
+            <input
+              type="color"
+              value={textColor}
+              onChange={handleTextColorChange}
+              onBlur={handleTextBlur}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              title="Modifier la couleur du texte pour cet événement"
+            />
+          </div>
+        ) : (
+          <span 
+            className="font-medium text-gray-900 dark:text-white block"
+            style={type.text_color_hex ? { color: type.text_color_hex } : undefined}
+          >
+            {type.name}
+          </span>
+        )}
       </div>
       
       {/* Selection Indicator */}
@@ -222,8 +260,10 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
         await addType({ eventId: event.id, attendeeTypeId: typeId }).unwrap()
         toast.success('Type de participant ajouté')
       }
-    } catch (error) {
-      toast.error("Une erreur est survenue")
+    } catch (error: any) {
+      // Extraire le message d'erreur du backend
+      const errorMessage = error?.data?.message || error?.message || "Une erreur est survenue"
+      toast.error(errorMessage)
     }
   }
 
@@ -237,6 +277,19 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
       toast.success('Couleur mise à jour')
     } catch (error) {
       toast.error('Erreur lors de la mise à jour de la couleur')
+    }
+  }
+
+  const handleTextColorChange = async (eventTypeId: string, color: string) => {
+    try {
+      await updateType({
+        eventId: event.id,
+        eventAttendeeTypeId: eventTypeId,
+        data: { text_color_hex: color }
+      }).unwrap()
+      toast.success('Couleur du texte mise à jour')
+    } catch (error) {
+      toast.error('Erreur lors de la mise à jour de la couleur du texte')
     }
   }
 
@@ -299,6 +352,7 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
                   isSelected={isSelected}
                   onToggle={() => handleToggle(type.id, eventType?.id)}
                   onColorChange={(color) => eventType && handleColorChange(eventType.id, color)}
+                  onTextColorChange={(color) => eventType && handleTextColorChange(eventType.id, color)}
                 />
               )
             })}

@@ -97,50 +97,52 @@ export const CreateAttendeeTypeModal: React.FC<CreateAttendeeTypeModalProps> = (
           )}
         </FormField>
 
-        <FormField label="Couleur de fond">
-          <div className="flex gap-2">
-            <input
-              type="color"
-              value={formData.color_hex}
-              onChange={(e) => handleChange('color_hex', e.target.value)}
-              className="h-10 w-16 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-            />
-            <Input
-              value={formData.color_hex}
-              onChange={(e) => handleChange('color_hex', e.target.value)}
-              placeholder="#4F46E5"
-            />
-          </div>
-        </FormField>
-
-        <FormField label="Couleur du texte">
-          <div className="flex gap-2">
-            <input
-              type="color"
-              value={formData.text_color_hex}
-              onChange={(e) => handleChange('text_color_hex', e.target.value)}
-              className="h-10 w-16 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-            />
-            <Input
-              value={formData.text_color_hex}
-              onChange={(e) => handleChange('text_color_hex', e.target.value)}
-              placeholder="#FFFFFF"
-            />
-          </div>
-        </FormField>
-
-        {/* Preview */}
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Aperçu :</div>
+        {/* Aperçu */}
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Aperçu :</p>
           <div
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium"
+            className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold"
             style={{
               backgroundColor: formData.color_hex,
               color: formData.text_color_hex,
             }}
           >
-            <span>{formData.name || 'Nom du type'}</span>
+            {formData.name || 'Type'}
           </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField label="Couleur de fond">
+            <div className="flex gap-2">
+              <Input
+                type="color"
+                value={formData.color_hex}
+                onChange={(e) => handleChange('color_hex', e.target.value)}
+                className="h-10 w-16 p-1"
+              />
+              <Input
+                value={formData.color_hex}
+                onChange={(e) => handleChange('color_hex', e.target.value)}
+                placeholder="#4F46E5"
+              />
+            </div>
+          </FormField>
+
+          <FormField label="Couleur du texte">
+            <div className="flex gap-2">
+              <Input
+                type="color"
+                value={formData.text_color_hex}
+                onChange={(e) => handleChange('text_color_hex', e.target.value)}
+                className="h-10 w-16 p-1"
+              />
+              <Input
+                value={formData.text_color_hex}
+                onChange={(e) => handleChange('text_color_hex', e.target.value)}
+                placeholder="#FFFFFF"
+              />
+            </div>
+          </FormField>
         </div>
       </div>
 

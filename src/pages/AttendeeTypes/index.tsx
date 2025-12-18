@@ -45,6 +45,34 @@ import {
   DeleteAttendeeTypeModal,
 } from '@/features/attendee-types/ui'
 
+// Composant pour le sélecteur de couleur avec sauvegarde au blur
+const ColorPicker = ({
+  initialValue,
+  onSave,
+}: {
+  initialValue: string
+  onSave: (value: string) => Promise<void>
+}) => {
+  const [color, setColor] = useState(initialValue)
+
+  const handleBlur = async () => {
+    if (color !== initialValue) {
+      await onSave(color)
+    }
+  }
+
+  return (
+    <input
+      type="color"
+      value={color}
+      onChange={(e) => setColor(e.target.value)}
+      onBlur={handleBlur}
+      className="h-8 w-12 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+      title="Cliquer pour modifier"
+    />
+  )
+}
+
 export function AttendeeTypesPage() {
   const currentUser = useSelector(selectUser)
   const currentOrg = useSelector(selectOrganization)
@@ -151,23 +179,71 @@ export function AttendeeTypesPage() {
         cell: ({ row }) => {
           const type = row.original
           return (
-            <div className="font-medium text-gray-900 dark:text-white">{type.name}</div>
+            <div
+              className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium"
+              style={{
+                backgroundColor: type.color_hex || '#9ca3af',
+                color: type.text_color_hex || '#ffffff',
+              }}
+            >
+              {type.name}
+            </div>
           )
         },
       },
       {
         accessorKey: 'color_hex',
-        header: 'Couleur',
+        header: 'Couleur de fond',
         cell: ({ row }) => {
           const type = row.original
           return (
             <div className="flex items-center gap-2">
-              <div
-                className="h-6 w-16 rounded border border-gray-200 dark:border-gray-700"
-                style={{ backgroundColor: type.color_hex }}
+              <ColorPicker
+                initialValue={type.color_hex || '#9ca3af'}
+                onSave={async (color) => {
+                  try {
+                    await updateType({
+                      orgId: currentOrg?.id || '',
+                      id: type.id,
+                      data: { color_hex: color },
+                    }).unwrap()
+                    toast.success('Couleur mise à jour')
+                  } catch (error) {
+                    toast.error('Erreur', 'Impossible de mettre à jour la couleur')
+                  }
+                }}
               />
               <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
                 {type.color_hex}
+              </span>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'text_color_hex',
+        header: 'Couleur de texte',
+        cell: ({ row }) => {
+          const type = row.original
+          return (
+            <div className="flex items-center gap-2">
+              <ColorPicker
+                initialValue={type.text_color_hex || '#ffffff'}
+                onSave={async (color) => {
+                  try {
+                    await updateType({
+                      orgId: currentOrg?.id || '',
+                      id: type.id,
+                      data: { text_color_hex: color },
+                    }).unwrap()
+                    toast.success('Couleur mise à jour')
+                  } catch (error) {
+                    toast.error('Erreur', 'Impossible de mettre à jour la couleur')
+                  }
+                }}
+              />
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                {type.text_color_hex}
               </span>
             </div>
           )
@@ -259,7 +335,15 @@ export function AttendeeTypesPage() {
         cell: ({ row }) => {
           const type = row.original
           return (
-            <div className="font-medium text-gray-900 dark:text-white">{type.name}</div>
+            <div
+              className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium opacity-50"
+              style={{
+                backgroundColor: type.color_hex || '#9ca3af',
+                color: type.text_color_hex || '#ffffff',
+              }}
+            >
+              {type.name}
+            </div>
           )
         },
       },

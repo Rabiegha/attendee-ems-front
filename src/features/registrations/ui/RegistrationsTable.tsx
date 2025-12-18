@@ -242,6 +242,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
   // Optimistic updates: stocke temporairement les nouveaux status avant confirmation serveur
   const [optimisticStatusUpdates, setOptimisticStatusUpdates] = useState<Map<string, string>>(new Map())
+  // Optimistic updates pour les types de participants
+  const [optimisticTypeUpdates, setOptimisticTypeUpdates] = useState<Map<string, string>>(new Map())
 
   const [updateStatus] = useUpdateRegistrationStatusMutation()
   const [updateRegistration, { isLoading: isUpdating }] =
@@ -299,6 +301,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     registrationId: string,
     newEventAttendeeTypeId: string
   ) => {
+    // Optimistic update: afficher immédiatement le nouveau type
+    setOptimisticTypeUpdates(prev => new Map(prev).set(registrationId, newEventAttendeeTypeId))
+    
     try {
       await updateRegistration({
         id: registrationId,
@@ -308,9 +313,16 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         }
       }).unwrap()
       toast.success('Type mis à jour', 'Le type de participant a été modifié')
-    } catch (error) {
-      console.error('Error updating attendee type:', error)
-      toast.error('Erreur', "Impossible de mettre à jour le type")
+      // Le nettoyage se fera automatiquement quand le serveur renverra la bonne valeur
+    } catch (error: any) {
+      console.error('Error updating type:', error)
+      // Erreur: restaurer l'ancienne valeur
+      setOptimisticTypeUpdates(prev => {
+        const next = new Map(prev)
+        next.delete(registrationId)
+        return next
+      })
+      toast.error('Erreur', 'Impossible de mettre à jour le type')
     }
   }
 
@@ -550,7 +562,22 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         header: 'Type',
         accessorFn: (row) => row.eventAttendeeType?.attendeeType?.name || 'Aucun',
         cell: ({ row }) => {
-          const currentTypeId = row.original.eventAttendeeType?.id || 'none'
+          // Utiliser la valeur optimiste si disponible, sinon la valeur serveur
+          const optimisticType = optimisticTypeUpdates.get(row.original.id)
+          const serverTypeId = row.original.eventAttendeeType?.id || 'none'
+          const currentTypeId = optimisticType || serverTypeId
+          
+          // Si on a une valeur optimiste ET que le serveur a renvoyé la même valeur, on peut nettoyer
+          if (optimisticType && serverTypeId === optimisticType) {
+            // Nettoyer de manière asynchrone pour éviter les updates pendant le render
+            Promise.resolve().then(() => {
+              setOptimisticTypeUpdates(prev => {
+                const next = new Map(prev)
+                next.delete(row.original.id)
+                return next
+              })
+            })
+          }
           
           // S'assurer que l'option actuelle existe dans la liste pour l'affichage correct
           // (Même si la liste globale est en cours de chargement ou si le type est manquant)
@@ -574,7 +601,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               value={currentTypeId}
               options={displayOptions}
               onChange={(newValue) => handleAttendeeTypeChange(row.original.id, newValue)}
-              disabled={isUpdating || (isLoadingAttendeeTypes && !eventAttendeeTypes)}
+              disabled={isLoadingAttendeeTypes && !eventAttendeeTypes}
               loadingText="..."
               size="sm"
             />
@@ -630,7 +657,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                   throw error
                 }
               }}
-              disabled={isUpdating}
               loadingText="Mise à jour..."
             />
           )

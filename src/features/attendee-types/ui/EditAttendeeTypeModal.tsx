@@ -19,11 +19,9 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
 }) => {
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
-    code: '',
     name: '',
     color_hex: '#4F46E5',
     text_color_hex: '#FFFFFF',
-    icon: '',
   })
 
   const { isChecking, isAvailable, errorMessage } = useAttendeeTypeNameAvailability(
@@ -34,11 +32,9 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
   useEffect(() => {
     if (type) {
       setFormData({
-        code: type.code || '',
         name: type.name || '',
         color_hex: type.color_hex || '#4F46E5',
         text_color_hex: type.text_color_hex || '#FFFFFF',
-        icon: type.icon || '',
       })
     }
   }, [type])
@@ -69,17 +65,6 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Modifier le type de participant">
       <div className="space-y-4">
-        <FormField label="Code" required>
-          <Input
-            value={formData.code}
-            disabled
-            className="bg-gray-100 dark:bg-gray-800 cursor-not-allowed"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Le code ne peut pas être modifié
-          </p>
-        </FormField>
-
         <FormField label="Nom" required>
           <Input
             value={formData.name}
@@ -111,6 +96,20 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
             </>
           )}
         </FormField>
+
+        {/* Aperçu */}
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Aperçu :</p>
+          <div
+            className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold"
+            style={{
+              backgroundColor: formData.color_hex,
+              color: formData.text_color_hex,
+            }}
+          >
+            {formData.name || 'Type'}
+          </div>
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <FormField label="Couleur de fond">
@@ -152,30 +151,6 @@ export const EditAttendeeTypeModal: React.FC<EditAttendeeTypeModalProps> = ({
               />
             </div>
           </FormField>
-        </div>
-
-        <FormField label="Icône (optionnel)">
-          <Input
-            value={formData.icon}
-            onChange={(e) =>
-              setFormData({ ...formData, icon: e.target.value })
-            }
-            placeholder="star"
-          />
-        </FormField>
-
-        {/* Aperçu */}
-        <div className="border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600 mb-2">Aperçu :</p>
-          <div
-            className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-semibold"
-            style={{
-              backgroundColor: formData.color_hex,
-              color: formData.text_color_hex,
-            }}
-          >
-            {formData.name || 'Type'}
-          </div>
         </div>
       </div>
 

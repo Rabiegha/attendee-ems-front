@@ -50,7 +50,7 @@ interface TemplateSelectProps {
   value: string
   onChange: (value: string) => void
   templates: any[]
-  onModify?: () => void
+  onModify?: (() => void) | undefined
 }
 
 const TemplateSelect: React.FC<TemplateSelectProps> = ({ value, onChange, templates, onModify }) => {
@@ -166,7 +166,7 @@ const TemplateSelect: React.FC<TemplateSelectProps> = ({ value, onChange, templa
       {value && onModify && (
         <Button
           variant="outline"
-          size="md"
+          size="default"
           onClick={onModify}
           className="h-[42px] px-6"
         >
@@ -189,9 +189,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
   const [deleteBadgeRule] = useDeleteEventBadgeRuleMutation()
 
   // Récupérer les templates de badges disponibles
-  const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({ 
-    orgId: event.orgId 
-  })
+const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
 
   // Récupérer les attendee types de l'événement
   const { data: eventAttendeeTypesData = [] } = useGetEventAttendeeTypesQuery(event.id)
@@ -258,12 +256,13 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
   useEffect(() => {
     const saveDefaultBadge = async () => {
       if (formData.badgeTemplateId === event.badgeTemplateId) return
+      if (!formData.badgeTemplateId) return
 
       try {
         await updateEvent({
           id: event.id,
           data: {
-            badgeTemplateId: formData.badgeTemplateId || null,
+            badgeTemplateId: formData.badgeTemplateId,
           },
         }).unwrap()
       } catch (error) {
@@ -687,7 +686,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
                             Annuler
                           </Button>
                           <Button
-                            variant="primary"
+                            variant="default"
                             size="sm"
                             onClick={() => handleSaveRule(rule.id)}
                             leftIcon={<Check className="h-4 w-4" />}
@@ -798,7 +797,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
                       Annuler
                     </Button>
                     <Button
-                      variant="primary"
+                      variant="default"
                       size="sm"
                       onClick={() => handleSaveRule('new')}
                       leftIcon={<Check className="h-4 w-4" />}

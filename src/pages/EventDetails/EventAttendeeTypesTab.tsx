@@ -13,9 +13,9 @@ import {
   type EventAttendeeType
 } from '@/features/events/api/eventsApi'
 import { EventDPO } from '@/features/events/dpo/event.dpo'
-import { Loader2, Check, Plus, Pen, X } from 'lucide-react'
+import { Loader2, Check, Plus, Pen } from 'lucide-react'
 import { useToast } from '@/shared/hooks/useToast'
-import { SearchInput, Button } from '@/shared/ui'
+import { SearchInput, Button, Modal } from '@/shared/ui'
 import { FilterBar, FilterButton } from '@/shared/ui/FilterBar'
 import type { FilterValues } from '@/shared/ui/FilterBar/types'
 import { CreateAttendeeTypeModal } from '@/features/attendee-types/ui/CreateAttendeeTypeModal'
@@ -40,13 +40,13 @@ const ColorEditorModal = ({
   const [bgColor, setBgColor] = useState(backgroundColor)
   const [txtColor, setTxtColor] = useState(textColor)
 
-  // Synchroniser les états locaux quand les props changent
+  // Synchroniser les états locaux quand les props changent ou que le modal s'ouvre
   useEffect(() => {
-    setBgColor(backgroundColor)
-    setTxtColor(textColor)
+    if (isOpen) {
+      setBgColor(backgroundColor)
+      setTxtColor(textColor)
+    }
   }, [backgroundColor, textColor, isOpen])
-
-  if (!isOpen) return null
 
   const handleSave = () => {
     onSave(bgColor, txtColor)
@@ -54,90 +54,78 @@ const ColorEditorModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div 
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Modifier les couleurs
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Modifier les couleurs"
+      size="md"
+    >
+      <div className="space-y-6">
+        {/* Preview */}
+        <div className="flex justify-center">
+          <span
+            className="px-4 py-2 rounded-full text-sm font-medium"
+            style={{ backgroundColor: bgColor, color: txtColor }}
           >
-            <X className="h-5 w-5" />
-          </button>
+            {typeName}
+          </span>
         </div>
 
-        <div className="space-y-6">
-          {/* Preview */}
-          <div className="flex justify-center">
-            <span
-              className="px-4 py-2 rounded-full text-sm font-medium"
-              style={{ backgroundColor: bgColor, color: txtColor }}
-            >
-              {typeName}
-            </span>
+        {/* Background Color */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Couleur de fond
+          </label>
+          <div className="flex items-center space-x-3">
+            <input
+              type="color"
+              value={bgColor}
+              onChange={(e) => setBgColor(e.target.value)}
+              className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+            />
+            <input
+              type="text"
+              value={bgColor}
+              onChange={(e) => setBgColor(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="#000000"
+            />
           </div>
+        </div>
 
-          {/* Background Color */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Couleur de fond
-            </label>
-            <div className="flex items-center space-x-3">
-              <input
-                type="color"
-                value={bgColor}
-                onChange={(e) => setBgColor(e.target.value)}
-                className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-              />
-              <input
-                type="text"
-                value={bgColor}
-                onChange={(e) => setBgColor(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="#000000"
-              />
-            </div>
+        {/* Text Color */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Couleur du texte
+          </label>
+          <div className="flex items-center space-x-3">
+            <input
+              type="color"
+              value={txtColor}
+              onChange={(e) => setTxtColor(e.target.value)}
+              className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+            />
+            <input
+              type="text"
+              value={txtColor}
+              onChange={(e) => setTxtColor(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="#FFFFFF"
+            />
           </div>
+        </div>
 
-          {/* Text Color */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Couleur du texte
-            </label>
-            <div className="flex items-center space-x-3">
-              <input
-                type="color"
-                value={txtColor}
-                onChange={(e) => setTxtColor(e.target.value)}
-                className="h-10 w-20 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-              />
-              <input
-                type="text"
-                value={txtColor}
-                onChange={(e) => setTxtColor(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="#FFFFFF"
-              />
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button variant="ghost" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button onClick={handleSave}>
-              Enregistrer
-            </Button>
-          </div>
+        {/* Actions */}
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <Button variant="ghost" onClick={onClose}>
+            Annuler
+          </Button>
+          <Button onClick={handleSave}>
+            Enregistrer
+          </Button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }
 

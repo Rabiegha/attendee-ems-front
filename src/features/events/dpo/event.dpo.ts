@@ -82,10 +82,10 @@ export interface CreateEventDPO {
   confirmationEmailEnabled?: boolean
   approvalEmailEnabled?: boolean
   reminderEmailEnabled?: boolean
-  badgeTemplateId?: string
+  badgeTemplateId?: string | undefined
 }
 
-export interface UpdateEventDPO extends Partial<CreateEventDPO> {
+export interface UpdateEventDPO extends Partial<Omit<CreateEventDPO, 'badgeTemplateId'>> {
   status?: EventStatus
-  badgeTemplateId?: string
+  badgeTemplateId?: string | undefined
 }

@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CreditCard, Plus, Trash2, AlertCircle, ChevronDown, Check, AlertTriangle } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { selectToken } from '@/features/auth/model/sessionSlice'
+import { CreditCard, Plus, Trash2, AlertCircle, ChevronDown, Check, AlertTriangle, Download } from 'lucide-react'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
-import { useToast } from '@/shared/hooks/useToast'
+import { useToast } from '@/shared/ui/useToast'
 import { useUpdateEventMutation, useGetEventAttendeeTypesQuery } from '@/features/events/api/eventsApi'
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api'
 import { 
@@ -179,7 +181,8 @@ const TemplateSelect: React.FC<TemplateSelectProps> = ({ value, onChange, templa
 
 export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
   const navigate = useNavigate()
-  const toast = useToast()
+  const { success: toastSuccess, error: toastError } = useToast()
+  const token = useSelector(selectToken)
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation()
 
   // API pour les règles de badge
@@ -267,7 +270,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
         }).unwrap()
       } catch (error) {
         console.error('Erreur lors de la mise à jour:', error)
-        toast.error('Erreur', 'Impossible de mettre à jour le badge par défaut')
+        toastError('Erreur', 'Impossible de mettre à jour le badge par défaut')
       }
     }
 
@@ -289,12 +292,60 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
   const handleRemoveRule = async (ruleId: string) => {
     try {
       await deleteBadgeRule({ eventId: event.id, ruleId }).unwrap()
-      toast.success('Règle supprimée', 'La règle a été supprimée avec succès')
-      setDeleteModalOpen(false)
-      setRuleToDelete(null)
+      toastSuccess('Règle supprimée', 'La règle a été supprimée avec succès')
     } catch (error) {
       console.error('Erreur lors de la suppression:', error)
-      toast.error('Erreur', 'Impossible de supprimer la règle')
+      toastError('Erreur', 'Impossible de supprimer la règle')
+    } finally {
+      setDeleteModalOpen(false)
+      setRuleToDelete(null)
+    }
+  }
+
+  // Télécharger le PDF des badges
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+  
+  const handleDownloadPDF = async () => {
+    try {
+      setIsGeneratingPDF(true)
+      
+      if (!token) {
+        toastError('Erreur', 'Vous devez être connecté')
+        return
+      }
+
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const response = await fetch(
+        `${apiUrl}/events/${event.id}/badges/pdf`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de la génération du PDF')
+      }
+
+      // Télécharger le PDF
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `badges-${event.name.replace(/[^a-z0-9]/gi, '_')}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
+      toastSuccess('PDF généré', 'Le fichier PDF a été téléchargé avec succès')
+    } catch (error) {
+      console.error('Erreur lors de la génération du PDF:', error)
+      toastError('Erreur', 'Impossible de générer le PDF des badges')
+    } finally {
+      setIsGeneratingPDF(false)
     }
   }
 
@@ -326,7 +377,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
       }).unwrap()
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error)
-      toast.error('Erreur', 'Impossible de mettre à jour la règle')
+      toastError('Erreur', 'Impossible de mettre à jour la règle')
     }
   }
 
@@ -355,7 +406,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
       }).unwrap()
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error)
-      toast.error('Erreur', 'Impossible de mettre à jour la règle')
+      toastError('Erreur', 'Impossible de mettre à jour la règle')
     }
   }
 
@@ -363,7 +414,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
   const handleSaveRule = async (ruleId: string) => {
     if (ruleId === 'new' && newRule) {
       if (!newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0) {
-        toast.error('Règle incomplète', 'Veuillez sélectionner un template et au moins un type')
+        toastError('Règle incomplète', 'Veuillez sélectionner un template et au moins un type')
         return
       }
 
@@ -372,23 +423,24 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
           eventId: event.id,
           data: newRule
         }).unwrap()
-        toast.success('Règle créée', 'La règle a été créée avec succès')
-        setOpenRuleId(null)
-        setIsCreatingRule(false)
+        toastSuccess('Règle créée', 'La règle a été créée avec succès')
+        // Réinitialiser l'état du formulaire
         setNewRule(null)
+        setIsCreatingRule(false)
+        setOpenRuleId(null)
       } catch (error) {
         console.error('Erreur lors de la création:', error)
-        toast.error('Erreur', 'Impossible de créer la règle')
+        toastError('Erreur', 'Impossible de créer la règle')
       }
     } else {
       const rule = badgeRules.find(r => r.id === ruleId)
       if (!rule?.badgeTemplateId || rule.attendeeTypeIds.length === 0) {
-        toast.error('Règle incomplète', 'Veuillez sélectionner un template et au moins un type')
+        toastError('Règle incomplète', 'Veuillez sélectionner un template et au moins un type')
         return
       }
       setOpenRuleId(null)
       setIsCreatingRule(false)
-      toast.success('Règle enregistrée', 'La règle a été configurée avec succès')
+      toastSuccess('Règle enregistrée', 'La règle a été configurée avec succès')
     }
   }
 
@@ -439,13 +491,24 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-          Configuration des badges
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Gérez les templates de badges pour cet événement et définissez des badges spécifiques par type de participant
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+            Configuration des badges
+          </h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Gérez les templates de badges pour cet événement et définissez des badges spécifiques par type de participant
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownloadPDF}
+          leftIcon={<Download className="h-4 w-4" />}
+          disabled={isGeneratingPDF}
+        >
+          {isGeneratingPDF ? 'Génération...' : 'Télécharger PDF'}
+        </Button>
       </div>
 
       {/* Badge par défaut */}
@@ -523,60 +586,64 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
                   className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-md"
                 >
                   {/* Header - toujours visible */}
-                  <button
-                    onClick={() => !isCreatingRule && toggleRule(rule.id)}
-                    disabled={isCreatingRule && !isOpen}
-                    className="w-full px-6 py-4 flex items-center justify-between gap-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CreditCard className="h-5 w-5 text-purple-600 flex-shrink-0" />
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                          {rule.badgeTemplateId ? getTemplateName(rule.badgeTemplateId) : 'Template non sélectionné'}
-                        </span>
-                        {isIncomplete && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
-                            <AlertCircle className="h-3 w-3" />
-                            Incomplète
+                  <div className="relative">
+                    <button
+                      onClick={() => !isCreatingRule && toggleRule(rule.id)}
+                      disabled={isCreatingRule && !isOpen}
+                      className="w-full px-6 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed pr-20"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <CreditCard className="h-5 w-5 text-purple-600 flex-shrink-0" />
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {rule.badgeTemplateId ? getTemplateName(rule.badgeTemplateId) : 'Template non sélectionné'}
                           </span>
-                        )}
-                        {!isIncomplete && hasRemovedTypes && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
-                            <AlertTriangle className="h-3 w-3" />
-                            Un ou plusieurs types ont été retirés de cet événement
-                          </span>
-                        )}
-                      </div>
-                      {selectedTypes.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {selectedTypes.slice(0, 5).map((type) => (
-                            <span
-                              key={type.id}
-                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                            >
-                              {type.color_hex && (
-                                <div
-                                  className="w-2 h-2 rounded-full"
-                                  style={{ backgroundColor: type.color_hex }}
-                                />
-                              )}
-                              {type.name}
+                          {isIncomplete && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
+                              <AlertCircle className="h-3 w-3" />
+                              Incomplète
                             </span>
-                          ))}
-                          {selectedTypes.length > 5 && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5">
-                              +{selectedTypes.length - 5} autres
+                          )}
+                          {!isIncomplete && hasRemovedTypes && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300">
+                              <AlertTriangle className="h-3 w-3" />
+                              Un ou plusieurs types ont été retirés de cet événement
                             </span>
                           )}
                         </div>
-                      ) : (
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          Aucun type sélectionné
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {!isCreatingRule && (
+                        {selectedTypes.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedTypes.slice(0, 5).map((type) => (
+                              <span
+                                key={type.id}
+                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                              >
+                                {type.color_hex && (
+                                  <div
+                                    className="w-2 h-2 rounded-full"
+                                    style={{ backgroundColor: type.color_hex }}
+                                  />
+                                )}
+                                {type.name}
+                              </span>
+                            ))}
+                            {selectedTypes.length > 5 && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5">
+                                +{selectedTypes.length - 5} autres
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Aucun type sélectionné
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                    
+                    {/* Bouton suppression - position absolute */}
+                    {!isCreatingRule && (
+                      <div className="absolute right-12 top-1/2 -translate-y-1/2 z-10">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -588,14 +655,18 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      )}
+                      </div>
+                    )}
+                    
+                    {/* Chevron - position absolute */}
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                       <ChevronDown
-                        className={`h-5 w-5 text-gray-400 transition-transform duration-300 ${
+                        className={`h-5 w-5 text-gray-400 transition-transform ${
                           isOpen ? 'rotate-180' : ''
                         }`}
                       />
                     </div>
-                  </button>
+                  </div>
 
                   {/* Contenu - avec transition smooth */}
                   <div

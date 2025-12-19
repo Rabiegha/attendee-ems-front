@@ -216,7 +216,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             disabled={disabled}
           >
             <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
-            {eventAttendeeTypes?.filter(type => type.attendeeType.is_active).map((type) => (
+            {eventAttendeeTypes?.filter(type => type.is_active && type.attendeeType.is_active).map((type) => (
               <option key={type.id} value={type.id} className="dark:bg-gray-700 dark:text-white">
                 {type.attendeeType.name}
               </option>

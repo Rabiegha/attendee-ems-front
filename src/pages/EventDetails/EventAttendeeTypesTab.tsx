@@ -272,11 +272,12 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
     if (!globalTypes) return []
 
     return globalTypes.filter((type) => {
-      // N'afficher que les types actifs
+      // N'afficher que les types actifs globalement
       if (!type.is_active) return false
       
       const eventType = eventTypes?.find((et) => et.attendee_type_id === type.id)
-      const isSelected = !!eventType
+      // Si le type est ajouté à l'événement, vérifier qu'il est actif dans l'événement
+      const isSelected = !!eventType && eventType.is_active
 
       // Filter by search
       if (searchQuery) {
@@ -318,17 +319,26 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
 
   const handleToggle = async (typeId: string, eventTypeId?: string) => {
     try {
-      if (eventTypeId) {
+      const eventType = eventTypes?.find(et => et.id === eventTypeId)
+      
+      // Si le type existe et est actif, on le désactive
+      if (eventTypeId && eventType?.is_active) {
         // Check if used
-        const eventType = eventTypes?.find(et => et.id === eventTypeId)
-        if (eventType?._count?.registrations && eventType._count.registrations > 0) {
+        if (eventType._count?.registrations && eventType._count.registrations > 0) {
           toast.error("Impossible de désactiver ce type car il est utilisé par des participants.")
           return
         }
 
         await removeType({ eventId: event.id, eventAttendeeTypeId: eventTypeId }).unwrap()
         toast.success('Type de participant retiré')
-      } else {
+      } 
+      // Si le type existe mais est inactif, on le réactive
+      else if (eventTypeId && !eventType?.is_active) {
+        await addType({ eventId: event.id, attendeeTypeId: typeId }).unwrap()
+        toast.success('Type de participant réactivé')
+      }
+      // Si le type n'existe pas, on l'ajoute
+      else {
         await addType({ eventId: event.id, attendeeTypeId: typeId }).unwrap()
         toast.success('Type de participant ajouté')
       }
@@ -420,7 +430,7 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTypes.map((type) => {
               const eventType = eventTypes?.find((et) => et.attendee_type_id === type.id)
-              const isSelected = !!eventType
+              const isSelected = !!eventType && eventType.is_active
 
               return (
                 <AttendeeTypeItem

@@ -207,7 +207,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       options: [
         { value: 'all', label: 'Tous les types' },
         { value: 'none', label: 'Aucun' },
-        ...(eventAttendeeTypes?.filter(type => type.attendeeType.is_active).map(type => ({
+        ...(eventAttendeeTypes?.filter(type => type.is_active && type.attendeeType.is_active).map(type => ({
           value: type.attendee_type_id,
           label: type.attendeeType.name
         })) || [])
@@ -226,19 +226,43 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
   // Options pour le sélecteur de type dans le tableau
   const attendeeTypeOptions: TableSelectorOption<string>[] = useMemo(() => {
-    // Ne garder que les types actifs pour les options du sélecteur
-    const options = eventAttendeeTypes?.filter(type => type.attendeeType.is_active).map(type => ({
-      value: type.id, // ID de la liaison event_attendee_type
-      label: type.attendeeType.name,
-      hexColor: type.color_hex || type.attendeeType.color_hex || '#9ca3af',
-      textHexColor: type.text_color_hex || type.attendeeType.text_color_hex || '#ffffff',
-    })) || []
+    if (!eventAttendeeTypes) return [{ value: 'none', label: 'Aucun', color: 'gray' as const }]
+    
+    // Vérifier quels types inactifs sont utilisés par au moins une registration
+    const usedTypeIds = new Set(
+      registrations
+        ?.filter(r => r.eventAttendeeType?.id)
+        .map(r => r.eventAttendeeType!.id)
+    )
+    
+    // Séparer les types actifs et inactifs
+    const activeTypes = eventAttendeeTypes
+      .filter(type => type.is_active && type.attendeeType.is_active)
+      .map(type => ({
+        value: type.id,
+        label: type.attendeeType.name,
+        hexColor: type.color_hex || type.attendeeType.color_hex || '#9ca3af',
+        textHexColor: type.text_color_hex || type.attendeeType.text_color_hex || '#ffffff',
+        disabled: false,
+      }))
+    
+    // Types inactifs mais utilisés (affichés en bas, grisés, disabled)
+    const inactiveUsedTypes = eventAttendeeTypes
+      .filter(type => !type.is_active && usedTypeIds.has(type.id))
+      .map(type => ({
+        value: type.id,
+        label: type.attendeeType.name,
+        hexColor: '#6b7280', // Gris
+        textHexColor: '#9ca3af',
+        disabled: true,
+      }))
     
     return [
       { value: 'none', label: 'Aucun', color: 'gray' as const },
-      ...options
+      ...activeTypes,
+      ...inactiveUsedTypes
     ]
-  }, [eventAttendeeTypes])
+  }, [eventAttendeeTypes, registrations])
 
   // Optimistic updates: stocke temporairement les nouveaux status avant confirmation serveur
   const [optimisticStatusUpdates, setOptimisticStatusUpdates] = useState<Map<string, string>>(new Map())

@@ -47,6 +47,11 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     checkedInAt: dto.checked_in_at || null,
     checkedInBy: dto.checked_in_by || null,
     checkinLocation: dto.checkin_location || null,
+    
+    // Check-out tracking
+    checkedOutAt: dto.checked_out_at || null,
+    checkedOutBy: dto.checked_out_by || null,
+    checkoutLocation: dto.checkout_location || null,
   }
 
   if (dto.attendee) {

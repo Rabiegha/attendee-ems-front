@@ -49,6 +49,14 @@ export interface RegistrationDPO {
     lng: number
   } | null
   
+  // Check-out tracking (when participant leaves)
+  checkedOutAt?: string | null // ISO date
+  checkedOutBy?: string | null // User ID
+  checkoutLocation?: {
+    lat: number
+    lng: number
+  } | null
+  
   attendee?: {
     id: string
     firstName: string

@@ -48,6 +48,14 @@ export interface RegistrationDTO {
     lng: number
   } | null
   
+  // Check-out tracking (when participant leaves)
+  checked_out_at?: string | null // ISO date
+  checked_out_by?: string | null // User ID
+  checkout_location?: {
+    lat: number
+    lng: number
+  } | null
+  
   attendee?: {
     id: string
     first_name: string

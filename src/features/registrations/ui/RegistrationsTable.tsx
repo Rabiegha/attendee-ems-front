@@ -16,6 +16,8 @@ import {
   RotateCcw,
   UserCheck,
   Users,
+  LogOut,
+  Undo2,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button, TableSelector, type TableSelectorOption, ActionButtons } from '@/shared/ui'
@@ -36,6 +38,10 @@ import {
   useBulkExportRegistrationsMutation,
   useBulkUpdateRegistrationStatusMutation,
   useBulkCheckInMutation,
+  useCheckInMutation,
+  useUndoCheckInMutation,
+  useCheckOutMutation,
+  useUndoCheckOutMutation,
 } from '../api/registrationsApi'
 import { EventAttendeeType } from '@/features/events/api/eventsApi'
 import { useToast } from '@/shared/hooks/useToast'
@@ -317,6 +323,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
   const [bulkUpdateStatus] = useBulkUpdateRegistrationStatusMutation()
   const [bulkCheckIn] = useBulkCheckInMutation()
+  const [checkIn] = useCheckInMutation()
+  const [undoCheckIn] = useUndoCheckInMutation()
+  const [checkOut] = useCheckOutMutation()
+  const [undoCheckOut] = useUndoCheckOutMutation()
 
   const handleRowClick = (registration: RegistrationDPO) => {
     navigate(`/attendees/${registration.attendeeId}`)
@@ -385,6 +395,74 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         return next
       })
       toast.error('Erreur', 'Impossible de mettre à jour le type')
+    }
+  }
+
+  const handleCheckIn = async (registration: RegistrationDPO) => {
+    try {
+      await checkIn({
+        id: registration.id,
+        eventId,
+      }).unwrap()
+      toast.success(
+        'Check-in effectué',
+        'Le participant a été enregistré comme présent'
+      )
+    } catch (error: any) {
+      console.error('Error checking in:', error)
+      const errorMessage = error?.data?.message || 'Impossible d\'effectuer le check-in'
+      toast.error('Erreur', errorMessage)
+    }
+  }
+
+  const handleUndoCheckIn = async (registration: RegistrationDPO) => {
+    try {
+      await undoCheckIn({
+        id: registration.id,
+        eventId,
+      }).unwrap()
+      toast.success(
+        'Check-in annulé',
+        'Le check-in a été annulé avec succès'
+      )
+    } catch (error: any) {
+      console.error('Error undoing check-in:', error)
+      const errorMessage = error?.data?.message || 'Impossible d\'annuler le check-in'
+      toast.error('Erreur', errorMessage)
+    }
+  }
+
+  const handleCheckOut = async (registration: RegistrationDPO) => {
+    try {
+      await checkOut({
+        id: registration.id,
+        eventId,
+      }).unwrap()
+      toast.success(
+        'Check-out effectué',
+        'Le participant a été enregistré comme sorti'
+      )
+    } catch (error: any) {
+      console.error('Error checking out:', error)
+      const errorMessage = error?.data?.message || 'Impossible d\'effectuer le check-out'
+      toast.error('Erreur', errorMessage)
+    }
+  }
+
+  const handleUndoCheckOut = async (registration: RegistrationDPO) => {
+    try {
+      await undoCheckOut({
+        id: registration.id,
+        eventId,
+      }).unwrap()
+      toast.success(
+        'Check-out annulé',
+        'Le check-out a été annulé avec succès'
+      )
+    } catch (error: any) {
+      console.error('Error undoing check-out:', error)
+      const errorMessage = error?.data?.message || 'Impossible d\'annuler le check-out'
+      toast.error('Erreur', errorMessage)
     }
   }
 
@@ -711,24 +789,104 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         header: 'Check-in',
         accessorKey: 'checkedInAt',
         cell: ({ row }) => (
-          <div className="cursor-pointer" onClick={() => handleRowClick(row.original)}>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {row.original.checkedInAt ? (
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                  {new Date(row.original.checkedInAt).toLocaleDateString('fr-FR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    {new Date(row.original.checkedInAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
                 </div>
-              </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleUndoCheckIn(row.original)}
+                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 p-1.5 h-auto"
+                  title="Annuler le check-in"
+                >
+                  <Undo2 className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <XCircle className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    Pas encore
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCheckIn(row.original)}
+                  className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 p-1.5 h-auto"
+                  title="Effectuer le check-in"
+                >
+                  <UserCheck className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: 'checkout',
+        header: 'Check-out',
+        accessorKey: 'checkedOutAt',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {row.original.checkedOutAt ? (
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <LogOut className="h-4 w-4 text-blue-500" />
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    {new Date(row.original.checkedOutAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleUndoCheckOut(row.original)}
+                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 p-1.5 h-auto"
+                  title="Annuler le check-out"
+                >
+                  <Undo2 className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            ) : row.original.checkedInAt ? (
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <XCircle className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    Pas encore
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCheckOut(row.original)}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 h-auto"
+                  title="Effectuer le check-out"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </>
             ) : (
               <div className="flex items-center gap-2">
                 <XCircle className="h-4 w-4 text-gray-400 dark:text-gray-600" />
-                <span className="text-xs text-gray-500 dark:text-gray-500">
-                  Pas encore
+                <span className="text-xs text-gray-400 dark:text-gray-600">
+                  Non disponible
                 </span>
               </div>
             )}
@@ -1088,32 +1246,34 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       </div>
 
       {/* DataTable */}
-      <Card variant="default" padding="none">
-        <DataTable
-          columns={columns}
-          data={filteredRegistrations}
-          isLoading={isLoading}
-          enableRowSelection
-          bulkActions={bulkActions}
-          getItemId={(registration) => registration.id}
-          itemType="inscriptions"
-          tabsElement={tabsElement}
-          onRowSelectionChange={() => {
-            // TanStack Table handles selection
-          }}
-          emptyMessage={
-            isDeletedTab
-              ? 'Aucune inscription supprimée'
-              : 'Aucune inscription trouvée'
-          }
-          // Server-side pagination
-          enablePagination={true}
-          pageSize={pageSize || 50}
-          totalItems={meta?.total || 0}
-          onPageChange={onPageChange || (() => {})}
-          onPageSizeChange={onPageSizeChange || (() => {})}
-        />
-      </Card>
+      <div className="w-full overflow-x-auto">
+        <Card variant="default" padding="none" className="min-w-full">
+          <DataTable
+            columns={columns}
+            data={filteredRegistrations}
+            isLoading={isLoading}
+            enableRowSelection
+            bulkActions={bulkActions}
+            getItemId={(registration) => registration.id}
+            itemType="inscriptions"
+            tabsElement={tabsElement}
+            onRowSelectionChange={() => {
+              // TanStack Table handles selection
+            }}
+            emptyMessage={
+              isDeletedTab
+                ? 'Aucune inscription supprimée'
+                : 'Aucune inscription trouvée'
+            }
+            // Server-side pagination
+            enablePagination={true}
+            pageSize={pageSize || 50}
+            totalItems={meta?.total || 0}
+            onPageChange={onPageChange || (() => {})}
+            onPageSizeChange={onPageSizeChange || (() => {})}
+          />
+        </Card>
+      </div>
 
       {/* Modals */}
       {editingRegistration && (

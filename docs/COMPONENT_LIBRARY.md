@@ -3,10 +3,158 @@
 ## 📋 Table des matières
 
 1. [Layout Components](#layout-components)
-2. [Form Components](#form-components)
-3. [Display Components](#display-components)
-4. [Feedback Components](#feedback-components)
-5. [Utility Components](#utility-components)
+2. [Data Display Components](#data-display-components)
+   - [DataTable](#datatable)
+   - [BulkActions](#bulkactions)
+3. [Form Components](#form-components)
+4. [Display Components](#display-components)
+5. [Feedback Components](#feedback-components)
+6. [Utility Components](#utility-components)
+
+---
+
+## Data Display Components
+
+### DataTable
+
+Composant de tableau robuste avec TanStack Table v8, sélection multiple, sticky headers, et bulk actions.
+
+**Props principales:**
+
+- `columns: ColumnDef<TData>[]` - Définition des colonnes
+- `data: TData[]` - Données à afficher
+- `isLoading?: boolean` - État de chargement
+- `enableRowSelection?: boolean` - Active la sélection multiple (default: false)
+- `bulkActions?: BulkAction[]` - Actions en lot sur la sélection
+- `getItemId?: (item: TData) => string` - Fonction pour obtenir l'ID unique
+- `itemType?: string` - Nom des items pour les messages ("utilisateurs", "participants", etc.)
+- `tabsElement?: React.ReactNode` - Onglets à afficher dans le toolbar
+- `emptyMessage?: string` - Message si aucune donnée
+
+**Fonctionnalités:**
+
+- ✅ Sélection multiple avec Shift+Click pour plages
+- ✅ Headers sticky (restent visibles au scroll)
+- ✅ Colonnes draggables et redimensionnables
+- ✅ Tri, filtres, recherche
+- ✅ Visibilité des colonnes configurable
+- ✅ Bulk actions avec confirmation
+- ✅ Scroll vertical limité, headers toujours visibles
+
+**Usage:**
+
+```tsx
+const columns = useMemo(() => [
+  createSelectionColumn<User>(), // Colonne select automatique
+  {
+    accessorKey: 'email',
+    header: 'Email',
+    cell: ({ row }) => row.original.email,
+  },
+  // ... autres colonnes
+], [])
+
+const bulkActions = useMemo(() => {
+  const actions: BulkAction[] = []
+  
+  actions.push(createBulkActions.delete(async (selectedIds) => {
+    await Promise.all(
+      Array.from(selectedIds).map((id) => deleteUser({ id }))
+    )
+  }))
+  
+  return actions
+}, [])
+
+<DataTable
+  key={activeTab} // Reset sélection au changement d'onglet
+  columns={columns}
+  data={users}
+  enableRowSelection
+  bulkActions={bulkActions}
+  getItemId={(user) => user.id}
+  itemType="utilisateurs"
+  tabsElement={<Tabs items={tabs} activeTab={activeTab} onTabChange={setActiveTab} />}
+/>
+```
+
+**Helpers pour colonnes:**
+
+```tsx
+// Colonne de sélection (toujours à gauche, pinnée)
+createSelectionColumn<TData>()
+
+// Colonne d'actions (toujours à droite)
+{
+  id: 'actions',
+  enableHiding: false,
+  enableSorting: false,
+  cell: ({ row }) => (
+    <ActionButtons
+      onEdit={() => handleEdit(row.original)}
+      onDelete={() => handleDelete(row.original)}
+    />
+  ),
+}
+```
+
+**Voir aussi:** `TABLE_PATTERN.md`, `TABLES_INVENTORY.md`
+
+---
+
+### BulkActions
+
+Zone d'actions en lot qui apparaît quand des éléments sont sélectionnés dans DataTable.
+
+**Props:**
+
+- `selectedCount: number` - Nombre d'éléments sélectionnés
+- `selectedIds: Set<string>` - IDs sélectionnés
+- `selectedItems: TData[]` - Items complets sélectionnés
+- `actions: BulkAction[]` - Actions disponibles
+- `onClearSelection: () => void` - Callback pour désélectionner
+
+**Actions prédéfinies:**
+
+```tsx
+import { createBulkActions } from '@/shared/ui/BulkActions'
+
+// Action delete
+createBulkActions.delete(async (selectedIds) => {
+  // Logique de suppression
+})
+
+// Action export
+createBulkActions.export(async (selectedIds) => {
+  // Logique d'export
+})
+
+// Action edit
+createBulkActions.edit(async (selectedIds) => {
+  // Logique de modification
+})
+```
+
+**Action personnalisée:**
+
+```tsx
+const customAction: BulkAction = {
+  id: 'approve',
+  label: 'Approuver',
+  icon: <Check className="h-4 w-4" />,
+  variant: 'default',
+  requiresConfirmation: true,
+  confirmationMessage: 'Approuver {count} inscriptions ?',
+  actionType: 'edit',
+  onClick: async (selectedIds) => {
+    await Promise.all(
+      Array.from(selectedIds).map((id) => approveRegistration({ id }))
+    )
+  },
+}
+```
+
+**Voir aussi:** Intégré automatiquement dans `DataTable` via `bulkActions` prop
 
 ---
 

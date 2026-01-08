@@ -139,7 +139,7 @@ export const RootLayout: React.FC = () => {
       <Header />
       <div className="flex">
         <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className={`flex-1 pt-[69px] transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
+        <main className={`flex-1 pt-[69px] transition-all duration-300 min-w-0 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
           <PageTransition>
             <Outlet />
           </PageTransition>

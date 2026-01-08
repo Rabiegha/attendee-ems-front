@@ -24,6 +24,8 @@ import {
   FilterBar,
   Tabs,
 } from '@/shared/ui'
+import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
+import { type BulkAction } from '@/shared/ui/BulkActions'
 import { selectUser, selectOrganization } from '@/features/auth/model/sessionSlice'
 import { useToast } from '@/shared/hooks/useToast'
 import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
@@ -173,6 +175,7 @@ export function AttendeeTypesPage() {
   // Colonnes du tableau pour les types actifs
   const activeColumns = useMemo<ColumnDef<AttendeeType>[]>(
     () => [
+      createSelectionColumn<AttendeeType>(),
       {
         accessorKey: 'name',
         header: 'Type',
@@ -330,6 +333,7 @@ export function AttendeeTypesPage() {
   // Colonnes du tableau pour les types désactivés
   const deletedColumns = useMemo<ColumnDef<AttendeeType>[]>(
     () => [
+      createSelectionColumn<AttendeeType>(),
       {
         accessorKey: 'name',
         header: 'Type',
@@ -435,6 +439,87 @@ export function AttendeeTypesPage() {
     []
   )
 
+  // Bulk actions
+  const bulkActions = useMemo(() => {
+    const actions: BulkAction[] = []
+
+    if (activeTab === 'active') {
+      // Désactiver en masse
+      actions.push({
+        id: 'deactivate',
+        label: 'Désactiver',
+        icon: <Trash2 className="h-4 w-4" />,
+        variant: 'destructive',
+        requiresConfirmation: true,
+        actionType: 'delete',
+        onClick: async (selectedIds) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                updateType({ id, data: { is_active: false } }).unwrap()
+              )
+            )
+            toast.success(`${selectedIds.size} type(s) désactivé(s)`)
+          } catch (error) {
+            console.error('Erreur lors de la désactivation:', error)
+            toast.error('Erreur lors de la désactivation')
+            throw error
+          }
+        },
+      })
+    } else {
+      // Restaurer en masse
+      actions.push({
+        id: 'restore',
+        label: 'Restaurer',
+        icon: <RotateCcw className="h-4 w-4" />,
+        variant: 'default',
+        requiresConfirmation: true,
+        actionType: 'edit',
+        onClick: async (selectedIds) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                updateType({ id, data: { is_active: true } }).unwrap()
+              )
+            )
+            toast.success(`${selectedIds.size} type(s) restauré(s)`)
+          } catch (error) {
+            console.error('Erreur lors de la restauration:', error)
+            toast.error('Erreur lors de la restauration')
+            throw error
+          }
+        },
+      })
+
+      // Supprimer définitivement en masse
+      actions.push({
+        id: 'permanent-delete',
+        label: 'Supprimer définitivement',
+        icon: <Trash2 className="h-4 w-4" />,
+        variant: 'destructive',
+        requiresConfirmation: true,
+        actionType: 'delete',
+        onClick: async (selectedIds) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                deleteType(id).unwrap()
+              )
+            )
+            toast.success(`${selectedIds.size} type(s) supprimé(s) définitivement`)
+          } catch (error) {
+            console.error('Erreur lors de la suppression:', error)
+            toast.error('Erreur lors de la suppression')
+            throw error
+          }
+        },
+      })
+    }
+
+    return actions
+  }, [activeTab, updateType, deleteType, toast])
+
   const handleOpenCreateModal = () => {
     setIsCreateModalOpen(true)
   }
@@ -475,9 +560,14 @@ export function AttendeeTypesPage() {
       <PageSection spacing="lg">
         <Card variant="default" padding="none">
           <DataTable
+            key={activeTab}
             columns={activeTab === 'active' ? activeColumns : deletedColumns}
             data={searchResults}
             isLoading={isLoading}
+            enableRowSelection
+            bulkActions={bulkActions}
+            getItemId={(type) => type.id}
+            itemType="types"
             emptyMessage={
               searchQuery
                 ? 'Aucun type ne correspond à votre recherche'

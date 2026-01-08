@@ -39,6 +39,8 @@ import {
   type TableSelectorOption,
   type FilterValues,
 } from '@/shared/ui'
+import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
+import { createBulkActions } from '@/shared/ui/BulkActions'
 import {
   useGetUsersQuery,
   useUpdateUserMutation,
@@ -235,6 +237,7 @@ export function UsersPage() {
   // Définition des colonnes
   const columns = useMemo<ColumnDef<User>[]>(
     () => [
+      createSelectionColumn<User>(),
       // Colonne Utilisateur (avec avatar et email)
       {
         id: 'user',
@@ -499,6 +502,29 @@ export function UsersPage() {
     [currentUser?.id, isDeletedTab, roles, rolesLoading, optimisticRoleUpdates, updateUser]
   )
 
+  // Bulk actions
+  const bulkActions = useMemo(() => {
+    const actions = []
+
+    if (!isDeletedTab) {
+      // Désactiver (soft delete)
+      actions.push(
+        createBulkActions.delete(async (selectedIds) => {
+          try {
+            await bulkDeleteUsers(Array.from(selectedIds)).unwrap()
+            toast.success(`${selectedIds.size} utilisateur(s) désactivé(s)`)
+          } catch (error) {
+            console.error('Erreur lors de la désactivation:', error)
+            toast.error('Erreur lors de la désactivation')
+            throw error
+          }
+        }, 'Désactiver')
+      )
+    }
+
+    return actions
+  }, [isDeletedTab, bulkDeleteUsers, toast])
+
   return (
     <PageContainer maxWidth="7xl" padding="lg">
       {/* En-tête de page */}
@@ -635,9 +661,14 @@ export function UsersPage() {
       <PageSection spacing="lg">
         <Card variant="default" padding="none">
           <DataTable
+            key={activeTab}
             columns={columns}
             data={filteredUsers}
             isLoading={isLoading}
+            enableRowSelection
+            bulkActions={bulkActions}
+            getItemId={(user) => user.id}
+            itemType="utilisateurs"
             emptyMessage={
               isDeletedTab
                 ? 'Aucun utilisateur supprimé'

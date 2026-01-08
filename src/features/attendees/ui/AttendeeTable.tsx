@@ -350,20 +350,15 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
 
   return (
     <div>
-      <BulkActions
-        selectedCount={selectedCount}
-        selectedIds={selectedIds}
-        selectedItems={selectedItems}
-        actions={bulkActions}
-        onClearSelection={unselectAll}
-        itemType="participants"
-      />
-
       <DataTable
+        key={isDeletedTab ? 'deleted' : 'active'}
         columns={columns}
         data={attendees}
         isLoading={isLoading}
         enableRowSelection
+        bulkActions={bulkActions}
+        getItemId={(attendee) => attendee.id}
+        itemType="participants"
         tabsElement={tabsElement}
         onRowSelectionChange={() => {
           // TanStack Table handles selection internally

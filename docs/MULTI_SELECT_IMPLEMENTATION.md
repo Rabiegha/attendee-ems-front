@@ -1,10 +1,57 @@
 # Implémentation de la Fonctionnalité Multi-Select
 
+> ⚠️ **Note importante** : Ce document décrit l'approche initiale avec `useMultiSelect` hook.
+> La version actuelle (2026) utilise **TanStack Table v8** avec gestion native de la sélection intégrée dans `DataTable`.
+> Voir `TABLE_PATTERN.md` et `TABLES_INVENTORY.md` pour le pattern actuel.
+
 ## Vue d'ensemble
 
 Cette documentation décrit l'implémentation de la fonctionnalité de sélection multiple avec actions en lot pour les tables de l'application EMS.
 
-## Architecture
+## ⚠️ Pattern Actuel (2026)
+
+La sélection multiple est maintenant gérée directement par **DataTable** via TanStack Table :
+
+```typescript
+// Plus besoin de useMultiSelect hook
+// La sélection est gérée par TanStack Table
+
+const columns = useMemo(() => [
+  createSelectionColumn<ItemType>(), // Colonne select automatique
+  // ... autres colonnes
+], [])
+
+const bulkActions = useMemo(() => {
+  const actions: BulkAction[] = []
+  // ... configuration des actions
+  return actions
+}, [dependencies])
+
+return (
+  <DataTable
+    key={activeTab} // Reset sélection au changement d'onglet
+    columns={columns}
+    data={items}
+    enableRowSelection // Active la sélection
+    bulkActions={bulkActions}
+    getItemId={(item) => item.id}
+    itemType="éléments"
+  />
+)
+```
+
+### Avantages du nouveau pattern
+- ✅ Gestion native par TanStack Table (plus robuste)
+- ✅ Shift+Click pour sélection de plage
+- ✅ Reset automatique via `key` prop
+- ✅ Colonnes pinnées et draggables
+- ✅ État synchronisé avec le tableau
+
+---
+
+## Architecture Historique (useMultiSelect)
+
+> Cette section est conservée pour référence historique.
 
 ### 1. Hook réutilisable `useMultiSelect`
 
@@ -45,37 +92,38 @@ Fonctionnalités :
 />
 ```
 
-## Implémentation par module
+## État d'implémentation (2026)
 
-### ✅ Attendees (Complété)
+### ✅ Complètement standardisés
 
-**Frontend**:
+Tous les tableaux suivent le pattern DataTable avec sélection TanStack Table :
 
-- `AttendeeTable.tsx` : Intégration complète avec checkboxes et actions
-- `attendeesApi.ts` : Endpoints `bulkDeleteAttendees` et `bulkExportAttendees`
+1. **UsersPage** (`src/pages/Users/index.tsx`)
+   - Sélection multiple ✅
+   - Bulk action: Désactiver ✅
+   - Key prop pour reset ✅
 
-**Backend**:
+2. **AttendeeTable** (`src/features/attendees/ui/AttendeeTable.tsx`)
+   - Sélection multiple ✅
+   - Bulk actions: Exporter, Supprimer ✅
+   - Key prop pour reset ✅
 
-- `users.controller.ts` : Routes `/bulk-delete` et `/bulk-export`
-- `users.service.ts` : Méthodes `bulkDelete()` et `bulkExport()`
+3. **RegistrationsTable** (`src/features/registrations/ui/RegistrationsTable.tsx`)
+   - Sélection multiple ✅
+   - Bulk actions: Exporter, Changer statut, Changer type, Check-in, Undo check-in, Check-out, Undo check-out, Supprimer ✅
+   - Key prop pour reset ✅
 
-### 🔄 Events (À implémenter)
+4. **AttendeeTypesPage** (`src/pages/AttendeeTypes/index.tsx`)
+   - Sélection multiple ✅
+   - Bulk actions: Désactiver, Restaurer, Supprimer définitivement ✅
+   - Key prop pour reset ✅
 
-**À faire**:
+5. **HistoryTable** (`src/pages/AttendeeDetail/HistoryTable.tsx`)
+   - Table en lecture seule (pas de sélection) ✅
 
-- [ ] Modifier `EventTable.tsx` pour ajouter multi-select
-- [ ] Ajouter endpoints bulk dans `eventsApi.ts`
-- [ ] Créer routes backend pour actions en lot sur events
+### Pattern d'implémentation actuel
 
-### 🔄 Registrations (À implémenter)
-
-**À faire**:
-
-- [ ] Modifier `RegistrationTable.tsx` pour ajouter multi-select
-- [ ] Ajouter endpoints bulk dans `registrationsApi.ts`
-- [ ] Créer routes backend pour actions en lot sur registrations
-
-## Pattern d'implémentation
+Voir `TABLE_PATTERN.md` pour le guide complet.
 
 ### 1. Modification d'un tableau existant
 

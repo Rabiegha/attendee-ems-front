@@ -1088,6 +1088,81 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         }
       })
 
+      // Undo Check-in en masse
+      actions.push({
+        id: 'undo-check-in',
+        label: 'Annuler Check-in',
+        icon: <Undo2 className="h-4 w-4" />,
+        variant: 'outline' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Annuler le check-in pour toutes les inscriptions sélectionnées ?',
+        actionType: 'edit' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                undoCheckIn({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`Check-in annulé pour ${selectedIds.size} inscription(s)`)
+          } catch (error) {
+            console.error('Erreur lors de l\'annulation du check-in:', error)
+            toast.error('Erreur lors de l\'annulation du check-in')
+            throw error
+          }
+        }
+      })
+
+      // Check-out en masse
+      actions.push({
+        id: 'check-out',
+        label: 'Check-out',
+        icon: <LogOut className="h-4 w-4" />,
+        variant: 'default' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Enregistrer le check-out pour toutes les inscriptions sélectionnées ?',
+        actionType: 'edit' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                checkOut({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`Check-out effectué pour ${selectedIds.size} inscription(s)`)
+          } catch (error) {
+            console.error('Erreur lors du check-out:', error)
+            toast.error('Erreur lors du check-out')
+            throw error
+          }
+        }
+      })
+
+      // Undo Check-out en masse
+      actions.push({
+        id: 'undo-check-out',
+        label: 'Annuler Check-out',
+        icon: <Undo2 className="h-4 w-4" />,
+        variant: 'outline' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Annuler le check-out pour toutes les inscriptions sélectionnées ?',
+        actionType: 'edit' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                undoCheckOut({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`Check-out annulé pour ${selectedIds.size} inscription(s)`)
+          } catch (error) {
+            console.error('Erreur lors de l\'annulation du check-out:', error)
+            toast.error('Erreur lors de l\'annulation du check-out')
+            throw error
+          }
+        }
+      })
+
       // Supprimer (soft delete)
       actions.push({
         id: 'delete',
@@ -1246,34 +1321,33 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       </div>
 
       {/* DataTable */}
-      <div className="w-full overflow-x-auto">
-        <Card variant="default" padding="none" className="min-w-full">
-          <DataTable
-            columns={columns}
-            data={filteredRegistrations}
-            isLoading={isLoading}
-            enableRowSelection
-            bulkActions={bulkActions}
-            getItemId={(registration) => registration.id}
-            itemType="inscriptions"
-            tabsElement={tabsElement}
-            onRowSelectionChange={() => {
-              // TanStack Table handles selection
-            }}
-            emptyMessage={
-              isDeletedTab
-                ? 'Aucune inscription supprimée'
-                : 'Aucune inscription trouvée'
-            }
-            // Server-side pagination
-            enablePagination={true}
-            pageSize={pageSize || 50}
-            totalItems={meta?.total || 0}
-            onPageChange={onPageChange || (() => {})}
-            onPageSizeChange={onPageSizeChange || (() => {})}
-          />
-        </Card>
-      </div>
+      <Card variant="default" padding="none" className="min-w-full">
+        <DataTable
+          key={isDeletedTab ? 'deleted' : 'active'}
+          columns={columns}
+          data={filteredRegistrations}
+          isLoading={isLoading}
+          enableRowSelection
+          bulkActions={bulkActions}
+          getItemId={(registration) => registration.id}
+          itemType="inscriptions"
+          tabsElement={tabsElement}
+          onRowSelectionChange={() => {
+            // TanStack Table handles selection
+          }}
+          emptyMessage={
+            isDeletedTab
+              ? 'Aucune inscription supprimée'
+              : 'Aucune inscription trouvée'
+          }
+          // Server-side pagination
+          enablePagination={true}
+          pageSize={pageSize || 50}
+          totalItems={meta?.total || 0}
+          onPageChange={onPageChange || (() => {})}
+          onPageSizeChange={onPageSizeChange || (() => {})}
+        />
+      </Card>
 
       {/* Modals */}
       {editingRegistration && (

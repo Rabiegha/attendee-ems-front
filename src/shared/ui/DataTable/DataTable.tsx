@@ -611,7 +611,7 @@ export function DataTable<TData, TValue>({
               </div>
             </div>
 
-            <div className="p-4">
+            <div className="p-4 max-h-[400px] overflow-y-auto">
               {table.getAllLeafColumns().map((column) => {
                 const canHide = column.getCanHide()
                 const isVisible = column.getIsVisible()
@@ -668,7 +668,7 @@ export function DataTable<TData, TValue>({
         />
       )}
 
-      {/* Table with DnD */}
+      {/* Table avec zone scrollable */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -677,10 +677,11 @@ export function DataTable<TData, TValue>({
         onDragCancel={handleDragCancel}
       >
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-          <div className="overflow-x-auto">
+          {/* Zone scrollable avec hauteur max */}
+          <div className="overflow-auto max-h-[calc(100vh-450px)]">
             <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-              {/* Header */}
-              <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200">
+              {/* Header sticky */}
+              <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200 sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {enableColumnOrdering ? (

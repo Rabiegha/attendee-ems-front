@@ -508,8 +508,8 @@ export const EventDetails: React.FC = () => {
     : allTabs
 
   return (
-    <PageContainer maxWidth="7xl" padding="lg">
-      <div className="space-y-6">
+    <div className="w-full min-h-screen">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Banner événement supprimé */}
         {event.isDeleted && (
         <div className="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-600 dark:border-red-500 p-4 rounded-r-lg">
@@ -843,7 +843,7 @@ export const EventDetails: React.FC = () => {
         )}
 
         {activeTab === 'registrations' && (
-          <div className="space-y-4">
+          <div className="space-y-4 w-full">
             <div className="flex items-center justify-end space-x-3">
               <Button
                 onClick={() => setIsAddParticipantModalOpen(true)}
@@ -1001,6 +1001,6 @@ export const EventDetails: React.FC = () => {
         />
       </Modal>
       </div>
-    </PageContainer>
+    </div>
   )
 }

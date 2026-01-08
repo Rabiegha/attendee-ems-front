@@ -9,6 +9,7 @@ export type FieldType =
   | 'phone' // Téléphone
   | 'textarea' // Texte long (commentaires)
   | 'select' // Liste déroulante
+  | 'radio' // Boutons radio (choix unique)
   | 'country' // Sélecteur de pays
   | 'attendee_type' // Type de participant (Staff, Partenaire, Invité...)
   | 'checkbox' // Case à cocher (RGPD, consentements)
@@ -20,6 +21,7 @@ export interface FormFieldConfig {
   // Affichage
   label: string // Label affiché dans le formulaire
   placeholder?: string // Texte d'aide
+  helpText?: string // Texte d'aide supplémentaire affiché sous le champ
   type: FieldType // Type de champ
 
   // Validation

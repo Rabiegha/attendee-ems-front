@@ -6,6 +6,7 @@ Composant de table réutilisable et puissant basé sur TanStack Table v8.
 
 ### Core Features
 - ✅ **Tri multi-colonnes** : Tri par plusieurs colonnes simultanément
+- ✅ **Tri insensible à la casse** : Le tri ignore les majuscules/minuscules pour un ordre alphabétique naturel
 - ✅ **Sélection multiple** : Checkbox avec gestion de plages (Shift+Click)
 - ✅ **Pagination** : Côté client ou serveur avec navigation complète
 - ✅ **Filtres** : Par colonne avec recherche intégrée
@@ -163,9 +164,32 @@ import { createTextColumn } from '@/shared/ui/DataTable/columns'
 
 createTextColumn<User>('name', 'Nom', {
   enableSorting: true,
+  sortingFn: 'caseInsensitive', // Tri insensible à la casse (recommandé)
   cell: (value) => <strong>{value}</strong>
 })
 ```
+
+## ✨ Tri insensible à la casse
+
+Pour un tri alphabétique naturel (ignorant les majuscules), ajoutez `sortingFn: 'caseInsensitive'` à vos colonnes de texte :
+
+```tsx
+const columns: ColumnDef<User>[] = [
+  {
+    accessorKey: 'name',
+    header: 'Nom',
+    sortingFn: 'caseInsensitive', // "arbre" viendra avant "Zero"
+  },
+  {
+    accessorKey: 'email',
+    header: 'Email',
+    sortingFn: 'caseInsensitive',
+  },
+]
+```
+
+**Sans `sortingFn`** : Tri ASCII (A-Z puis a-z) → "Zero" vient avant "arbre"  
+**Avec `sortingFn: 'caseInsensitive'`** : Tri naturel → "arbre" vient avant "Zero"
 
 ### Date Column
 ```tsx
@@ -194,8 +218,16 @@ createBadgeColumn<User>('status', 'Statut', (status) => (
 ```tsx
 function SimpleTable() {
   const columns: ColumnDef<User>[] = [
-    { accessorKey: 'name', header: 'Nom' },
-    { accessorKey: 'email', header: 'Email' },
+    { 
+      accessorKey: 'name', 
+      header: 'Nom',
+      sortingFn: 'caseInsensitive' // Tri insensible à la casse
+    },
+    { 
+      accessorKey: 'email', 
+      header: 'Email',
+      sortingFn: 'caseInsensitive'
+    },
     createDateColumn<User>('createdAt', 'Créé le'),
   ]
 

@@ -1,6 +1,8 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 import type { RootState } from '@/app/store'
 import { setSession, clearSession } from '@/features/auth/model/sessionSlice'
+import { addToast } from '@/shared/ui/toast-slice'
+import i18n from '@/shared/lib/i18n'
 
 let refreshPromise: Promise<any> | null = null
 
@@ -27,6 +29,24 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
     // Si le refresh lui-même échoue, c'est terminé
     if (url === '/auth/refresh') {
       // console.log('[AUTH] Refresh failed, clearing session')
+      
+      const errorData = result.error?.data as any
+      const errorMessage = errorData?.detail || errorData?.message
+      if (
+        errorMessage === 'User not found or inactive' ||
+        errorMessage === 'Account deactivated' ||
+        errorMessage === 'User not found'
+      ) {
+        api.dispatch(
+          addToast({
+            type: 'error',
+            title: i18n.t('session_terminated', { ns: 'auth' }),
+            message: i18n.t('account_deactivated_logout', { ns: 'auth' }),
+            duration: 10000,
+          })
+        )
+      }
+
       api.dispatch(clearSession())
       return result
     }
@@ -61,6 +81,24 @@ const baseQueryWithReauth: typeof rawBaseQuery = async (args, api, extra) => {
           )
         } else {
           // console.log('[AUTH] Refresh failed, clearing session')
+          
+          const errorData = res.error?.data as any
+          const errorMessage = errorData?.detail || errorData?.message
+          if (
+            errorMessage === 'User not found or inactive' ||
+            errorMessage === 'Account deactivated' ||
+            errorMessage === 'User not found'
+          ) {
+            api.dispatch(
+              addToast({
+                type: 'error',
+                title: i18n.t('session_terminated', { ns: 'auth' }),
+                message: i18n.t('account_deactivated_logout', { ns: 'auth' }),
+                duration: 10000,
+              })
+            )
+          }
+
           api.dispatch(clearSession())
         }
         return res
@@ -90,8 +128,10 @@ export const rootApi = createApi({
   tagTypes: [
     'Attendees',
     'Attendee',
+    'AttendeeTypes',
     'Events',
     'Event',
+    'EventBadgeRules',
     'Users',
     'User',
     'Roles',

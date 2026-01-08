@@ -15,16 +15,18 @@ import { CreateEventPage } from '@/pages/CreateEvent'
 import { Attendees } from '@/pages/Attendees'
 import { AttendeeDetail } from '@/pages/AttendeeDetail'
 import { UsersPage } from '@/pages/Users'
+import { AttendeeTypesPage } from '@/pages/AttendeeTypes'
 import { RolePermissionsAdmin } from '@/pages/RolePermissionsAdmin'
 import { ChangePasswordPage } from '@/pages/ChangePassword'
 import { LoginPage } from '@/pages/Login'
 import { SignupPage } from '@/pages/Signup'
+import { RequestPasswordResetPage } from '@/pages/RequestPasswordReset'
+import { ResetPasswordPage } from '@/pages/ResetPassword'
 import { InvitationsPage } from '@/pages/Invitations'
 import { CompleteInvitationPage } from '@/pages/CompleteInvitation'
 import { OrganizationsPage } from '@/features/organizations/pages'
 import { ForbiddenPage } from '@/pages/Forbidden'
 import { NotFoundPage } from '@/pages/NotFound'
-import { AuthRecoveryPage } from '@/pages/AuthRecovery'
 import PublicRegistration from '@/pages/PublicRegistration'
 import { PrivacyPolicyPage } from '@/pages/PrivacyPolicy'
 import { BadgeDesigner } from '@/pages/BadgeDesigner'
@@ -113,6 +115,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'attendee-types',
+        element: (
+          <GuardedRoute action="read" subject="Organization">
+            <AttendeeTypesPage />
+          </GuardedRoute>
+        ),
+      },
+      {
         path: 'roles-permissions',
         element: (
           <GuardedRoute action="manage" subject="Role">
@@ -168,8 +178,12 @@ export const router = createBrowserRouter([
         element: <LoginPage />,
       },
       {
-        path: 'recovery',
-        element: <AuthRecoveryPage />,
+        path: 'request-password-reset',
+        element: <RequestPasswordResetPage />,
+      },
+      {
+        path: 'reset-password/:token',
+        element: <ResetPasswordPage />,
       },
     ],
   },

@@ -11,6 +11,17 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     attendanceType: dto.attendance_type,
     answers: dto.answers,
     eventAttendeeTypeId: dto.event_attendee_type_id || null,
+    eventAttendeeType: dto.eventAttendeeType ? {
+      id: dto.eventAttendeeType.id,
+      color_hex: dto.eventAttendeeType.color_hex ?? null,
+      text_color_hex: dto.eventAttendeeType.text_color_hex ?? null,
+      attendeeType: {
+        id: dto.eventAttendeeType.attendeeType.id,
+        name: dto.eventAttendeeType.attendeeType.name,
+        color_hex: dto.eventAttendeeType.attendeeType.color_hex,
+        text_color_hex: dto.eventAttendeeType.attendeeType.text_color_hex,
+      }
+    } : null,
     badgeTemplateId: dto.badge_template_id || null,
     invitedAt: dto.invited_at || null,
     confirmedAt: dto.confirmed_at || null,
@@ -36,6 +47,11 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
     checkedInAt: dto.checked_in_at || null,
     checkedInBy: dto.checked_in_by || null,
     checkinLocation: dto.checkin_location || null,
+    
+    // Check-out tracking
+    checkedOutAt: dto.checked_out_at || null,
+    checkedOutBy: dto.checked_out_by || null,
+    checkoutLocation: dto.checkout_location || null,
   }
 
   if (dto.attendee) {

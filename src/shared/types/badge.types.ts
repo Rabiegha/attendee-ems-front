@@ -85,13 +85,15 @@ export type BadgeFormat = {
 // Badge element (from original badge generator)
 export interface BadgeElement {
   id: string;
-  type: 'text' | 'qrcode' | 'image';
+  type: 'text' | 'qrcode' | 'image' | 'qr' | 'shape';
   content: string;
   x: number;
   y: number;
   width: number;
   height: number;
   visible: boolean;
+  rotation?: number;
+  properties?: any;
   style: {
     fontFamily: string;
     fontSize: number;
@@ -103,8 +105,12 @@ export interface BadgeElement {
     transform: string;
     rotation: number;
     textTransform?: 'uppercase' | 'none';
+    textDecoration?: 'none' | 'underline' | 'line-through';
     opacity: number;
     zIndex: number;
+    lineHeight?: number;
+    letterSpacing?: number;
+    alignItems?: 'flex-start' | 'center' | 'flex-end';
   };
   imageId?: string;
   aspectRatio?: number;
@@ -119,6 +125,7 @@ export type UploadedImage = {
 export type HistoryState = {
   elements: BadgeElement[];
   background: string | null;
+  symmetryPairs: [string, string][]; // Array of [parentId, cloneId] pairs
 };
 
 export interface BadgeDesignDimensions {

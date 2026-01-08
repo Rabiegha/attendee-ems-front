@@ -8,6 +8,17 @@ export interface RegistrationDPO {
   attendanceType: 'onsite' | 'online' | 'hybrid'
   answers: Record<string, any> | null
   eventAttendeeTypeId?: string | null
+  eventAttendeeType?: {
+    id: string
+    color_hex?: string | null
+    text_color_hex?: string | null
+    attendeeType: {
+      id: string
+      name: string
+      color_hex: string
+      text_color_hex: string | null
+    }
+  } | null
   badgeTemplateId?: string | null
   invitedAt?: string | null
   confirmedAt?: string | null
@@ -34,6 +45,14 @@ export interface RegistrationDPO {
   checkedInAt?: string | null // ISO date
   checkedInBy?: string | null // User ID
   checkinLocation?: {
+    lat: number
+    lng: number
+  } | null
+  
+  // Check-out tracking (when participant leaves)
+  checkedOutAt?: string | null // ISO date
+  checkedOutBy?: string | null // User ID
+  checkoutLocation?: {
     lat: number
     lng: number
   } | null

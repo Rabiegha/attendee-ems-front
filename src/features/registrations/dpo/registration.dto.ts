@@ -8,6 +8,17 @@ export interface RegistrationDTO {
   attendance_type: 'onsite' | 'online' | 'hybrid'
   answers: Record<string, any> | null
   event_attendee_type_id?: string | null
+  eventAttendeeType?: {
+    id: string
+    color_hex?: string | null
+    text_color_hex?: string | null
+    attendeeType: {
+      id: string
+      name: string
+      color_hex: string
+      text_color_hex: string | null
+    }
+  } | null
   badge_template_id?: string | null
   invited_at?: string | null
   confirmed_at?: string | null
@@ -33,6 +44,14 @@ export interface RegistrationDTO {
   checked_in_at?: string | null // ISO date
   checked_in_by?: string | null // User ID
   checkin_location?: {
+    lat: number
+    lng: number
+  } | null
+  
+  // Check-out tracking (when participant leaves)
+  checked_out_at?: string | null // ISO date
+  checked_out_by?: string | null // User ID
+  checkout_location?: {
     lat: number
     lng: number
   } | null

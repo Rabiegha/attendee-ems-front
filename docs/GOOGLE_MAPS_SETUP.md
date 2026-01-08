@@ -33,7 +33,7 @@ Pour activer la fonctionnalité d'autocomplete d'adresse avec Google Maps Places
    - Créez un fichier `.env` à la racine du projet (s'il n'existe pas déjà)
    - Ajoutez votre clé API :
      ```bash
-     VITE_GOOGLE_MAPS_API_KEY=AIzaSyC2N68FbZcV7NtT8d_ZNFuKpweG6_-Jf_o
+     VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key-here
      ```
    - Redémarrez le serveur de développement
 

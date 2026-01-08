@@ -173,6 +173,11 @@ export const registrationsApi = rootApi.injectEndpoints({
           event_attendee_type_id?: string
           answers?: Record<string, any>
           source?: 'public_form' | 'test_form' | 'manual' | 'import'
+          // Admin fields for manual registration
+          admin_status?: 'awaiting' | 'approved' | 'refused' | 'cancelled'
+          admin_is_checked_in?: boolean
+          admin_checked_in_at?: string
+          admin_registered_at?: string
         }
       }
     >({
@@ -205,19 +210,38 @@ export const registrationsApi = rootApi.injectEndpoints({
             country?: string
           }
           answers?: Record<string, any>
+          eventAttendeeTypeId?: string | null
+          attendanceType?: 'onsite' | 'online' | 'hybrid'
+          status?: string
         }
       }
     >({
-      query: ({ id, data }) => ({
-        url: `/registrations/${id}`,
-        method: 'PATCH',
-        body: data,
-      }),
+      query: ({ id, data }) => {
+        // Map camelCase to snake_case for API
+        const payload: any = { ...data }
+        
+        if (data.eventAttendeeTypeId !== undefined) {
+          payload.event_attendee_type_id = data.eventAttendeeTypeId
+          delete payload.eventAttendeeTypeId
+        }
+        
+        if (data.attendanceType !== undefined) {
+          payload.attendance_type = data.attendanceType
+          delete payload.attendanceType
+        }
+
+        return {
+          url: `/registrations/${id}`,
+          method: 'PATCH',
+          body: payload,
+        }
+      },
       transformResponse: (response: RegistrationDTO) =>
         mapRegistrationDTOtoDPO(response),
       invalidatesTags: (_result, _error, { id, eventId }) => [
         { type: 'Attendee', id },
         { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'AttendeeTypes', id: eventId }, // Invalider pour mettre à jour les compteurs
       ],
     }),
 
@@ -310,6 +334,86 @@ export const registrationsApi = rootApi.injectEndpoints({
       ],
     }),
 
+    checkIn: builder.mutation<
+      { success: boolean; message: string; registration: RegistrationDPO },
+      { id: string; eventId: string; checkinLocation?: { lat: number; lng: number } }
+    >({
+      query: ({ id, eventId, checkinLocation }) => ({
+        url: `/registrations/${id}/check-in`,
+        method: 'POST',
+        body: { eventId, checkinLocation },
+      }),
+      transformResponse: (response: { success: boolean; message: string; registration: RegistrationDTO }) => ({
+        ...response,
+        registration: mapRegistrationDTOtoDPO(response.registration),
+      }),
+      invalidatesTags: (_result, _error, { id, eventId }) => [
+        { type: 'Attendee', id },
+        { type: 'Attendee', id: 'LIST' },
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+      ],
+    }),
+
+    undoCheckIn: builder.mutation<
+      { success: boolean; message: string; registration: RegistrationDPO },
+      { id: string; eventId: string }
+    >({
+      query: ({ id, eventId }) => ({
+        url: `/registrations/${id}/undo-check-in`,
+        method: 'POST',
+        body: { eventId },
+      }),
+      transformResponse: (response: { success: boolean; message: string; registration: RegistrationDTO }) => ({
+        ...response,
+        registration: mapRegistrationDTOtoDPO(response.registration),
+      }),
+      invalidatesTags: (_result, _error, { id, eventId }) => [
+        { type: 'Attendee', id },
+        { type: 'Attendee', id: 'LIST' },
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+      ],
+    }),
+
+    checkOut: builder.mutation<
+      { success: boolean; message: string; registration: RegistrationDPO },
+      { id: string; eventId: string; checkoutLocation?: { lat: number; lng: number } }
+    >({
+      query: ({ id, eventId, checkoutLocation }) => ({
+        url: `/registrations/${id}/check-out`,
+        method: 'POST',
+        body: { eventId, checkoutLocation },
+      }),
+      transformResponse: (response: { success: boolean; message: string; registration: RegistrationDTO }) => ({
+        ...response,
+        registration: mapRegistrationDTOtoDPO(response.registration),
+      }),
+      invalidatesTags: (_result, _error, { id, eventId }) => [
+        { type: 'Attendee', id },
+        { type: 'Attendee', id: 'LIST' },
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+      ],
+    }),
+
+    undoCheckOut: builder.mutation<
+      { success: boolean; message: string; registration: RegistrationDPO },
+      { id: string; eventId: string }
+    >({
+      query: ({ id, eventId }) => ({
+        url: `/registrations/${id}/undo-check-out`,
+        method: 'POST',
+        body: { eventId },
+      }),
+      transformResponse: (response: { success: boolean; message: string; registration: RegistrationDTO }) => ({
+        ...response,
+        registration: mapRegistrationDTOtoDPO(response.registration),
+      }),
+      invalidatesTags: (_result, _error, { id, eventId }) => [
+        { type: 'Attendee', id },
+        { type: 'Attendee', id: 'LIST' },
+        { type: 'Attendee', id: `EVENT-${eventId}` },
+      ],
+    }),
+
     bulkExportRegistrations: builder.mutation<
       { downloadUrl: string; filename: string },
       { ids: string[]; format?: string }
@@ -373,6 +477,24 @@ export const registrationsApi = rootApi.injectEndpoints({
       ],
     }),
 
+    getRegistrationTemplate: builder.mutation<Blob, void>({
+      query: () => ({
+        url: '/registrations/template',
+        method: 'GET',
+        responseHandler: async (response) => {
+          if (!response.ok) {
+            const text = await response.text()
+            try {
+              return JSON.parse(text)
+            } catch {
+              return { error: text, status: response.status }
+            }
+          }
+          return response.blob()
+        },
+      }),
+    }),
+
     downloadBadge: builder.mutation<
       Blob,
       { eventId: string; registrationId: string; format: 'pdf' | 'html' | 'image' }
@@ -401,9 +523,14 @@ export const {
   useBulkDeleteRegistrationsMutation,
   useBulkUpdateRegistrationStatusMutation,
   useBulkCheckInMutation,
+  useCheckInMutation,
+  useUndoCheckInMutation,
+  useCheckOutMutation,
+  useUndoCheckOutMutation,
   useBulkExportRegistrationsMutation,
   useGenerateBadgesForEventMutation,
   useGenerateBadgesBulkMutation,
   useGenerateBadgeMutation,
   useDownloadBadgeMutation,
+  useGetRegistrationTemplateMutation,
 } = registrationsApi

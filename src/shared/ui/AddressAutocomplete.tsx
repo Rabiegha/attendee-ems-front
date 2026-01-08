@@ -208,15 +208,18 @@ export const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
           })
         }
 
-        const placeData = {
+        const placeData: any = {
           formatted_address: address,
-          street: street.trim() || undefined,
-          city: city || undefined,
-          postal_code: postal_code || undefined,
-          country: country || undefined,
-          latitude: place.geometry?.location?.lat() || undefined,
-          longitude: place.geometry?.location?.lng() || undefined,
         }
+        
+        if (street.trim()) placeData.street = street.trim()
+        if (city) placeData.city = city
+        if (postal_code) placeData.postal_code = postal_code
+        if (country) placeData.country = country
+        const lat = place.geometry?.location?.lat()
+        const lng = place.geometry?.location?.lng()
+        if (lat !== undefined) placeData.latitude = lat
+        if (lng !== undefined) placeData.longitude = lng
 
         onChangeRef.current(address)
         onPlaceSelectRef.current?.(placeData)

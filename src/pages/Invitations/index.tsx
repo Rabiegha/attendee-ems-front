@@ -7,7 +7,11 @@ import { Card } from '@/shared/ui/Card'
 import { Input } from '@/shared/ui/Input'
 import { PageContainer, PageHeader, PageSection } from '@/shared/ui'
 import { UniversalModal, useUniversalModal } from '@/shared/ui'
-import { useSendInvitationMutation } from '@/features/invitations/api/invitationsApi'
+import { useToast } from '@/shared/hooks/useToast'
+import { 
+  useSendInvitationMutation, 
+  useResendInvitationMutation 
+} from '@/features/invitations/api/invitationsApi'
 import { useGetRolesFilteredQuery } from '@/features/roles/api/rolesApi'
 import { useGetOrganizationsQuery } from '@/features/users/api/usersApi'
 import { useCreateOrganizationMutation } from '@/features/organizations/api/organizationsApi'
@@ -24,6 +28,7 @@ interface InvitationFormData {
 
 export const InvitationsPage: React.FC = () => {
   const currentUser = useSelector((state: RootState) => state.session.user)
+  const toast = useToast()
 
   // Vérifier si l'utilisateur est SUPER_ADMIN
   const hasRoleSuperAdmin = currentUser?.roles?.includes('SUPER_ADMIN')
@@ -71,11 +76,14 @@ export const InvitationsPage: React.FC = () => {
     hideModal,
     showError,
     showWarning,
+    showConfirmation,
+    showSuccess,
     showInvitationSent,
     showInvitationSentWithOrg,
   } = useUniversalModal()
 
   const [sendInvitation, { isLoading: isSending }] = useSendInvitationMutation()
+  const [resendInvitation] = useResendInvitationMutation()
   const [createOrganization, { isLoading: isCreatingOrg }] =
     useCreateOrganizationMutation()
 
@@ -245,7 +253,7 @@ export const InvitationsPage: React.FC = () => {
       }
 
       // Envoyer l'invitation avec l'organisation appropriée
-      await sendInvitation({
+      const invitationResult = await sendInvitation({
         email: formData.email,
         roleId: formData.roleId,
         orgId: finalOrgId,
@@ -260,7 +268,7 @@ export const InvitationsPage: React.FC = () => {
           createdOrgSlug
         )
       } else {
-        // Cas : Seulement invitation envoyée
+        // Cas : Invitation envoyée normalement
         showInvitationSent(formData.email)
       }
 
@@ -273,6 +281,79 @@ export const InvitationsPage: React.FC = () => {
         newOrgName: '',
       })
     } catch (error: any) {
+      console.log('🔍 [INVITATION ERROR]', { error, status: error?.status, data: error?.data })
+      console.log('🔍 [INVITATION ERROR DATA]', JSON.stringify(error?.data, null, 2))
+      
+      // Gestion du cas 409 - Invitation déjà en cours
+      // RTK Query met les erreurs dans error.data
+      const errorData = error?.data || error
+      const errorStatus = error?.status || error?.originalStatus
+      
+      console.log('🔍 [CHECKING 409]', { 
+        errorStatus, 
+        is409: errorStatus === 409,
+        hasPendingInvitation: errorData?.hasPendingInvitation,
+        existingInvitation: errorData?.existingInvitation,
+        willShowModal: errorStatus === 409
+      })
+      
+      // Si 409 = invitation en cours
+      if (errorStatus === 409) {
+        if (errorData?.hasPendingInvitation && errorData?.existingInvitation) {
+          // Backend a retourné les données complètes
+          const existingInv = errorData.existingInvitation
+          const createdDate = new Date(existingInv.createdAt).toLocaleDateString('fr-FR')
+          const expiresDate = new Date(existingInv.expiresAt).toLocaleDateString('fr-FR')
+
+          showConfirmation(
+            'Invitation déjà en cours',
+            `Une invitation a déjà été envoyée à ${existingInv.email} le ${createdDate}.\n\nElle expire le ${expiresDate}.\n\nVoulez-vous renvoyer une nouvelle invitation ?`,
+            async () => {
+              // OUI - Renvoyer l'invitation
+              hideModal()
+              try {
+                await resendInvitation(existingInv.id).unwrap()
+                
+                toast.success(
+                  'Invitation renvoyée',
+                  `Une nouvelle invitation a été envoyée à ${existingInv.email}.`
+                )
+                
+                // Reset form
+                setFormData({
+                  email: '',
+                  roleId: '',
+                  orgId: currentUser?.orgId || '',
+                  createNewOrg: false,
+                  newOrgName: '',
+                })
+              } catch (resendError: any) {
+                toast.error('Erreur de renvoi', resendError?.message || 'Impossible de renvoyer l\'invitation')
+              }
+            },
+            () => {
+              // NON - Fermer la modal
+              hideModal()
+            }
+          )
+        } else {
+          // Fallback: backend n'a pas retourné les données complètes
+          showConfirmation(
+            'Invitation déjà en cours',
+            `Une invitation a déjà été envoyée à ${formData.email}.\n\nVoulez-vous renvoyer une nouvelle invitation ?`,
+            () => {
+              // OUI - Recharger la page
+              window.location.reload()
+            },
+            () => {
+              // NON - Fermer
+              hideModal()
+            }
+          )
+        }
+        return
+      }
+
       // Gestion spécifique des erreurs d'invitation (les erreurs d'organisation sont gérées séparément)
       const errorMessage =
         error?.data?.message ||

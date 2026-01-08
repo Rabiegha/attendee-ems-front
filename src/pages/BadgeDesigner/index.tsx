@@ -41,8 +41,8 @@ export const BadgeDesigner: React.FC = () => {
   });
 
   // Configuration des filtres
-  const filterConfig = [
-    {
+  const filterConfig: Record<string, any> = {
+    status: {
       key: 'status',
       label: 'Statut',
       type: 'select' as const,
@@ -51,7 +51,7 @@ export const BadgeDesigner: React.FC = () => {
         { value: 'inactive', label: 'Inactif' },
       ],
     },
-    {
+    isDefault: {
       key: 'isDefault',
       label: 'Type',
       type: 'select' as const,
@@ -60,7 +60,7 @@ export const BadgeDesigner: React.FC = () => {
         { value: 'custom', label: 'Personnalisé' },
       ],
     },
-  ];
+  };
 
   // Configuration des options de tri
   const sortOptions: SortOption[] = [

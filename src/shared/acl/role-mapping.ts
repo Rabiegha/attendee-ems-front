@@ -15,7 +15,7 @@ export const ROLE_MAPPING: Record<string, UserRole> = {
   MANAGER: 'MANAGER', // Gestion événements sans invitations (scope org)
   VIEWER: 'VIEWER', // Lecture seule tous événements org (scope org)
   PARTNER: 'PARTNER', // Lecture seule événements assignés (scope org)
-  HOTESSE: 'HOTESSE', // Scan QR codes événements assignés (scope org)
+  HOSTESS: 'HOSTESS', // Scan QR codes événements assignés (scope org)
 
   // Support snake_case et minuscules du backend
   super_admin: 'SUPER_ADMIN',
@@ -23,14 +23,15 @@ export const ROLE_MAPPING: Record<string, UserRole> = {
   manager: 'MANAGER',
   viewer: 'VIEWER',
   partner: 'PARTNER',
-  hotesse: 'HOTESSE',
+  hostess: 'HOSTESS',
+  hotesse: 'HOSTESS', // French alias
 
   // Legacy roles (pour compatibilité avec anciennes données)
   org_admin: 'ADMIN',
   org_manager: 'MANAGER',
   event_manager: 'MANAGER',
   readonly: 'VIEWER',
-  checkin_staff: 'HOTESSE',
+  checkin_staff: 'HOSTESS',
 }
 
 /**

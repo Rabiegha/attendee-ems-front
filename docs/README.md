@@ -8,10 +8,15 @@ Ce dossier contient toute la documentation technique et utilisateur du système 
 
 | Document                                                   | Description                                                                                                       | Mise à jour |
 | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ----------- |
+| [`TABLE_PATTERN.md`](./TABLE_PATTERN.md)                   | **Pattern standard pour les tableaux** - Architecture, onglets, sélection, bulk actions, sticky headers          | 08/01/2026  |
+| [`TABLES_INVENTORY.md`](./TABLES_INVENTORY.md)             | **Inventaire des tableaux** - Liste complète des DataTables avec leur configuration et status                    | 08/01/2026  |
+| [`DATATABLE_GUIDE.md`](./DATATABLE_GUIDE.md)               | **Guide complet DataTable** - Tutoriel avec exemples pratiques et résolution de problèmes                        | 08/01/2026  |
+| [`COMPONENT_LIBRARY.md`](./COMPONENT_LIBRARY.md)           | **Bibliothèque de composants** - DataTable, BulkActions, et tous les composants réutilisables                    | 08/01/2026  |
 | [`TEST_ACCOUNTS.md`](./TEST_ACCOUNTS.md)                   | **Comptes de test multi-organisations** - Liste complète des comptes disponibles pour tester les permissions RBAC | 24/09/2025  |
 | [`ATTENDEES_ARCHITECTURE.md`](./ATTENDEES_ARCHITECTURE.md) | Architecture du système Attendees/Registrations avec CRM intégré                                                  | -           |
 | [`USER_CREATION_WORKFLOW.md`](./USER_CREATION_WORKFLOW.md) | Workflow sécurisé de création d'utilisateur par invitation                                                        | -           |
 | [`LOGOUT_CACHE_FIX.md`](./LOGOUT_CACHE_FIX.md)             | Fix critique - Nettoyage cache RTK Query à la déconnexion                                                         | -           |
+| [`MULTI_SELECT_IMPLEMENTATION.md`](./MULTI_SELECT_IMPLEMENTATION.md) | Documentation historique sélection multiple (voir TABLE_PATTERN.md pour pattern actuel)          | Archivé     |
 
 ### 🐛 Documentation des corrections
 

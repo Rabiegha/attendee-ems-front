@@ -39,6 +39,8 @@ import {
   type TableSelectorOption,
   type FilterValues,
 } from '@/shared/ui'
+import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
+import { createBulkActions } from '@/shared/ui/BulkActions'
 import {
   useGetUsersQuery,
   useUpdateUserMutation,
@@ -132,8 +134,8 @@ export function UsersPage() {
     // Filtre par rôle (single select)
     if (selectedRoleId && selectedRoleId !== 'all') {
       users = users.filter((user) => {
-        const userRoles = user.roles || []
-        return userRoles.some((r: any) => r.id === selectedRoleId || r.role_id === selectedRoleId)
+        // user.role is the correct property, not user.roles
+        return user.role?.id === selectedRoleId
       })
     }
 
@@ -165,7 +167,7 @@ export function UsersPage() {
   }
 
   const handleInviteUser = () => {
-    navigate('/users/invite')
+    navigate('/invitations')
   }
 
   const handleTabChange = (tabId: string) => {
@@ -235,11 +237,13 @@ export function UsersPage() {
   // Définition des colonnes
   const columns = useMemo<ColumnDef<User>[]>(
     () => [
+      createSelectionColumn<User>(),
       // Colonne Utilisateur (avec avatar et email)
       {
         id: 'user',
         header: 'Utilisateur',
         accessorFn: (row) => `${row.first_name || ''} ${row.last_name || ''} ${row.email}`,
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const user = row.original
           return (
@@ -268,6 +272,7 @@ export function UsersPage() {
         id: 'role',
         header: 'Rôle',
         accessorKey: 'role.name',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const user = row.original
           
@@ -476,24 +481,49 @@ export function UsersPage() {
             >
               <Edit2 className="h-4 w-4 shrink-0" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleDeleteUser(user)
-              }}
-              title="Désactiver"
-              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
-            >
-              <Trash2 className="h-4 w-4 shrink-0" />
-            </Button>
+            {user.id !== currentUser?.id && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleDeleteUser(user)
+                }}
+                title="Désactiver"
+                className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
+              >
+                <Trash2 className="h-4 w-4 shrink-0" />
+              </Button>
+            )}
           </>
         )
       }),
     ],
     [currentUser?.id, isDeletedTab, roles, rolesLoading, optimisticRoleUpdates, updateUser]
   )
+
+  // Bulk actions
+  const bulkActions = useMemo(() => {
+    const actions = []
+
+    if (!isDeletedTab) {
+      // Désactiver (soft delete)
+      actions.push(
+        createBulkActions.delete(async (selectedIds) => {
+          try {
+            await bulkDeleteUsers(Array.from(selectedIds)).unwrap()
+            toast.success(`${selectedIds.size} utilisateur(s) désactivé(s)`)
+          } catch (error) {
+            console.error('Erreur lors de la désactivation:', error)
+            toast.error('Erreur lors de la désactivation')
+            throw error
+          }
+        }, 'Désactiver')
+      )
+    }
+
+    return actions
+  }, [isDeletedTab, bulkDeleteUsers, toast])
 
   return (
     <PageContainer maxWidth="7xl" padding="lg">
@@ -631,9 +661,14 @@ export function UsersPage() {
       <PageSection spacing="lg">
         <Card variant="default" padding="none">
           <DataTable
+            key={activeTab}
             columns={columns}
             data={filteredUsers}
             isLoading={isLoading}
+            enableRowSelection
+            bulkActions={bulkActions}
+            getItemId={(user) => user.id}
+            itemType="utilisateurs"
             emptyMessage={
               isDeletedTab
                 ? 'Aucun utilisateur supprimé'
@@ -647,10 +682,8 @@ export function UsersPage() {
               />
             }
             // Server-side pagination
-            manualPagination={true}
+            enablePagination={true}
             pageSize={usersData?.limit || 10}
-            currentPage={usersData?.page || 1}
-            pageCount={usersData ? Math.ceil(usersData.total / usersData.limit) : 1}
             totalItems={usersData?.total || 0}
             onPageChange={(page: number) => {
               dispatch(setFilters({ page }))

@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+errors.txt
 
 node_modules
 dist
@@ -17,6 +18,8 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+*/.DS_Store
+**/.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
@@ -24,12 +27,11 @@ dist-ssr
 *.sw?
 
 # Environment variables
+# Only .env.example and .env.README.md files are committed
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.demo
+.env.*
+!.env.example
+!.env.README.md
 
 # Testing
 coverage
@@ -45,4 +47,23 @@ public/mockServiceWorker.js
 
 # Windsurf
 .windsurf
+
+# Build & temp files
+*.tsbuildinfo
+.cache
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Logs & dumps
+*.log.*
+dump.*
+*.dump
+
+# Uploads (local dev)
+uploads/
+public/uploads/
 

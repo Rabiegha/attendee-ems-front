@@ -33,6 +33,7 @@ interface EventsPageProps {}
 export const EventsPage: React.FC<EventsPageProps> = () => {
   const { t } = useTranslation(['events', 'common'])
   const navigate = useNavigate()
+  const dispatch = useDispatch()
 
   // État pour les modals
   const [editingEvent, setEditingEvent] = useState<any>(null)

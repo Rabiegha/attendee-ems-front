@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ColumnDef } from '@tanstack/react-table'
 import {
@@ -15,6 +15,9 @@ import {
   Award,
   RotateCcw,
   UserCheck,
+  Users,
+  LogOut,
+  Undo2,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button, TableSelector, type TableSelectorOption, ActionButtons } from '@/shared/ui'
@@ -35,7 +38,12 @@ import {
   useBulkExportRegistrationsMutation,
   useBulkUpdateRegistrationStatusMutation,
   useBulkCheckInMutation,
+  useCheckInMutation,
+  useUndoCheckInMutation,
+  useCheckOutMutation,
+  useUndoCheckOutMutation,
 } from '../api/registrationsApi'
+import { EventAttendeeType } from '@/features/events/api/eventsApi'
 import { useToast } from '@/shared/hooks/useToast'
 import { EditRegistrationModal } from './EditRegistrationModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
@@ -44,6 +52,7 @@ import { PermanentDeleteRegistrationModal } from './PermanentDeleteRegistrationM
 import { QrCodeModal } from './QrCodeModal'
 import { BadgePreviewModal } from './BadgePreviewModal'
 import { BulkStatusChangeModal } from './BulkStatusChangeModal'
+import { BulkAttendeeTypeChangeModal } from './BulkAttendeeTypeChangeModal'
 import { createBulkActions } from '@/shared/ui/BulkActions'
 import {
   getRegistrationFullName,
@@ -70,12 +79,22 @@ interface RegistrationsTableProps {
       refused: number
     }
   }
+  stats?: {
+    total: number
+    statusCounts: {
+      awaiting: number
+      approved: number
+      refused: number
+    }
+  }
   // Server-side pagination
   currentPage?: number
   pageSize?: number
   totalPages?: number
   onPageChange?: (page: number) => void
   onPageSizeChange?: (pageSize: number) => void
+  eventAttendeeTypes?: EventAttendeeType[] | undefined
+  isLoadingAttendeeTypes?: boolean
 }
 
 const STATUS_CONFIG = {
@@ -145,16 +164,21 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   isDeletedTab,
   tabsElement,
   meta,
+  stats,
   currentPage,
   pageSize,
   totalPages,
   onPageChange,
   onPageSizeChange,
+  eventAttendeeTypes,
+  isLoadingAttendeeTypes = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterValues, setFilterValues] = useState<FilterValues>({})
   const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false)
   const [bulkStatusSelectedIds, setBulkStatusSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkTypeModalOpen, setBulkTypeModalOpen] = useState(false)
+  const [bulkTypeSelectedIds, setBulkTypeSelectedIds] = useState<Set<string>>(new Set())
   const [editingRegistration, setEditingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [deletingRegistration, setDeletingRegistration] =
@@ -183,6 +207,18 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         { value: 'cancelled', label: 'Annulés' },
       ],
     },
+    attendeeType: {
+      label: 'Type de participant',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous les types' },
+        { value: 'none', label: 'Aucun' },
+        ...(eventAttendeeTypes?.filter(type => type.is_active && type.attendeeType.is_active).map(type => ({
+          value: type.attendee_type_id,
+          label: type.attendeeType.name
+        })) || [])
+      ],
+    },
     checkin: {
       label: 'Check-in',
       type: 'radio' as const,
@@ -194,8 +230,88 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     },
   }
 
+  // Options pour le sélecteur de type dans le tableau
+  const attendeeTypeOptions: TableSelectorOption<string>[] = useMemo(() => {
+    if (!eventAttendeeTypes) return [{ value: 'none', label: 'Aucun', color: 'gray' as const }]
+    
+    // Vérifier quels types inactifs sont utilisés par au moins une registration
+    const usedTypeIds = new Set(
+      registrations
+        ?.filter(r => r.eventAttendeeType?.id)
+        .map(r => r.eventAttendeeType!.id)
+    )
+    
+    // Séparer les types actifs et inactifs
+    const activeTypes = eventAttendeeTypes
+      .filter(type => type.is_active && type.attendeeType.is_active)
+      .map(type => ({
+        value: type.id,
+        label: type.attendeeType.name,
+        hexColor: type.color_hex || type.attendeeType.color_hex || '#9ca3af',
+        textHexColor: type.text_color_hex || type.attendeeType.text_color_hex || '#ffffff',
+        disabled: false,
+      }))
+    
+    // Types inactifs mais utilisés (affichés en bas, grisés, disabled)
+    const inactiveUsedTypes = eventAttendeeTypes
+      .filter(type => !type.is_active && usedTypeIds.has(type.id))
+      .map(type => ({
+        value: type.id,
+        label: type.attendeeType.name,
+        hexColor: '#6b7280', // Gris
+        textHexColor: '#9ca3af',
+        disabled: true,
+      }))
+    
+    return [
+      { value: 'none', label: 'Aucun', color: 'gray' as const },
+      ...activeTypes,
+      ...inactiveUsedTypes
+    ]
+  }, [eventAttendeeTypes, registrations])
+
   // Optimistic updates: stocke temporairement les nouveaux status avant confirmation serveur
   const [optimisticStatusUpdates, setOptimisticStatusUpdates] = useState<Map<string, string>>(new Map())
+  // Optimistic updates pour les types de participants
+  const [optimisticTypeUpdates, setOptimisticTypeUpdates] = useState<Map<string, string>>(new Map())
+
+  // Nettoyage automatique des mises à jour optimistes quand les valeurs serveur correspondent
+  useEffect(() => {
+    // Nettoyer les mises à jour de statut optimistes
+    const statusToClean: string[] = []
+    optimisticStatusUpdates.forEach((optimisticValue, registrationId) => {
+      const registration = registrations.find(r => r.id === registrationId)
+      if (registration && registration.status === optimisticValue) {
+        statusToClean.push(registrationId)
+      }
+    })
+    
+    if (statusToClean.length > 0) {
+      setOptimisticStatusUpdates(prev => {
+        const next = new Map(prev)
+        statusToClean.forEach(id => next.delete(id))
+        return next
+      })
+    }
+
+    // Nettoyer les mises à jour de type optimistes
+    const typeToClean: string[] = []
+    optimisticTypeUpdates.forEach((optimisticValue, registrationId) => {
+      const registration = registrations.find(r => r.id === registrationId)
+      const serverTypeId = registration?.eventAttendeeType?.id || 'none'
+      if (serverTypeId === optimisticValue) {
+        typeToClean.push(registrationId)
+      }
+    })
+    
+    if (typeToClean.length > 0) {
+      setOptimisticTypeUpdates(prev => {
+        const next = new Map(prev)
+        typeToClean.forEach(id => next.delete(id))
+        return next
+      })
+    }
+  }, [registrations, optimisticStatusUpdates, optimisticTypeUpdates])
 
   const [updateStatus] = useUpdateRegistrationStatusMutation()
   const [updateRegistration, { isLoading: isUpdating }] =
@@ -207,6 +323,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
   const [bulkUpdateStatus] = useBulkUpdateRegistrationStatusMutation()
   const [bulkCheckIn] = useBulkCheckInMutation()
+  const [checkIn] = useCheckInMutation()
+  const [undoCheckIn] = useUndoCheckInMutation()
+  const [checkOut] = useCheckOutMutation()
+  const [undoCheckOut] = useUndoCheckOutMutation()
 
   const handleRowClick = (registration: RegistrationDPO) => {
     navigate(`/attendees/${registration.attendeeId}`)
@@ -226,7 +346,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         `L'inscription a été ${STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG].label.toLowerCase()}`
       )
       // Le nettoyage se fera automatiquement quand le serveur renverra la bonne valeur
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating status:', error)
       // Erreur: restaurer l'ancienne valeur
       setOptimisticStatusUpdates(prev => {
@@ -234,7 +354,115 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         next.delete(registrationId)
         return next
       })
-      toast.error('Erreur', 'Impossible de mettre à jour le statut')
+
+      let title = 'Erreur'
+      let message = 'Impossible de mettre à jour le statut'
+
+      if (error?.status === 409) {
+        title = 'Capacité atteinte'
+        message = "L'événement est complet. Impossible d'approuver ce participant."
+      } else if (error?.data?.message) {
+        message = error.data.message
+      }
+
+      toast.error(title, message)
+    }
+  }
+
+  const handleAttendeeTypeChange = async (
+    registrationId: string,
+    newEventAttendeeTypeId: string
+  ) => {
+    // Optimistic update: afficher immédiatement le nouveau type
+    setOptimisticTypeUpdates(prev => new Map(prev).set(registrationId, newEventAttendeeTypeId))
+    
+    try {
+      await updateRegistration({
+        id: registrationId,
+        eventId,
+        data: {
+          eventAttendeeTypeId: newEventAttendeeTypeId === 'none' ? null : newEventAttendeeTypeId
+        }
+      }).unwrap()
+      toast.success('Type mis à jour', 'Le type de participant a été modifié')
+      // Le nettoyage se fera automatiquement quand le serveur renverra la bonne valeur
+    } catch (error: any) {
+      console.error('Error updating type:', error)
+      // Erreur: restaurer l'ancienne valeur
+      setOptimisticTypeUpdates(prev => {
+        const next = new Map(prev)
+        next.delete(registrationId)
+        return next
+      })
+      toast.error('Erreur', 'Impossible de mettre à jour le type')
+    }
+  }
+
+  const handleCheckIn = async (registration: RegistrationDPO) => {
+    try {
+      await checkIn({
+        id: registration.id,
+        eventId,
+      }).unwrap()
+      toast.success(
+        'Check-in effectué',
+        'Le participant a été enregistré comme présent'
+      )
+    } catch (error: any) {
+      console.error('Error checking in:', error)
+      const errorMessage = error?.data?.message || 'Impossible d\'effectuer le check-in'
+      toast.error('Erreur', errorMessage)
+    }
+  }
+
+  const handleUndoCheckIn = async (registration: RegistrationDPO) => {
+    try {
+      await undoCheckIn({
+        id: registration.id,
+        eventId,
+      }).unwrap()
+      toast.success(
+        'Check-in annulé',
+        'Le check-in a été annulé avec succès'
+      )
+    } catch (error: any) {
+      console.error('Error undoing check-in:', error)
+      const errorMessage = error?.data?.message || 'Impossible d\'annuler le check-in'
+      toast.error('Erreur', errorMessage)
+    }
+  }
+
+  const handleCheckOut = async (registration: RegistrationDPO) => {
+    try {
+      await checkOut({
+        id: registration.id,
+        eventId,
+      }).unwrap()
+      toast.success(
+        'Check-out effectué',
+        'Le participant a été enregistré comme sorti'
+      )
+    } catch (error: any) {
+      console.error('Error checking out:', error)
+      const errorMessage = error?.data?.message || 'Impossible d\'effectuer le check-out'
+      toast.error('Erreur', errorMessage)
+    }
+  }
+
+  const handleUndoCheckOut = async (registration: RegistrationDPO) => {
+    try {
+      await undoCheckOut({
+        id: registration.id,
+        eventId,
+      }).unwrap()
+      toast.success(
+        'Check-out annulé',
+        'Le check-out a été annulé avec succès'
+      )
+    } catch (error: any) {
+      console.error('Error undoing check-out:', error)
+      const errorMessage = error?.data?.message || 'Impossible d\'annuler le check-out'
+      toast.error('Erreur', errorMessage)
     }
   }
 
@@ -290,9 +518,20 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         "L'inscription a été restaurée avec succès"
       )
       setRestoringRegistration(null)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error restoring registration:', error)
-      toast.error('Erreur', "Impossible de restaurer l'inscription")
+      
+      let title = 'Erreur'
+      let message = "Impossible de restaurer l'inscription"
+
+      if (error?.status === 409) {
+        title = 'Capacité atteinte'
+        message = "L'événement est complet. Impossible de restaurer une inscription approuvée."
+      } else if (error?.data?.message) {
+        message = error.data.message
+      }
+
+      toast.error(title, message)
     }
   }
 
@@ -328,9 +567,48 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       // Réinitialiser
       setBulkStatusModalOpen(false)
       setBulkStatusSelectedIds(new Set())
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erreur lors du changement de statut:', error)
-      toast.error('Erreur lors du changement de statut')
+      
+      let title = 'Erreur'
+      let message = 'Erreur lors du changement de statut'
+
+      if (error?.status === 409) {
+        title = 'Capacité atteinte'
+        message = "L'événement est complet. Impossible d'approuver ces participants."
+      } else if (error?.data?.message) {
+        message = error.data.message
+      }
+
+      toast.error(title, message)
+      throw error
+    }
+  }
+
+  const handleBulkAttendeeTypeChange = async (attendeeTypeId: string) => {
+    try {
+      // On utilise updateRegistration en boucle car il n'y a pas encore de mutation bulk pour le type
+      // TODO: Créer une mutation bulkUpdateAttendeeType pour optimiser
+      await Promise.all(
+        Array.from(bulkTypeSelectedIds).map((id) =>
+          updateRegistration({
+            id,
+            eventId,
+            data: {
+              eventAttendeeTypeId: attendeeTypeId === 'none' ? null : attendeeTypeId
+            }
+          }).unwrap()
+        )
+      )
+      
+      toast.success(`${bulkTypeSelectedIds.size} inscription(s) mise(s) à jour`)
+      
+      // Réinitialiser
+      setBulkTypeModalOpen(false)
+      setBulkTypeSelectedIds(new Set())
+    } catch (error) {
+      console.error('Erreur lors du changement de type:', error)
+      toast.error('Erreur', "Impossible de mettre à jour les types")
       throw error
     }
   }
@@ -338,6 +616,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   // Extraction des valeurs de filtres
   const statusFilter = (filterValues.status as string) || 'all'
   const checkinFilter = (filterValues.checkin as string) || 'all'
+  const attendeeTypeFilter = (filterValues.attendeeType as string) || 'all'
 
   // 1. Recherche floue (Fuzzy Search)
   const searchResults = useFuzzySearch(
@@ -362,9 +641,15 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         (checkinFilter === 'checked' && reg.checkedInAt) ||
         (checkinFilter === 'not_checked' && !reg.checkedInAt)
 
-      return matchesStatus && matchesCheckin
+      const matchesAttendeeType = 
+        attendeeTypeFilter === 'all' || 
+        (attendeeTypeFilter === 'none' && !reg.eventAttendeeTypeId) ||
+        reg.eventAttendeeTypeId === attendeeTypeFilter || // Si on filtre par ID de liaison
+        (reg.eventAttendeeType?.attendeeType?.id === attendeeTypeFilter) // Si on filtre par ID de type
+
+      return matchesStatus && matchesCheckin && matchesAttendeeType
     })
-  }, [searchResults, statusFilter, checkinFilter])
+  }, [searchResults, statusFilter, checkinFilter, attendeeTypeFilter])
 
   // Columns definition
   const columns = useMemo<ColumnDef<RegistrationDPO>[]>(
@@ -374,6 +659,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         id: 'participant',
         header: 'Participant',
         accessorFn: (row) => getRegistrationFullName(row),
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div className="cursor-pointer" onClick={() => handleRowClick(row.original)}>
             <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -392,6 +678,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         id: 'contact',
         header: 'Contact',
         accessorFn: (row) => getRegistrationEmail(row),
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div className="cursor-pointer space-y-1" onClick={() => handleRowClick(row.original)}>
             <div className="text-sm text-gray-900 dark:text-white flex items-center">
@@ -413,6 +700,49 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         ),
       },
       {
+        id: 'attendeeType',
+        header: 'Type',
+        accessorFn: (row) => row.eventAttendeeType?.attendeeType?.name || 'Aucun',
+        sortingFn: 'caseInsensitive',
+        cell: ({ row }) => {
+          // Utiliser la valeur optimiste si disponible, sinon la valeur serveur
+          const optimisticType = optimisticTypeUpdates.get(row.original.id)
+          const serverTypeId = row.original.eventAttendeeType?.id || 'none'
+          const currentTypeId = optimisticType || serverTypeId
+          
+          // S'assurer que l'option actuelle existe dans la liste pour l'affichage correct
+          // (Même si la liste globale est en cours de chargement ou si le type est manquant)
+          const currentOptionExists = attendeeTypeOptions.some(o => o.value === currentTypeId)
+          
+          let displayOptions = attendeeTypeOptions
+          if (!currentOptionExists && row.original.eventAttendeeType) {
+            // Le type actuel n'est pas dans la liste (probablement désactivé)
+            // On l'ajoute uniquement pour cet utilisateur avec une indication
+            displayOptions = [
+              ...attendeeTypeOptions,
+              {
+                value: row.original.eventAttendeeType.id,
+                label: row.original.eventAttendeeType.attendeeType.name,
+                hexColor: row.original.eventAttendeeType.color_hex || row.original.eventAttendeeType.attendeeType.color_hex,
+                textHexColor: row.original.eventAttendeeType.text_color_hex || row.original.eventAttendeeType.attendeeType.text_color_hex || '#ffffff',
+                description: 'Type désactivé' as const
+              }
+            ]
+          }
+
+          return (
+            <TableSelector
+              value={currentTypeId}
+              options={displayOptions}
+              onChange={(newValue) => handleAttendeeTypeChange(row.original.id, newValue)}
+              disabled={isLoadingAttendeeTypes && !eventAttendeeTypes}
+              loadingText="..."
+              size="sm"
+            />
+          )
+        },
+      },
+      {
         id: 'status',
         header: 'Statut',
         accessorKey: 'status',
@@ -420,18 +750,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           // Utiliser la valeur optimiste si disponible, sinon la valeur serveur
           const optimisticStatus = optimisticStatusUpdates.get(row.original.id)
           const displayedStatus = optimisticStatus || row.original.status
-          
-          // Si on a une valeur optimiste ET que le serveur a renvoyé la même valeur, on peut nettoyer
-          if (optimisticStatus && row.original.status === optimisticStatus) {
-            // Nettoyer de manière asynchrone pour éviter les updates pendant le render
-            Promise.resolve().then(() => {
-              setOptimisticStatusUpdates(prev => {
-                const next = new Map(prev)
-                next.delete(row.original.id)
-                return next
-              })
-            })
-          }
           
           if (isDeletedTab) {
             // Affichage simple pour les inscriptions supprimées
@@ -461,7 +779,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                   throw error
                 }
               }}
-              disabled={isUpdating}
               loadingText="Mise à jour..."
             />
           )
@@ -472,24 +789,104 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         header: 'Check-in',
         accessorKey: 'checkedInAt',
         cell: ({ row }) => (
-          <div className="cursor-pointer" onClick={() => handleRowClick(row.original)}>
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {row.original.checkedInAt ? (
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                  {new Date(row.original.checkedInAt).toLocaleDateString('fr-FR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    {new Date(row.original.checkedInAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
                 </div>
-              </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleUndoCheckIn(row.original)}
+                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 p-1.5 h-auto"
+                  title="Annuler le check-in"
+                >
+                  <Undo2 className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <XCircle className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    Pas encore
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCheckIn(row.original)}
+                  className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 p-1.5 h-auto"
+                  title="Effectuer le check-in"
+                >
+                  <UserCheck className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: 'checkout',
+        header: 'Check-out',
+        accessorKey: 'checkedOutAt',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {row.original.checkedOutAt ? (
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <LogOut className="h-4 w-4 text-blue-500" />
+                  <div className="text-xs text-gray-600 dark:text-gray-400">
+                    {new Date(row.original.checkedOutAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleUndoCheckOut(row.original)}
+                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 p-1.5 h-auto"
+                  title="Annuler le check-out"
+                >
+                  <Undo2 className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            ) : row.original.checkedInAt ? (
+              <>
+                <div className="flex items-center gap-2 flex-1">
+                  <XCircle className="h-4 w-4 text-gray-400 dark:text-gray-600" />
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    Pas encore
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleCheckOut(row.original)}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 p-1.5 h-auto"
+                  title="Effectuer le check-out"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </Button>
+              </>
             ) : (
               <div className="flex items-center gap-2">
                 <XCircle className="h-4 w-4 text-gray-400 dark:text-gray-600" />
-                <span className="text-xs text-gray-500 dark:text-gray-500">
-                  Pas encore
+                <span className="text-xs text-gray-400 dark:text-gray-600">
+                  Non disponible
                 </span>
               </div>
             )}
@@ -499,10 +896,10 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       {
         id: 'date',
         header: "Date d'inscription",
-        accessorKey: 'createdAt',
+        accessorKey: 'invitedAt',
         cell: ({ row }) => (
           <div className="cursor-pointer text-sm text-gray-500 dark:text-gray-400" onClick={() => handleRowClick(row.original)}>
-            {formatDateTime(row.original.createdAt)}
+            {formatDateTime(row.original.invitedAt || row.original.createdAt)}
           </div>
         ),
       },
@@ -654,6 +1051,19 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         }
       })
 
+      // Changer le type avec sélecteur
+      actions.push({
+        id: 'change-type',
+        label: 'Changer le type',
+        icon: <Users className="h-4 w-4" />,
+        variant: 'outline' as const,
+        skipClearSelection: true,
+        onClick: async (selectedIds: Set<string>) => {
+          setBulkTypeSelectedIds(selectedIds)
+          setBulkTypeModalOpen(true)
+        }
+      })
+
       // Check-in en masse
       actions.push({
         id: 'check-in',
@@ -673,6 +1083,81 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           } catch (error) {
             console.error('Erreur lors du check-in:', error)
             toast.error('Erreur lors du check-in')
+            throw error
+          }
+        }
+      })
+
+      // Undo Check-in en masse
+      actions.push({
+        id: 'undo-check-in',
+        label: 'Annuler Check-in',
+        icon: <Undo2 className="h-4 w-4" />,
+        variant: 'outline' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Annuler le check-in pour toutes les inscriptions sélectionnées ?',
+        actionType: 'edit' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                undoCheckIn({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`Check-in annulé pour ${selectedIds.size} inscription(s)`)
+          } catch (error) {
+            console.error('Erreur lors de l\'annulation du check-in:', error)
+            toast.error('Erreur lors de l\'annulation du check-in')
+            throw error
+          }
+        }
+      })
+
+      // Check-out en masse
+      actions.push({
+        id: 'check-out',
+        label: 'Check-out',
+        icon: <LogOut className="h-4 w-4" />,
+        variant: 'default' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Enregistrer le check-out pour toutes les inscriptions sélectionnées ?',
+        actionType: 'edit' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                checkOut({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`Check-out effectué pour ${selectedIds.size} inscription(s)`)
+          } catch (error) {
+            console.error('Erreur lors du check-out:', error)
+            toast.error('Erreur lors du check-out')
+            throw error
+          }
+        }
+      })
+
+      // Undo Check-out en masse
+      actions.push({
+        id: 'undo-check-out',
+        label: 'Annuler Check-out',
+        icon: <Undo2 className="h-4 w-4" />,
+        variant: 'outline' as const,
+        requiresConfirmation: true,
+        confirmationMessage: 'Annuler le check-out pour toutes les inscriptions sélectionnées ?',
+        actionType: 'edit' as const,
+        onClick: async (selectedIds: Set<string>) => {
+          try {
+            await Promise.all(
+              Array.from(selectedIds).map((id) =>
+                undoCheckOut({ id, eventId }).unwrap()
+              )
+            )
+            toast.success(`Check-out annulé pour ${selectedIds.size} inscription(s)`)
+          } catch (error) {
+            console.error('Erreur lors de l\'annulation du check-out:', error)
+            toast.error('Erreur lors de l\'annulation du check-out')
             throw error
           }
         }
@@ -771,7 +1256,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           setFilterValues({})
         }}
         showResetButton={searchQuery !== '' || Object.keys(filterValues).length > 0}
-        onRefresh={onRefresh}
+        {...(onRefresh && { onRefresh })}
         showRefreshButton={!!onRefresh}
       >
         <SearchInput
@@ -803,7 +1288,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
           <div className="text-sm text-gray-600 dark:text-gray-300">Total</div>
           <div className="text-2xl font-bold text-gray-900 dark:text-white">
-            {meta?.total || registrations.length}
+            {stats?.total ?? meta?.total ?? registrations.length}
           </div>
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 transition-colors duration-200">
@@ -811,7 +1296,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             En attente
           </div>
           <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-            {meta?.statusCounts.awaiting ||
+            {stats?.statusCounts.awaiting ?? meta?.statusCounts.awaiting ??
               registrations.filter((r) => r.status === 'awaiting').length}
           </div>
         </div>
@@ -820,7 +1305,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             Approuvés
           </div>
           <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {meta?.statusCounts.approved ||
+            {stats?.statusCounts.approved ?? meta?.statusCounts.approved ??
               registrations.filter((r) => r.status === 'approved').length}
           </div>
         </div>
@@ -829,15 +1314,16 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             Refusés
           </div>
           <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {meta?.statusCounts.refused ||
+            {stats?.statusCounts.refused ?? meta?.statusCounts.refused ??
               registrations.filter((r) => r.status === 'refused').length}
           </div>
         </div>
       </div>
 
       {/* DataTable */}
-      <Card variant="default" padding="none">
+      <Card variant="default" padding="none" className="min-w-full">
         <DataTable
+          key={isDeletedTab ? 'deleted' : 'active'}
           columns={columns}
           data={filteredRegistrations}
           isLoading={isLoading}
@@ -855,10 +1341,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               : 'Aucune inscription trouvée'
           }
           // Server-side pagination
-          manualPagination={true}
+          enablePagination={true}
           pageSize={pageSize || 50}
-          currentPage={currentPage || 1}
-          pageCount={totalPages || 1}
           totalItems={meta?.total || 0}
           onPageChange={onPageChange || (() => {})}
           onPageSizeChange={onPageSizeChange || (() => {})}
@@ -910,7 +1394,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           onClose={() => setBadgeDownloadRegistration(null)}
           registration={badgeDownloadRegistration}
           eventId={eventId}
-          currentBadgeTemplateId={eventBadgeTemplateId}
+          currentBadgeTemplateId={eventBadgeTemplateId ?? null}
         />
       )}
 
@@ -922,6 +1406,17 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         }}
         onConfirm={handleBulkStatusChange}
         selectedCount={bulkStatusSelectedIds.size}
+      />
+
+      <BulkAttendeeTypeChangeModal
+        isOpen={bulkTypeModalOpen}
+        onClose={() => {
+          setBulkTypeModalOpen(false)
+          setBulkTypeSelectedIds(new Set())
+        }}
+        onConfirm={handleBulkAttendeeTypeChange}
+        selectedCount={bulkTypeSelectedIds.size}
+        attendeeTypes={eventAttendeeTypes || []}
       />
     </div>
   )

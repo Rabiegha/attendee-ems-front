@@ -205,6 +205,31 @@ export const useUniversalModal = () => {
     })
   }
 
+  const showInvitationReplaced = (
+    email: string,
+    organization?: string,
+    onSendAnother?: () => void
+  ) => {
+    showModal({
+      type: 'warning',
+      title: 'Invitation en cours remplacée',
+      message: `Une invitation était déjà en cours pour ${email}. L'ancienne invitation a été annulée et une nouvelle invitation avec un nouveau lien a été envoyée.`,
+      details: { email, ...(organization && { organization }) },
+      actions: {
+        primary: {
+          label: 'Compris',
+          action: () => {},
+        },
+        ...(onSendAnother && {
+          secondary: {
+            label: 'Envoyer une autre',
+            action: onSendAnother,
+          },
+        }),
+      },
+    })
+  }
+
   return {
     modalState,
     showModal,
@@ -218,5 +243,6 @@ export const useUniversalModal = () => {
     showUserCreated,
     showInvitationSent,
     showInvitationSentWithOrg,
+    showInvitationReplaced,
   }
 }

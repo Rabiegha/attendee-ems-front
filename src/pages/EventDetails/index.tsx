@@ -4,6 +4,7 @@ import {
   useGetEventByIdQuery,
   useUpdateRegistrationFieldsMutation,
   useUpdateEventMutation,
+  useGetEventAttendeeTypesQuery,
 } from '@/features/events/api/eventsApi'
 import {
   useGetRegistrationsQuery,
@@ -13,7 +14,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
 import { Button } from '@/shared/ui/Button'
 import { PageContainer } from '@/shared/ui/PageContainer'
-import { LoadingSpinner, EventDetailsSkeleton } from '@/shared/ui'
+import { LoadingSpinner, EventDetailsSkeleton, Modal } from '@/shared/ui'
 import { Tabs, type TabItem } from '@/shared/ui'
 import {
   Edit,
@@ -24,15 +25,22 @@ import {
   Users,
   FileText,
   Upload,
+  UserPlus,
   ArrowLeft,
   Settings,
   FormInput,
   Zap,
+  XCircle,
+  Tag,
+  CreditCard,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
+import { EventAttendeeTypesTab } from './EventAttendeeTypesTab'
+import { EventBadgesTab } from './EventBadgesTab'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
+import { AddParticipantForm } from '@/features/registrations/ui/AddParticipantForm'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
 import {
   FormBuilder,
@@ -43,7 +51,7 @@ import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 
-type TabType = 'details' | 'registrations' | 'form' | 'settings'
+type TabType = 'details' | 'registrations' | 'form' | 'settings' | 'attendee-types' | 'badges'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -54,11 +62,12 @@ export const EventDetails: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>(tabFromUrl || 'details')
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false)
 
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'form', 'settings'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'form', 'settings', 'attendee-types', 'badges'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -86,6 +95,14 @@ export const EventDetails: React.FC = () => {
     isLoading: eventLoading,
     error,
   } = useGetEventByIdQuery(id!)
+  
+  const { 
+    data: eventAttendeeTypes, 
+    isLoading: isLoadingAttendeeTypes 
+  } = useGetEventAttendeeTypesQuery(id!, {
+    skip: !id
+  })
+
   const [updateRegistrationFields] = useUpdateRegistrationFieldsMutation()
   const [updateEvent] = useUpdateEventMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
@@ -302,9 +319,6 @@ export const EventDetails: React.FC = () => {
     })
   }
 
-  // Mode test pour le formulaire (permet de tester les inscriptions)
-  const [isFormTestMode, setIsFormTestMode] = useState(false)
-
   const {
     data: registrationsResponse,
     isLoading: registrationsLoading,
@@ -465,19 +479,26 @@ export const EventDetails: React.FC = () => {
     )
   }
 
-  // Utiliser les compteurs depuis les métadonnées backend (total cross-pages)
-  const approvedCount = registrationsMeta.statusCounts.approved
-  const awaitingCount = registrationsMeta.statusCounts.awaiting
-  const refusedCount = registrationsMeta.statusCounts.refused
+  // Utiliser les stats actives pour l'affichage global (Header, Sidebar)
+  const activeMeta = activeRegistrationsStats?.meta || {
+    total: 0,
+    statusCounts: { awaiting: 0, approved: 0, refused: 0 }
+  }
+
+  const approvedCount = activeMeta.statusCounts.approved
+  const awaitingCount = activeMeta.statusCounts.awaiting
+  const refusedCount = activeMeta.statusCounts.refused
 
   // Filtrer les onglets si l'événement est supprimé
   const allTabs = [
     { id: 'details' as TabType, label: 'Détails', icon: FileText },
     {
       id: 'registrations' as TabType,
-      label: `Inscriptions (${registrationsMeta.total})`,
+      label: `Inscriptions (${activeMeta.total})`,
       icon: Users,
     },
+    { id: 'attendee-types' as TabType, label: 'Types de participants', icon: Tag },
+    { id: 'badges' as TabType, label: 'Badges', icon: CreditCard },
     { id: 'form' as TabType, label: 'Formulaire', icon: FormInput, disabledIfDeleted: true },
     { id: 'settings' as TabType, label: 'Paramètres', icon: Settings, disabledIfDeleted: true },
   ]
@@ -487,8 +508,8 @@ export const EventDetails: React.FC = () => {
     : allTabs
 
   return (
-    <PageContainer maxWidth="7xl" padding="lg">
-      <div className="space-y-6">
+    <div className="w-full min-h-screen">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Banner événement supprimé */}
         {event.isDeleted && (
         <div className="bg-red-100 dark:bg-red-900/30 border-l-4 border-red-600 dark:border-red-500 p-4 rounded-r-lg">
@@ -742,7 +763,7 @@ export const EventDetails: React.FC = () => {
                       Inscriptions totales
                     </span>
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {registrationsMeta.total}
+                      {activeMeta.total}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -822,9 +843,17 @@ export const EventDetails: React.FC = () => {
         )}
 
         {activeTab === 'registrations' && (
-          <div className="space-y-4">
+          <div className="space-y-4 w-full">
             <div className="flex items-center justify-end space-x-3">
               <Button
+                onClick={() => setIsAddParticipantModalOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <UserPlus className="h-4 w-4" />
+                <span>Ajouter un participant</span>
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => setIsImportModalOpen(true)}
                 className="flex items-center space-x-2"
               >
@@ -848,6 +877,8 @@ export const EventDetails: React.FC = () => {
               eventBadgeTemplateId={event?.badgeTemplateId ?? null}
               onRefresh={() => refetchRegistrations()}
               isDeletedTab={registrationsActiveTab === 'deleted'}
+              eventAttendeeTypes={eventAttendeeTypes}
+              isLoadingAttendeeTypes={isLoadingAttendeeTypes}
               tabsElement={
                 <Tabs
                   items={registrationsTabs}
@@ -856,6 +887,7 @@ export const EventDetails: React.FC = () => {
                 />
               }
               meta={registrationsMeta}
+              stats={activeMeta}
               // Server-side pagination props
               currentPage={registrationsMeta.page}
               pageSize={registrationsMeta.limit}
@@ -867,6 +899,10 @@ export const EventDetails: React.FC = () => {
               }}
             />
           </div>
+        )}
+
+        {activeTab === 'attendee-types' && (
+          <EventAttendeeTypesTab event={event} />
         )}
 
         {activeTab === 'form' && (
@@ -896,23 +932,12 @@ export const EventDetails: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Aperçu en temps réel
                 </h3>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isFormTestMode}
-                    onChange={(e) => setIsFormTestMode(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    Mode Test
-                  </span>
-                </label>
               </div>
               <div className="sticky top-6">
                 <FormPreview
                   event={event}
                   fields={formFields}
-                  testMode={isFormTestMode}
+                  functional={true}
                   submitButtonText={submitButtonText}
                   submitButtonColor={submitButtonColor}
                   showTitle={showTitle}
@@ -926,6 +951,10 @@ export const EventDetails: React.FC = () => {
 
         {activeTab === 'settings' && (
           <EventSettingsTab event={event} />
+        )}
+
+        {activeTab === 'badges' && (
+          <EventBadgesTab event={event} />
         )}
       </div>
 
@@ -951,7 +980,27 @@ export const EventDetails: React.FC = () => {
         currentEndDate={event.endDate}
         onStatusChange={handleStatusChange}
       />
+
+      {/* Modal Ajouter un participant */}
+      <Modal
+        isOpen={isAddParticipantModalOpen}
+        onClose={() => setIsAddParticipantModalOpen(false)}
+        title="Ajouter un participant"
+        maxWidth="4xl"
+      >
+        <AddParticipantForm
+          fields={formFields}
+          eventId={event.id}
+          publicToken={event.publicToken}
+          submitButtonText="Ajouter"
+          submitButtonColor={submitButtonColor}
+          onSuccess={() => {
+            setIsAddParticipantModalOpen(false)
+            refetchRegistrations()
+          }}
+        />
+      </Modal>
       </div>
-    </PageContainer>
+    </div>
   )
 }

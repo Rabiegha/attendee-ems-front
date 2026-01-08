@@ -173,7 +173,13 @@ export const LoginPage: React.FC = () => {
 
       // Messages d'erreur personnalisés basés sur le statut
       if (status === 401) {
-        setLastError(t('login.invalid_credentials'))
+        console.log('[LOGIN] 401 Error details:', err);
+        const errorMessage = err?.data?.detail || err?.data?.message;
+        if (errorMessage === 'Account deactivated' || errorMessage === 'User not found or inactive') {
+          setLastError(t('login.account_deactivated'))
+        } else {
+          setLastError(t('login.invalid_credentials'))
+        }
       } else if (status === 429) {
         setLastError(t('login.too_many_attempts'))
       } else if (status >= 500) {
@@ -348,33 +354,16 @@ export const LoginPage: React.FC = () => {
               </Button>
             </AnimatedContainer>
 
-            {/* Informations supplémentaires */}
+            {/* Mot de passe oublié */}
             <AnimatedContainer animation="fade-in" delay={800}>
-              <div className="text-center space-y-2">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {t('login.help', "Besoin d'aide ?")}{' '}
-                  <button
-                    type="button"
-                    className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                    onClick={() => {
-                      /* TODO: Ouvrir modal d'aide */
-                    }}
-                  >
-                    {t('login.contact_admin', 'Contactez votre administrateur')}
-                  </button>
-                </p>
-
-                {/* Lien de récupération en cas de problème */}
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Problème de connexion en boucle ?{' '}
-                  <button
-                    type="button"
-                    className="font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 underline transition-colors"
-                    onClick={() => navigate('/auth/recovery')}
-                  >
-                    Récupération d'urgence
-                  </button>
-                </p>
+              <div className="text-center">
+                <button
+                  type="button"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                  onClick={() => navigate('/auth/request-password-reset')}
+                >
+                  {t('login.forgot_password', 'Mot de passe oublié ?')}
+                </button>
               </div>
             </AnimatedContainer>
           </form>

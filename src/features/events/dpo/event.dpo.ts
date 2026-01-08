@@ -62,6 +62,7 @@ export interface CreateEventDPO {
   startDate: string // ISO string from form
   endDate: string // ISO string from form
   location?: string // Optionnel
+  locationType?: 'physical' | 'online' | 'hybrid'
   maxAttendees?: number // Optionnel (sans limite par défaut)
   status?: EventStatus // Optionnel (sera 'published' par défaut)
   tags?: string[]
@@ -81,10 +82,10 @@ export interface CreateEventDPO {
   confirmationEmailEnabled?: boolean
   approvalEmailEnabled?: boolean
   reminderEmailEnabled?: boolean
-  badgeTemplateId?: string
+  badgeTemplateId?: string | undefined
 }
 
-export interface UpdateEventDPO extends Partial<CreateEventDPO> {
+export interface UpdateEventDPO extends Partial<Omit<CreateEventDPO, 'badgeTemplateId'>> {
   status?: EventStatus
-  badgeTemplateId?: string
+  badgeTemplateId?: string | undefined
 }

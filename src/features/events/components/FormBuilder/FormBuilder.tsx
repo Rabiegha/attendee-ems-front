@@ -616,7 +616,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     {/* Info */}
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <span className="capitalize font-medium">
-                        {field.type}
+                        {field.type === 'attendee_type' ? 'Type de participant' : field.type}
                       </span>
                       <span>•</span>
                       <span className="font-mono">{field.key}</span>
@@ -629,6 +629,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                         </>
                       )}
                     </div>
+
+                    {/* Attendee Type Info */}
+                    {field.type === 'attendee_type' && (
+                      <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-700 dark:text-blue-300">
+                        ℹ️ Ce champ affichera automatiquement la liste des types de participants configurés dans l'onglet "Types de participants".
+                      </div>
+                    )}
 
                     {/* Options for Select Fields */}
                     {field.type === 'select' && (

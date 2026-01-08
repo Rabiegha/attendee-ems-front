@@ -24,7 +24,7 @@ export function RestoreUserModal({ user, onClose, onRestore }: RestoreUserModalP
   return (
     <Modal isOpen={!!user} onClose={onClose} title="Restaurer cet utilisateur">
       <div className="space-y-4">
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-neutral-600 dark:text-neutral-300">
           Êtes-vous sûr de vouloir restaurer{' '}
           <span className="font-semibold">
             {user.first_name} {user.last_name}

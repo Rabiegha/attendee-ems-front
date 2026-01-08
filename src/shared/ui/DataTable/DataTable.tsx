@@ -31,6 +31,14 @@ import {
   ColumnPinningState,
   Column,
 } from '@tanstack/react-table'
+
+// Déclaration pour étendre les types de TanStack Table avec notre fonction de tri personnalisée
+declare module '@tanstack/react-table' {
+  interface SortingFns {
+    caseInsensitive: any
+  }
+}
+
 import {
   DndContext,
   KeyboardSensor,
@@ -68,6 +76,20 @@ import { Checkbox } from '../Checkbox'
 import { cn } from '@/shared/lib/utils'
 import { BulkActions, type BulkAction } from '../BulkActions'
 
+// Fonction de tri insensible à la casse pour les chaînes de caractères
+const caseInsensitiveSort = (rowA: any, rowB: any, columnId: string) => {
+  const a = rowA.getValue(columnId)
+  const b = rowB.getValue(columnId)
+  
+  // Si les valeurs ne sont pas des chaînes, utiliser le tri par défaut
+  if (typeof a !== 'string' || typeof b !== 'string') {
+    return a === b ? 0 : a > b ? 1 : -1
+  }
+  
+  // Tri insensible à la casse
+  return a.toLowerCase().localeCompare(b.toLowerCase())
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
@@ -81,6 +103,9 @@ interface DataTableProps<TData, TValue> {
   // Pagination
   pageSize?: number
   enablePagination?: boolean
+  totalItems?: number
+  onPageChange?: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
   // Column features
   enableColumnOrdering?: boolean
   enableColumnVisibility?: boolean
@@ -92,6 +117,8 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean
   // Empty state
   emptyMessage?: string
+  // Misc
+  rowKey?: string
 }
 
 // Composant pour les en-têtes draggables
@@ -342,6 +369,9 @@ export function DataTable<TData, TValue>({
     onColumnOrderChange: setColumnOrder,
     onColumnPinningChange: setColumnPinning,
     enableRowSelection,
+    sortingFns: {
+      caseInsensitive: caseInsensitiveSort,
+    },
     state: {
       sorting,
       columnFilters,
@@ -581,7 +611,7 @@ export function DataTable<TData, TValue>({
               </div>
             </div>
 
-            <div className="p-4">
+            <div className="p-4 max-h-[400px] overflow-y-auto">
               {table.getAllLeafColumns().map((column) => {
                 const canHide = column.getCanHide()
                 const isVisible = column.getIsVisible()
@@ -638,7 +668,7 @@ export function DataTable<TData, TValue>({
         />
       )}
 
-      {/* Table with DnD */}
+      {/* Table avec zone scrollable */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -647,10 +677,11 @@ export function DataTable<TData, TValue>({
         onDragCancel={handleDragCancel}
       >
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-          <div className="overflow-x-auto">
+          {/* Zone scrollable avec hauteur max */}
+          <div className="overflow-auto max-h-[calc(100vh-450px)]">
             <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-              {/* Header */}
-              <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200">
+              {/* Header sticky */}
+              <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200 sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {enableColumnOrdering ? (

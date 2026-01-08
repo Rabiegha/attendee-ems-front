@@ -26,6 +26,7 @@ export interface CreateInvitationResponse {
   emailSent: boolean
   organization: string
   role: string
+  isReplacement?: boolean
 }
 
 export interface CompleteInvitationRequest {

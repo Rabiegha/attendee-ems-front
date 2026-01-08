@@ -151,6 +151,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         id: 'participant',
         header: 'Participant',
         accessorFn: (row) => row.displayName,
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div 
             className="cursor-pointer"
@@ -171,6 +172,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         id: 'contact',
         header: 'Contact',
         accessorKey: 'email',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div 
             className="cursor-pointer"
@@ -191,6 +193,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         id: 'company',
         header: 'Entreprise',
         accessorKey: 'company',
+        sortingFn: 'caseInsensitive',
         cell: ({ row }) => (
           <div 
             className="cursor-pointer"
@@ -347,30 +350,23 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
 
   return (
     <div>
-      <BulkActions
-        selectedCount={selectedCount}
-        selectedIds={selectedIds}
-        selectedItems={selectedItems}
-        actions={bulkActions}
-        onClearSelection={unselectAll}
-        itemType="participants"
-      />
-
       <DataTable
+        key={isDeletedTab ? 'deleted' : 'active'}
         columns={columns}
         data={attendees}
         isLoading={isLoading}
         enableRowSelection
+        bulkActions={bulkActions}
+        getItemId={(attendee) => attendee.id}
+        itemType="participants"
         tabsElement={tabsElement}
         onRowSelectionChange={() => {
           // TanStack Table handles selection internally
         }}
         emptyMessage="Aucun participant trouvé"
         // Server-side pagination
-        manualPagination={true}
+        enablePagination={true}
         pageSize={pageSize || 50}
-        currentPage={currentPage || 1}
-        pageCount={totalPages || 1}
         totalItems={totalItems || 0}
         onPageChange={onPageChange || (() => {})}
         onPageSizeChange={onPageSizeChange || (() => {})}

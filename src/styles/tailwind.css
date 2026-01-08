@@ -79,7 +79,7 @@
 
   body {
     @apply bg-background text-foreground;
-    overflow-y: scroll; /* Force la scrollbar pour éviter les sauts */
+    overflow-y: auto; /* Scrollbar uniquement si nécessaire */
   }
 
   #root {
@@ -92,6 +92,24 @@
   /* Empêche tous les éléments de dépasser la largeur de l'écran */
   * {
     max-width: 100%;
+  }
+
+  /* ============================================
+     ICON SIZE FIX - Taille minimale pour tous les icônes
+     ============================================ */
+  
+  /* Force une taille minimale pour tous les SVG (icônes lucide-react) */
+  svg {
+    min-width: 16px !important;
+    min-height: 16px !important;
+    flex-shrink: 0; /* Empêche la compression des icônes */
+  }
+
+  /* Pour les boutons avec icônes, assure un espacement correct */
+  button svg,
+  a svg {
+    display: inline-block;
+    vertical-align: middle;
   }
 
   /* Fix for datetime-local input icon in dark mode */

@@ -16,10 +16,10 @@ export interface AttendeeDPO {
   createdAt: string // ISO string for Redux serialization
   updatedAt: string // ISO string for Redux serialization
 
-  // Statistics
-  totalEvents?: number
-  totalRegistrations?: number
-  checkedInCount?: number
+  // Statistics - always defined
+  totalEvents: number
+  totalRegistrations: number
+  checkedInCount: number
   lastEventAt?: string
 
   // Computed properties

@@ -518,7 +518,7 @@ export function UsersPage() {
             toast.error('Erreur lors de la désactivation')
             throw error
           }
-        }, 'Désactiver')
+        })
       )
     }
 

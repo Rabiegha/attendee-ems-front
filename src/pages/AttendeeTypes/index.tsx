@@ -456,7 +456,7 @@ export function AttendeeTypesPage() {
           try {
             await Promise.all(
               Array.from(selectedIds).map((id) =>
-                updateType({ id, data: { is_active: false } }).unwrap()
+                updateType({ orgId: currentUser?.org_id!, id, data: { is_active: false } }).unwrap()
               )
             )
             toast.success(`${selectedIds.size} type(s) désactivé(s)`)
@@ -480,7 +480,7 @@ export function AttendeeTypesPage() {
           try {
             await Promise.all(
               Array.from(selectedIds).map((id) =>
-                updateType({ id, data: { is_active: true } }).unwrap()
+                updateType({ orgId: currentUser?.org_id!, id, data: { is_active: true } }).unwrap()
               )
             )
             toast.success(`${selectedIds.size} type(s) restauré(s)`)
@@ -504,7 +504,7 @@ export function AttendeeTypesPage() {
           try {
             await Promise.all(
               Array.from(selectedIds).map((id) =>
-                deleteType(id).unwrap()
+                deleteType({ orgId: currentUser?.org_id!, id }).unwrap()
               )
             )
             toast.success(`${selectedIds.size} type(s) supprimé(s) définitivement`)

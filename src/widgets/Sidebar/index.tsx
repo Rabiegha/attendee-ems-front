@@ -13,6 +13,7 @@ import {
   Building2,
   CreditCard,
   Tag,
+  Smartphone,
 } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
@@ -99,6 +100,12 @@ const navigation = [
     icon: Settings,
     action: 'update' as const,
     subject: 'Organization' as const,
+  },
+  {
+    name: 'navigation.application',
+    href: '/application',
+    icon: Smartphone,
+    // Pas de guard - accessible à tous
   },
 ]
 

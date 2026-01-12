@@ -90,6 +90,10 @@ export async function bootstrapAuth() {
   
   // Créer une nouvelle promesse de bootstrap
   bootstrapPromise = (async () => {
+    // Récupérer l'état actuel de la session
+    const currentState = store.getState()
+    const hasExistingSession = currentState.session?.token && currentState.session?.user
+    
     // Toujours tenter le refresh - le cookie HttpOnly n'est pas accessible via document.cookie
     // Le backend répondra 401 si le cookie n'existe pas ou est invalide
     try {
@@ -112,8 +116,22 @@ export async function bootstrapAuth() {
         store.dispatch(clearSession())
       }
     } catch (error: any) {
-      // Pas de refresh token = redirection vers login (comportement normal)
-      store.dispatch(clearSession())
+      // Vérifier si c'est une vraie erreur de refresh (401 = token révoqué ou expiré)
+      const is401 = error?.status === 401 || error?.data?.statusCode === 401
+      
+      // Si on a un 401, le refresh token n'existe plus ou est invalide
+      // Cela peut arriver après un logout ou si le navigateur a été fermé trop longtemps
+      if (is401) {
+        console.log('[BOOTSTRAP] Refresh failed with 401 - clearing session')
+        store.dispatch(clearSession())
+      } else if (hasExistingSession) {
+        // Pour les autres erreurs (timeout, réseau), on garde la session
+        console.log('[BOOTSTRAP] Refresh failed (network issue) but keeping existing session')
+        scheduleProactiveRefresh()
+      } else {
+        // Pas de session existante + erreur = vraiment déconnecté
+        store.dispatch(clearSession())
+      }
     }
   })()
 

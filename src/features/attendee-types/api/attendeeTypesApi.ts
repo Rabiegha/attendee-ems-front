@@ -36,6 +36,7 @@ export const attendeeTypesApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     getAttendeeTypes: builder.query<AttendeeType[], string>({
       query: (orgId) => `/orgs/${orgId}/attendee-types`,
+      transformResponse: (response: { items: AttendeeType[] }) => response.items,
       providesTags: ['AttendeeTypes'],
     }),
 

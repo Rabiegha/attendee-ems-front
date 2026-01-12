@@ -253,9 +253,59 @@ export const eventsApi = rootApi.injectEndpoints({
       }),
       invalidatesTags: (_result, _error, { eventId }) => [{ type: 'AttendeeTypes', id: eventId }],
     }),
+
+    getEventAssignedUsers: builder.query<EventAssignedUser[], string>({
+      query: (eventId) => `/events/${eventId}/assigned-users`,
+      providesTags: (_result, _error, eventId) => [{ type: 'Event', id: `${eventId}-assigned-users` }],
+    }),
+
+    assignUsersToEvent: builder.mutation<
+      { message: string; assignments: EventAssignedUser[] },
+      { eventId: string; user_ids: string[]; reason?: string }
+    >({
+      query: ({ eventId, user_ids, reason }) => ({
+        url: `/events/${eventId}/assign-users`,
+        method: 'POST',
+        body: { user_ids, reason },
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'Event', id: `${eventId}-assigned-users` },
+        { type: 'Event', id: eventId },
+      ],
+    }),
+
+    unassignUserFromEvent: builder.mutation<
+      { message: string },
+      { eventId: string; userId: string }
+    >({
+      query: ({ eventId, userId }) => ({
+        url: `/events/${eventId}/assigned-users/${userId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'Event', id: `${eventId}-assigned-users` },
+        { type: 'Event', id: eventId },
+      ],
+    }),
   }),
   overrideExisting: false,
 })
+
+export interface EventAssignedUser {
+  id: string
+  org_id: string
+  event_id: string
+  user_id: string
+  reason?: string
+  granted_by?: string
+  expires_at?: string
+  created_at: string
+  updated_at: string
+  event?: {
+    id: string
+    name: string
+  }
+}
 
 export const {
   useGetEventsQuery,
@@ -273,4 +323,7 @@ export const {
   useAddEventAttendeeTypeMutation,
   useRemoveEventAttendeeTypeMutation,
   useUpdateEventAttendeeTypeMutation,
+  useGetEventAssignedUsersQuery,
+  useAssignUsersToEventMutation,
+  useUnassignUserFromEventMutation,
 } = eventsApi

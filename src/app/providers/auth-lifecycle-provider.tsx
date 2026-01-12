@@ -17,12 +17,15 @@ export const AuthLifecycleProvider: React.FC<AuthLifecycleProviderProps> = ({
   const { token, expiresAt } = useSelector(selectSession)
   const [hasBootstrapped, setHasBootstrapped] = useState(false)
 
-  // Bootstrap auth au montage
+  // Bootstrap auth au montage - DÉSACTIVÉ
+  // Le refresh automatique se fait via les intercepteurs 401 dans rootApi.ts
+  // Redux-persist réhydrate la session existante
   useEffect(() => {
     if (hasBootstrapped) return
     
-    // TOUJOURS appeler bootstrapAuth - il gère lui-même le cas sans token
-    bootstrapAuth()
+    console.log('[AUTH-LIFECYCLE] Using Redux persist for session restoration')
+    // bootstrapAuth() causait un clearSession() avant que Redux persist ne réhydrate
+    // Le refresh se fera automatiquement sur la première requête 401
     
     setHasBootstrapped(true)
   }, [hasBootstrapped])

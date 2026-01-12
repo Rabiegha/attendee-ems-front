@@ -45,6 +45,9 @@ storybook-static
 # MSW
 public/mockServiceWorker.js
 
+# APK files (too large for GitHub)
+public/downloads/*.apk
+
 # Windsurf
 .windsurf
 

@@ -5,7 +5,7 @@ import { Card } from '@/shared/ui/Card'
 import { Button } from '@/shared/ui/Button'
 
 export const ApplicationDownloadPage: React.FC = () => {
-  const apkUrl = '/downloads/attendee-app.apk'
+  const apkUrl = '/downloads/attendeeV1.apk'
   
   const features = [
     'Consultation des événements en cours, à venir et passés',
@@ -55,7 +55,7 @@ export const ApplicationDownloadPage: React.FC = () => {
                   </div>
                   <a
                     href={apkUrl}
-                    download="attendee-app.apk"
+                    download="attendeeV1.apk"
                     className="w-full max-w-xs"
                   >
                     <Button

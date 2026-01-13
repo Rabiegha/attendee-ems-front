@@ -138,6 +138,9 @@ export const rootApi = createApi({
     'Role',
     'Permissions',
     'Permission',
+    'RbacRole', // RBAC Admin - Roles
+    'RbacPermission', // RBAC Admin - Permissions
+    'RbacUserRole', // RBAC Admin - User Role Assignments
     'Invitations',
     'Invitation',
     'Auth',

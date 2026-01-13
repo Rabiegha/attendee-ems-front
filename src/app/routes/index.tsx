@@ -17,6 +17,7 @@ import { AttendeeDetail } from '@/pages/AttendeeDetail'
 import { UsersPage } from '@/pages/Users'
 import { AttendeeTypesPage } from '@/pages/AttendeeTypes'
 import { RolePermissionsAdmin } from '@/pages/RolePermissionsAdmin'
+import { RolesManagement } from '@/features/roles/pages/RolesManagement'
 import { ChangePasswordPage } from '@/pages/ChangePassword'
 import { LoginPage } from '@/pages/Login'
 import { SignupPage } from '@/pages/Signup'
@@ -128,6 +129,14 @@ export const router = createBrowserRouter([
         element: (
           <GuardedRoute action="manage" subject="Role">
             <RolePermissionsAdmin />
+          </GuardedRoute>
+        ),
+      },
+      {
+        path: 'rbac/:orgId',
+        element: (
+          <GuardedRoute action="manage" subject="Role">
+            <RolesManagement />
           </GuardedRoute>
         ),
       },

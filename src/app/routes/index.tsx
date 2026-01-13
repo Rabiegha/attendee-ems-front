@@ -135,7 +135,7 @@ export const router = createBrowserRouter([
       {
         path: 'rbac/:orgId',
         element: (
-          <GuardedRoute action="manage" subject="Role">
+          <GuardedRoute action="read" subject="Role">
             <RolesManagement />
           </GuardedRoute>
         ),

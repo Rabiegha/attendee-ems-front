@@ -8,7 +8,7 @@
  */
 
 import React, { useState } from 'react'
-import { Plus, Shield, AlertCircle } from 'lucide-react'
+import { Plus, Shield, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import {
   useGetRbacRolesQuery,
@@ -16,6 +16,8 @@ import {
   useCreateRbacRoleMutation,
   useUpdateRbacRoleMutation,
   useDeleteRbacRoleMutation,
+  useRestoreRbacRoleMutation,
+  usePermanentlyDeleteRbacRoleMutation,
   useAssignPermissionsMutation,
   useReorderRolesMutation,
   useGetNextRankQuery,
@@ -24,6 +26,8 @@ import {
 import { RolesDragList } from '../components/RolesDragList'
 import { PermissionsModal } from '../components/PermissionsModal'
 import { RoleFormModal } from '../components/RoleFormModal'
+
+type TabType = 'active' | 'inactive'
 
 export function RolesManagement() {
   const { orgId } = useParams<{ orgId: string }>()
@@ -38,6 +42,7 @@ export function RolesManagement() {
   }
 
   // State
+  const [activeTab, setActiveTab] = useState<TabType>('active')
   const [selectedRole, setSelectedRole] = useState<RoleWithDetails | null>(null)
   const [showPermissionsModal, setShowPermissionsModal] = useState(false)
   const [showRoleFormModal, setShowRoleFormModal] = useState(false)
@@ -49,7 +54,7 @@ export function RolesManagement() {
     data: roles = [],
     isLoading: rolesLoading,
     error: rolesError,
-  } = useGetRbacRolesQuery(orgId)
+  } = useGetRbacRolesQuery({ orgId, includeInactive: true })
 
   const {
     data: allPermissions = [],
@@ -62,9 +67,16 @@ export function RolesManagement() {
   const [createRole, { isLoading: creating }] = useCreateRbacRoleMutation()
   const [updateRole, { isLoading: updating }] = useUpdateRbacRoleMutation()
   const [deleteRole, { isLoading: deleting }] = useDeleteRbacRoleMutation()
+  const [restoreRole, { isLoading: restoring }] = useRestoreRbacRoleMutation()
+  const [permanentlyDeleteRole, { isLoading: permanentlyDeleting }] = usePermanentlyDeleteRbacRoleMutation()
   const [assignPermissions, { isLoading: assigningPerms }] =
     useAssignPermissionsMutation()
   const [reorderRoles, { isLoading: reordering }] = useReorderRolesMutation()
+
+  // Filter roles by active tab
+  const displayedRoles = roles.filter((role) =>
+    activeTab === 'active' ? role.is_active : !role.is_active
+  )
 
   // Handlers
   const handleCreateRole = async (data: {
@@ -108,7 +120,7 @@ export function RolesManagement() {
   const handleDeleteRole = async (role: RoleWithDetails) => {
     if (
       !window.confirm(
-        `Êtes-vous sûr de vouloir supprimer le rôle "${role.name}" ?`
+        `Désactiver le rôle "${role.name}" ? Il pourra être réactivé depuis l'onglet Désactivés.`
       )
     ) {
       return
@@ -117,11 +129,37 @@ export function RolesManagement() {
     try {
       await deleteRole({ roleId: role.id, orgId }).unwrap()
     } catch (error: any) {
-      console.error('Erreur suppression rôle:', error)
-      if (error?.data?.message?.includes('locked')) {
-        alert('Impossible de supprimer un rôle verrouillé')
+      console.error('Erreur désactivation rôle:', error)
+      alert(error?.data?.message || 'Erreur lors de la désactivation du rôle')
+    }
+  }
+
+  const handleRestoreRole = async (role: RoleWithDetails) => {
+    try {
+      await restoreRole({ roleId: role.id, orgId }).unwrap()
+    } catch (error: any) {
+      console.error('Erreur réactivation rôle:', error)
+      alert(error?.data?.message || 'Erreur lors de la réactivation du rôle')
+    }
+  }
+
+  const handlePermanentlyDeleteRole = async (role: RoleWithDetails) => {
+    if (
+      !window.confirm(
+        `⚠️ ATTENTION : Supprimer DÉFINITIVEMENT le rôle "${role.name}" ?\n\nCette action est IRRÉVERSIBLE !`
+      )
+    ) {
+      return
+    }
+
+    try {
+      await permanentlyDeleteRole({ roleId: role.id, orgId }).unwrap()
+    } catch (error: any) {
+      console.error('Erreur suppression définitive rôle:', error)
+      if (error?.data?.message?.includes('assigned')) {
+        alert('Impossible de supprimer définitivement un rôle assigné à des utilisateurs')
       } else {
-        alert(error?.data?.message || 'Erreur lors de la suppression du rôle')
+        alert(error?.data?.message || 'Erreur lors de la suppression définitive du rôle')
       }
     }
   }
@@ -238,7 +276,7 @@ export function RolesManagement() {
                 Total des rôles
               </div>
               <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {roles.length}
+                {roles.filter(r => r.is_active).length} actifs / {roles.length}
               </div>
             </div>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
@@ -252,10 +290,36 @@ export function RolesManagement() {
           </div>
         </div>
 
+        {/* Tabs */}
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
+          <button
+            onClick={() => setActiveTab('active')}
+            className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
+              activeTab === 'active'
+                ? 'text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <CheckCircle className="h-5 w-5" />
+            Actifs ({roles.filter(r => r.is_active).length})
+          </button>
+          <button
+            onClick={() => setActiveTab('inactive')}
+            className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
+              activeTab === 'inactive'
+                ? 'text-orange-600 dark:text-orange-400 border-b-2 border-orange-600'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <XCircle className="h-5 w-5" />
+            Désactivés ({roles.filter(r => !r.is_active).length})
+          </button>
+        </div>
+
         {/* Roles List */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-            Hiérarchie des rôles
+            {activeTab === 'active' ? 'Hiérarchie des rôles' : 'Rôles désactivés'}
           </h2>
 
           {reordering && (
@@ -265,11 +329,13 @@ export function RolesManagement() {
           )}
 
           <RolesDragList
-            roles={roles}
-            onReorder={handleReorder}
-            onEdit={handleEdit}
-            onDelete={handleDeleteRole}
-            onManagePermissions={handleManagePermissions}
+            roles={displayedRoles}
+            onReorder={activeTab === 'active' ? handleReorder : undefined}
+            onEdit={activeTab === 'active' ? handleEdit : undefined}
+            onDelete={activeTab === 'active' ? handleDeleteRole : undefined}
+            onManagePermissions={activeTab === 'active' ? handleManagePermissions : undefined}
+            onRestore={activeTab === 'inactive' ? handleRestoreRole : undefined}
+            onPermanentlyDelete={activeTab === 'inactive' ? handlePermanentlyDeleteRole : undefined}
           />
         </div>
       </div>

@@ -33,6 +33,7 @@ export interface RoleWithDetails {
   is_platform: boolean
   is_root: boolean
   is_locked: boolean
+  is_active: boolean
   is_system_role: boolean
   managed_by_template: boolean
   created_at: string
@@ -94,9 +95,12 @@ export const rbacAdminApi = rootApi.injectEndpoints({
      * GET /rbac/roles/:orgId
      * Liste tous les rôles d'une organisation (avec permissions)
      */
-    getRbacRoles: builder.query<RoleWithDetails[], string>({
-      query: (orgId) => `/rbac/roles/${orgId}`,
-      providesTags: (result, _error, orgId) =>
+    getRbacRoles: builder.query<RoleWithDetails[], { orgId: string; includeInactive?: boolean }>({
+      query: ({ orgId, includeInactive = false }) => ({
+        url: `/rbac/roles/${orgId}`,
+        params: includeInactive ? { includeInactive: 'true' } : {},
+      }),
+      providesTags: (result, _error, { orgId }) =>
         result
           ? [
               ...result.map(({ id }) => ({ type: 'RbacRole' as const, id })),
@@ -140,11 +144,39 @@ export const rbacAdminApi = rootApi.injectEndpoints({
 
     /**
      * DELETE /rbac/roles/:roleId
-     * Supprimer un rôle (impossible si verrouillé)
+     * Désactiver un rôle (soft delete)
      */
     deleteRbacRole: builder.mutation<void, { roleId: string; orgId: string }>({
       query: ({ roleId }) => ({
         url: `/rbac/roles/${roleId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { orgId }) => [
+        { type: 'RbacRole', id: `ORG-${orgId}` },
+      ],
+    }),
+
+    /**
+     * POST /rbac/roles/:roleId/restore
+     * Réactiver un rôle désactivé
+     */
+    restoreRbacRole: builder.mutation<RoleWithDetails, { roleId: string; orgId: string }>({
+      query: ({ roleId }) => ({
+        url: `/rbac/roles/${roleId}/restore`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, { orgId }) => [
+        { type: 'RbacRole', id: `ORG-${orgId}` },
+      ],
+    }),
+
+    /**
+     * DELETE /rbac/roles/:roleId/permanent
+     * Supprimer définitivement un rôle (hard delete)
+     */
+    permanentlyDeleteRbacRole: builder.mutation<void, { roleId: string; orgId: string }>({
+      query: ({ roleId }) => ({
+        url: `/rbac/roles/${roleId}/permanent`,
         method: 'DELETE',
       }),
       invalidatesTags: (_result, _error, { orgId }) => [
@@ -277,6 +309,8 @@ export const {
   useCreateRbacRoleMutation,
   useUpdateRbacRoleMutation,
   useDeleteRbacRoleMutation,
+  useRestoreRbacRoleMutation,
+  usePermanentlyDeleteRbacRoleMutation,
   // Permissions
   useGetAllPermissionsQuery,
   useGetRolePermissionsQuery,

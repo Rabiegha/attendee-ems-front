@@ -147,7 +147,7 @@ export function AssignedTeam({ eventId }: AssignedTeamProps) {
                     <Button
                       size="sm"
                       variant="ghost"
-                      icon={unassigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
+                      leftIcon={unassigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserMinus className="h-4 w-4" />}
                       onClick={() => handleUnassign(assignment.user_id)}
                       disabled={unassigning}
                     >
@@ -211,7 +211,7 @@ export function AssignedTeam({ eventId }: AssignedTeamProps) {
                       </div>
                       <Button
                         size="sm"
-                        icon={assigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                        leftIcon={assigning ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
                         onClick={() => handleAssign(user.id)}
                         disabled={assigning}
                       >

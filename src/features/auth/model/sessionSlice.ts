@@ -33,8 +33,8 @@ export const sessionSlice = createSlice({
       action: PayloadAction<{
         access_token?: string
         token?: string
-        user?: User
-        organization?: Organization
+        user?: User | undefined
+        organization?: Organization | null | undefined
         expiresInSec?: number
       }>
     ) => {

@@ -36,6 +36,7 @@ export interface User {
   org_id?: string // Support backend format
   eventIds?: string[]
   isSuperAdmin?: boolean
+  isPlatform?: boolean
   is_active?: boolean
   must_change_password?: boolean
 }

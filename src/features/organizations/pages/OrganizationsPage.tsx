@@ -65,8 +65,8 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
   // Trier les utilisateurs par hiérarchie de rôle
   const sortedUsers = usersData?.users
     ? [...usersData.users].sort((a, b) => {
-        const levelA = getRoleLevel(a.role.code)
-        const levelB = getRoleLevel(b.role.code)
+        const levelA = getRoleLevel(a.role?.code || 'UNKNOWN')
+        const levelB = getRoleLevel(b.role?.code || 'UNKNOWN')
         
         // Tri par niveau de rôle (0 = plus haut)
         if (levelA !== levelB) {
@@ -155,14 +155,14 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
                     <div className="flex items-center space-x-2">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          user.role.code === 'ADMIN'
+                          user.role?.code === 'ADMIN'
                             ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                            : user.role.code === 'MANAGER'
+                            : user.role?.code === 'MANAGER'
                               ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                               : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                         }`}
                       >
-                        {user.role.name}
+                        {user.role?.name || 'Sans rôle'}
                       </span>
                       {!user.is_active && (
                         <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">

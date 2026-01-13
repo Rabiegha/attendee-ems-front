@@ -82,7 +82,13 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
   }, [policyData, dispatch])
 
   const ability = useMemo(() => {
-    // PRIORITY 1: Use JWT permissions directly (new scope-based system)
+    // PRIORITY 1: Use API rules if available (most up-to-date from backend)
+    if (rules.length > 0) {
+      console.log('[AbilityProvider] Using API rules:', rules.length)
+      return createAbilityFromRules(rules)
+    }
+
+    // PRIORITY 2: Use JWT permissions directly (new scope-based system)
     if (user && token && (orgId || isSuperAdmin)) {
       console.log('[AbilityProvider] Using JWT permissions')
 
@@ -96,6 +102,9 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
 
       // Extract permissions from JWT
       const payload = decodeJWT(token)
+      
+      console.log('[AbilityProvider] JWT payload:', payload)
+      console.log('[AbilityProvider] JWT has permissions?', !!payload?.permissions, payload?.permissions?.length)
 
       if (payload?.permissions && payload.permissions.length > 0) {
         console.log(
@@ -111,14 +120,11 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
         )
 
         console.log('[AbilityProvider] Generated CASL rules:', caslRules.length)
+        console.log('[AbilityProvider] Badge rules:', caslRules.filter(r => r.subject === 'Badge'))
+        console.log('[AbilityProvider] Report rules:', caslRules.filter(r => r.subject === 'Report'))
+        console.log('[AbilityProvider] AttendeeType rules:', caslRules.filter(r => r.subject === 'AttendeeType'))
         return createAbilityFromRules(caslRules)
       }
-    }
-
-    // PRIORITY 2: Use API rules if available (for compatibility/fallback)
-    if (rules.length > 0) {
-      console.log('[AbilityProvider] Using API rules:', rules.length)
-      return createAbilityFromRules(rules)
     }
 
     // PRIORITY 3: Use legacy preset rules based on roles (fallback)

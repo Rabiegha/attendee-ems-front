@@ -25,6 +25,7 @@ export type Subjects =
   | 'Event'
   | 'Subevent'
   | 'Attendee'
+  | 'AttendeeType'
   | 'User'
   | 'Badge'
   | 'Scan'
@@ -35,6 +36,8 @@ export type Subjects =
   | 'Permission'
   | 'Invitation'
   | 'Invoice'
+  | 'Registration'
+  | 'Analytics'
   | 'all'
 
 // Define the shape of our ability using MongoAbility for conditions support

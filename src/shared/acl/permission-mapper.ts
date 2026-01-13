@@ -119,6 +119,9 @@ export function mapPermissionsToCASlRules(
       registrations: 'Registration',
       permissions: 'Permission',
       badges: 'Badge',
+      'badge-templates': 'Badge',
+      'attendee-types': 'AttendeeType',
+      reports: 'Report',
     }
 
     const subject = subjectMap[resource] || resource
@@ -188,6 +191,9 @@ export function mapPermissionsToCASlRules(
           registrations: 'Registration',
           permissions: 'Permission',
           badges: 'Badge',
+          'badge-templates': 'Badge',
+          'attendee-types': 'AttendeeType',
+          reports: 'Report',
         }
         
         const subject = subjectMap[resource] || resource

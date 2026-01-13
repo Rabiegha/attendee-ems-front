@@ -49,7 +49,7 @@ const navigation = [
     name: 'navigation.badge_designer',
     href: '/badges',
     icon: CreditCard,
-    action: 'manage' as const,
+    action: 'read' as const,
     subject: 'Badge' as const,
   },
   {
@@ -64,7 +64,7 @@ const navigation = [
     href: ROUTES.ATTENDEE_TYPES,
     icon: Tag,
     action: 'read' as const,
-    subject: 'Organization' as const,
+    subject: 'AttendeeType' as const,
   },
   {
     name: 'navigation.users',
@@ -91,7 +91,7 @@ const navigation = [
     name: 'navigation.reports',
     href: '/reports',
     icon: BarChart3,
-    action: 'read' as const,
+    action: 'export' as const,
     subject: 'Report' as const,
   },
   {

@@ -89,6 +89,10 @@ export function AttendeeTypesPage() {
   const [deletingType, setDeletingType] = useState<AttendeeType | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
+  // Debug: vérifier si l'organisation est disponible
+  console.log('[AttendeeTypes] Current org:', currentOrg)
+  console.log('[AttendeeTypes] Org ID:', currentOrg?.id)
+
   // API queries and mutations
   const { data: attendeeTypes = [], isLoading } = useGetAttendeeTypesQuery(
     currentOrg?.id || '',

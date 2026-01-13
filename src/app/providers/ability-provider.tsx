@@ -38,23 +38,26 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
   const isSuperAdmin =
     user?.roles?.[0] === 'SUPER_ADMIN' || user?.roles?.includes('SUPER_ADMIN')
 
-  // 🔇 Logs de debug désactivés en production
-  // console.log('[AbilityProvider] State:', {
-  //   hasUser: !!user,
-  //   orgId,
-  //   isSuperAdmin,
-  //   rulesCount: rules.length,
-  //   userRoles: user?.roles
-  // })
+  // � Logs de debug activés pour diagnostic
+  console.log('[AbilityProvider] State:', {
+    hasUser: !!user,
+    user,
+    orgId,
+
+    isSuperAdmin,
+    rulesCount: rules.length,
+    userRoles: user?.roles,
+    token: token ? 'present' : 'missing'
+  })
 
   // Charger automatiquement les règles de politique si l'utilisateur est connecté (sauf SUPER_ADMIN)
   const shouldSkipPolicy = Boolean(
     !user || // Pas d'utilisateur connecté
-      !orgId || // Pas d'organisation
+      (!orgId && !user.isPlatform) || // Pas d'org ET pas platform user
       isSuperAdmin // Super admin n'a pas besoin de règles de politique
   )
 
-  // console.log('[AbilityProvider] Should skip policy?', shouldSkipPolicy)
+  console.log('[AbilityProvider] Should skip policy?', shouldSkipPolicy, { user: !!user, orgId, isSuperAdmin })
 
   // POLLING DÉSACTIVÉ : Les permissions sont chargées une seule fois au login
   // et rafraîchies manuellement lors d'actions spécifiques (changement de rôle, etc.)
@@ -64,13 +67,12 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
     // pollingInterval: 5000, // ❌ DÉSACTIVÉ - causait des requêtes en boucle
   })
 
-  // 🔇 Logs de debug désactivés
-  // console.log('[AbilityProvider] Policy data:', {
-  //   hasData: !!policyData,
-  //   isLoading: isPolicyLoading,
-  //   error: policyError,
-  //   rulesFromApi: policyData?.rules?.length
-  // })
+  // � Logs de debug activés
+  console.log('[AbilityProvider] Policy data:', {
+    hasData: !!policyData,
+    rulesFromApi: policyData?.rules?.length,
+    policyData
+  })
 
   // Mettre à jour les règles dans le store quand elles sont chargées
   useEffect(() => {
@@ -80,7 +82,13 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
   }, [policyData, dispatch])
 
   const ability = useMemo(() => {
-    // PRIORITY 1: Use JWT permissions directly (new scope-based system)
+    // PRIORITY 1: Use API rules if available (most up-to-date from backend)
+    if (rules.length > 0) {
+      console.log('[AbilityProvider] Using API rules:', rules.length)
+      return createAbilityFromRules(rules)
+    }
+
+    // PRIORITY 2: Use JWT permissions directly (new scope-based system)
     if (user && token && (orgId || isSuperAdmin)) {
       console.log('[AbilityProvider] Using JWT permissions')
 
@@ -94,6 +102,9 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
 
       // Extract permissions from JWT
       const payload = decodeJWT(token)
+      
+      console.log('[AbilityProvider] JWT payload:', payload)
+      console.log('[AbilityProvider] JWT has permissions?', !!payload?.permissions, payload?.permissions?.length)
 
       if (payload?.permissions && payload.permissions.length > 0) {
         console.log(
@@ -109,14 +120,11 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
         )
 
         console.log('[AbilityProvider] Generated CASL rules:', caslRules.length)
+        console.log('[AbilityProvider] Badge rules:', caslRules.filter(r => r.subject === 'Badge'))
+        console.log('[AbilityProvider] Report rules:', caslRules.filter(r => r.subject === 'Report'))
+        console.log('[AbilityProvider] AttendeeType rules:', caslRules.filter(r => r.subject === 'AttendeeType'))
         return createAbilityFromRules(caslRules)
       }
-    }
-
-    // PRIORITY 2: Use API rules if available (for compatibility/fallback)
-    if (rules.length > 0) {
-      console.log('[AbilityProvider] Using API rules:', rules.length)
-      return createAbilityFromRules(rules)
     }
 
     // PRIORITY 3: Use legacy preset rules based on roles (fallback)

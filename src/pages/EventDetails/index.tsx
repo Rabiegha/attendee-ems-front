@@ -12,6 +12,7 @@ import {
 } from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
+import { useCan } from '@/shared/acl/hooks/useCan'
 import { Button } from '@/shared/ui/Button'
 import { PageContainer } from '@/shared/ui/PageContainer'
 import { LoadingSpinner, EventDetailsSkeleton, Modal } from '@/shared/ui'
@@ -38,6 +39,7 @@ import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
 import { EventAttendeeTypesTab } from './EventAttendeeTypesTab'
 import { EventBadgesTab } from './EventBadgesTab'
+import { AssignedTeam } from './components/AssignedTeam'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
 import { AddParticipantForm } from '@/features/registrations/ui/AddParticipantForm'
@@ -51,7 +53,7 @@ import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 
-type TabType = 'details' | 'registrations' | 'form' | 'settings' | 'attendee-types' | 'badges'
+type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -67,7 +69,7 @@ export const EventDetails: React.FC = () => {
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'form', 'settings', 'attendee-types', 'badges'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -489,23 +491,70 @@ export const EventDetails: React.FC = () => {
   const awaitingCount = activeMeta.statusCounts.awaiting
   const refusedCount = activeMeta.statusCounts.refused
 
-  // Filtrer les onglets si l'événement est supprimé
+  // Hooks de permissions
+  const canReadEvents = useCan('read', 'Event')
+  const canReadRegistrations = useCan('read', 'Registration')
+  const canReadAttendeeTypes = useCan('read', 'AttendeeType')
+  const canReadBadges = useCan('read', 'Badge')
+  const canUpdateEvent = useCan('update', 'Event')
+  const canAssignUsers = useCan('update', 'Event') // Même permission que update event
+
+  // Définir les onglets avec leurs permissions requises
   const allTabs = [
-    { id: 'details' as TabType, label: 'Détails', icon: FileText },
+    { 
+      id: 'details' as TabType, 
+      label: 'Détails', 
+      icon: FileText,
+      hasPermission: canReadEvents
+    },
     {
       id: 'registrations' as TabType,
       label: `Inscriptions (${activeMeta.total})`,
       icon: Users,
+      hasPermission: canReadRegistrations
     },
-    { id: 'attendee-types' as TabType, label: 'Types de participants', icon: Tag },
-    { id: 'badges' as TabType, label: 'Badges', icon: CreditCard },
-    { id: 'form' as TabType, label: 'Formulaire', icon: FormInput, disabledIfDeleted: true },
-    { id: 'settings' as TabType, label: 'Paramètres', icon: Settings, disabledIfDeleted: true },
+    { 
+      id: 'team' as TabType, 
+      label: 'Équipe', 
+      icon: Users,
+      hasPermission: canAssignUsers,
+      disabledIfDeleted: true 
+    },
+    { 
+      id: 'attendee-types' as TabType, 
+      label: 'Types de participants', 
+      icon: Tag,
+      hasPermission: canReadAttendeeTypes,
+      disabledIfDeleted: true 
+    },
+    { 
+      id: 'badges' as TabType, 
+      label: 'Badges', 
+      icon: CreditCard,
+      hasPermission: canReadBadges,
+      disabledIfDeleted: true 
+    },
+    { 
+      id: 'form' as TabType, 
+      label: 'Formulaire', 
+      icon: FormInput, 
+      hasPermission: canUpdateEvent,
+      disabledIfDeleted: true 
+    },
+    { 
+      id: 'settings' as TabType, 
+      label: 'Paramètres', 
+      icon: Settings, 
+      hasPermission: canUpdateEvent,
+      disabledIfDeleted: true 
+    },
   ]
 
-  const tabs = event.isDeleted 
-    ? allTabs.filter(tab => !tab.disabledIfDeleted)
-    : allTabs
+  // Filtrer selon l'état de suppression et les permissions
+  const tabs = allTabs.filter(tab => {
+    if (event.isDeleted && tab.disabledIfDeleted) return false
+    return tab.hasPermission
+  })
 
   return (
     <div className="w-full min-h-screen">
@@ -951,6 +1000,10 @@ export const EventDetails: React.FC = () => {
 
         {activeTab === 'settings' && (
           <EventSettingsTab event={event} />
+        )}
+
+        {activeTab === 'team' && (
+          <AssignedTeam eventId={event.id} />
         )}
 
         {activeTab === 'badges' && (

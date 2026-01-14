@@ -322,7 +322,7 @@ export const eventsApi = rootApi.injectEndpoints({
 
     getEventSessionHistory: builder.query<SessionScan[], { eventId: string; sessionId: string }>({
       query: ({ eventId, sessionId }) => `/events/${eventId}/sessions/${sessionId}/history`,
-      providesTags: (_result, _error, { sessionId }) => [{ type: 'SessionHistory', id: sessionId }],
+      providesTags: (_result, _error, { sessionId }) => [{ type: 'Sessions', id: sessionId }],
     }),
 
     createEventSession: builder.mutation<Session, { eventId: string; data: CreateSessionDto }>({

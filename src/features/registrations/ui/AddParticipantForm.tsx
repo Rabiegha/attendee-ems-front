@@ -50,7 +50,10 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
   // Initialise selectedAttendeeTypeId le premier type actif si disponible
   React.useEffect(() => {
     if (eventAttendeeTypes && eventAttendeeTypes.length > 0 && !selectedAttendeeTypeId) {
-      setSelectedAttendeeTypeId(eventAttendeeTypes[0].id)
+      const firstId = eventAttendeeTypes[0]?.id;
+      if (firstId) {
+        setSelectedAttendeeTypeId(firstId);
+      }
     }
   }, [eventAttendeeTypes, selectedAttendeeTypeId])
 
@@ -66,6 +69,9 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
       const attendee: any = {}
       const registrationData: any = {}
       const answers: any = {}
+
+      // Helper function to convert camelCase to snake_case
+      const toSnakeCase = (str: string) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 
       // Logique existante pour peupler attendee, registrationData, answers
       fields.forEach((field) => {
@@ -142,7 +148,7 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
       
       if (!requestData.event_attendee_type_id && eventAttendeeTypes && eventAttendeeTypes.length > 0) {
          // Si rien n'est sélectionné mais qu'il y a des types dispos, on prend le premier
-         requestData.event_attendee_type_id = eventAttendeeTypes[0].id;
+         requestData.event_attendee_type_id = eventAttendeeTypes[0]?.id;
       }
 
       if (Object.keys(answers).length > 0) {

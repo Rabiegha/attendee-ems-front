@@ -1025,7 +1025,7 @@ export const EventDetails: React.FC = () => {
         {activeTab === 'sessions' && (
           <EventSessionsTab 
             event={event} 
-            eventAttendeeTypes={eventAttendeeTypes}
+            eventAttendeeTypes={eventAttendeeTypes || []}
             isLoadingAttendeeTypes={isLoadingAttendeeTypes}
           />
         )}

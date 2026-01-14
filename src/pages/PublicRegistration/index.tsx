@@ -11,6 +11,7 @@ interface EventSettings {
   description?: string
   start_at: string
   address_formatted: string
+  location_type?: string  // Ajout du champ manquant
   capacity?: number
   status?: string
   registration_fields: any[]

@@ -24,6 +24,10 @@ export function PermissionsModal({
   onClose,
   isLoading = false,
 }: PermissionsModalProps) {
+  const disableProtection = import.meta.env.VITE_RBAC_DISABLE_ROLE_PROTECTION === 'true'
+  const isRoleLocked = !disableProtection && (
+    role.is_locked || role.is_system_role || role.is_root
+  )
   // Permissions actuellement sélectionnées
   const currentPermissionIds = useMemo(
     () => new Set(role.rolePermissions?.map((rp) => rp.permission_id) ?? []),
@@ -142,6 +146,11 @@ export function PermissionsModal({
 
         {/* Search */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          {isRoleLocked && (
+            <div className="mb-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 px-4 py-3">
+              Ce rôle est protégé (système/racine/verrouillé) et ne peut pas être modifié.
+            </div>
+          )}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
@@ -171,6 +180,7 @@ export function PermissionsModal({
                   <div className="flex items-center gap-3 pb-2 border-b border-gray-200 dark:border-gray-700">
                     <button
                       onClick={() => toggleCategory(category)}
+                      disabled={isRoleLocked}
                       className={`
                         flex items-center justify-center w-5 h-5 border-2 rounded transition-colors
                         ${
@@ -206,6 +216,7 @@ export function PermissionsModal({
                           type="checkbox"
                           checked={selectedIds.has(permission.id)}
                           onChange={() => togglePermission(permission.id)}
+                          disabled={isRoleLocked}
                           className="mt-1 h-4 w-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
                         />
                         <div className="flex-1 min-w-0">
@@ -242,7 +253,11 @@ export function PermissionsModal({
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            {hasChanges ? (
+            {isRoleLocked ? (
+              <span className="text-amber-600 dark:text-amber-400">
+                Rôle protégé: modifications interdites
+              </span>
+            ) : hasChanges ? (
               <span className="text-amber-600 dark:text-amber-400">
                 Modifications non enregistrées
               </span>
@@ -262,10 +277,14 @@ export function PermissionsModal({
             </button>
             <button
               onClick={handleSave}
-              disabled={isLoading || !hasChanges}
+              disabled={isLoading || !hasChanges || isRoleLocked}
               className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
-              {isLoading ? 'Enregistrement...' : 'Enregistrer'}
+              {isRoleLocked
+                ? 'Rôle protégé'
+                : isLoading
+                ? 'Enregistrement...'
+                : 'Enregistrer'}
             </button>
           </div>
         </div>

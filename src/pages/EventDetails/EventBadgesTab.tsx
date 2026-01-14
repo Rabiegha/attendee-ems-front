@@ -5,6 +5,7 @@ import { selectToken } from '@/features/auth/model/sessionSlice'
 import { CreditCard, Plus, Trash2, AlertCircle, ChevronDown, Check, AlertTriangle, Download } from 'lucide-react'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
+import { Skeleton } from '@/shared/ui/Skeleton'
 import { useToast } from '@/shared/ui/useToast'
 import { useUpdateEventMutation, useGetEventAttendeeTypesQuery } from '@/features/events/api/eventsApi'
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api'
@@ -192,7 +193,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
   const [deleteBadgeRule] = useDeleteEventBadgeRuleMutation()
 
   // Récupérer les templates de badges disponibles
-const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
+  const { data: badgeTemplatesData, isLoading: isLoadingTemplates } = useGetBadgeTemplatesQuery({})
 
   // Récupérer les attendee types de l'événement
   const { data: eventAttendeeTypesData = [] } = useGetEventAttendeeTypesQuery(event.id)
@@ -486,6 +487,32 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
       typesCount: selectedTypes.length,
       typesNames: selectedTypes.map(t => t.name).join(', ')
     }
+  }
+
+  if (isLoadingRules || isLoadingTemplates) {
+    return (
+      <div className="space-y-6">
+        <div>
+           <Skeleton className="h-7 w-48 mb-2" />
+           <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4">
+           <Skeleton className="h-6 w-40" />
+           <Skeleton className="h-10 w-full" />
+        </div>
+        <div className="space-y-4">
+           <div className="flex justify-between items-center">
+              <div>
+                <Skeleton className="h-6 w-48 mb-1" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <Skeleton className="h-9 w-32" />
+           </div>
+           <Skeleton className="h-32 w-full rounded-lg" />
+           <Skeleton className="h-32 w-full rounded-lg" />
+        </div>
+      </div>
+    )
   }
 
   return (

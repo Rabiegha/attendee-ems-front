@@ -19,6 +19,7 @@ import { SearchInput, Button, Modal } from '@/shared/ui'
 import { FilterBar, FilterButton } from '@/shared/ui/FilterBar'
 import type { FilterValues } from '@/shared/ui/FilterBar/types'
 import { CreateAttendeeTypeModal } from '@/features/attendee-types/ui/CreateAttendeeTypeModal'
+import { Skeleton } from '@/shared/ui/Skeleton'
 
 interface ColorEditorModalProps {
   isOpen: boolean
@@ -416,23 +417,37 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredTypes.map((type) => {
-              const eventType = eventTypes?.find((et) => et.attendee_type_id === type.id)
-              const isSelected = !!eventType && eventType.is_active
+            {(isLoadingGlobal || isLoadingEvent) ? (
+               Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-800/50">
+                  <div className="flex justify-between items-start mb-4">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton variant="circular" className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-2 mb-4">
+                     <Skeleton className="h-4 w-full" />
+                     <Skeleton className="h-4 w-2/3" />
+                  </div>
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              ))
+            ) : filteredTypes.length > 0 ? (
+              filteredTypes.map((type) => {
+                const eventType = eventTypes?.find((et) => et.attendee_type_id === type.id)
+                const isSelected = !!eventType && eventType.is_active
 
-              return (
-                <AttendeeTypeItem
-                  key={type.id}
-                  type={type}
-                  eventType={eventType}
-                  isSelected={isSelected}
-                  onToggle={() => handleToggle(type.id, eventType?.id)}
-                  onEditColors={() => eventType && openColorEditor(eventType, type)}
-                />
-              )
-            })}
-            
-            {filteredTypes.length === 0 && (
+                return (
+                  <AttendeeTypeItem
+                    key={type.id}
+                    type={type}
+                    eventType={eventType}
+                    isSelected={isSelected}
+                    onToggle={() => handleToggle(type.id, eventType?.id)}
+                    onEditColors={() => eventType && openColorEditor(eventType, type)}
+                  />
+                )
+              })
+            ) : (
               <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
                 Aucun type de participant trouvé
               </div>

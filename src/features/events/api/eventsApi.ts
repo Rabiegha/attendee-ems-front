@@ -26,6 +26,67 @@ export interface EventAttendeeType {
   }
 }
 
+export interface Session {
+  id: string
+  org_id: string
+  event_id: string
+  name: string
+  description?: string | null
+  start_at: string
+  end_at: string
+  location?: string | null
+  capacity?: number | null
+  allowedAttendeeTypes: string[]
+  created_at: string
+  updated_at: string
+  _count?: {
+    scans: number
+  }
+}
+
+export interface SessionScan {
+  id: string
+  session_id: string
+  registration_id: string
+  scan_type: 'IN' | 'OUT'
+  scanned_at: string
+  registration: {
+    id: string
+    status: string
+    attendee: {
+      first_name: string
+      last_name: string
+      email: string
+      company: string | null
+    }
+  }
+}
+
+export interface CreateSessionDto {
+  name: string
+  description?: string
+  start_at: string
+  end_at: string
+  location?: string
+  capacity?: number
+  allowedAttendeeTypes?: string[]
+}
+
+export interface UpdateSessionDto {
+  name?: string
+  description?: string
+  start_at?: string
+  end_at?: string
+  location?: string
+  capacity?: number
+  allowedAttendeeTypes?: string[]
+}
+
+export interface ScanSessionDto {
+  registrationId: string
+  scanType: 'IN' | 'OUT'
+}
+
 export interface EventsListParams {
   page?: number
   limit?: number
@@ -254,6 +315,51 @@ export const eventsApi = rootApi.injectEndpoints({
       invalidatesTags: (_result, _error, { eventId }) => [{ type: 'AttendeeTypes', id: eventId }],
     }),
 
+    getEventSessions: builder.query<Session[], string>({
+      query: (eventId) => `/events/${eventId}/sessions`,
+      providesTags: (_result, _error, eventId) => [{ type: 'Sessions', id: eventId }],
+    }),
+
+    getEventSessionHistory: builder.query<SessionScan[], { eventId: string; sessionId: string }>({
+      query: ({ eventId, sessionId }) => `/events/${eventId}/sessions/${sessionId}/history`,
+      providesTags: (_result, _error, { sessionId }) => [{ type: 'SessionHistory', id: sessionId }],
+    }),
+
+    createEventSession: builder.mutation<Session, { eventId: string; data: CreateSessionDto }>({
+      query: ({ eventId, data }) => ({
+        url: `/events/${eventId}/sessions`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'Sessions', id: eventId }],
+    }),
+
+    updateEventSession: builder.mutation<Session, { eventId: string; sessionId: string; data: UpdateSessionDto }>({
+      query: ({ eventId, sessionId, data }) => ({
+        url: `/events/${eventId}/sessions/${sessionId}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'Sessions', id: eventId }],
+    }),
+
+    deleteEventSession: builder.mutation<void, { eventId: string; sessionId: string }>({
+      query: ({ eventId, sessionId }) => ({
+        url: `/events/${eventId}/sessions/${sessionId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'Sessions', id: eventId }],
+    }),
+
+    scanSessionParticipant: builder.mutation<void, { eventId: string; sessionId: string; data: ScanSessionDto }>({
+      query: ({ eventId, sessionId, data }) => ({
+        url: `/events/${eventId}/sessions/${sessionId}/scan`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'Sessions', id: eventId }],
+    }),
+
     getEventAssignedUsers: builder.query<EventAssignedUser[], string>({
       query: (eventId) => `/events/${eventId}/assigned-users`,
       providesTags: (_result, _error, eventId) => [{ type: 'Event', id: `${eventId}-assigned-users` }],
@@ -326,4 +432,10 @@ export const {
   useGetEventAssignedUsersQuery,
   useAssignUsersToEventMutation,
   useUnassignUserFromEventMutation,
+  useGetEventSessionsQuery,
+  useGetEventSessionHistoryQuery,
+  useCreateEventSessionMutation,
+  useUpdateEventSessionMutation,
+  useDeleteEventSessionMutation,
+  useScanSessionParticipantMutation,
 } = eventsApi

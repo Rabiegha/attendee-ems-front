@@ -150,6 +150,7 @@ export const rootApi = createApi({
     'Tags',
     'Badges',
     'Badge',
+    'Sessions',
   ],
   // Pas d'endpoints ici, ils seront injectés par chaque feature
   endpoints: () => ({}),

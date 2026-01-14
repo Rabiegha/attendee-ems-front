@@ -1,5 +1,5 @@
 import React from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard,
@@ -114,10 +114,20 @@ const navigation = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const { t } = useTranslation('common')
+  const location = useLocation()
 
   const items = TEMP_HIDE_REPORTS_SETTINGS
     ? navigation.filter((i) => i.href !== '/reports' && i.href !== '/settings')
     : navigation;
+
+  // Fonction pour déterminer si un item est actif
+  // Gère le cas spécial de /roles-permissions qui redirige vers /rbac/:orgId
+  const isItemActive = (itemHref: string, currentPath: string) => {
+    if (itemHref === ROUTES.ROLES_PERMISSIONS && currentPath.startsWith('/rbac/')) {
+      return true
+    }
+    return currentPath === itemHref
+  }
 
   return (
     <aside
@@ -164,11 +174,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           {items.map((item) => {
             // Dashboard accessible à tous sans guard
             if (!item.action || !item.subject) {
+              const isActive = isItemActive(item.href, location.pathname)
               return (
                 <li key={item.href}>
                   <NavLink
                     to={item.href}
-                    className={({ isActive }) =>
+                    className={() =>
                       cn(
                         'flex items-center py-2 text-sm font-medium rounded-md transition-all duration-300 relative overflow-hidden group',
                         'px-4',
@@ -192,12 +203,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
             }
 
             // Autres items avec guard CASL
+            const isActive = isItemActive(item.href, location.pathname)
             return (
               <Can key={item.href} do={item.action} on={item.subject}>
                 <li>
                   <NavLink
                     to={item.href}
-                    className={({ isActive }) =>
+                    className={() =>
                       cn(
                         'flex items-center py-2 text-sm font-medium rounded-md transition-all duration-300 relative overflow-hidden group',
                         'px-4',

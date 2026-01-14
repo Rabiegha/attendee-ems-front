@@ -108,6 +108,10 @@ export const attendeesApi = rootApi.injectEndpoints({
               { type: 'Attendees', id: `LIST-${params.isActive}` },
             ]
           : [{ type: 'Attendees', id: `LIST-${params.isActive}` }],
+      keepUnusedDataFor: 0, // Disable cache completely like Users
+      serializeQueryArgs: ({ queryArgs }) => {
+        return `attendees-${queryArgs.isActive}-${queryArgs.page || 1}-${queryArgs.pageSize || 20}-${queryArgs.search || ''}`
+      },
     }),
 
     getAttendeeById: builder.query<AttendeeDPO, string>({

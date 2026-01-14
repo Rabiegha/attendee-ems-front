@@ -49,6 +49,10 @@ export const registrationsApi = rootApi.injectEndpoints({
               { type: 'Attendee', id: `EVENT-${eventId}-${isActive}` },
             ]
           : [{ type: 'Attendee', id: `EVENT-${eventId}-${isActive}` }],
+      keepUnusedDataFor: 0, // Disable cache completely like Users
+      serializeQueryArgs: ({ queryArgs }) => {
+        return `registrations-${queryArgs.eventId}-${queryArgs.isActive}-${queryArgs.page || 1}-${queryArgs.limit || 50}`
+      },
     }),
 
     updateRegistrationStatus: builder.mutation<

@@ -139,6 +139,9 @@ export const EventDetails: React.FC = () => {
             return {
               ...savedField,
               icon: predefinedField.icon,
+              attendeeField: predefinedField.attendeeField, // Ensure mapping is present
+              registrationField: predefinedField.registrationField,
+              storeInAnswers: predefinedField.storeInAnswers,
               // Ajouter width: 'half' par défaut si non défini (pour les anciens champs)
               width: savedField.width || 'half',
             }

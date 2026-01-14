@@ -4,6 +4,7 @@ import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/hooks/useToast'
 import { useCreateRegistrationMutation } from '../api/registrationsApi'
 import { CheckCircle, Clock, XCircle, Ban } from 'lucide-react'
+import { useGetEventAttendeeTypesQuery } from '@/features/events/api/eventsApi'
 
 interface AddParticipantFormProps {
   fields: FormField[]
@@ -25,6 +26,7 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [adminStatus, setAdminStatus] = useState<'awaiting' | 'approved' | 'refused' | 'cancelled'>('approved')
   const [isCheckedIn, setIsCheckedIn] = useState(false)
+  const [selectedAttendeeTypeId, setSelectedAttendeeTypeId] = useState<string>('')
   const [checkedInAt, setCheckedInAt] = useState(() => {
     const now = new Date()
     // Convertir en heure locale pour datetime-local
@@ -42,6 +44,15 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const toast = useToast()
   const [createRegistration] = useCreateRegistrationMutation()
+  
+  const { data: eventAttendeeTypes } = useGetEventAttendeeTypesQuery(eventId)
+
+  // Initialise selectedAttendeeTypeId le premier type actif si disponible
+  React.useEffect(() => {
+    if (eventAttendeeTypes && eventAttendeeTypes.length > 0 && !selectedAttendeeTypeId) {
+      setSelectedAttendeeTypeId(eventAttendeeTypes[0].id)
+    }
+  }, [eventAttendeeTypes, selectedAttendeeTypeId])
 
   const handleInputChange = (fieldId: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }))
@@ -56,13 +67,10 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
       const registrationData: any = {}
       const answers: any = {}
 
-      const toSnakeCase = (str: string) => {
-        return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
-      }
-
+      // Logique existante pour peupler attendee, registrationData, answers
       fields.forEach((field) => {
         const value = formData[field.id]
-        if (!value) return
+        if (value === undefined || value === '') return
 
         if (field.attendeeField) {
           const backendFieldName = toSnakeCase(field.attendeeField)
@@ -73,6 +81,38 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
           answers[field.key] = value
         }
       })
+
+      // Correction robuste: Récupération explicite des champs standard s'ils manquent
+      // Ceci est nécessaire car certains anciens formulaires ont perdu leurs métadonnées
+      if (!attendee.first_name) {
+         // Chercher par key avec underscore OU camelCase
+         const found = fields.find(f => f.key === 'first_name' || f.key === 'firstName' || f.id === 'firstName');
+         if (found && formData[found.id]) attendee.first_name = formData[found.id];
+      }
+      if (!attendee.last_name) {
+         const found = fields.find(f => f.key === 'last_name' || f.key === 'lastName' || f.id === 'lastName');
+         if (found && formData[found.id]) attendee.last_name = formData[found.id];
+      }
+      if (!attendee.email) {
+         const found = fields.find(f => f.type === 'email' || f.key === 'email' || f.id === 'email');
+         if (found && formData[found.id]) attendee.email = formData[found.id];
+      }
+      if (!attendee.company) {
+         const found = fields.find(f => f.key === 'company' || f.id === 'company');
+         if (found && formData[found.id]) attendee.company = formData[found.id];
+      }
+      if (!attendee.job_title) {
+         const found = fields.find(f => f.key === 'job_title' || f.key === 'jobTitle' || f.id === 'jobTitle');
+         if (found && formData[found.id]) attendee.job_title = formData[found.id];
+      }
+      if (!attendee.phone) {
+         const found = fields.find(f => f.key === 'phone' || f.id === 'phone');
+         if (found && formData[found.id]) attendee.phone = formData[found.id];
+      }
+      if (!attendee.country) {
+         const found = fields.find(f => f.key === 'country' || f.id === 'country');
+         if (found && formData[found.id]) attendee.country = formData[found.id];
+      }
 
       if (!attendee.email) {
         toast.error('Email requis', "L'adresse email est obligatoire")
@@ -88,15 +128,30 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
         admin_is_checked_in: isCheckedIn,
         admin_checked_in_at: isCheckedIn ? new Date(checkedInAt).toISOString() : undefined,
         admin_registered_at: new Date(registeredAt).toISOString(),
+        event_attendee_type_id: selectedAttendeeTypeId, // Utilisation de la sélection manuelle
       }
 
+      // Si le formulaire contient aussi un sélecteur de type d'attendee, il sera prioritaire (écrasant la sélection manuelle si désiré, ou inversement) 
+      // Ici on garde la logique précédente au cas où :
       if (registrationData.attendee_type) {
         requestData.event_attendee_type_id = registrationData.attendee_type
+      } else if (selectedAttendeeTypeId) {
+        // Fallback or explicit selection
+        requestData.event_attendee_type_id = selectedAttendeeTypeId;
+      }
+      
+      if (!requestData.event_attendee_type_id && eventAttendeeTypes && eventAttendeeTypes.length > 0) {
+         // Si rien n'est sélectionné mais qu'il y a des types dispos, on prend le premier
+         requestData.event_attendee_type_id = eventAttendeeTypes[0].id;
       }
 
       if (Object.keys(answers).length > 0) {
         requestData.answers = answers
       }
+
+      console.log('[AddParticipantForm] Final request data:', JSON.stringify(requestData, null, 2));
+      console.log('[AddParticipantForm] FormData state:', formData);
+      console.log('[AddParticipantForm] Fields config:', fields.map(f => ({ id: f.id, key: f.key, label: f.label, attendeeField: f.attendeeField })));
 
       await createRegistration({
         eventId,
@@ -253,6 +308,28 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
           Informations du participant
         </h3>
+        
+        {/* Sélecteur de Type de Participant (Ajouté) */}
+        {eventAttendeeTypes && eventAttendeeTypes.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Type de participant <span className="text-red-500 ml-1">*</span>
+            </label>
+            <select
+              value={selectedAttendeeTypeId}
+              onChange={(e) => setSelectedAttendeeTypeId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Sélectionner un type...</option>
+              {eventAttendeeTypes.filter(t => t.is_active !== false).map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.attendeeType.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {fields.map((field) => (
           <div key={field.id}>
             <label htmlFor={field.id} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

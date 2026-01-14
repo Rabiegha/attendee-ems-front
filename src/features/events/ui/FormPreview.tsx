@@ -303,7 +303,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             </div>
             <div className="flex items-center">
               <MapPin className="h-4 w-4 mr-2" />
-              {event.location}
+              {event.locationType === 'online' ? 'En ligne' : event.location}
             </div>
             {event.maxAttendees && event.maxAttendees < 100000 && (
               <div className="flex items-center">

@@ -217,7 +217,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
           
           // Si le type est utilisé dans une règle de badge, on le garde aussi
           const usedInRules = badgeRules.some(rule => 
-            rule.attendeeTypeIds.includes(eat.attendeeType.id)
+            rule.attendeeTypeIds.includes(eat.id)
           )
           if (usedInRules) return true
         }
@@ -225,7 +225,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
         return false
       })
       .map(eat => ({
-        id: eat.attendeeType.id,
+        id: eat.id,
         name: eat.attendeeType.name,
         color_hex: eat.color_hex || eat.attendeeType.color_hex,
         text_color_hex: eat.text_color_hex || eat.attendeeType.text_color_hex,

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { Calendar, MapPin, Users, CheckCircle, AlertCircle } from 'lucide-react'
 import { useToast } from '@/shared/hooks/useToast'
 import { formatDate } from '@/shared/lib/utils'
+import { getFieldById } from '@/features/events/components/FormBuilder'
 
 interface EventSettings {
   id: string
@@ -65,6 +66,23 @@ const PublicRegistration: React.FC = () => {
         }
 
         const data = await response.json()
+        
+        // Enrichir les champs avec les métadonnées prédéfinies (correction pour les propriétés manquantes)
+        if (data.registration_fields && Array.isArray(data.registration_fields)) {
+          data.registration_fields = data.registration_fields.map((field: any) => {
+            const predefined = getFieldById(field.key);
+            if (predefined) {
+              return {
+                ...field,
+                attendeeField: field.attendeeField || predefined.attendeeField,
+                registrationField: field.registrationField || predefined.registrationField,
+                storeInAnswers: field.storeInAnswers !== undefined ? field.storeInAnswers : predefined.storeInAnswers,
+              };
+            }
+            return field;
+          });
+        }
+
         setEvent(data)
 
         // Si l'événement a des champs de type attendee_type, charger les types
@@ -370,7 +388,7 @@ const PublicRegistration: React.FC = () => {
                   </div>
                   <div className="flex items-center">
                   <MapPin className="h-4 w-4 mr-2" />
-                  {event.address_formatted}
+                  {event.location_type === 'online' ? 'En ligne' : event.address_formatted}
                 </div>
                 {event.capacity && event.capacity < 100000 && (
                   <div className="flex items-center">

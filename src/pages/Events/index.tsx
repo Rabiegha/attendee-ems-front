@@ -368,7 +368,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                       {event.location && (
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-2" />
-                          <span className="truncate">{event.location}</span>
+                          <span className="truncate">{event.locationType === 'online' ? 'En ligne' : event.location}</span>
                         </div>
                       )}
 

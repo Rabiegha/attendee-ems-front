@@ -24,6 +24,9 @@ interface SidebarProps {
   onToggle: () => void
 }
 
+// Temp: masquer Reports et Settings dans la sidebar
+const TEMP_HIDE_REPORTS_SETTINGS = true;
+
 const navigation = [
   {
     name: 'navigation.dashboard',
@@ -112,6 +115,10 @@ const navigation = [
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const { t } = useTranslation('common')
 
+  const items = TEMP_HIDE_REPORTS_SETTINGS
+    ? navigation.filter((i) => i.href !== '/reports' && i.href !== '/settings')
+    : navigation;
+
   return (
     <aside
       className={cn(
@@ -154,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
 
       <nav className="px-2 overflow-y-auto pb-20">
         <ul className="space-y-2 pt-4">
-          {navigation.map((item) => {
+          {items.map((item) => {
             // Dashboard accessible à tous sans guard
             if (!item.action || !item.subject) {
               return (

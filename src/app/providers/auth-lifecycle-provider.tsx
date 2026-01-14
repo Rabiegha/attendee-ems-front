@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import {
   onAuthStateMaybeChanged,
-  bootstrapAuth,
+  // bootstrapAuth, // Optionnel: le bootstrap est géré via Redux Persist + refresh 401
 } from '@/features/auth/authLifecycle'
-import { selectSession } from '@/features/auth/model/sessionSlice'
+import { selectSession, setBootstrapCompleted } from '@/features/auth/model/sessionSlice'
 
 interface AuthLifecycleProviderProps {
   children: React.ReactNode
@@ -26,6 +26,8 @@ export const AuthLifecycleProvider: React.FC<AuthLifecycleProviderProps> = ({
     console.log('[AUTH-LIFECYCLE] Using Redux persist for session restoration')
     // bootstrapAuth() causait un clearSession() avant que Redux persist ne réhydrate
     // Le refresh se fera automatiquement sur la première requête 401
+    // Marquer explicitement la fin du bootstrap pour éviter les loaders infinis
+    dispatch(setBootstrapCompleted())
     
     setHasBootstrapped(true)
   }, [hasBootstrapped])

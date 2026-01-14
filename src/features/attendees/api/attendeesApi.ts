@@ -101,13 +101,13 @@ export const attendeesApi = rootApi.injectEndpoints({
         data: response.data.map(mapAttendeeDTOtoDPO),
         meta: response.meta,
       }),
-      providesTags: (result) =>
+      providesTags: (result, _error, params) =>
         result
           ? [
               ...result.data.map(({ id }) => ({ type: 'Attendee' as const, id })),
-              { type: 'Attendees', id: 'LIST' },
+              { type: 'Attendees', id: `LIST-${params.isActive}` },
             ]
-          : [{ type: 'Attendees', id: 'LIST' }],
+          : [{ type: 'Attendees', id: `LIST-${params.isActive}` }],
     }),
 
     getAttendeeById: builder.query<AttendeeDPO, string>({

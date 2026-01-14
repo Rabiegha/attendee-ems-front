@@ -42,13 +42,13 @@ export const registrationsApi = rootApi.injectEndpoints({
         data: response.data.map(mapRegistrationDTOtoDPO),
         meta: response.meta,
       }),
-      providesTags: (result, _error, { eventId }) =>
+      providesTags: (result, _error, { eventId, isActive }) =>
         result
           ? [
               ...result.data.map(({ id }) => ({ type: 'Attendee' as const, id })),
-              { type: 'Attendee', id: `EVENT-${eventId}` },
+              { type: 'Attendee', id: `EVENT-${eventId}-${isActive}` },
             ]
-          : [{ type: 'Attendee', id: `EVENT-${eventId}` }],
+          : [{ type: 'Attendee', id: `EVENT-${eventId}-${isActive}` }],
     }),
 
     updateRegistrationStatus: builder.mutation<

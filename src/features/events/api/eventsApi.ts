@@ -245,7 +245,7 @@ export const eventsApi = rootApi.injectEndpoints({
       invalidatesTags: (_result, _error, { eventId }) => [{ type: 'AttendeeTypes', id: eventId }],
     }),
 
-    updateEventAttendeeType: builder.mutation<EventAttendeeType, { eventId: string; eventAttendeeTypeId: string; data: { color_hex?: string; text_color_hex?: string; capacity?: number } }>({
+    updateEventAttendeeType: builder.mutation<EventAttendeeType, { eventId: string; eventAttendeeTypeId: string; data: { color_hex?: string; text_color_hex?: string; capacity?: number; sort_order?: number; is_active?: boolean } }>({
       query: ({ eventId, eventAttendeeTypeId, data }) => ({
         url: `/events/${eventId}/attendee-types/${eventAttendeeTypeId}`,
         method: 'PUT',

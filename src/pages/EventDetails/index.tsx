@@ -34,11 +34,13 @@ import {
   XCircle,
   Tag,
   CreditCard,
+  CalendarDays,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
 import { EventAttendeeTypesTab } from './EventAttendeeTypesTab'
 import { EventBadgesTab } from './EventBadgesTab'
+import { EventSessionsTab } from './EventSessionsTab'
 import { AssignedTeam } from './components/AssignedTeam'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
@@ -53,7 +55,7 @@ import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 
-type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges'
+type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -69,7 +71,7 @@ export const EventDetails: React.FC = () => {
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -518,6 +520,13 @@ export const EventDetails: React.FC = () => {
       label: 'Équipe', 
       icon: Users,
       hasPermission: canAssignUsers,
+      disabledIfDeleted: true 
+    },
+    { 
+      id: 'sessions' as TabType, 
+      label: 'Sessions', 
+      icon: CalendarDays,
+      hasPermission: canReadEvents,
       disabledIfDeleted: true 
     },
     { 
@@ -1008,6 +1017,14 @@ export const EventDetails: React.FC = () => {
 
         {activeTab === 'badges' && (
           <EventBadgesTab event={event} />
+        )}
+
+        {activeTab === 'sessions' && (
+          <EventSessionsTab 
+            event={event} 
+            eventAttendeeTypes={eventAttendeeTypes}
+            isLoadingAttendeeTypes={isLoadingAttendeeTypes}
+          />
         )}
       </div>
 

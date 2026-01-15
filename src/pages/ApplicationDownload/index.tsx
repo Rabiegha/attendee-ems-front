@@ -1,11 +1,13 @@
 import React from 'react'
-import { Download, Smartphone, CheckCircle } from 'lucide-react'
+import { Download, Smartphone, CheckCircle, QrCode } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { PageContainer, PageHeader, PageSection } from '@/shared/ui'
 import { Card } from '@/shared/ui/Card'
 import { Button } from '@/shared/ui/Button'
 
 export const ApplicationDownloadPage: React.FC = () => {
-  const apkUrl = '/downloads/attendeeV1.apk'
+  const apkUrl = '/downloads/AttendeeV1.apk'
+  const downloadUrl = `${window.location.origin}${apkUrl}`
   
   const features = [
     'Consultation des événements en cours, à venir et passés',
@@ -39,33 +41,66 @@ export const ApplicationDownloadPage: React.FC = () => {
             </div>
 
             <div className="space-form">
-              {/* Bouton de téléchargement */}
+              {/* Section QR Code et Téléchargement */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-                <div className="flex flex-col items-center text-center gap-4">
-                  <div className="p-4 bg-white dark:bg-gray-800 rounded-full shadow-lg">
-                    <Smartphone className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                      Fichier APK prêt au téléchargement
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Dernière mise à jour : {new Date().toLocaleDateString('fr-FR')}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* QR Code */}
+                  <div className="flex flex-col items-center text-center gap-4">
+                    <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+                      <QrCode className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                        Scannez avec votre téléphone
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Utilisez l'appareil photo de votre téléphone
+                      </p>
+                    </div>
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg">
+                      <QRCodeSVG 
+                        value={downloadUrl}
+                        size={180}
+                        level="H"
+                        includeMargin={true}
+                        className="mx-auto"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
+                      Pointez votre appareil photo vers ce code pour télécharger directement l'application
                     </p>
                   </div>
-                  <a
-                    href={apkUrl}
-                    download="attendeeV1.apk"
-                    className="w-full max-w-xs"
-                  >
-                    <Button
-                      type="button"
-                      className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+
+                  {/* Bouton de téléchargement */}
+                  <div className="flex flex-col items-center text-center gap-4 justify-center">
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-full shadow-lg">
+                      <Smartphone className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                        Téléchargement direct
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Dernière mise à jour : {new Date().toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    <a
+                      href={apkUrl}
+                      download="AttendeeV1.apk"
+                      className="w-full max-w-xs"
                     >
-                      <Download className="h-5 w-5 mr-2" />
-                      Télécharger l'APK
-                    </Button>
-                  </a>
+                      <Button
+                        type="button"
+                        className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
+                      >
+                        <Download className="h-5 w-5 mr-2" />
+                        Télécharger l'APK
+                      </Button>
+                    </a>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
+                      Si vous êtes déjà sur mobile, cliquez ici pour télécharger
+                    </p>
+                  </div>
                 </div>
               </div>
 

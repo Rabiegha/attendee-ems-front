@@ -34,10 +34,13 @@ export const registrationsApi = rootApi.injectEndpoints({
       { data: RegistrationDPO[]; meta: RegistrationsListResponse['meta'] },
       RegistrationsQueryParams
     >({
-      query: ({ eventId, ...params }) => ({
-        url: `/events/${eventId}/registrations`,
-        params,
-      }),
+      query: ({ eventId, ...params }) => {
+        console.log('🔍 [registrationsApi] Building query with params:', params);
+        return {
+          url: `/events/${eventId}/registrations`,
+          params,
+        };
+      },
       transformResponse: (response: RegistrationsListResponse) => ({
         data: response.data.map(mapRegistrationDTOtoDPO),
         meta: response.meta,

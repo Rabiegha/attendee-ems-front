@@ -345,6 +345,11 @@ export const EventDetails: React.FC = () => {
     }
   )
 
+  // Log pour debugging
+  useEffect(() => {
+    console.log('📊 [EventDetails] registrationsIsActive changed:', registrationsIsActive)
+  }, [registrationsIsActive])
+
   // Hook séparé pour récupérer tous les IDs lors de l'export (avec limite haute)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: allRegistrationsForExport } = useGetRegistrationsQuery(
@@ -419,6 +424,7 @@ export const EventDetails: React.FC = () => {
 
   const handleRegistrationsTabChange = (tabId: string) => {
     const newTab = tabId as 'active' | 'deleted'
+    console.log('🔄 [EventDetails] Changing registrations tab to:', newTab, '-> isActive:', newTab === 'active')
     setRegistrationsActiveTab(newTab)
     setRegistrationsIsActive(newTab === 'active')
     setRegistrationsPage(1) // Reset to first page

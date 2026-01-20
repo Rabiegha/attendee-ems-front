@@ -11,6 +11,10 @@ import {
   CheckCircle,
   Search,
   X,
+  Plus,
+  Trash2,
+  GripVertical,
+  Edit,
 } from 'lucide-react'
 import { Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -24,15 +28,142 @@ import {
   Card,
   CardContent,
   RolesPermissionsPageSkeleton,
+  Modal,
 } from '@/shared/ui'
 import {
   useGetRolesQuery,
   useGetPermissionsQuery,
   useUpdateRolePermissionsMutation,
+  useCreateRoleMutation,
+  useUpdateRoleMutation,
+  useDeleteRoleMutation,
+  useUpdateRolesHierarchyMutation,
 } from '@/features/roles/api/rolesApi'
-import type { Permission } from '@/features/roles/api/rolesApi'
-import { canModifyUser } from '@/shared/lib/role-hierarchy'
+import type { Permission, Role } from '@/features/roles/api/rolesApi'
 import type { RootState } from '@/app/store'
+import { RoleCreationModal } from '@/features/roles/components/RoleCreationModal'
+import { RoleEditModal } from '@/features/roles/components/RoleEditModal'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+
+// Composant pour un item de rôle draggable
+interface SortableRoleItemProps {
+  role: Role
+  isSelected: boolean
+  isOwnRole: boolean
+  canModify: boolean
+  permissionsCount: number
+  onClick: () => void
+  onDelete: () => void
+}
+
+const SortableRoleItem: React.FC<SortableRoleItemProps> = ({
+  role,
+  isSelected,
+  isOwnRole,
+  canModify,
+  permissionsCount,
+  onClick,
+  onDelete,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: role.id, disabled: role.is_system_role || !canModify })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-colors cursor-pointer ${
+        isSelected
+          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+          : 'border-transparent bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+      }`}
+    >
+      {/* Drag Handle - visible seulement si modifiable */}
+      {canModify && !role.is_system_role && (
+        <button
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+        >
+          <GripVertical className="h-5 w-5" />
+        </button>
+      )}
+
+      {/* Role Info */}
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-gray-900 dark:text-white">
+            {role.name}
+          </p>
+          {role.is_system_role && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200">
+              Système
+            </span>
+          )}
+          {isOwnRole && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
+              <Lock className="h-3 w-3 mr-1" />
+              Votre rôle
+            </span>
+          )}
+          {!canModify && !isOwnRole && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200">
+              <Lock className="h-3 w-3 mr-1" />
+              Protégé
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+          {permissionsCount} permissions • Niveau {role.level}
+        </p>
+      </div>
+
+      {/* Delete Button */}
+      {canModify && !role.is_system_role && !isOwnRole && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete()
+          }}
+          className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+          title="Supprimer ce rôle"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  )
+}
 
 export const RolePermissionsAdmin: React.FC = () => {
   const {
@@ -48,6 +179,10 @@ export const RolePermissionsAdmin: React.FC = () => {
   } = useGetPermissionsQuery()
   const [updateRolePermissions, { isLoading: isUpdating }] =
     useUpdateRolePermissionsMutation()
+  const [createRole, { isLoading: isCreating }] = useCreateRoleMutation()
+  const [updateRole, { isLoading: isUpdatingRole }] = useUpdateRoleMutation()
+  const [deleteRole, { isLoading: isDeleting }] = useDeleteRoleMutation()
+  const [updateRolesHierarchy] = useUpdateRolesHierarchyMutation()
 
   // Récupérer l'utilisateur connecté depuis Redux
   const currentUser = useSelector((state: RootState) => state.session.user)
@@ -58,8 +193,21 @@ export const RolePermissionsAdmin: React.FC = () => {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({})
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [isCreationModalOpen, setIsCreationModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [roleToDelete, setRoleToDelete] = useState<{ id: string; name: string } | null>(null)
+  const [sortedRoles, setSortedRoles] = useState<Role[]>([])
   
   const toast = useToast()
+
+  // Configurer les sensors pour le drag & drop
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -72,26 +220,114 @@ export const RolePermissionsAdmin: React.FC = () => {
   const error = rolesError || permissionsError
 
   // Définir la hiérarchie des rôles (du plus élevé au plus bas)
-  const roleHierarchy = ['admin', 'manager', 'user']
-  
-  const getUserRoleLevel = (roleCode: string): number => {
-    const index = roleHierarchy.indexOf(roleCode.toLowerCase())
-    return index === -1 ? roleHierarchy.length : index
+  // Filtrer les rôles : afficher tous les rôles de l'organisation
+  const roles = rolesRaw.filter((role) => {
+    // Garder seulement les rôles de cette organisation (exclure les rôles système sans org)
+    return role.org_id !== null
+  })
+
+  // Trouver le niveau de l'utilisateur connecté
+  const currentUserRole = roles.find(r => r.code === currentUserRoleCode)
+  const currentUserLevel = currentUserRole?.level ?? 999 // Si pas trouvé, niveau très bas
+
+  // Mettre à jour sortedRoles quand roles change
+  React.useEffect(() => {
+    const sorted = [...roles].sort((a, b) => a.level - b.level)
+    setSortedRoles(sorted)
+  }, [roles])
+
+  // Gestion du drag & drop
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (!over || active.id === over.id) {
+      return
+    }
+
+    const oldIndex = sortedRoles.findIndex((r) => r.id === active.id)
+    const newIndex = sortedRoles.findIndex((r) => r.id === over.id)
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return
+    }
+
+    // Vérifier qu'on ne place pas un rôle au-dessus ou au même niveau que le sien
+    // newIndex est la position dans le tableau, qui correspond au level
+    if (newIndex <= currentUserLevel) {
+      toast.error(`Vous ne pouvez pas placer un rôle au niveau ${newIndex} ou supérieur. Votre niveau est ${currentUserLevel}.`)
+      return
+    }
+
+    // Réorganiser localement
+    const newOrder = arrayMove(sortedRoles, oldIndex, newIndex)
+    setSortedRoles(newOrder)
+
+    // Mettre à jour les niveaux hiérarchiques
+    const updates = newOrder.map((role, index) => ({
+      roleId: role.id,
+      level: index,
+    }))
+
+    try {
+      await updateRolesHierarchy(updates).unwrap()
+      toast.success('Hiérarchie mise à jour avec succès')
+      refetchRoles()
+    } catch (error: any) {
+      // Revert en cas d'erreur
+      const sorted = [...roles].sort((a, b) => a.level - b.level)
+      setSortedRoles(sorted)
+      toast.error(error?.data?.message || 'Erreur lors de la mise à jour de la hiérarchie')
+    }
   }
 
-  // Filtrer les rôles : 
-  // 1. Enlever les doublons 
-  // 2. Ne garder que les rôles de l'organisation
-  // 3. Ne garder que les rôles de niveau inférieur à l'utilisateur
-  const roles = rolesRaw.filter((role) => {
-    if (role.org_id === null) return false
+  // Gestion de la création de rôle
+  const handleCreateRole = async (data: {
+    name: string
+    description?: string
+  }) => {
+    await createRole(data).unwrap()
+    refetchRoles()
+  }
+
+  // Gestion de la modification de rôle
+  const handleUpdateRole = async (data: {
+    name: string
+    description?: string
+  }) => {
+    if (!selectedRoleId) return
     
-    const currentUserLevel = getUserRoleLevel(currentUserRoleCode)
-    const roleLevel = getUserRoleLevel(role.code || '')
-    
-    // Ne montrer que les rôles de niveau strictement inférieur
-    return roleLevel > currentUserLevel
-  })
+    await updateRole({
+      roleId: selectedRoleId,
+      ...data
+    }).unwrap()
+    refetchRoles()
+  }
+
+  // Gestion de la suppression de rôle
+  const handleDeleteRole = (roleId: string, roleName: string) => {
+    setRoleToDelete({ id: roleId, name: roleName })
+    setIsDeleteModalOpen(true)
+  }
+
+  const confirmDeleteRole = async () => {
+    if (!roleToDelete) return
+
+    try {
+      await deleteRole(roleToDelete.id).unwrap()
+      toast.success('Rôle supprimé avec succès')
+      
+      // Désélectionner si c'était le rôle sélectionné
+      if (selectedRoleId === roleToDelete.id) {
+        setSelectedRoleId(null)
+      }
+      
+      setIsDeleteModalOpen(false)
+      setRoleToDelete(null)
+      refetchRoles()
+    } catch (error: any) {
+      toast.error(error?.data?.message || 'Erreur lors de la suppression du rôle')
+    }
+  }
 
   // Filtrer les permissions : enlever celles qui contiennent :any (SUPER_ADMIN only)
   const permissions = permissionsRaw.filter((permission) => {
@@ -105,7 +341,7 @@ export const RolePermissionsAdmin: React.FC = () => {
     return true
   })
 
-  const selectedRole = roles.find((r) => r.id === selectedRoleId)
+  const selectedRole = sortedRoles.find((r) => r.id === selectedRoleId)
 
   const handlePermissionToggle = async (
     permissionId: string,
@@ -113,27 +349,18 @@ export const RolePermissionsAdmin: React.FC = () => {
   ) => {
     if (!selectedRole) return
 
-    // Vérification côté client : ne peut pas modifier son propre rôle
+    // Vérification hiérarchique : peut modifier uniquement les rôles de niveau supérieur
     const isOwnRole = currentUser?.roles?.includes(selectedRole.code || '')
-    if (isOwnRole) {
-      console.error(
-        'Vous ne pouvez pas modifier les permissions de votre propre rôle'
-      )
-      alert('Vous ne pouvez pas modifier les permissions de votre propre rôle')
-      return
-    }
+    const canModifyHierarchy = selectedRole.level > currentUserLevel
 
-    // Vérification hiérarchique : peut modifier uniquement les rôles de niveau inférieur
-    const hierarchyCheck = canModifyUser(
-      currentUserRoleCode,
-      selectedRole.code || '',
-      currentUserId,
-      selectedRole.id
-    )
-
-    if (!hierarchyCheck.canModify) {
-      console.error(hierarchyCheck.reason)
-      alert(hierarchyCheck.reason || 'Vous ne pouvez pas modifier ce rôle')
+    if (isOwnRole || selectedRole.is_system_role || !canModifyHierarchy) {
+      const reason = isOwnRole 
+        ? 'Vous ne pouvez pas modifier les permissions de votre propre rôle'
+        : selectedRole.is_system_role
+        ? 'Les rôles système ne peuvent pas être modifiés'
+        : `Vous ne pouvez modifier que les rôles de niveau strictement supérieur au vôtre (niveau ${currentUserLevel})`
+      console.error(reason)
+      alert(reason)
       return
     }
 
@@ -226,20 +453,112 @@ export const RolePermissionsAdmin: React.FC = () => {
           description="Configurez les permissions pour chaque rôle de votre organisation."
           icon={Shield}
           actions={
-            <Button
-              variant="secondary"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              leftIcon={
-                <RefreshCw
-                  className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-                />
-              }
-            >
-              Actualiser
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                onClick={() => setIsCreationModalOpen(true)}
+                leftIcon={<Plus className="h-4 w-4" />}
+              >
+                Nouveau rôle
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                leftIcon={
+                  <RefreshCw
+                    className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
+                  />
+                }
+              >
+                Actualiser
+              </Button>
+            </div>
           }
         />
+
+        {/* Modal de création */}
+        <RoleCreationModal
+          isOpen={isCreationModalOpen}
+          onClose={() => setIsCreationModalOpen(false)}
+          onSubmit={handleCreateRole}
+          existingLevels={sortedRoles.map(r => r.level)}
+          isLoading={isCreating}
+        />
+
+        {/* Modal d'édition */}
+        <RoleEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSubmit={handleUpdateRole}
+          initialData={selectedRole ? {
+            name: selectedRole.name,
+            description: selectedRole.description
+          } : undefined}
+          isLoading={isUpdatingRole}
+        />
+
+        {/* Modal de confirmation de suppression */}
+        <Modal
+          isOpen={isDeleteModalOpen}
+          onClose={() => {
+            setIsDeleteModalOpen(false)
+            setRoleToDelete(null)
+          }}
+          title="Confirmer la suppression"
+          maxWidth="md"
+          showCloseButton={true}
+          closeOnBackdropClick={!isDeleting}
+        >
+          <div className="space-y-6">
+            {/* Message d'avertissement */}
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-1">
+                    Action irréversible
+                  </h4>
+                  <p className="text-sm text-red-800 dark:text-red-300">
+                    Cette action ne peut pas être annulée. Le rôle sera définitivement supprimé.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Message de confirmation */}
+            <div>
+              <p className="text-gray-900 dark:text-white">
+                Êtes-vous sûr de vouloir supprimer le rôle{' '}
+                <span className="font-semibold">"{roleToDelete?.name}"</span> ?
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  setIsDeleteModalOpen(false)
+                  setRoleToDelete(null)
+                }}
+                disabled={isDeleting}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={confirmDeleteRole}
+                disabled={isDeleting}
+                leftIcon={<Trash2 className="h-4 w-4" />}
+              >
+                {isDeleting ? 'Suppression...' : 'Supprimer'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
 
         {/* Gestion des erreurs */}
         {error && (
@@ -275,7 +594,7 @@ export const RolePermissionsAdmin: React.FC = () => {
                   Rôles
                 </h3>
 
-                {roles.length === 0 ? (
+                {sortedRoles.length === 0 ? (
                   <div className="text-center py-8">
                     <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 dark:text-gray-300">
@@ -283,59 +602,40 @@ export const RolePermissionsAdmin: React.FC = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {roles.map((role) => {
-                      // Vérifier si le rôle peut être modifié
-                      const isOwnRole = currentUser?.roles?.includes(role.code || '')
-                      const hierarchyCheck = canModifyUser(
-                        currentUserRoleCode,
-                        role.code || '',
-                        currentUserId,
-                        role.id
-                      )
-                      const canModify = !isOwnRole && hierarchyCheck.canModify
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={sortedRoles.map(r => r.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-2">
+                        {sortedRoles.map((role) => {
+                          // Vérifier si le rôle peut être modifié
+                          const isOwnRole = currentUser?.roles?.includes(role.code || '')
+                          // On peut modifier seulement les rôles de niveau strictement supérieur au nôtre
+                          // (niveau plus élevé = plus bas dans la hiérarchie)
+                          const canModifyHierarchy = role.level > currentUserLevel
+                          const canModify = !isOwnRole && canModifyHierarchy && !role.is_system_role
 
-                      return (
-                        <button
-                          key={role.id}
-                          onClick={() => setSelectedRoleId(role.id)}
-                          disabled={!canModify}
-                          className={`w-full text-left p-3 rounded-lg border-2 transition-colors ${
-                            selectedRoleId === role.id
-                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                              : canModify
-                                ? 'border-transparent bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
-                                : 'border-transparent bg-gray-100 dark:bg-gray-800 opacity-50 cursor-not-allowed'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {role.name}
-                                </p>
-                                {isOwnRole && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
-                                    <Lock className="h-3 w-3 mr-1" />
-                                    Votre rôle
-                                  </span>
-                                )}
-                                {!canModify && !isOwnRole && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200">
-                                    <Lock className="h-3 w-3 mr-1" />
-                                    Protégé
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                {role.permissions?.length || 0} permissions
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+                          return (
+                            <SortableRoleItem
+                              key={role.id}
+                              role={role}
+                              isSelected={selectedRoleId === role.id}
+                              isOwnRole={isOwnRole}
+                              canModify={canModify}
+                              permissionsCount={role.permissions?.length || 0}
+                              onClick={() => setSelectedRoleId(role.id)}
+                              onDelete={() => handleDeleteRole(role.id, role.name)}
+                            />
+                          )
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 )}
               </div>
             </div>
@@ -347,15 +647,20 @@ export const RolePermissionsAdmin: React.FC = () => {
                   {/* Message d'avertissement si rôle protégé */}
                   {(() => {
                     const isOwnRole = currentUser?.roles?.includes(selectedRole.code || '')
-                    const hierarchyCheck = canModifyUser(
-                      currentUserRoleCode,
-                      selectedRole.code || '',
-                      currentUserId,
-                      selectedRole.id
-                    )
-                    const canModify = !isOwnRole && hierarchyCheck.canModify
+                    const isSystemRole = selectedRole.is_system_role
+                    const canModifyHierarchy = selectedRole.level > currentUserLevel
+                    const canModify = !isOwnRole && !isSystemRole && canModifyHierarchy
 
                     if (!canModify) {
+                      let reason = ''
+                      if (isOwnRole) {
+                        reason = 'Vous ne pouvez pas modifier les permissions de votre propre rôle pour des raisons de sécurité.'
+                      } else if (isSystemRole) {
+                        reason = 'Ce rôle système ne peut pas être modifié.'
+                      } else if (!canModifyHierarchy) {
+                        reason = `Vous ne pouvez modifier que les rôles de niveau strictement supérieur au vôtre (niveau ${currentUserLevel}). Ce rôle est de niveau ${selectedRole.level}.`
+                      }
+
                       return (
                         <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
                           <div className="flex items-start space-x-3">
@@ -364,13 +669,12 @@ export const RolePermissionsAdmin: React.FC = () => {
                               <h4 className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">
                                 {isOwnRole
                                   ? 'Votre propre rôle'
-                                  : 'Rôle protégé'}
+                                  : isSystemRole
+                                    ? 'Rôle système'
+                                    : 'Rôle protégé'}
                               </h4>
                               <p className="text-sm text-amber-800 dark:text-amber-300">
-                                {isOwnRole
-                                  ? 'Vous ne pouvez pas modifier les permissions de votre propre rôle pour des raisons de sécurité.'
-                                  : hierarchyCheck.reason ||
-                                    'Vous ne pouvez modifier que les rôles de niveau inférieur au vôtre.'}
+                                {reason}
                               </p>
                             </div>
                           </div>
@@ -380,12 +684,35 @@ export const RolePermissionsAdmin: React.FC = () => {
                     return null
                   })()}
 
+                  {/* En-tête avec nom, description et bouton d'édition */}
                   <div className="mb-6">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                      {selectedRole.name}
-                    </h3>
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        {selectedRole.name}
+                      </h3>
+                      {(() => {
+                        const isOwnRole = currentUser?.roles?.includes(selectedRole.code || '')
+                        const isSystemRole = selectedRole.is_system_role
+                        const canModifyHierarchy = selectedRole.level > currentUserLevel
+                        const canModify = !isOwnRole && !isSystemRole && canModifyHierarchy
+                        
+                        if (canModify) {
+                          return (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setIsEditModalOpen(true)}
+                              leftIcon={<Edit className="h-4 w-4" />}
+                            >
+                              Modifier
+                            </Button>
+                          )
+                        }
+                        return null
+                      })()}
+                    </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {selectedRole.description}
+                      {selectedRole.description || 'Aucune description'}
                     </p>
                   </div>
 
@@ -458,14 +785,9 @@ export const RolePermissionsAdmin: React.FC = () => {
                         // Vérifier si on peut modifier ce rôle
                         const isOwnRole =
                           currentUser?.roles?.includes(selectedRole.code || '')
-                        const hierarchyCheck = canModifyUser(
-                          currentUserRoleCode,
-                          selectedRole.code || '',
-                          currentUserId,
-                          selectedRole.id
-                        )
+                        const canModifyHierarchy = selectedRole.level > currentUserLevel
                         const canModifyRole =
-                          !isOwnRole && hierarchyCheck.canModify
+                          !isOwnRole && !selectedRole.is_system_role && canModifyHierarchy
                         
                         const isExpanded = expandedCategories[category] ?? false
                         

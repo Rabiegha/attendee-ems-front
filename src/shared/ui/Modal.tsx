@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
@@ -49,6 +49,13 @@ export const Modal: React.FC<ModalProps> = ({
   const [isVisible, setIsVisible] = useState(false)
   const [shouldRender, setShouldRender] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
+  
+  // Utiliser useRef pour éviter les re-renders en boucle
+  const onCloseRef = useRef(onClose)
+  
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   useEffect(() => {
     if (isOpen && !isClosing) {
@@ -68,13 +75,13 @@ export const Modal: React.FC<ModalProps> = ({
         setShouldRender(false)
         setIsClosing(false)
         if (isClosing) {
-          onClose()
+          onCloseRef.current()
         }
       }, 210) // 200ms animation + 10ms marge
       return () => clearTimeout(timer)
     }
     return undefined
-  }, [isOpen, isClosing, onClose])
+  }, [isOpen, isClosing])
 
   const handleClose = () => {
     setIsClosing(true)

@@ -101,6 +101,76 @@ export const rolesApi = rootApi.injectEndpoints({
       query: () => API_ENDPOINTS.PERMISSIONS.LIST,
       providesTags: [{ type: 'Permission', id: 'LIST' }],
     }),
+
+    // Créer un nouveau rôle personnalisé
+    createRole: builder.mutation<
+      Role,
+      {
+        name: string
+        description?: string
+        permissionIds?: string[]
+      }
+    >({
+      query: (body) => ({
+        url: API_ENDPOINTS.ROLES.LIST,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: [
+        { type: 'Role', id: 'LIST' },
+        'Policy',
+      ],
+    }),
+
+    // Mettre à jour un rôle existant
+    updateRole: builder.mutation<
+      Role,
+      {
+        roleId: string
+        name?: string
+        description?: string
+        level?: number
+      }
+    >({
+      query: ({ roleId, ...body }) => ({
+        url: `${API_ENDPOINTS.ROLES.LIST}/${roleId}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: (_, __, { roleId }) => [
+        { type: 'Role', id: roleId },
+        { type: 'Role', id: 'LIST' },
+        'Policy',
+      ],
+    }),
+
+    // Supprimer un rôle personnalisé
+    deleteRole: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (roleId) => ({
+        url: `${API_ENDPOINTS.ROLES.LIST}/${roleId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [
+        { type: 'Role', id: 'LIST' },
+        'Policy',
+      ],
+    }),
+
+    // Mettre à jour la hiérarchie des rôles
+    updateRolesHierarchy: builder.mutation<
+      { success: boolean; updated: number },
+      Array<{ roleId: string; level: number }>
+    >({
+      query: (updates) => ({
+        url: `${API_ENDPOINTS.ROLES.LIST}/hierarchy`,
+        method: 'PATCH',
+        body: { updates },
+      }),
+      invalidatesTags: [
+        { type: 'Role', id: 'LIST' },
+        'Policy',
+      ],
+    }),
   }),
   overrideExisting: false,
 })
@@ -111,4 +181,8 @@ export const {
   useGetRoleQuery,
   useUpdateRolePermissionsMutation,
   useGetPermissionsQuery,
+  useCreateRoleMutation,
+  useUpdateRoleMutation,
+  useDeleteRoleMutation,
+  useUpdateRolesHierarchyMutation,
 } = rolesApi

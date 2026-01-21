@@ -1,5 +1,5 @@
 import React from 'react'
-import { Can } from '@/shared/acl/guards/Can'
+import { useCan } from '@/shared/acl/hooks/useCan'
 import { AccessDenied } from '@/pages/AccessDenied'
 import type { Actions, Subjects } from '@/shared/acl/app-ability'
 
@@ -15,6 +15,7 @@ interface ProtectedPageProps {
 /**
  * Wrapper component pour protéger une page avec CASL
  * Affiche la page AccessDenied si l'utilisateur n'a pas les permissions
+ * Les enfants ne sont PAS montés si l'utilisateur n'a pas la permission
  */
 export const ProtectedPage: React.FC<ProtectedPageProps> = ({
   action,
@@ -24,19 +25,19 @@ export const ProtectedPage: React.FC<ProtectedPageProps> = ({
   deniedTitle,
   deniedMessage,
 }) => {
-  return (
-    <Can
-      do={action}
-      on={subject}
-      {...(data && { data })}
-      fallback={
-        <AccessDenied
-          {...(deniedTitle && { title: deniedTitle })}
-          {...(deniedMessage && { message: deniedMessage })}
-        />
-      }
-    >
-      {children}
-    </Can>
-  )
+  // Vérifier la permission AVANT de monter les enfants
+  const hasPermission = useCan(action, subject, data)
+
+  // Si pas de permission, afficher AccessDenied SANS monter les enfants
+  if (!hasPermission) {
+    return (
+      <AccessDenied
+        {...(deniedTitle && { title: deniedTitle })}
+        {...(deniedMessage && { message: deniedMessage })}
+      />
+    )
+  }
+
+  // Seulement si permission, monter les enfants
+  return <>{children}</>
 }

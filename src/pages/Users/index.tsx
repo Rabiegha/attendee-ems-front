@@ -50,6 +50,7 @@ import {
 } from '@/features/users/api/usersApi'
 import { useGetRolesFilteredQuery } from '@/features/roles/api/rolesApi'
 import { Can } from '@/shared/acl/guards/Can'
+import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
 import { selectUser } from '@/features/auth/model/sessionSlice'
 import { EditUserModal } from '@/features/users/ui/EditUserModal'
 import { DeleteUserModal } from '@/features/users/ui/DeleteUserModal'
@@ -65,7 +66,7 @@ import {
 import { useToast } from '@/shared/hooks/useToast'
 import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 
-export function UsersPage() {
+function UsersPageContent() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const currentUser = useSelector(selectUser)
@@ -724,3 +725,14 @@ export function UsersPage() {
     </PageContainer>
   )
 }
+
+export const UsersPage = () => (
+  <ProtectedPage
+    action="read"
+    subject="User"
+    deniedTitle="Accès aux utilisateurs refusé"
+    deniedMessage="Vous n'avez pas les permissions nécessaires pour consulter les utilisateurs."
+  >
+    <UsersPageContent />
+  </ProtectedPage>
+)

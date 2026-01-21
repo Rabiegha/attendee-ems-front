@@ -17,6 +17,7 @@ import { useGetOrganizationsQuery } from '@/features/users/api/usersApi'
 import { useCreateOrganizationMutation } from '@/features/organizations/api/organizationsApi'
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
+import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
 
 interface InvitationFormData {
   email: string
@@ -26,7 +27,7 @@ interface InvitationFormData {
   newOrgName: string
 }
 
-export const InvitationsPage: React.FC = () => {
+const InvitationsPageContent: React.FC = () => {
   const currentUser = useSelector((state: RootState) => state.session.user)
   const toast = useToast()
 
@@ -97,66 +98,40 @@ export const InvitationsPage: React.FC = () => {
           ? { orgId: currentUser.orgId } // Admin normal → rôles de son org
           : undefined // SUPER_ADMIN sans sélection → query skipped
 
-  // FIX: Skip la query si SUPER_ADMIN n'a pas encore fait de choix
+  // Skip la query si SUPER_ADMIN n'a pas encore fait de choix
   const shouldSkipRolesQuery = isSuperAdmin
     ? !formData.createNewOrg && !selectedOrgId // Skip si pas d'org sélectionnée et pas de nouvelle org
     : false // Ne jamais skip pour les admins normaux
-
-  // DEBUG: Log pour voir les paramètres de query
-  console.log(' [INVITATIONS] Roles Query Params:', {
-    isSuperAdmin,
-    createNewOrg: formData.createNewOrg,
-    selectedOrgId,
-    userOrgId: currentUser?.orgId,
-    rolesQueryParams,
-    rolesQueryParamsJSON: JSON.stringify(rolesQueryParams), // 🔥 Voir exactement ce qui est passé
-    shouldSkip: shouldSkipRolesQuery,
-  })
 
   const {
     data: rolesDataRaw,
     isLoading: isLoadingRoles,
     error: rolesError,
   } = useGetRolesFilteredQuery(
-    rolesQueryParams ?? { templatesOnly: false }, // 🔥 FIX: Toujours passer un objet, jamais undefined
+    rolesQueryParams ?? { templatesOnly: false },
     {
       skip: shouldSkipRolesQuery,
-      refetchOnMountOrArgChange: true, // Force le refetch à chaque changement
+      refetchOnMountOrArgChange: true,
     }
   )
 
-  // DEBUG: Log des rôles chargés
-  console.log('📋 [INVITATIONS] Roles loaded:', {
-    count: rolesDataRaw?.length || 0,
-    roles: rolesDataRaw?.map((r) => ({
-      id: r.id,
-      code: r.code,
-      orgId: r.org_id,
-      isSystem: r.is_system_role,
-    })),
-    isLoading: isLoadingRoles,
-    error: rolesError,
-  })
-
-  const { data: organizations, isLoading: isLoadingOrganizations } =
-    useGetOrganizationsQuery(undefined, {
-      skip: !isSuperAdmin, // Ne charger que si l'utilisateur est SUPER_ADMIN
-    })
-
-  // 🎯 Filtrer les rôles selon la hiérarchie (pour non-SUPER_ADMIN uniquement)
-  const currentUserRole = currentUser?.roles?.[0] // Premier rôle
+  // Filtrer les rôles selon la hiérarchie (pour non-SUPER_ADMIN uniquement)
+  const currentUserRole = currentUser?.roles?.[0]
   const currentUserRoleData = rolesDataRaw?.find(
     (r: any) => r.code === currentUserRole
   )
   const currentUserRoleLevel = currentUserRoleData?.level ?? 99
 
   const roles = isSuperAdmin
-    ? rolesDataRaw // SUPER_ADMIN voit tous les rôles chargés (selon params)
+    ? rolesDataRaw // SUPER_ADMIN voit tous les rôles chargés
     : rolesDataRaw?.filter(
-        (role: any) => role.level >= currentUserRoleLevel // Niveau >= (plus élevé ou égal)
+        (role: any) => role.level >= currentUserRoleLevel
       ) || []
 
-  // Les données sont chargées via RTK Query
+  const { data: organizations, isLoading: isLoadingOrganizations } =
+    useGetOrganizationsQuery(undefined, {
+      skip: !isSuperAdmin, // Ne charger que si l'utilisateur est SUPER_ADMIN
+    })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -194,11 +169,6 @@ export const InvitationsPage: React.FC = () => {
 
       // Si on doit créer une nouvelle organisation
       if (isSuperAdmin && formData.createNewOrg && formData.newOrgName) {
-        console.log(
-          'Création de la nouvelle organisation:',
-          formData.newOrgName
-        )
-
         // Générer le slug simple à partir du nom
         const orgSlug = formData.newOrgName
           .toLowerCase()
@@ -215,7 +185,6 @@ export const InvitationsPage: React.FC = () => {
             timezone: 'Europe/Paris',
           }).unwrap()
 
-          console.log(' Organisation créée:', createdOrg)
           finalOrgId = createdOrg.id
 
           // Sauvegarder les infos pour les afficher avec l'invitation
@@ -256,7 +225,6 @@ export const InvitationsPage: React.FC = () => {
       const invitationResult = await sendInvitation({
         email: formData.email,
         roleId: formData.roleId,
-        orgId: finalOrgId,
       }).unwrap()
 
       // Modal de succès combinée (avec info organisation si créée)
@@ -281,23 +249,11 @@ export const InvitationsPage: React.FC = () => {
         newOrgName: '',
       })
     } catch (error: any) {
-      console.log('🔍 [INVITATION ERROR]', { error, status: error?.status, data: error?.data })
-      console.log('🔍 [INVITATION ERROR DATA]', JSON.stringify(error?.data, null, 2))
-      
-      // Gestion du cas 409 - Invitation déjà en cours
       // RTK Query met les erreurs dans error.data
       const errorData = error?.data || error
       const errorStatus = error?.status || error?.originalStatus
       
-      console.log('🔍 [CHECKING 409]', { 
-        errorStatus, 
-        is409: errorStatus === 409,
-        hasPendingInvitation: errorData?.hasPendingInvitation,
-        existingInvitation: errorData?.existingInvitation,
-        willShowModal: errorStatus === 409
-      })
-      
-      // Si 409 = invitation en cours
+      // Si 409 = invitation déjà en cours
       if (errorStatus === 409) {
         if (errorData?.hasPendingInvitation && errorData?.existingInvitation) {
           // Backend a retourné les données complètes
@@ -354,13 +310,39 @@ export const InvitationsPage: React.FC = () => {
         return
       }
 
-      // Gestion spécifique des erreurs d'invitation (les erreurs d'organisation sont gérées séparément)
+      // Gestion des autres erreurs d'invitation
+      // IMPORTANT: Vérifier 'detail' avant 'error' car le backend renvoie le message détaillé dans 'detail'
       const errorMessage =
+        error?.data?.detail ||        // Message détaillé du backend
         error?.data?.message ||
-        error?.data?.error ||
-        error?.data?.detail ||
+        error?.data?.error ||          // Titre générique ("Bad Request")
         error?.message ||
         "Une erreur inattendue s'est produite"
+
+      // Vérifier si l'utilisateur est déjà membre
+      if (
+        errorMessage.includes('déjà membre') ||
+        errorMessage.includes('already a member') ||
+        errorMessage.includes('déjà un compte et est membre')
+      ) {
+        showError(
+          'Utilisateur déjà membre',
+          errorMessage
+        )
+        return
+      }
+
+      // Vérifier si une invitation est déjà en attente
+      if (
+        errorMessage.includes('invitation est déjà en attente') ||
+        errorMessage.includes('invitation already pending')
+      ) {
+        showError(
+          'Invitation en attente',
+          errorMessage
+        )
+        return
+      }
 
       // Vérifier si c'est une erreur de compte existant
       if (
@@ -408,8 +390,6 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
     field: keyof InvitationFormData,
     value: string | boolean
   ) => {
-    console.log(`🔄 [INVITATIONS] Field changed: ${field} =`, value)
-
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -418,17 +398,13 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
       ...(field === 'createNewOrg' && { roleId: '' }),
     }))
 
-    // 🎯 Mettre à jour selectedOrgId pour charger les rôles correspondants
+    // Mettre à jour selectedOrgId pour charger les rôles correspondants
     if (field === 'orgId' && typeof value === 'string') {
       const newOrgId = value || null
-      console.log(`[INVITATIONS] Setting selectedOrgId to:`, newOrgId)
       setSelectedOrgId(newOrgId)
     } else if (field === 'createNewOrg') {
       // Si on bascule vers "créer nouvelle org", on reset selectedOrgId
       if (value === true) {
-        console.log(
-          `➕ [INVITATIONS] Create new org mode - resetting selectedOrgId`
-        )
         setSelectedOrgId(null)
       }
     }
@@ -787,5 +763,16 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
     </PageContainer>
   )
 }
+
+export const InvitationsPage = () => (
+  <ProtectedPage
+    action="create"
+    subject="Invitation"
+    deniedTitle="Accès aux invitations refusé"
+    deniedMessage="Vous n'avez pas les permissions nécessaires pour gérer les invitations."
+  >
+    <InvitationsPageContent />
+  </ProtectedPage>
+)
 
 export default InvitationsPage

@@ -293,8 +293,8 @@ export const CompleteInvitationPage: React.FC = () => {
           {tokenValidation && (
             <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>{tokenValidation.organization}</strong> ·{' '}
-                {tokenValidation.role}
+                <strong>{tokenValidation.organizationName}</strong> ·{' '}
+                {tokenValidation.roleName}
               </p>
             </div>
           )}

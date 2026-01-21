@@ -37,15 +37,15 @@ export const ROLE_MAPPING: Record<string, UserRole> = {
 /**
  * Convertit un rôle backend vers un rôle CASL
  * @param backendRole - Rôle depuis la base de données
- * @returns Rôle CASL correspondant
+ * @returns Rôle CASL correspondant ou null si rôle inconnu
  */
-export function mapBackendRoleToCASQL(backendRole: string): UserRole {
+export function mapBackendRoleToCASQL(backendRole: string): UserRole | null {
   const mapped = ROLE_MAPPING[backendRole]
   if (!mapped) {
     console.warn(
-      `[RBAC] Unknown backend role: ${backendRole}, defaulting to VIEWER`
+      `[RBAC] Unknown backend role: ${backendRole}, returning null (no permissions)`
     )
-    return 'VIEWER'
+    return null
   }
   return mapped
 }
@@ -53,10 +53,12 @@ export function mapBackendRoleToCASQL(backendRole: string): UserRole {
 /**
  * Convertit un tableau de rôles backend vers des rôles CASL
  * @param backendRoles - Rôles depuis la base de données
- * @returns Rôles CASL correspondants
+ * @returns Rôles CASL correspondants (filtre les rôles inconnus)
  */
 export function mapBackendRolesToCASQL(backendRoles: string[]): UserRole[] {
-  return backendRoles.map(mapBackendRoleToCASQL)
+  return backendRoles
+    .map(mapBackendRoleToCASQL)
+    .filter((role): role is UserRole => role !== null) // Filtrer les null
 }
 
 /**

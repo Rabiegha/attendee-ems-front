@@ -70,13 +70,13 @@ export const invitationsApi = rootApi.injectEndpoints({
       {
         valid: boolean
         email: string
-        organization: string
-        role: string
+        organizationName: string
+        roleName: string
         expiresAt: string
       },
       string
     >({
-      query: (token) => `/invitations/validate/${token}`,
+      query: (token) => `/invitations/verify/${token}`,
     }),
 
     // Compléter une invitation (page publique)

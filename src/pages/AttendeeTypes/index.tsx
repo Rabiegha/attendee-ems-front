@@ -30,6 +30,7 @@ import { selectUser, selectOrganization } from '@/features/auth/model/sessionSli
 import { useToast } from '@/shared/hooks/useToast'
 import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 import { Can } from '@/shared/acl/guards/Can'
+import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
 import {
   useGetAttendeeTypesQuery,
   useCreateAttendeeTypeMutation,
@@ -627,3 +628,16 @@ export function AttendeeTypesPage() {
     </PageContainer>
   )
 }
+
+const AttendeeTypesPageProtected = () => (
+  <ProtectedPage
+    action="read"
+    subject="AttendeeType"
+    deniedTitle="Accès aux types de participants refusé"
+    deniedMessage="Vous n'avez pas les permissions nécessaires pour consulter les types de participants."
+  >
+    <AttendeeTypesPage />
+  </ProtectedPage>
+)
+
+export default AttendeeTypesPageProtected

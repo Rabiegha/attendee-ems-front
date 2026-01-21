@@ -19,6 +19,7 @@ import {
 import { Navigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { Can } from '@/shared/acl/guards/Can'
+import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
 import { useToast } from '@/shared/hooks/useToast'
 import {
   Button,
@@ -165,7 +166,7 @@ const SortableRoleItem: React.FC<SortableRoleItemProps> = ({
   )
 }
 
-export const RolePermissionsAdmin: React.FC = () => {
+const RolePermissionsAdminContent: React.FC = () => {
   const {
     data: rolesRaw = [],
     isLoading: isLoadingRoles,
@@ -891,3 +892,14 @@ export const RolePermissionsAdmin: React.FC = () => {
     </Can>
   )
 }
+
+export const RolePermissionsAdmin = () => (
+  <ProtectedPage
+    action="manage"
+    subject="Role"
+    deniedTitle="Accès aux rôles et permissions refusé"
+    deniedMessage="Vous n'avez pas les permissions nécessaires pour gérer les rôles et permissions."
+  >
+    <RolePermissionsAdminContent />
+  </ProtectedPage>
+)

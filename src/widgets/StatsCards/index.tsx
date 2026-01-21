@@ -10,6 +10,8 @@ interface StatsCardsProps {
   attendees: AttendeeDPO[]
   totalAttendees?: number // Total depuis l'API (peut différer de attendees.length si paginé)
   isLoading: boolean
+  canCreateEvent?: boolean
+  canInviteUser?: boolean
 }
 
 export const StatsCards: React.FC<StatsCardsProps> = ({
@@ -17,6 +19,8 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
   attendees,
   totalAttendees,
   isLoading,
+  canCreateEvent = false,
+  canInviteUser = false,
 }) => {
   const navigate = useNavigate()
 
@@ -44,7 +48,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       bgGlow: 'bg-green-500/10',
       onClick: () => navigate('/attendees'),
     },
-    {
+    ...(canCreateEvent ? [{
       title: 'Créer un événement',
       description: 'Nouvel événement',
       icon: Plus,
@@ -52,8 +56,8 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       bgGlow: 'bg-purple-500/10',
       isAction: true,
       onClick: () => navigate('/events/create'),
-    },
-    {
+    }] : []),
+    ...(canInviteUser ? [{
       title: 'Inviter utilisateur',
       description: 'Ajouter un membre',
       icon: UserPlus,
@@ -61,7 +65,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       bgGlow: 'bg-orange-500/10',
       isAction: true,
       onClick: () => navigate('/invitations'),
-    },
+    }] : []),
   ]
 
   if (isLoading) {

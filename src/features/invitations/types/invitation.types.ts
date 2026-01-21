@@ -15,7 +15,6 @@ export interface UserInvitation {
 export interface CreateInvitationRequest {
   email: string
   roleId: string
-  orgId: string
 }
 
 export interface CreateInvitationResponse {

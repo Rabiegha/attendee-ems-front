@@ -11,6 +11,7 @@ import {
 import { AttendeeTable } from '@/features/attendees/ui/AttendeeTable'
 import { AttendeeFilters } from '@/features/attendees/ui/AttendeeFilters'
 import { Can } from '@/shared/acl/guards/Can'
+import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
 import {
   Button,
   PageContainer,
@@ -25,7 +26,7 @@ import {
 } from '@/shared/ui'
 import { Plus, Download, Users } from 'lucide-react'
 
-export const Attendees: React.FC = () => {
+const AttendeesPage: React.FC = () => {
   const { t } = useTranslation(['attendees', 'common'])
   const dispatch = useDispatch()
   const filters = useSelector(selectAttendeesFilters)
@@ -154,3 +155,14 @@ export const Attendees: React.FC = () => {
     </PageContainer>
   )
 }
+
+export const Attendees: React.FC = () => (
+  <ProtectedPage
+    action="read"
+    subject="Attendee"
+    deniedTitle="Accès aux participants refusé"
+    deniedMessage="Vous n'avez pas les permissions nécessaires pour consulter les participants."
+  >
+    <AttendeesPage />
+  </ProtectedPage>
+)

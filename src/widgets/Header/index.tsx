@@ -10,10 +10,8 @@ import {
 } from '@/features/auth/model/sessionSlice'
 import { useMeQuery } from '@/features/auth/api/authApi'
 import { performLogout } from '@/features/auth/authLifecycle'
-import { getRoleLabel } from '@/shared/acl/role-mapping'
 import { Button } from '@/shared/ui/Button'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
-// import { Can } from '@/shared/acl/guards/Can'
 
 export const Header: React.FC = () => {
   const { t } = useTranslation('common')
@@ -24,14 +22,14 @@ export const Header: React.FC = () => {
 
   // Récupérer les informations utilisateur complètes avec l'organisation
   const { data: userProfile } = useMeQuery(undefined, {
-    skip: !isAuthenticated || !user, // Skip si pas authentifié OU pas d'utilisateur
+    skip: !isAuthenticated || !user,
+    refetchOnMountOrArgChange: true,
   })
 
   // Utiliser l'organisation du profil utilisateur si disponible, sinon celle du store
   const displayOrganization = userProfile?.organization || organization
 
   const handleLogout = async () => {
-    console.log('[HEADER] Logout initiated')
     // Utiliser la fonction centralisée de logout qui :
     // 1. Arrête le timer proactif
     // 2. Nettoie la session Redux
@@ -41,7 +39,6 @@ export const Header: React.FC = () => {
     await performLogout()
 
     // Rediriger vers la page de login
-    console.log('[HEADER] Logout complete, redirecting to login')
     navigate('/auth/login', { replace: true })
   }
 
@@ -87,10 +84,7 @@ export const Header: React.FC = () => {
                   })()}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {/* Display the proper role label */}
-                  {user.roles?.[0]
-                    ? getRoleLabel(user.roles[0])
-                    : 'Utilisateur'}
+                  {userProfile?.role?.name || 'Utilisateur'}
                 </div>
               </div>
             </div>

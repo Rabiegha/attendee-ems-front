@@ -17,10 +17,11 @@ import {
   useDeleteBadgeTemplateMutation
 } from '@/services/api/badge-templates.api';
 import { useToast } from '@/shared/hooks/useToast';
+import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage';
 
 const MAX_HISTORY = 99;
 
-export const BadgeDesignerPage: React.FC = () => {
+const BadgeDesignerPageContent: React.FC = () => {
   // Router hooks
   const { templateId } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
@@ -1649,3 +1650,14 @@ export const BadgeDesignerPage: React.FC = () => {
     </div>
   );
 };
+
+export const BadgeDesignerPage = () => (
+  <ProtectedPage
+    action="read"
+    subject="Badge"
+    deniedTitle="Accès au designer de badges refusé"
+    deniedMessage="Vous n'avez pas les permissions nécessaires pour accéder au designer de badges."
+  >
+    <BadgeDesignerPageContent />
+  </ProtectedPage>
+);

@@ -46,6 +46,7 @@ import type { EventStatus } from '@/features/events/types'
 // Multi-select components
 import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
 import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
+import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
 
 const EventsList = () => {
   const toast = useToast()
@@ -557,4 +558,15 @@ const EventsList = () => {
   )
 }
 
-export default EventsList
+const EventsListProtected = () => (
+  <ProtectedPage
+    action="read"
+    subject="Event"
+    deniedTitle="Accès aux événements refusé"
+    deniedMessage="Vous n'avez pas les permissions nécessaires pour consulter les événements."
+  >
+    <EventsList />
+  </ProtectedPage>
+)
+
+export default EventsListProtected

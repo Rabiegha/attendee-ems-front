@@ -121,8 +121,28 @@ export const usersApi = rootApi.injectEndpoints({
         method: 'PATCH',
         body: data,
       }),
-      // Invalider TOUS les caches liés aux users pour une mise à jour instantanée
-      invalidatesTags: ['Users', 'Roles'],
+      invalidatesTags: ['Users', 'Roles', 'Auth'],
+      async onQueryStarted({ id }, { dispatch, queryFulfilled, getState }) {
+        try {
+          const result = await queryFulfilled
+          const state = getState() as any
+          const currentUser = state.session?.user
+          
+          // Si l'utilisateur modifié est l'utilisateur connecté
+          if (currentUser && currentUser.id === id) {
+            // Mettre à jour le Redux store
+            const { updateUser: updateSessionUser } = await import('@/features/auth/model/sessionSlice')
+            dispatch(updateSessionUser(result.data))
+            
+            // Invalider spécifiquement la query 'me' pour forcer le refetch
+            dispatch(
+              (await import('@/features/auth/api/authApi')).authApi.util.invalidateTags(['Auth'])
+            )
+          }
+        } catch {
+          // Erreur déjà gérée par le composant
+        }
+      },
     }),
 
     // Supprimer un utilisateur

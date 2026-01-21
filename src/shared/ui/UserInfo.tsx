@@ -2,7 +2,7 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import { selectUser, selectOrganization } from '@/features/auth/model/sessionSlice'
 import { useCan } from '@/shared/acl/hooks/useCan'
-import { getRoleLabel } from '@/shared/acl/role-mapping'
+import { useMeQuery } from '@/features/auth/api/authApi'
 
 /**
  * Composant pour afficher les informations de l'utilisateur connecté
@@ -11,6 +11,11 @@ import { getRoleLabel } from '@/shared/acl/role-mapping'
 export const UserInfo: React.FC = () => {
   const user = useSelector(selectUser)
   const organization = useSelector(selectOrganization)
+  
+  // Récupérer les infos à jour depuis l'API
+  const { data: userProfile } = useMeQuery(undefined, {
+    skip: !user,
+  })
   
   // Test des permissions principales
   const canManageUsers = useCan('manage', 'User')
@@ -27,8 +32,7 @@ export const UserInfo: React.FC = () => {
     )
   }
 
-  const primaryRole = user.roles?.[0] || 'unknown'
-  const roleLabel = getRoleLabel(primaryRole)
+  const roleLabel = userProfile?.role?.name || 'Non défini'
 
   return (
     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">

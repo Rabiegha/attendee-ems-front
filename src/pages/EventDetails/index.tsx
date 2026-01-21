@@ -92,6 +92,14 @@ export const EventDetails: React.FC = () => {
   // ⏰ POLLING AUTO - Refresh toutes les 5 secondes
   const [pollingInterval, setPollingInterval] = useState(5000)
 
+  // Hooks de permissions - DOIVENT être appelés avant les conditions
+  const canReadEvents = useCan('read', 'Event')
+  const canReadRegistrations = useCan('read', 'Registration')
+  const canReadAttendeeTypes = useCan('read', 'AttendeeType')
+  const canReadBadges = useCan('read', 'Badge')
+  const canUpdateEvent = useCan('update', 'Event')
+  const canAssignUsers = useCan('update', 'Event') // Même permission que update event
+
   const {
     data: event,
     isLoading: eventLoading,
@@ -490,14 +498,6 @@ export const EventDetails: React.FC = () => {
   const approvedCount = activeMeta.statusCounts.approved
   const awaitingCount = activeMeta.statusCounts.awaiting
   const refusedCount = activeMeta.statusCounts.refused
-
-  // Hooks de permissions
-  const canReadEvents = useCan('read', 'Event')
-  const canReadRegistrations = useCan('read', 'Registration')
-  const canReadAttendeeTypes = useCan('read', 'AttendeeType')
-  const canReadBadges = useCan('read', 'Badge')
-  const canUpdateEvent = useCan('update', 'Event')
-  const canAssignUsers = useCan('update', 'Event') // Même permission que update event
 
   // Définir les onglets avec leurs permissions requises
   const allTabs = [

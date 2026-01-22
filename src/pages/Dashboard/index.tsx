@@ -102,7 +102,7 @@ export const Dashboard: React.FC = () => {
       {/* Cartes de statistiques avec boutons d'action conditionnels */}
       <PageSection spacing="lg">
         <StatsCards
-          events={allEvents}
+          events={allEvents as any}
           attendees={attendees}
           totalAttendees={totalAttendees}
           isLoading={eventsLoading || attendeesLoading}
@@ -118,7 +118,7 @@ export const Dashboard: React.FC = () => {
             {canReadEvent && (
               <div className="space-y-4">
                 <h2 className="section-title">Événements récents</h2>
-                <EventList events={events} isLoading={eventsLoading} />
+                <EventList events={events as any} isLoading={eventsLoading} />
               </div>
             )}
 

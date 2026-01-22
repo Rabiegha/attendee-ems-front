@@ -482,7 +482,7 @@ const RolePermissionsAdminContent: React.FC = () => {
           onSubmit={handleUpdateRole}
           initialData={selectedRole ? {
             name: selectedRole.name,
-            description: selectedRole.description
+            description: selectedRole.description || undefined
           } : undefined}
           isLoading={isUpdatingRole}
         />
@@ -615,7 +615,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                               role={role}
                               isSelected={selectedRoleId === role.id}
                               isOwnRole={isOwnRole}
-                              canModify={canModify}
+                              canModify={!!canModify}
                               permissionsCount={role.permissions?.length || 0}
                               onClick={() => setSelectedRoleId(role.id)}
                               onDelete={() => handleDeleteRole(role.id, role.name)}

@@ -59,7 +59,7 @@ export const UserInfo: React.FC = () => {
         </div>
         <div>
           <strong>Rôle:</strong> <span className="px-2 py-1 bg-blue-100 rounded text-blue-800">
-            {roleLabel} ({primaryRole})
+            {roleLabel}
           </span>
         </div>
         <div>

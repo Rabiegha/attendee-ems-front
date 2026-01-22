@@ -85,7 +85,8 @@ export const ROLE_LABELS: Record<string, string> = {
  * @param role - Rôle CASL ou backend
  * @returns Label en français
  */
-export function getRoleLabel(role: string): string {
+export function getRoleLabel(role: string | null): string {
+  if (!role) return 'Non défini'
   const caslRole = mapBackendRoleToCASQL(role)
   return ROLE_LABELS[caslRole] || role
 }

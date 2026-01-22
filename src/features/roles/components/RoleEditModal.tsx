@@ -13,7 +13,7 @@ interface RoleEditModalProps {
   initialData?: {
     name: string
     description?: string
-  }
+  } | undefined
   isLoading?: boolean
 }
 

@@ -88,5 +88,5 @@ export const ROLE_LABELS: Record<string, string> = {
 export function getRoleLabel(role: string | null): string {
   if (!role) return 'Non défini'
   const caslRole = mapBackendRoleToCASQL(role)
-  return ROLE_LABELS[caslRole] || role
+  return ROLE_LABELS[caslRole as keyof typeof ROLE_LABELS] || role
 }

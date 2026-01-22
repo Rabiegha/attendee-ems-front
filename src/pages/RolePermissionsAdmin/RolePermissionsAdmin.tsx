@@ -482,7 +482,7 @@ const RolePermissionsAdminContent: React.FC = () => {
           onSubmit={handleUpdateRole}
           initialData={selectedRole ? {
             name: selectedRole.name,
-            description: selectedRole.description || undefined
+            description: selectedRole.description ?? undefined
           } : undefined}
           isLoading={isUpdatingRole}
         />
@@ -603,7 +603,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                       <div className="space-y-2">
                         {sortedRoles.map((role) => {
                           // Vérifier si le rôle peut être modifié
-                          const isOwnRole = currentUser?.roles?.includes(role.code || '')
+                          const isOwnRole = !!(currentUser?.roles?.includes(role.code || ''))
                           // On peut modifier seulement les rôles de niveau strictement supérieur au nôtre
                           // (niveau plus élevé = plus bas dans la hiérarchie)
                           const canModifyHierarchy = role.level > currentUserLevel

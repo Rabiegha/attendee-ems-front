@@ -216,7 +216,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
           
           // Si le type est utilisé dans une règle de badge, on le garde aussi
           const usedInRules = badgeRules.some(rule => 
-            rule.attendeeTypeIds.includes(eat.attendeeType.id)
+            rule.attendeeTypeIds.includes(eat.id) // Utiliser eat.id (event_attendee_type_id)
           )
           if (usedInRules) return true
         }
@@ -224,7 +224,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
         return false
       })
       .map(eat => ({
-        id: eat.attendeeType.id,
+        id: eat.id, // Utiliser l'ID de event_attendee_type, pas l'ID du type global
         name: eat.attendeeType.name,
         color_hex: eat.color_hex || eat.attendeeType.color_hex,
         text_color_hex: eat.text_color_hex || eat.attendeeType.text_color_hex,
@@ -242,11 +242,12 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
 
   const [openRuleId, setOpenRuleId] = useState<string | null>(null)
   const [isCreatingRule, setIsCreatingRule] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [ruleToDelete, setRuleToDelete] = useState<string | null>(null)
   
   // État temporaire pour la création d'une nouvelle règle
-  const [newRule, setNewRule] = useState<{ badgeTemplateId: string; attendeeTypeIds: string[] } | null>(null)
+  const [newRule, setNewRule] = useState<{ name: string; badgeTemplateId: string; attendeeTypeIds: string[] } | null>(null)
 
   // Mettre à jour le formulaire quand l'événement change
   useEffect(() => {
@@ -281,6 +282,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
   // Ajouter une nouvelle règle
   const handleAddRule = () => {
     setNewRule({
+      name: '',
       badgeTemplateId: '',
       attendeeTypeIds: [],
     })
@@ -381,6 +383,25 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
     }
   }
 
+  // Mettre à jour le nom d'une règle
+  const handleUpdateRuleName = async (ruleId: string, name: string) => {
+    if (ruleId === 'new' && newRule) {
+      setNewRule({ ...newRule, name })
+      return
+    }
+    
+    try {
+      await updateBadgeRule({
+        eventId: event.id,
+        ruleId,
+        data: { name }
+      }).unwrap()
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error)
+      toastError('Erreur', 'Impossible de mettre à jour le nom de la règle')
+    }
+  }
+
   // Mettre à jour les attendee types d'une règle
   const handleUpdateRuleAttendeeTypes = async (ruleId: string, attendeeTypeId: string, checked: boolean) => {
     if (ruleId === 'new' && newRule) {
@@ -413,11 +434,14 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
   // Valider et sauvegarder une règle
   const handleSaveRule = async (ruleId: string) => {
     if (ruleId === 'new' && newRule) {
-      if (!newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0) {
-        toastError('Règle incomplète', 'Veuillez sélectionner un template et au moins un type')
+      if (!newRule.name || !newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0) {
+        toastError('Règle incomplète', 'Veuillez renseigner le nom, sélectionner un template et au moins un type')
         return
       }
 
+      if (isSaving) return // Éviter les clics multiples
+
+      setIsSaving(true)
       try {
         await createBadgeRule({
           eventId: event.id,
@@ -431,6 +455,8 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
       } catch (error) {
         console.error('Erreur lors de la création:', error)
         toastError('Erreur', 'Impossible de créer la règle')
+      } finally {
+        setIsSaving(false)
       }
     } else {
       const rule = badgeRules.find(r => r.id === ruleId)
@@ -596,7 +622,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
                         <div className="flex items-center gap-3 mb-2">
                           <CreditCard className="h-5 w-5 text-purple-600 flex-shrink-0" />
                           <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                            {rule.badgeTemplateId ? getTemplateName(rule.badgeTemplateId) : 'Template non sélectionné'}
+                            {rule.name || 'Sans nom'}
                           </span>
                           {isIncomplete && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
@@ -676,6 +702,17 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
                     style={{ overflow: isOpen ? 'visible' : 'hidden' }}
                   >
                     <div className="px-6 pb-6 pt-2 border-t border-gray-200 dark:border-gray-700 space-y-4">
+                      {/* Nom de la règle */}
+                      <FormField label="Nom de la règle">
+                        <input
+                          type="text"
+                          value={rule.name}
+                          onChange={(e) => handleUpdateRuleName(rule.id, e.target.value)}
+                          placeholder="Ex: Badge VIP, Badge Exposant..."
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        />
+                      </FormField>
+
                       {/* Sélection du template */}
                       <FormField label="Template de badge">
                         <TemplateSelect
@@ -785,7 +822,7 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">
                       Nouvelle règle
                     </span>
-                    {(!newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0) && (
+                    {(!newRule.name || !newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0) && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
                         <AlertCircle className="h-3 w-3" />
                         Incomplète
@@ -796,6 +833,16 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
 
                 {/* Contenu */}
                 <div className="p-6 space-y-4">
+                  <FormField label="Nom de la règle">
+                    <input
+                      type="text"
+                      value={newRule.name}
+                      onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
+                      placeholder="Ex: Badge VIP, Badge Exposant..."
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </FormField>
+
                   <FormField label="Template de badge">
                     <TemplateSelect
                       value={newRule.badgeTemplateId}
@@ -845,11 +892,15 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
                   </FormField>
 
                   {/* Validation */}
-                  {(!newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0) && (
+                  {(!newRule.name || !newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0) && (
                     <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
                       <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
                       <p className="text-sm text-amber-800 dark:text-amber-300">
-                        {!newRule.badgeTemplateId && newRule.attendeeTypeIds.length === 0
+                        {!newRule.name && !newRule.badgeTemplateId && newRule.attendeeTypeIds.length === 0
+                          ? 'Renseignez le nom, sélectionnez un template et au moins un type'
+                          : !newRule.name
+                          ? 'Renseignez le nom de la règle'
+                          : !newRule.badgeTemplateId && newRule.attendeeTypeIds.length === 0
                           ? 'Sélectionnez un template et au moins un type'
                           : !newRule.badgeTemplateId
                           ? 'Sélectionnez un template de badge'
@@ -872,9 +923,9 @@ const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
                       size="sm"
                       onClick={() => handleSaveRule('new')}
                       leftIcon={<Check className="h-4 w-4" />}
-                      disabled={!newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0}
+                      disabled={!newRule.name || !newRule.badgeTemplateId || newRule.attendeeTypeIds.length === 0 || isSaving}
                     >
-                      Valider
+                      {isSaving ? 'Enregistrement...' : 'Valider'}
                     </Button>
                   </div>
                 </div>

@@ -422,6 +422,7 @@ export const registrationsApi = rootApi.injectEndpoints({
         url: '/registrations/bulk-export',
         method: 'POST',
         body: { ids, format },
+        cache: 'no-cache',
         responseHandler: async (response) => {
           const blob = await response.blob()
           const downloadUrl = URL.createObjectURL(blob)

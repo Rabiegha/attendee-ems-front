@@ -1010,11 +1010,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     // Export : toujours disponible
     actions.push(
       createBulkActions.export(async (selectedIds) => {
+        console.log('🔵 Export sélection multiple appelé', { count: selectedIds.size })
         try {
           const response = await bulkExportRegistrations({
             ids: Array.from(selectedIds),
             format: 'excel',
           }).unwrap()
+
+          console.log('✅ Réponse export sélection:', response)
 
           const a = document.createElement('a')
           a.style.display = 'none'
@@ -1026,7 +1029,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           
           toast.success(`${selectedIds.size} inscription(s) exportée(s)`)
         } catch (error) {
-          console.error("Erreur lors de l'export:", error)
+          console.error("❌ Erreur lors de l'export sélection:", error)
           toast.error("Erreur lors de l'export")
           throw error
         }

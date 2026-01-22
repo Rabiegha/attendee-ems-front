@@ -5,10 +5,20 @@ import { useToast } from '@/shared/hooks/useToast'
 import { useCreateRegistrationMutation } from '../api/registrationsApi'
 import { CheckCircle, Clock, XCircle, Ban } from 'lucide-react'
 
+interface EventAttendeeType {
+  id: string
+  attendeeType: {
+    id: string
+    name: string
+    description?: string
+  }
+}
+
 interface AddParticipantFormProps {
   fields: FormField[]
   eventId: string
   publicToken: string
+  eventAttendeeTypes?: EventAttendeeType[]
   onSuccess?: () => void
   submitButtonText?: string
   submitButtonColor?: string
@@ -18,11 +28,13 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
   fields,
   eventId,
   publicToken,
+  eventAttendeeTypes = [],
   onSuccess,
   submitButtonText = "Ajouter",
   submitButtonColor = '#4F46E5',
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({})
+  const [selectedAttendeeTypeId, setSelectedAttendeeTypeId] = useState<string>('')
   const [adminStatus, setAdminStatus] = useState<'awaiting' | 'approved' | 'refused' | 'cancelled'>('approved')
   const [isCheckedIn, setIsCheckedIn] = useState(false)
   const [checkedInAt, setCheckedInAt] = useState(() => {
@@ -90,7 +102,10 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
         admin_registered_at: new Date(registeredAt).toISOString(),
       }
 
-      if (registrationData.attendee_type) {
+      // Priorité : attendee type sélectionné explicitement, sinon depuis le champ du formulaire
+      if (selectedAttendeeTypeId) {
+        requestData.event_attendee_type_id = selectedAttendeeTypeId
+      } else if (registrationData.attendee_type) {
         requestData.event_attendee_type_id = registrationData.attendee_type
       }
 
@@ -274,6 +289,28 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
           Configuration avancée
         </h3>
+
+        {/* Type de participant */}
+        {eventAttendeeTypes.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Type de participant
+            </label>
+            <select
+              value={selectedAttendeeTypeId}
+              onChange={(e) => setSelectedAttendeeTypeId(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">Sélectionner un type (optionnel)</option>
+              {eventAttendeeTypes.map((eat) => (
+                <option key={eat.id} value={eat.id}>
+                  {eat.attendeeType.name}
+                  {eat.attendeeType.description && ` - ${eat.attendeeType.description}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Statut */}
         <div>

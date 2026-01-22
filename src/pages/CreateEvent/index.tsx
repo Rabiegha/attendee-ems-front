@@ -111,12 +111,16 @@ export function CreateEventPage() {
 
   const handleSubmit = async () => {
     try {
+      // Convertir les dates locales en UTC
+      const startDate = new Date(formData.start_at).toISOString()
+      const endDate = new Date(formData.end_at).toISOString()
+
       // Préparer les données pour l'API (conversion au format DPO)
       const eventData: any = {
         name: formData.name,
         description: formData.description || undefined,
-        startDate: formData.start_at,
-        endDate: formData.end_at,
+        startDate,
+        endDate,
         location: formData.address_formatted || undefined,
         maxAttendees: formData.capacity || undefined,
         tags: formData.tags || undefined,

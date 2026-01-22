@@ -17,6 +17,7 @@ import { Button } from '@/shared/ui/Button'
 import { PageContainer } from '@/shared/ui/PageContainer'
 import { LoadingSpinner, EventDetailsSkeleton, Modal } from '@/shared/ui'
 import { Tabs, type TabItem } from '@/shared/ui'
+import { useToast } from '@/shared/hooks/useToast'
 import {
   Edit,
   Download,
@@ -52,12 +53,14 @@ import {
 import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
+import { EventSessionsTab } from './EventSessionsTab'
 
-type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges'
+type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const [searchParams, setSearchParams] = useSearchParams()
+  const toast = useToast()
 
   // Récupérer l'onglet depuis l'URL, ou 'details' par défaut
   const tabFromUrl = searchParams.get('tab') as TabType | null
@@ -69,7 +72,7 @@ export const EventDetails: React.FC = () => {
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -363,6 +366,13 @@ export const EventDetails: React.FC = () => {
     }
   )
 
+  // Log pour debug
+  console.log('📋 allRegistrationsForExport:', {
+    hasData: !!allRegistrationsForExport,
+    dataLength: allRegistrationsForExport?.data?.length,
+    meta: allRegistrationsForExport?.meta,
+  })
+
   // Queries pour les stats des onglets (actives/supprimées)
   const { data: activeRegistrationsStats } = useGetRegistrationsQuery(
     id
@@ -437,16 +447,32 @@ export const EventDetails: React.FC = () => {
 
   // Fonction pour exporter toutes les inscriptions
   const handleExportAll = async () => {
-    if (!id || !allRegistrationsForExport?.data) return
+    console.log('🔵 handleExportAll appelé', { id, hasData: !!allRegistrationsForExport?.data })
+    
+    if (!id || !allRegistrationsForExport?.data) {
+      console.warn('⚠️ Pas de données à exporter', { id, data: allRegistrationsForExport?.data })
+      toast.error('Aucune inscription à exporter')
+      return
+    }
 
     try {
       // Utiliser tous les IDs récupérés par le hook dédié
       const allIds = allRegistrationsForExport.data.map((reg) => reg.id)
+      console.log('📊 IDs à exporter:', allIds.length)
+
+      if (allIds.length === 0) {
+        toast.info('Aucune inscription à exporter')
+        return
+      }
+
+      toast.info(`Export de ${allIds.length} inscription(s) en cours...`)
 
       const response = await bulkExportRegistrations({
         ids: allIds,
         format: 'excel',
       }).unwrap()
+
+      console.log('✅ Réponse export reçue:', response)
 
       // Télécharger le fichier
       const a = document.createElement('a')
@@ -457,8 +483,11 @@ export const EventDetails: React.FC = () => {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(response.downloadUrl)
+
+      toast.success(`${allIds.length} inscription(s) exportée(s) avec succès`)
     } catch (error) {
-      console.error("Erreur lors de l'export:", error)
+      console.error("❌ Erreur lors de l'export:", error)
+      toast.error("Erreur lors de l'export des inscriptions")
     }
   }
 
@@ -471,13 +500,19 @@ export const EventDetails: React.FC = () => {
   }
 
   if (error || !event) {
+    // Vérifier si c'est une erreur 403 (accès refusé)
+    const isForbidden = error && 'status' in error && error.status === 403
+    
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          Événement non trouvé
+          {isForbidden ? 'Accès refusé' : 'Événement non trouvé'}
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
-          L'événement que vous recherchez n'existe pas ou a été supprimé.
+          {isForbidden 
+            ? "Vous n'avez pas accès à cet événement. Veuillez demander à un administrateur de vous inviter à cet événement."
+            : "L'événement que vous recherchez n'existe pas ou a été supprimé."
+          }
         </p>
         <Link to="/events">
           <Button variant="outline">
@@ -532,6 +567,13 @@ export const EventDetails: React.FC = () => {
       label: 'Badges', 
       icon: CreditCard,
       hasPermission: canReadBadges,
+      disabledIfDeleted: true 
+    },
+    { 
+      id: 'sessions' as TabType, 
+      label: 'Sessions', 
+      icon: Calendar,
+      hasPermission: canReadEvents,
       disabledIfDeleted: true 
     },
     { 
@@ -666,7 +708,14 @@ export const EventDetails: React.FC = () => {
             </Button>
           </Can>
           <Can do="export" on="Attendee" data={{ eventId: event.id }}>
-            <Button className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              className="flex items-center space-x-2"
+              onClick={() => {
+                console.log('🖱️ Bouton Export (header) cliqué')
+                handleExportAll()
+              }}
+            >
               <Download className="h-4 w-4" />
               <span>Exporter</span>
             </Button>
@@ -1009,6 +1058,14 @@ export const EventDetails: React.FC = () => {
         {activeTab === 'badges' && (
           <EventBadgesTab event={event} />
         )}
+
+        {activeTab === 'sessions' && (
+          <EventSessionsTab 
+            event={event} 
+            eventAttendeeTypes={eventAttendeeTypes} 
+            isLoadingAttendeeTypes={isLoadingAttendeeTypes}
+          />
+        )}
       </div>
 
       {/* Modals */}
@@ -1045,6 +1102,7 @@ export const EventDetails: React.FC = () => {
           fields={formFields}
           eventId={event.id}
           publicToken={event.publicToken}
+          eventAttendeeTypes={eventAttendeeTypes || []}
           submitButtonText="Ajouter"
           submitButtonColor={submitButtonColor}
           onSuccess={() => {

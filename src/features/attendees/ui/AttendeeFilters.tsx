@@ -10,7 +10,11 @@ import { attendeesApi } from '../api/attendeesApi'
 import { FilterBar } from '@/shared/ui/FilterBar'
 import { SearchInput } from '@/shared/ui/SearchInput'
 
-export const AttendeeFilters: React.FC = () => {
+interface AttendeeFiltersProps {
+  resultCount: number
+}
+
+export const AttendeeFilters: React.FC<AttendeeFiltersProps> = ({ resultCount }) => {
   const { t } = useTranslation('attendees')
   const dispatch = useDispatch()
 
@@ -26,6 +30,8 @@ export const AttendeeFilters: React.FC = () => {
 
   return (
     <FilterBar
+      resultCount={resultCount}
+      resultLabel="participant"
       onReset={handleResetFilters}
       showResetButton={searchQuery !== ''}
       onRefresh={handleRefresh}

@@ -4,6 +4,7 @@ export interface EventBadgeRule {
   id: string
   eventId: string
   badgeTemplateId: string
+  name: string
   priority: number
   attendeeTypeIds: string[]
   createdAt: string
@@ -11,12 +12,14 @@ export interface EventBadgeRule {
 }
 
 export interface CreateEventBadgeRuleDto {
+  name: string
   badgeTemplateId: string
   attendeeTypeIds: string[]
   priority?: number
 }
 
 export interface UpdateEventBadgeRuleDto {
+  name?: string
   badgeTemplateId?: string
   attendeeTypeIds?: string[]
   priority?: number

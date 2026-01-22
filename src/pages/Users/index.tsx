@@ -535,15 +535,6 @@ function UsersPageContent() {
         icon={Users}
         actions={
           <ActionGroup align="right" spacing="md">
-            <Button
-              variant="outline"
-              onClick={handleRefresh}
-              loading={isLoading}
-              leftIcon={<RefreshCw className="h-4 w-4" />}
-            >
-              Actualiser
-            </Button>
-
             <Can do="create" on="User">
               <Button
                 variant="default"
@@ -556,83 +547,6 @@ function UsersPageContent() {
           </ActionGroup>
         }
       />
-
-      {/* Section des statistiques */}
-      <PageSection spacing="lg">
-        {isLoading ? (
-          <StatsGridSkeleton count={4} />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Statistique 1 */}
-            <Card variant="default" padding="lg">
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                      Total utilisateurs
-                    </p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-                      {stats.total}
-                    </p>
-                  </div>
-                  <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Statistique 2 */}
-            <Card variant="default" padding="lg">
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                      Actifs
-                    </p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
-                      {stats.active}
-                    </p>
-                  </div>
-                  <UserCheck className="h-8 w-8 text-green-600 dark:text-green-400" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Statistique 3 */}
-            <Card variant="default" padding="lg">
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                      À activer
-                    </p>
-                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 mt-2">
-                      {stats.pending}
-                    </p>
-                  </div>
-                  <Mail className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Statistique 4 */}
-            <Card variant="default" padding="lg">
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                      Inactifs
-                    </p>
-                    <p className="text-3xl font-bold text-red-600 dark:text-red-400 mt-2">
-                      {stats.inactive}
-                    </p>
-                  </div>
-                  <UserX className="h-8 w-8 text-red-600 dark:text-red-400" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-      </PageSection>
 
       {/* Section liste des utilisateurs */}
       <PageSection spacing="lg">

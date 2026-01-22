@@ -1,7 +1,11 @@
 import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useGetAttendeesQuery } from '@/features/attendees/api/attendeesApi'
+import {
+  useGetAttendeesQuery,
+  useBulkExportAttendeesMutation,
+} from '@/features/attendees/api/attendeesApi'
 import { useSelector, useDispatch } from 'react-redux'
+import { useToast } from '@/shared/hooks/useToast'
 import {
   selectAttendeesFilters,
   selectAttendeesActiveTab,
@@ -29,6 +33,7 @@ import { Plus, Download, Users } from 'lucide-react'
 const AttendeesPage: React.FC = () => {
   const { t } = useTranslation(['attendees', 'common'])
   const dispatch = useDispatch()
+  const toast = useToast()
   const filters = useSelector(selectAttendeesFilters)
   const activeTab = useSelector(selectAttendeesActiveTab)
 
@@ -37,6 +42,15 @@ const AttendeesPage: React.FC = () => {
     isLoading,
     error,
   } = useGetAttendeesQuery(filters)
+
+  // Hook pour récupérer tous les IDs lors de l'export global
+  const { data: allAttendeesForExport } = useGetAttendeesQuery({
+    page: 1,
+    pageSize: 10000,
+    isActive: activeTab === 'active',
+  })
+
+  const [bulkExportAttendees] = useBulkExportAttendeesMutation()
 
   // Query for stats (active attendees count)
   const { data: activeStatsResponse } = useGetAttendeesQuery({
@@ -92,6 +106,60 @@ const AttendeesPage: React.FC = () => {
     dispatch(setFilters({ pageSize, page: 1 }))
   }
 
+  // Fonction pour exporter tous les attendees
+  const handleExportAll = async () => {
+    console.log('🔵 handleExportAll appelé (Attendees)', {
+      hasData: !!allAttendeesForExport?.data,
+    })
+
+    if (!allAttendeesForExport?.data) {
+      console.warn('⚠️ Pas de données à exporter')
+      toast.error('Aucun participant à exporter')
+      return
+    }
+
+    try {
+      const allIds = allAttendeesForExport.data.map((att) => att.id)
+      console.log('📊 IDs à exporter:', allIds.length)
+
+      if (allIds.length === 0) {
+        toast.info('Aucun participant à exporter')
+        return
+      }
+
+      toast.info(`Export de ${allIds.length} participant(s) en cours...`)
+
+      const response = await bulkExportAttendees({
+        ids: allIds,
+        format: 'xlsx',
+      }).unwrap()
+
+      console.log('✅ Réponse export reçue:', response)
+
+      // Télécharger le fichier
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = response.downloadUrl
+      a.download = response.filename || 'participants.xlsx'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(response.downloadUrl)
+
+      toast.success(`${allIds.length} participant(s) exporté(s) avec succès`)
+    } catch (error: any) {
+      console.error('❌ Erreur lors de l\'export:', error)
+      console.error('❌ Détails erreur:', {
+        status: error?.status,
+        data: error?.data,
+        message: error?.data?.message,
+      })
+      toast.error(
+        error?.data?.message || 'Erreur lors de l\'export des participants'
+      )
+    }
+  }
+
   return (
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
@@ -104,13 +172,12 @@ const AttendeesPage: React.FC = () => {
               <Button
                 variant="outline"
                 leftIcon={<Download className="h-4 w-4" />}
+                onClick={() => {
+                  console.log('🖱️ Bouton Export (Attendees) cliqué')
+                  handleExportAll()
+                }}
               >
                 {t('attendees.export')}
-              </Button>
-            </Can>
-            <Can do="create" on="Attendee">
-              <Button leftIcon={<Plus className="h-4 w-4" />}>
-                {t('attendees.create')}
               </Button>
             </Can>
           </ActionGroup>
@@ -118,7 +185,7 @@ const AttendeesPage: React.FC = () => {
       />
 
       <PageSection spacing="lg">
-        <AttendeeFilters />
+        <AttendeeFilters resultCount={meta.total} />
       </PageSection>
 
       <PageSection spacing="lg">

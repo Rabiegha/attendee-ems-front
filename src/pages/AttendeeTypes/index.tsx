@@ -95,7 +95,7 @@ export function AttendeeTypesPage() {
   console.log('[AttendeeTypes] Org ID:', currentOrg?.id)
 
   // API queries and mutations
-  const { data: attendeeTypes = [], isLoading } = useGetAttendeeTypesQuery(
+  const { data: attendeeTypes = [], isLoading, refetch } = useGetAttendeeTypesQuery(
     currentOrg?.id || '',
     { skip: !currentOrg?.id }
   )
@@ -552,6 +552,8 @@ export function AttendeeTypesPage() {
           resultLabel="type"
           onReset={() => setSearchQuery('')}
           showResetButton={searchQuery !== ''}
+          onRefresh={refetch}
+          showRefreshButton={true}
         >
           <SearchInput
             placeholder="Rechercher un type..."

@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useGetEventsQuery, eventsApi } from '@/features/events/api/eventsApi'
+import { selectUser } from '@/features/auth/model/sessionSlice'
 import { Can } from '@/shared/acl/guards/Can'
 import {
   Button,
@@ -17,7 +18,7 @@ import {
   EventsPageSkeleton,
   FilterBar,
   FilterButton,
-  FilterTag,
+  FilterTagMulti,
   FilterSort,
   type FilterValues,
   type SortOption,
@@ -26,7 +27,7 @@ import { EditEventModal } from '@/features/events/ui/EditEventModal'
 import { DeleteEventModal } from '@/features/events/ui/DeleteEventModal'
 import { formatDateForDisplay } from '@/shared/lib/date-utils'
 import { formatAttendeesCount } from '@/shared/lib/utils'
-import { Plus, Calendar, MapPin, Users, Clock } from 'lucide-react'
+import { Plus, Calendar, MapPin, Users, Clock, X } from 'lucide-react'
 
 interface EventsPageProps {}
 
@@ -41,14 +42,18 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
   // Filtres et recherche
   const [searchQuery, setSearchQuery] = useState('')
-  const [tagFilter, setTagFilter] = useState<string>('')
+  const [tagFilters, setTagFilters] = useState<string[]>([])
   const [filterValues, setFilterValues] = useState<FilterValues>({})
   const [sortValue, setSortValue] = useState<string>('createdAt-desc')
+
+  // Récupérer l'utilisateur actuel
+  const currentUser = useSelector(selectUser)
 
   // Extraction des valeurs de filtres et tri
   const statusFilter = filterValues.status as string | undefined
   const locationTypeFilter = filterValues.locationType as string | undefined
   const eventStateFilter = filterValues.eventState as string | undefined
+  const assignedToMeFilter = filterValues.assignedToMe as string | undefined
   const [sortBy, sortOrder] = sortValue.split('-') as [string, 'asc' | 'desc']
 
   // Récupération des événements avec filtres
@@ -75,9 +80,27 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   // Filtrage côté client pour tags et autres filtres
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      // Filtre par tag
-      if (tagFilter && !(event.tags && Array.isArray(event.tags) && event.tags.includes(tagFilter))) {
-        return false
+      // Filtre par tags (multi-sélection - logique AND : l'événement doit avoir TOUS les tags sélectionnés)
+      if (tagFilters.length > 0) {
+        const eventTags = event.eventTags?.map((et: any) => et.tag.name) || []
+        const hasAllTags = tagFilters.every(selectedTag => eventTags.includes(selectedTag))
+        if (!hasAllTags) {
+          return false
+        }
+      }
+
+      // Filtre par attribution (événements assignés à l'utilisateur actuel)
+      if (assignedToMeFilter && assignedToMeFilter !== 'all' && currentUser) {
+        const eventAccess = event.eventAccess || []
+        const isAssigned = eventAccess.some((access: any) => access.user_id === currentUser.id)
+        
+        // Si on veut les événements attribués et qu'il ne l'est pas, ou vice versa
+        if (assignedToMeFilter === 'yes' && !isAssigned) {
+          return false
+        }
+        if (assignedToMeFilter === 'no' && isAssigned) {
+          return false
+        }
       }
 
       // Filtre par statut (single select)
@@ -86,15 +109,15 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       }
 
       // Filtre par type de lieu
-      if (locationTypeFilter && locationTypeFilter !== 'all' && event.locationType !== locationTypeFilter) {
+      if (locationTypeFilter && locationTypeFilter !== 'all' && event.location_type !== locationTypeFilter) {
         return false
       }
 
       // Filtre par état de l'événement (terminé, en cours, à venir)
       if (eventStateFilter && eventStateFilter !== 'all') {
         const now = new Date()
-        const start = new Date(event.startDate)
-        const end = new Date(event.endDate)
+        const start = new Date(event.start_at)
+        const end = new Date(event.end_at)
         
         if (eventStateFilter === 'completed' && end > now) return false
         if (eventStateFilter === 'ongoing' && (start > now || end < now)) return false
@@ -103,7 +126,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
       return true
     })
-  }, [events, tagFilter, statusFilter, locationTypeFilter, eventStateFilter])
+  }, [events, tagFilters, statusFilter, locationTypeFilter, eventStateFilter, assignedToMeFilter, currentUser])
 
   const handleCreateEvent = () => {
     navigate('/events/create')
@@ -142,8 +165,15 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
         { value: 'ongoing', label: 'En cours' },
         { value: 'completed', label: 'Terminé' },
       ],
-    },
-  }
+    },    assignedToMe: {
+      label: 'Attribution',
+      type: 'radio' as const,
+      options: [
+        { value: 'all', label: 'Tous les événements' },
+        { value: 'yes', label: 'Attribués à moi' },
+        { value: 'no', label: 'Non attribués' },
+      ],
+    },  }
 
   // Options de tri
   const sortOptions: SortOption[] = [
@@ -157,7 +187,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
   const handleResetFilters = () => {
     setSearchQuery('')
-    setTagFilter('')
+    setTagFilters([])
     setFilterValues({})
     setSortValue('createdAt-desc')
   }
@@ -204,7 +234,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
             resultCount={filteredEvents.length}
             resultLabel="événement"
             onReset={handleResetFilters}
-            showResetButton={searchQuery !== '' || tagFilter !== '' || Object.keys(filterValues).length > 0}
+            showResetButton={searchQuery !== '' || tagFilters.length > 0 || Object.keys(filterValues).length > 0}
           >
             <SearchInput
               placeholder="Rechercher des événements..."
@@ -213,10 +243,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
               className="flex-1"
             />
 
-            <FilterTag
-              value={tagFilter}
-              onChange={setTagFilter}
-              placeholder="Filtrer par tag..."
+            <FilterTagMulti
+              value={tagFilters}
+              onChange={setTagFilters}
+              placeholder="Filtrer par tags..."
               className="w-64"
             />
 
@@ -232,6 +262,35 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
               options={sortOptions}
             />
           </FilterBar>
+
+          {/* Tags sélectionnés */}
+          {tagFilters.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {tagFilters.map((tagName) => (
+                <span
+                  key={tagName}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-lg text-sm font-medium"
+                >
+                  {tagName}
+                  <button
+                    type="button"
+                    onClick={() => setTagFilters(tagFilters.filter(t => t !== tagName))}
+                    className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    aria-label={`Retirer le tag ${tagName}`}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={() => setTagFilters([])}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm font-medium transition-colors"
+              >
+                Tout effacer
+              </button>
+            </div>
+          )}
         </PageSection>
 
         <PageSection spacing="lg">
@@ -277,7 +336,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
           resultCount={filteredEvents.length}
           resultLabel="événement"
           onReset={handleResetFilters}
-          showResetButton={searchQuery !== '' || tagFilter !== '' || Object.keys(filterValues).length > 0}
+          showResetButton={searchQuery !== '' || tagFilters.length > 0 || Object.keys(filterValues).length > 0}
           onRefresh={handleRefresh}
           showRefreshButton={true}
         >
@@ -287,10 +346,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
             onChange={setSearchQuery}
           />
 
-          <FilterTag
-            value={tagFilter}
-            onChange={setTagFilter}
-            placeholder="Filtrer par tag..."
+          <FilterTagMulti
+            value={tagFilters}
+            onChange={setTagFilters}
+            placeholder="Filtrer par tags..."
             className="w-64 flex-shrink-0"
           />
 
@@ -306,16 +365,44 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
             options={sortOptions}
           />
         </FilterBar>
+
+        {/* Tags sélectionnés */}
+        {tagFilters.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {tagFilters.map((tagName) => (
+              <span
+                key={tagName}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-lg text-sm font-medium"
+              >
+                {tagName}
+                <button
+                  type="button"
+                  onClick={() => setTagFilters(tagFilters.filter(t => t !== tagName))}
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                  aria-label={`Retirer le tag ${tagName}`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={() => setTagFilters([])}
+              className="inline-flex items-center gap-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm font-medium transition-colors"
+            >
+              Tout effacer
+            </button>
+          </div>
+        )}
       </PageSection>
 
       {/* Liste des événements */}
-      <PageSection spacing="lg">
-        {filteredEvents.length === 0 ? (
+      <PageSection spacing="lg">{filteredEvents.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
             <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Aucun événement trouvé</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {searchQuery || tagFilter || Object.keys(filterValues).length > 0
+              {searchQuery || tagFilters.length > 0 || Object.keys(filterValues).length > 0
                 ? 'Aucun événement ne correspond à votre recherche.'
                 : 'Commencez par créer votre premier événement.'}
             </p>
@@ -362,37 +449,37 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                     <div className="space-y-2 text-body-sm">
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-2" />
-                        <span>{formatDateForDisplay(event.startDate)}</span>
+                        <span>{formatDateForDisplay(event.start_at)}</span>
                       </div>
 
-                      {event.location && (
+                      {event.address_formatted && (
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-2" />
-                          <span className="truncate">{event.location}</span>
+                          <span className="truncate">{event.address_formatted}</span>
                         </div>
                       )}
 
                       <div className="flex items-center">
                         <Users className="h-4 w-4 mr-2" />
                         <span>
-                          {formatAttendeesCount(event.currentAttendees, event.maxAttendees)}
+                          {formatAttendeesCount(event._count?.registrations || 0, event.capacity || 999999)}
                         </span>
                       </div>
                     </div>
 
-                    {event.tags && event.tags.length > 0 && (
+                    {event.eventTags && event.eventTags.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1">
-                        {event.tags.slice(0, 3).map((tag) => (
+                        {event.eventTags.slice(0, 3).map((et: any) => (
                           <span
-                            key={tag}
+                            key={et.tag.id}
                             className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                           >
-                            {tag}
+                            {et.tag.name}
                           </span>
                         ))}
-                        {event.tags.length > 3 && (
+                        {event.eventTags.length > 3 && (
                           <span className="text-caption">
-                            +{event.tags.length - 3} autres
+                            +{event.eventTags.length - 3} autres
                           </span>
                         )}
                       </div>

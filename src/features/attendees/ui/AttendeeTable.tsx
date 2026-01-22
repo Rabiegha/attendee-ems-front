@@ -291,23 +291,28 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
 
     actions.push(
       createBulkActions.export(async (selectedIds) => {
+        console.log('🔵 Export sélection multiple (Attendees) appelé', {
+          count: selectedIds.size,
+        })
         try {
           const response = await bulkExportAttendees({
             ids: Array.from(selectedIds),
-            format: 'csv',
+            format: 'xlsx',
           }).unwrap()
+
+          console.log('✅ Réponse export sélection (Attendees):', response)
 
           const a = document.createElement('a')
           a.style.display = 'none'
           a.href = response.downloadUrl
-          a.download = response.filename || 'attendees.csv'
+          a.download = response.filename || 'participants.xlsx'
           document.body.appendChild(a)
           a.click()
           document.body.removeChild(a)
 
           unselectAll()
         } catch (error) {
-          console.error("Erreur lors de l'export:", error)
+          console.error('❌ Erreur lors de l\'export (Attendees):', error)
           throw error
         }
       })

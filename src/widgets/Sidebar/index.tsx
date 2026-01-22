@@ -32,25 +32,11 @@ const navigation = [
     // Pas de guard - accessible à tous
   },
   {
-    name: 'navigation.organizations',
-    href: '/organizations',
-    icon: Building2,
-    action: 'read' as const,
-    subject: 'Organization' as const,
-  },
-  {
     name: 'navigation.events',
     href: ROUTES.EVENTS,
     icon: Calendar,
     action: 'read' as const,
     subject: 'Event' as const,
-  },
-  {
-    name: 'navigation.badge_designer',
-    href: '/badges',
-    icon: CreditCard,
-    action: 'read' as const,
-    subject: 'Badge' as const,
   },
   {
     name: 'navigation.attendees',
@@ -67,25 +53,11 @@ const navigation = [
     subject: 'AttendeeType' as const,
   },
   {
-    name: 'navigation.users',
-    href: ROUTES.USERS,
-    icon: UserCog,
+    name: 'navigation.badge_designer',
+    href: '/badges',
+    icon: CreditCard,
     action: 'read' as const,
-    subject: 'User' as const,
-  },
-  {
-    name: 'navigation.invitations',
-    href: '/invitations',
-    icon: Mail,
-    action: 'create' as const,
-    subject: 'Invitation' as const,
-  },
-  {
-    name: 'navigation.roles_permissions',
-    href: ROUTES.ROLES_PERMISSIONS,
-    icon: Shield,
-    action: 'manage' as const,
-    subject: 'Role' as const,
+    subject: 'Badge' as const,
   },
   {
     name: 'navigation.reports',
@@ -95,17 +67,45 @@ const navigation = [
     subject: 'Report' as const,
   },
   {
-    name: 'navigation.settings',
-    href: '/settings',
-    icon: Settings,
-    action: 'update' as const,
+    name: 'navigation.organizations',
+    href: '/organizations',
+    icon: Building2,
+    action: 'read' as const,
     subject: 'Organization' as const,
+  },
+  {
+    name: 'navigation.users',
+    href: ROUTES.USERS,
+    icon: UserCog,
+    action: 'read' as const,
+    subject: 'User' as const,
+  },
+  {
+    name: 'navigation.roles_permissions',
+    href: ROUTES.ROLES_PERMISSIONS,
+    icon: Shield,
+    action: 'manage' as const,
+    subject: 'Role' as const,
+  },
+  {
+    name: 'navigation.invitations',
+    href: '/invitations',
+    icon: Mail,
+    action: 'create' as const,
+    subject: 'Invitation' as const,
   },
   {
     name: 'navigation.application',
     href: '/application',
     icon: Smartphone,
     // Pas de guard - accessible à tous
+  },
+  {
+    name: 'navigation.settings',
+    href: '/settings',
+    icon: Settings,
+    action: 'update' as const,
+    subject: 'Organization' as const,
   },
 ]
 

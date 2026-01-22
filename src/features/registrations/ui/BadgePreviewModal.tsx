@@ -46,21 +46,28 @@ export function BadgePreviewModal({
   })
 
   // Récupérer les règles de badge pour cet événement
-  const { data: badgeRules = [] } = useGetEventBadgeRulesQuery(eventId)
+  const { data: badgeRules = [], isLoading: isLoadingRules } = useGetEventBadgeRulesQuery(eventId)
 
   // Calculer le template à utiliser en fonction des règles
+  // IMPORTANT: Ne calculer que si les règles sont chargées pour éviter les changements de template
   const effectiveBadgeTemplateId = useMemo(() => {
-    // Si le participant a un attendee type, chercher une règle correspondante
-    const attendeeTypeId = registration.eventAttendeeType?.attendeeType?.id
+    // Si les règles sont en cours de chargement, retourner null pour attendre
+    if (isLoadingRules) {
+      console.log('[Badge] Rules are loading, waiting...')
+      return null
+    }
+
+    // Si le participant a un event attendee type, chercher une règle correspondante
+    const eventAttendeeTypeId = registration.eventAttendeeType?.id
     
-    if (attendeeTypeId) {
+    if (eventAttendeeTypeId && badgeRules.length > 0) {
       // Copier l'array avant de trier (RTK Query retourne un array en lecture seule)
       const matchingRule = [...badgeRules]
         .sort((a, b) => a.priority - b.priority) // Trier par priorité
-        .find(rule => rule.attendeeTypeIds.includes(attendeeTypeId))
+        .find(rule => rule.attendeeTypeIds.includes(eventAttendeeTypeId))
       
       if (matchingRule) {
-        console.log('[Badge] Using rule template:', matchingRule.badgeTemplateId, 'for attendee type:', attendeeTypeId)
+        console.log('[Badge] Using rule template:', matchingRule.badgeTemplateId, 'for event attendee type:', eventAttendeeTypeId)
         return matchingRule.badgeTemplateId
       }
     }
@@ -68,7 +75,7 @@ export function BadgePreviewModal({
     // Sinon, utiliser le badge par défaut de l'événement
     console.log('[Badge] Using default template:', currentBadgeTemplateId)
     return currentBadgeTemplateId || null
-  }, [badgeRules, registration.eventAttendeeType, currentBadgeTemplateId])
+  }, [badgeRules, registration.eventAttendeeType, currentBadgeTemplateId, isLoadingRules])
 
   // Trouver le template utilisé
   const usedTemplate = badgeTemplatesData?.data?.find(t => t.id === effectiveBadgeTemplateId)
@@ -77,6 +84,12 @@ export function BadgePreviewModal({
   const loadBadgePreview = async () => {
     if (!token) {
       setIsLoading(false)
+      return
+    }
+
+    // Attendre que le template soit calculé (règles chargées)
+    if (effectiveBadgeTemplateId === null) {
+      console.log('[Badge] Template not yet determined, waiting...')
       return
     }
 
@@ -151,7 +164,8 @@ export function BadgePreviewModal({
     }
 
     loadBadgePreview()
-  }, [isOpen, registration.id, eventId, effectiveBadgeTemplateId, API_URL, token])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, registration.id, effectiveBadgeTemplateId])
 
   const handleDownload = async (format: BadgeFormat) => {
     try {

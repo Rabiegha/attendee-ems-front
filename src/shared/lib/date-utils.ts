@@ -37,10 +37,11 @@ export const formatDateForDisplay = (
 
 /**
  * Formate une date ISO string pour les inputs datetime-local
+ * Convertit correctement une date UTC en heure locale pour l'affichage
  */
 export const formatDateForInput = (dateString: string): string => {
   const date = new Date(dateString)
-  // Format YYYY-MM-DDTHH:mm pour les inputs datetime-local
+  // Utiliser les méthodes locales (pas UTC) pour afficher dans le fuseau horaire local
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')

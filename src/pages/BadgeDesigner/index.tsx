@@ -34,7 +34,8 @@ export const BadgeDesigner: React.FC = () => {
   const { 
     data, 
     isLoading, 
-    error 
+    error,
+    refetch 
   } = useGetBadgeTemplatesQuery({ 
     page: 1, 
     limit: 100 
@@ -142,16 +143,15 @@ export const BadgeDesigner: React.FC = () => {
         title="Templates de badges"
         description="Créez et gérez vos templates de badges d'événements"
         icon={CreditCard}
+        actions={
+          <Button 
+            leftIcon={<Plus className="h-4 w-4" />}
+            onClick={() => navigate('/badges/designer/new')}
+          >
+            Nouveau template
+          </Button>
+        }
       />
-      
-      <div className="flex gap-4 mb-6">
-        <Button 
-          leftIcon={<Plus className="h-4 w-4" />}
-          onClick={() => navigate('/badges/designer/new')}
-        >
-          Nouveau template
-        </Button>
-      </div>
 
       {/* Barre de recherche et filtres */}
       <FilterBar
@@ -159,6 +159,8 @@ export const BadgeDesigner: React.FC = () => {
         resultLabel="template"
         onReset={handleResetFilters}
         showResetButton={searchQuery !== '' || Object.keys(filterValues).length > 0}
+        onRefresh={refetch}
+        showRefreshButton={true}
       >
         <SearchInput
           placeholder="Rechercher un template..."

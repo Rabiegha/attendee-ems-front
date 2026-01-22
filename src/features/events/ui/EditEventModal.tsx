@@ -6,6 +6,7 @@ import { useUpdateEventMutation } from '../api/eventsApi'
 import { type CreateEventFormData } from '../lib/validation'
 import type { EventDPO } from '../dpo/event.dpo'
 import { useToast } from '@/shared/hooks/useToast'
+import { formatDateForInput } from '@/shared/lib/date-utils'
 
 interface EditEventModalProps {
   event: EventDPO | null
@@ -25,11 +26,15 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
     if (!event) return
 
     try {
+      // Convertir les dates datetime-local en ISO UTC
+      const startDate = new Date(data.startDate).toISOString()
+      const endDate = new Date(data.endDate).toISOString()
+
       // Construire l'objet de mise à jour avec seulement les champs modifiés
       const updateData: any = {
         name: data.name,
-        startDate: data.startDate,
-        endDate: data.endDate,
+        startDate,
+        endDate,
       }
 
       // Ajouter seulement les champs optionnels qui ont une valeur
@@ -77,8 +82,8 @@ export const EditEventModal: React.FC<EditEventModalProps> = ({
     ? {
         name: event.name,
         description: event.description || undefined,
-        startDate: event.startDate,
-        endDate: event.endDate,
+        startDate: formatDateForInput(event.startDate),
+        endDate: formatDateForInput(event.endDate),
         location: event.location || undefined,
         maxAttendees:
           event.maxAttendees && event.maxAttendees < 100000

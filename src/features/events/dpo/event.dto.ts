@@ -52,6 +52,9 @@ export interface EventDTO {
       color?: string | null
     }
   }>
+  eventAccess?: Array<{
+    user_id: string
+  }>
   _count?: {
     registrations: number
   }

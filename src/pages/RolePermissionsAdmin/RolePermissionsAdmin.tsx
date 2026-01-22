@@ -462,18 +462,6 @@ const RolePermissionsAdminContent: React.FC = () => {
               >
                 Nouveau rôle
               </Button>
-              <Button
-                variant="secondary"
-                onClick={handleRefresh}
-                disabled={isLoading}
-                leftIcon={
-                  <RefreshCw
-                    className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-                  />
-                }
-              >
-                Actualiser
-              </Button>
             </div>
           }
         />

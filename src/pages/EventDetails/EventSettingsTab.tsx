@@ -19,6 +19,7 @@ import {
 import type { EventDPO } from '@/features/events/dpo/event.dpo'
 import { TagInput } from '@/features/tags'
 import { useUpdateEventTagsMutation } from '@/services/tags'
+import { formatDateForInput } from '@/shared/lib/date-utils'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
@@ -67,8 +68,8 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   const initialFormData = useMemo(() => ({
     name: event.name,
     description: event.description,
-    startDate: event.startDate.split('T')[0] + 'T' + event.startDate.split('T')[1]?.substring(0, 5) || '',
-    endDate: event.endDate.split('T')[0] + 'T' + event.endDate.split('T')[1]?.substring(0, 5) || '',
+    startDate: formatDateForInput(event.startDate),
+    endDate: formatDateForInput(event.endDate),
     location: event.addressFormatted || '', // Utiliser l'adresse réelle du backend, pas la location mappée
     locationType: event.locationType,
     maxAttendees: event.maxAttendees && event.maxAttendees < 999999 ? event.maxAttendees : '',
@@ -172,25 +173,17 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         location: formData.locationType === 'online' ? '' : formData.location,
         locationType: formData.locationType,
         maxAttendees: maxAttendeesValue,
-      }
-
-      // Ajouter websiteUrl seulement s'il est défini
-      if (formData.websiteUrl) {
-        updateData.websiteUrl = formData.websiteUrl
-      }
-
-      // Ajouter les options d'inscription et de notification
-      // Si capacity est undefined, on envoie null pour supprimer la limite
-      updateData.capacity = formData.capacity !== undefined ? formData.capacity : null
-      updateData.registrationAutoApprove = formData.registration_auto_approve
-      updateData.requireEmailVerification = formData.require_email_verification
-      updateData.confirmationEmailEnabled = formData.confirmation_email_enabled
-      updateData.approvalEmailEnabled = formData.approval_email_enabled
-      updateData.reminderEmailEnabled = formData.reminder_email_enabled
-      
-      // Ajouter le template de badge
-      if (formData.badgeTemplateId) {
-        updateData.badgeTemplateId = formData.badgeTemplateId
+        // Envoyer null si vide pour supprimer la valeur
+        websiteUrl: formData.websiteUrl || null,
+        // Si capacity est undefined, on envoie null pour supprimer la limite
+        capacity: formData.capacity !== undefined ? formData.capacity : null,
+        registrationAutoApprove: formData.registration_auto_approve,
+        requireEmailVerification: formData.require_email_verification,
+        confirmationEmailEnabled: formData.confirmation_email_enabled,
+        approvalEmailEnabled: formData.approval_email_enabled,
+        reminderEmailEnabled: formData.reminder_email_enabled,
+        // Envoyer null si vide pour supprimer le template
+        badgeTemplateId: formData.badgeTemplateId || null,
       }
 
       // Mettre à jour les informations de l'événement

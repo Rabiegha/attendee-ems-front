@@ -242,13 +242,23 @@ export const attendeesApi = rootApi.injectEndpoints({
     }),
 
     bulkExportAttendees: builder.mutation<
-      ExportAttendeesResponse,
+      { downloadUrl: string; filename: string },
       { ids: string[]; format?: 'csv' | 'xlsx' }
     >({
       query: ({ ids, format = 'csv' }) => ({
         url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-export`,
         method: 'POST',
         body: { ids, format },
+        cache: 'no-cache',
+        responseHandler: async (response) => {
+          const blob = await response.blob()
+          const downloadUrl = URL.createObjectURL(blob)
+          const contentDisposition = response.headers.get('content-disposition')
+          const filename =
+            contentDisposition?.match(/filename="(.+)"/)?.[1] ||
+            `participants_export_${new Date().toISOString().split('T')[0]}.${format === 'xlsx' ? 'xlsx' : 'csv'}`
+          return { downloadUrl, filename }
+        },
       }),
     }),
 

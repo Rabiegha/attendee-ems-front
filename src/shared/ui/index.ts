@@ -11,6 +11,7 @@ export {
   FilterButton,
   FilterPopover,
   FilterTag,
+  FilterTagMulti,
   FilterSort,
   type FilterType,
   type FilterOption,

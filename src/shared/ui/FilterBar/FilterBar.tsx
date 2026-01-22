@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { RotateCcw, RefreshCw } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '../Button'
@@ -24,6 +24,21 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onRefresh,
   showRefreshButton = false,
 }) => {
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefreshClick = async () => {
+    if (!onRefresh || isRefreshing) return
+    
+    setIsRefreshing(true)
+    try {
+      await Promise.resolve(onRefresh())
+      // Garder l'animation visible au moins 500ms pour que l'utilisateur la voie
+      await new Promise(resolve => setTimeout(resolve, 500))
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   return (
     <div className={cn('space-y-3', className)}>
       {/* Barre de filtres */}
@@ -39,12 +54,22 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <Button
               variant="outline"
               size="sm"
-              onClick={onRefresh}
+              onClick={handleRefreshClick}
+              disabled={isRefreshing}
               className="h-10 flex-shrink-0"
               title="Rafraîchir la liste"
-              leftIcon={<RefreshCw className="h-4 w-4" />}
+              leftIcon={
+                <RefreshCw 
+                  className={cn(
+                    "h-4 w-4",
+                    isRefreshing && "animate-spin"
+                  )} 
+                />
+              }
             >
-              <span className="hidden sm:inline">Rafraîchir</span>
+              <span className="hidden sm:inline">
+                {isRefreshing ? 'Rafraîchissement...' : 'Rafraîchir'}
+              </span>
             </Button>
           )}
         </div>

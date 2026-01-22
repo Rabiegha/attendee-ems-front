@@ -88,7 +88,7 @@ const EventsList = () => {
   // Filter events based on user role and filters
   const filteredEvents = events.filter((event) => {
     // RBAC: SUPER_ADMIN sees all events, others see only their org events
-    if (!isSuperAdmin && event.org_id !== orgId) {
+    if (!isSuperAdmin && event.orgId !== orgId) {
       return false
     }
     
@@ -448,7 +448,7 @@ const EventsList = () => {
                         <td className="px-6 py-4">
                           <div className="text-sm">
                             <div className="text-gray-900 dark:text-white">
-                              {new Date(event.start_at).toLocaleDateString(
+                              {new Date(event.startDate).toLocaleDateString(
                                 'fr-FR',
                                 {
                                   day: 'numeric',
@@ -458,7 +458,7 @@ const EventsList = () => {
                               )}
                             </div>
                             <div className="text-gray-500 dark:text-gray-400">
-                              {new Date(event.start_at).toLocaleTimeString(
+                              {new Date(event.startDate).toLocaleTimeString(
                                 'fr-FR',
                                 {
                                   hour: '2-digit',
@@ -471,18 +471,18 @@ const EventsList = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                            {event.location_type === 'online' ? 'En ligne' : ((event as any).location || 'En ligne')}
+                            {event.locationType === 'online' ? 'En ligne' : (event.location || 'En ligne')}
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm">
                             <Users className="w-4 h-4 mr-1 text-gray-400" />
                             <span className="text-gray-900 dark:text-white font-medium">
-                              {(event as any).currentAttendees || 0}
+                              {event.currentAttendees || 0}
                             </span>
-                            {(event as any).maxAttendees && (
+                            {event.maxAttendees && event.maxAttendees < 999999 && (
                               <span className="text-gray-500 dark:text-gray-400 ml-1">
-                                / {(event as any).maxAttendees}
+                                / {event.maxAttendees}
                               </span>
                             )}
                           </div>

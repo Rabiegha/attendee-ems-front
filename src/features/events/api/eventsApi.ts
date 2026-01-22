@@ -49,7 +49,7 @@ export interface EventsListResponse {
 
 export const eventsApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    getEvents: builder.query<EventDTO[], EventsListParams>({
+    getEvents: builder.query<EventDPO[], EventsListParams>({
       query: (params) => {
         const searchParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
@@ -64,7 +64,7 @@ export const eventsApi = rootApi.injectEndpoints({
         return `${API_ENDPOINTS.EVENTS.LIST}?${searchParams.toString()}`
       },
       transformResponse: (response: EventsListResponse) =>
-        response.data,
+        response.data.map(mapEventDTOtoDPO),
       providesTags: (result) =>
         result
           ? [

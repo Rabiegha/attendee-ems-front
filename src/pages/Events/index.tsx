@@ -82,8 +82,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
     return events.filter((event) => {
       // Filtre par tags (multi-sélection - logique AND : l'événement doit avoir TOUS les tags sélectionnés)
       if (tagFilters.length > 0) {
-        const eventTags = event.eventTags?.map((et: any) => et.tag.name) || []
-        const hasAllTags = tagFilters.every(selectedTag => eventTags.includes(selectedTag))
+        const hasAllTags = tagFilters.every(selectedTag => event.tags.includes(selectedTag))
         if (!hasAllTags) {
           return false
         }
@@ -91,8 +90,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
       // Filtre par attribution (événements assignés à l'utilisateur actuel)
       if (assignedToMeFilter && assignedToMeFilter !== 'all' && currentUser) {
-        const eventAccess = event.eventAccess || []
-        const isAssigned = eventAccess.some((access: any) => access.user_id === currentUser.id)
+        const isAssigned = event.partnerIds.includes(currentUser.id)
         
         // Si on veut les événements attribués et qu'il ne l'est pas, ou vice versa
         if (assignedToMeFilter === 'yes' && !isAssigned) {
@@ -109,15 +107,15 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       }
 
       // Filtre par type de lieu
-      if (locationTypeFilter && locationTypeFilter !== 'all' && event.location_type !== locationTypeFilter) {
+      if (locationTypeFilter && locationTypeFilter !== 'all' && event.locationType !== locationTypeFilter) {
         return false
       }
 
       // Filtre par état de l'événement (terminé, en cours, à venir)
       if (eventStateFilter && eventStateFilter !== 'all') {
         const now = new Date()
-        const start = new Date(event.start_at)
-        const end = new Date(event.end_at)
+        const start = new Date(event.startDate)
+        const end = new Date(event.endDate)
         
         if (eventStateFilter === 'completed' && end > now) return false
         if (eventStateFilter === 'ongoing' && (start > now || end < now)) return false
@@ -449,37 +447,37 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                     <div className="space-y-2 text-body-sm">
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-2" />
-                        <span>{formatDateForDisplay(event.start_at)}</span>
+                        <span>{formatDateForDisplay(event.startDate)}</span>
                       </div>
 
-                      {event.address_formatted && (
+                      {event.addressFormatted && (
                         <div className="flex items-center">
                           <MapPin className="h-4 w-4 mr-2" />
-                          <span className="truncate">{event.address_formatted}</span>
+                          <span className="truncate">{event.addressFormatted}</span>
                         </div>
                       )}
 
                       <div className="flex items-center">
                         <Users className="h-4 w-4 mr-2" />
                         <span>
-                          {formatAttendeesCount(event._count?.registrations || 0, event.capacity || 999999)}
+                          {formatAttendeesCount(event.currentAttendees, event.capacity || 999999)}
                         </span>
                       </div>
                     </div>
 
-                    {event.eventTags && event.eventTags.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        {event.eventTags.slice(0, 3).map((et: any) => (
+                    {event.tags && event.tags.length > 0 && (
+                      <div className="flex items-center flex-wrap gap-2 mt-2">
+                        {event.tags.slice(0, 3).map((tag: string, index: number) => (
                           <span
-                            key={et.tag.id}
-                            className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+                            key={index}
+                            className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200"
                           >
-                            {et.tag.name}
+                            {tag}
                           </span>
                         ))}
-                        {event.eventTags.length > 3 && (
-                          <span className="text-caption">
-                            +{event.eventTags.length - 3} autres
+                        {event.tags.length > 3 && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            +{event.tags.length - 3} autres
                           </span>
                         )}
                       </div>

@@ -143,6 +143,39 @@
     --z-modal: 1050;
     --z-popover: 1060;
     --z-tooltip: 1070;
+
+    /* === RESPONSIVE BREAKPOINTS - As CSS custom properties === */
+    --breakpoint-xs: 475px;
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+
+    /* === RESPONSIVE SPACING - Mobile-first === */
+    --page-padding: 1rem; /* Mobile default */
+    --page-padding-sm: 1.5rem; /* Small tablets */
+    --page-padding-md: 2rem; /* Tablets */
+    --page-padding-lg: 2.5rem; /* Laptops */
+    --page-padding-xl: 3rem; /* Desktops */
+
+    /* === HEADER & NAVIGATION === */
+    --header-height: 64px; /* Mobile */
+    --header-height-md: 69px; /* Desktop */
+    --sidebar-width: 256px; /* 64rem - Desktop expanded */
+    --sidebar-width-collapsed: 64px; /* 16rem - Desktop collapsed */
+    --sidebar-width-mobile: 280px; /* Mobile overlay */
+
+    /* === TOUCH TARGETS - Minimum size for mobile === */
+    --touch-target-min: 44px; /* Apple HIG recommendation */
+    --touch-target-comfortable: 48px; /* Material Design recommendation */
+
+    /* === CONTAINER MAX WIDTHS === */
+    --container-sm: 640px;
+    --container-md: 768px;
+    --container-lg: 1024px;
+    --container-xl: 1280px;
+    --container-2xl: 1400px;
   }
 
   /* Dark mode overrides */
@@ -304,5 +337,120 @@
 
   .table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100;
+  }
+
+  /* === RESPONSIVE UTILITIES === */
+
+  /* Responsive container with proper padding */
+  .responsive-container {
+    @apply w-full mx-auto;
+    @apply px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12;
+  }
+
+  /* Responsive grid layouts */
+  .responsive-grid-auto {
+    @apply grid gap-4;
+    @apply grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .responsive-grid-2 {
+    @apply grid gap-4;
+    @apply grid-cols-1 md:grid-cols-2;
+  }
+
+  .responsive-grid-3 {
+    @apply grid gap-4;
+    @apply grid-cols-1 md:grid-cols-2 lg:grid-cols-3;
+  }
+
+  /* Responsive flex utilities */
+  .responsive-flex-col {
+    @apply flex flex-col md:flex-row;
+  }
+
+  .responsive-flex-wrap {
+    @apply flex flex-wrap gap-4;
+  }
+
+  /* Touch-friendly buttons and interactive elements */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  .touch-target-comfortable {
+    @apply min-h-[48px] min-w-[48px];
+  }
+
+  /* Mobile-optimized text sizing */
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl md:text-2xl;
+  }
+
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl md:text-3xl;
+  }
+
+  /* Hide/show utilities for different breakpoints */
+  .mobile-only {
+    @apply block md:hidden;
+  }
+
+  .tablet-up {
+    @apply hidden md:block;
+  }
+
+  .desktop-only {
+    @apply hidden lg:block;
+  }
+
+  /* Responsive spacing */
+  .space-responsive {
+    @apply space-y-4 md:space-y-6 lg:space-y-8;
+  }
+
+  .gap-responsive {
+    @apply gap-4 md:gap-6 lg:gap-8;
+  }
+
+  /* Responsive padding */
+  .p-responsive {
+    @apply p-4 md:p-6 lg:p-8;
+  }
+
+  .px-responsive {
+    @apply px-4 md:px-6 lg:px-8;
+  }
+
+  .py-responsive {
+    @apply py-4 md:py-6 lg:py-8;
+  }
+
+  /* Modal responsive sizing */
+  .modal-responsive {
+    @apply w-full mx-4;
+    @apply sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl;
+  }
+
+  .modal-responsive-lg {
+    @apply w-full mx-4;
+    @apply sm:max-w-lg md:max-w-2xl lg:max-w-4xl xl:max-w-6xl;
+  }
+
+  /* Card responsive */
+  .card-responsive {
+    @apply p-4 sm:p-5 md:p-6;
+  }
+
+  /* Overflow handling for mobile */
+  .overflow-x-responsive {
+    @apply overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0;
   }
 }

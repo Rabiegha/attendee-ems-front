@@ -2,6 +2,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { RootState } from '@/app/store'
 import type { User, Organization } from '../api/authApi'
 import type { AppRule } from '@/shared/acl/app-ability'
+import { REHYDRATE } from 'redux-persist'
 
 export interface SessionState {
   token: string | null
@@ -83,6 +84,21 @@ export const sessionSlice = createSlice({
       state.isBootstrapping = false // Bootstrap terminé
       state.expiresAt = null
     },
+  },
+  extraReducers: (builder) => {
+    // Écouter l'action REHYDRATE de Redux Persist
+    builder.addCase(REHYDRATE, (state, action: any) => {
+      // Une fois la réhydratation terminée, marquer le bootstrap comme terminé
+      console.log('[SESSION] REHYDRATE completed, marking bootstrap as done')
+      state.isBootstrapping = false
+      
+      // Si la réhydratation a restauré une session, s'assurer que isAuthenticated est correct
+      if (action.payload?.session?.token && action.payload?.session?.user) {
+        console.log('[SESSION] Session restored from localStorage')
+      } else {
+        console.log('[SESSION] No session to restore')
+      }
+    })
   },
 })
 

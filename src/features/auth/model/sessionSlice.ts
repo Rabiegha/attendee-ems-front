@@ -88,16 +88,33 @@ export const sessionSlice = createSlice({
   extraReducers: (builder) => {
     // Écouter l'action REHYDRATE de Redux Persist
     builder.addCase(REHYDRATE, (state, action: any) => {
-      // Une fois la réhydratation terminée, marquer le bootstrap comme terminé
-      console.log('[SESSION] REHYDRATE completed, marking bootstrap as done')
-      state.isBootstrapping = false
+      // Restaurer les données de la session depuis le payload
+      const rehydratedSession = action.payload?.session
       
-      // Si la réhydratation a restauré une session, s'assurer que isAuthenticated est correct
-      if (action.payload?.session?.token && action.payload?.session?.user) {
-        console.log('[SESSION] Session restored from localStorage')
+      if (rehydratedSession) {
+        // Restaurer toutes les données de la session
+        if (rehydratedSession.token) state.token = rehydratedSession.token
+        if (rehydratedSession.user) state.user = rehydratedSession.user
+        if (rehydratedSession.organization !== undefined) {
+          state.organization = rehydratedSession.organization
+        }
+        if (rehydratedSession.rules) state.rules = rehydratedSession.rules
+        if (rehydratedSession.expiresAt) state.expiresAt = rehydratedSession.expiresAt
+        
+        // Restaurer l'état d'authentification
+        state.isAuthenticated = rehydratedSession.isAuthenticated || false
+        
+        console.log('[SESSION] Session restored from localStorage:', {
+          hasToken: !!state.token,
+          hasUser: !!state.user,
+          isAuthenticated: state.isAuthenticated
+        })
       } else {
         console.log('[SESSION] No session to restore')
       }
+      
+      // Toujours marquer le bootstrap comme terminé
+      state.isBootstrapping = false
     })
   },
 })

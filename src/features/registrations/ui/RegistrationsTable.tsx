@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ColumnDef } from '@tanstack/react-table'
 import {
@@ -18,6 +18,9 @@ import {
   Users,
   LogOut,
   Undo2,
+  FileText,
+  Image as ImageIcon,
+  Loader2,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button, TableSelector, type TableSelectorOption, ActionButtons } from '@/shared/ui'
@@ -28,6 +31,8 @@ import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { Card } from '@/shared/ui/Card'
 import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
 import { formatDateTime } from '@/shared/lib/utils'
+import { useSelector } from 'react-redux'
+import { selectToken } from '@/features/auth/model/sessionSlice'
 import {
   useUpdateRegistrationStatusMutation,
   useUpdateRegistrationMutation,
@@ -191,8 +196,87 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     useState<RegistrationDPO | null>(null)
   const [badgeDownloadRegistration, setBadgeDownloadRegistration] =
     useState<RegistrationDPO | null>(null)
+  const [quickDownloadingKeys, setQuickDownloadingKeys] = useState<Set<string>>(new Set())
+  const downloadQueueRef = useRef<Array<{ registration: RegistrationDPO; format: 'pdf' | 'image' }>>([])
+  const isProcessingQueueRef = useRef(false)
   const toast = useToast()
   const navigate = useNavigate()
+  const token = useSelector(selectToken)
+
+  // Fonction pour traiter la queue de téléchargements
+  const processDownloadQueue = async () => {
+    if (isProcessingQueueRef.current || downloadQueueRef.current.length === 0) {
+      return
+    }
+
+    isProcessingQueueRef.current = true
+    const { registration, format } = downloadQueueRef.current[0]
+    const downloadKey = `${registration.id}-${format}`
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      
+      if (!token) {
+        toast.error('Vous devez être connecté pour télécharger un badge')
+        return
+      }
+      
+      const response = await fetch(
+        `${API_URL}/events/${eventId}/registrations/${registration.id}/badge/download?format=${format}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Échec du téléchargement')
+      }
+
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `badge-${registration.id}.${format === 'pdf' ? 'pdf' : 'png'}`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (error) {
+      console.error(`Error downloading badge ${format}:`, error)
+      toast.error(`Erreur lors du téléchargement du badge ${format}`)
+    } finally {
+      // Retirer de la queue et du Set
+      downloadQueueRef.current.shift()
+      setQuickDownloadingKeys(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(downloadKey)
+        return newSet
+      })
+      
+      isProcessingQueueRef.current = false
+      
+      // Traiter le suivant s'il y en a
+      if (downloadQueueRef.current.length > 0) {
+        setTimeout(() => processDownloadQueue(), 100)
+      }
+    }
+  }
+
+  // Fonction de téléchargement rapide de badge (ajout à la queue)
+  const handleQuickDownloadBadge = (registration: RegistrationDPO, format: 'pdf' | 'image') => {
+    const downloadKey = `${registration.id}-${format}`
+    
+    // Ajouter à la queue
+    downloadQueueRef.current.push({ registration, format })
+    
+    // Ajouter au Set des téléchargements actifs
+    setQuickDownloadingKeys(prev => new Set(prev).add(downloadKey))
+    
+    // Démarrer le traitement
+    processDownloadQueue()
+  }
 
   // Configuration des filtres pour le popup
   const filterConfig = {
@@ -923,13 +1007,37 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         id: 'badge',
         header: 'Badge',
         cell: ({ row }) => (
-          <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setBadgeDownloadRegistration(row.original)}
               className="inline-flex items-center justify-center p-2 rounded-lg text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
-              title="Télécharger le badge"
+              title="Voir le badge"
             >
-              <Award className="h-5 w-5" />
+              <Award className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => handleQuickDownloadBadge(row.original, 'pdf')}
+              disabled={quickDownloadingKeys.has(`${row.original.id}-pdf`)}
+              className="inline-flex items-center justify-center p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Télécharger PDF"
+            >
+              {quickDownloadingKeys.has(`${row.original.id}-pdf`) ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+            </button>
+            <button
+              onClick={() => handleQuickDownloadBadge(row.original, 'image')}
+              disabled={quickDownloadingKeys.has(`${row.original.id}-image`)}
+              className="inline-flex items-center justify-center p-2 rounded-lg text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Télécharger Image"
+            >
+              {quickDownloadingKeys.has(`${row.original.id}-image`) ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ImageIcon className="h-4 w-4" />
+              )}
             </button>
           </div>
         ),
@@ -1000,7 +1108,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         enableHiding: false,
       },
     ],
-    [isUpdating, isDeletedTab, optimisticStatusUpdates, updateStatus]
+    [isUpdating, isDeletedTab, optimisticStatusUpdates, updateStatus, quickDownloadingKeys]
   )
 
   // Bulk actions

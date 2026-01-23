@@ -234,6 +234,28 @@ export function BadgePreviewModal({
           )}
         </div>
 
+        {/* Download Actions - En haut, avant le template */}
+        {!error && (
+          <div className="flex gap-3 justify-center">
+            <Button
+              onClick={() => handleDownload('pdf')}
+              disabled={isDownloading || isLoading}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+            >
+              <FileText className="h-4 w-4" />
+              {isDownloading ? 'Téléchargement...' : 'Télécharger PDF'}
+            </Button>
+            <Button
+              onClick={() => handleDownload('image')}
+              disabled={isDownloading || isLoading}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+            >
+              <ImageIcon className="h-4 w-4" />
+              {isDownloading ? 'Téléchargement...' : 'Télécharger Image'}
+            </Button>
+          </div>
+        )}
+
         {/* Template Info - Affichage du template utilisé */}
         {!error && usedTemplate && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
@@ -358,28 +380,6 @@ export function BadgePreviewModal({
             </div>
           )}
         </div>
-
-        {/* Download Actions */}
-        {!isLoading && !error && (
-          <div className="flex gap-3 justify-center pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              onClick={() => handleDownload('pdf')}
-              disabled={isDownloading}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
-            >
-              <FileText className="h-4 w-4" />
-              {isDownloading ? 'Téléchargement...' : 'Télécharger PDF'}
-            </Button>
-            <Button
-              onClick={() => handleDownload('image')}
-              disabled={isDownloading}
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <ImageIcon className="h-4 w-4" />
-              {isDownloading ? 'Téléchargement...' : 'Télécharger Image'}
-            </Button>
-          </div>
-        )}
 
         {/* Info message */}
         <div className="text-center text-xs text-gray-500 dark:text-gray-400 pt-2">

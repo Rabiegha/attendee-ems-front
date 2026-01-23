@@ -210,7 +210,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     }
 
     isProcessingQueueRef.current = true
-    const { registration, format } = downloadQueueRef.current[0]
+    const item = downloadQueueRef.current[0]
+    
+    if (!item) {
+      isProcessingQueueRef.current = false
+      return
+    }
+    
+    const { registration, format } = item
     const downloadKey = `${registration.id}-${format}`
 
     try {

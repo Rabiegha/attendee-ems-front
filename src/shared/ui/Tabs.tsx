@@ -25,16 +25,16 @@ export const Tabs: React.FC<TabsProps> = ({
 }) => {
   return (
     <div
-      className={cn('dark:border-gray-700 flex items-center justify-between', className)}
+      className={cn('dark:border-gray-700 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0', className)}
     >
-      <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+      <nav className="flex space-x-4 sm:space-x-8 overflow-x-auto scrollbar-hide -mb-px" aria-label="Tabs">
         {items.map((item) => (
           <button
             key={item.id}
             onClick={() => !item.disabled && onTabChange(item.id)}
             disabled={item.disabled}
             className={cn(
-              'group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200',
+              'group inline-flex items-center py-2 px-1 border-b-2 font-medium text-sm transition-colors duration-200 whitespace-nowrap touch-target',
               {
                 'border-blue-500 text-blue-600 dark:text-blue-400 dark:border-blue-400':
                   activeTab === item.id,
@@ -67,7 +67,7 @@ export const Tabs: React.FC<TabsProps> = ({
         ))}
       </nav>
       {actions && (
-        <div className="flex items-center gap-2 -mb-px pb-2">
+        <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-end sm:-mb-px sm:pb-2">
           {actions}
         </div>
       )}

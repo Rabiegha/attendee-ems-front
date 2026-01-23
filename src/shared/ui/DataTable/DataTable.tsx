@@ -847,6 +847,7 @@ export function DataTable<TData, TValue>({
             </table>
           </div>
         </div>
+        </div>
 
         {/* Drag Overlay - Aperçu pendant le drag */}
         <DragOverlay

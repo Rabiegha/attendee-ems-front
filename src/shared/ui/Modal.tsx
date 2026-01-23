@@ -7,15 +7,15 @@ import { cn } from '@/shared/lib/utils'
 const modalVariants = cva('modal-content', {
   variants: {
     size: {
-      sm: 'max-w-sm',
-      md: 'max-w-md',
-      lg: 'max-w-lg',
-      xl: 'max-w-xl',
-      '2xl': 'max-w-2xl',
-      '3xl': 'max-w-3xl',
-      '4xl': 'max-w-4xl',
-      '5xl': 'max-w-5xl',
-      full: 'max-w-full mx-8',
+      sm: 'w-full max-w-sm mx-4',
+      md: 'w-full max-w-md mx-4',
+      lg: 'w-full max-w-lg mx-4 sm:mx-6',
+      xl: 'w-full max-w-xl mx-4 sm:mx-6',
+      '2xl': 'w-full max-w-2xl mx-4 sm:mx-6 md:mx-8',
+      '3xl': 'w-full max-w-3xl mx-4 sm:mx-6 md:mx-8',
+      '4xl': 'w-full max-w-4xl mx-4 sm:mx-6 md:mx-8 lg:mx-10',
+      '5xl': 'w-full max-w-5xl mx-4 sm:mx-6 md:mx-8 lg:mx-10',
+      full: 'w-full max-w-full mx-4 sm:mx-6 md:mx-8',
     },
   },
   defaultVariants: {
@@ -119,16 +119,16 @@ export const Modal: React.FC<ModalProps> = ({
       >
         {/* Header optionnel simplifié */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-gray-700">
             {title && (
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white pr-2">
                 {title}
               </h2>
             )}
             {showCloseButton && (
               <button
                 onClick={handleClose}
-                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 flex-shrink-0 touch-target"
                 aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
@@ -140,8 +140,9 @@ export const Modal: React.FC<ModalProps> = ({
         {/* Contenu avec scroll */}
         <div
           className={cn(
-            'overflow-y-auto max-h-[calc(90vh-80px)]',
-            contentPadding && 'p-6'
+            'overflow-y-auto',
+            'max-h-[calc(90vh-80px)] sm:max-h-[calc(90vh-100px)]',
+            contentPadding && 'p-4 sm:p-5 md:p-6'
           )}
         >
           {children}

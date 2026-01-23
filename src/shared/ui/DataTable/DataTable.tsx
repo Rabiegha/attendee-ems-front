@@ -550,14 +550,14 @@ export function DataTable<TData, TValue>({
       {/* Toolbar - Column Visibility & Reset */}
       {(enableColumnVisibility || enableColumnOrdering || tabsElement) && (
         <div className={cn(
-          "flex items-center gap-2 mb-4",
-          tabsElement ? "justify-between px-6 pt-4" : "justify-end bg-transparent"
+          "flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-2 mb-4",
+          tabsElement ? "justify-between px-4 sm:px-6 pt-4" : "justify-end bg-transparent"
         )}>
           {/* Tabs on the left */}
-          {tabsElement && <div className="flex-1">{tabsElement}</div>}
+          {tabsElement && <div className="flex-1 overflow-x-auto">{tabsElement}</div>}
           
           {/* Buttons on the right */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto justify-end">
             {/* Reset Button */}
             {(enableColumnOrdering || enableColumnVisibility) && (
               <Button
@@ -566,8 +566,10 @@ export function DataTable<TData, TValue>({
                 onClick={handleResetTable}
                 leftIcon={<RotateCcw className="h-4 w-4" />}
                 title="Réinitialiser l'ordre et la visibilité des colonnes"
+                className="touch-target"
               >
-                Réinitialiser
+                <span className="hidden sm:inline">Réinitialiser</span>
+                <span className="sm:hidden">Reset</span>
               </Button>
             )}
 
@@ -579,8 +581,10 @@ export function DataTable<TData, TValue>({
                   size="sm"
                   onClick={() => setShowColumnSettings(!showColumnSettings)}
                   leftIcon={<Settings2 className="h-4 w-4" />}
+                  className="touch-target"
                 >
-                  Colonnes ({visibleColumnsCount})
+                  <span className="hidden sm:inline">Colonnes ({visibleColumnsCount})</span>
+                  <span className="sm:hidden">Cols ({visibleColumnsCount})</span>
                 </Button>
 
               {showColumnSettings && (
@@ -676,12 +680,13 @@ export function DataTable<TData, TValue>({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-          {/* Zone scrollable avec hauteur max */}
-          <div className="overflow-auto max-h-[calc(100vh-450px)]">
-            <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
-              {/* Header sticky */}
-              <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200 sticky top-0 z-10">
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200 overflow-hidden">
+          {/* Zone scrollable avec hauteur max - responsive */}
+          <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-450px)] sm:max-h-[calc(100vh-400px)] -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+              <table className="min-w-full" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+                {/* Header sticky */}
+                <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200 sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {enableColumnOrdering ? (
@@ -696,7 +701,7 @@ export function DataTable<TData, TValue>({
                               <th
                                 key={header.id}
                                 className={cn(
-                                  'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
+                                  'px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
                                   header.column.getCanSort() &&
                                     'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
                                   'bg-gray-50 dark:bg-gray-700'
@@ -770,7 +775,7 @@ export function DataTable<TData, TValue>({
                         <th
                           key={header.id}
                           className={cn(
-                            'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
+                            'px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
                             header.column.getCanSort() &&
                               'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
                             'bg-gray-50 dark:bg-gray-700' // Background pour le sticky
@@ -829,7 +834,7 @@ export function DataTable<TData, TValue>({
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
-                          className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800"
+                          className="px-3 sm:px-4 md:px-6 py-3 sm:py-4 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                           style={getCommonPinningStyles(cell.column)}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -882,9 +887,9 @@ export function DataTable<TData, TValue>({
 
       {/* Pagination */}
       {enablePagination && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-200">
+        <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-200">
           {/* Page info and page size selector */}
-          <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
             {enableRowSelection && table.getFilteredSelectedRowModel().rows.length > 0 ? (
               <div className="flex items-center gap-3">
                 <span>
@@ -894,15 +899,17 @@ export function DataTable<TData, TValue>({
               </div>
             ) : (
               <>
-                <span>
-                  Affichage de {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} à {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} sur {table.getFilteredRowModel().rows.length} résultats
+                <span className="whitespace-nowrap">
+                  <span className="hidden sm:inline">Affichage de </span>
+                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} à {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} <span className="hidden sm:inline">sur</span><span className="sm:hidden">/</span> {table.getFilteredRowModel().rows.length}
+                  <span className="hidden sm:inline"> résultats</span>
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="whitespace-nowrap">Par page :</span>
                   <select
                     value={table.getState().pagination.pageSize}
                     onChange={(e) => table.setPageSize(Number(e.target.value))}
-                    className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-none text-center"
+                    className="px-2 py-1 text-xs sm:text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-none text-center touch-target-comfortable"
                   >
                     {[10, 20, 30, 50, 100].map((size) => (
                       <option key={size} value={size}>
@@ -917,13 +924,13 @@ export function DataTable<TData, TValue>({
 
           {/* Page numbers and navigation */}
           {table.getPageCount() > 1 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2 justify-center sm:justify-end flex-wrap">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => table.setPageIndex(0)}
                 disabled={!table.getCanPreviousPage()}
-                className="flex-shrink-0"
+                className="flex-shrink-0 touch-target"
               >
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
@@ -932,13 +939,13 @@ export function DataTable<TData, TValue>({
                 size="sm"
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
-                className="flex-shrink-0"
+                className="flex-shrink-0 touch-target"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               
-              {/* Page numbers */}
-              <div className="flex items-center gap-1">
+              {/* Page numbers - hide on very small screens */}
+              <div className="hidden xs:flex items-center gap-1">
                 {(() => {
                   const currentPage = table.getState().pagination.pageIndex + 1
                   const totalPages = table.getPageCount()
@@ -971,7 +978,7 @@ export function DataTable<TData, TValue>({
                         variant={currentPage === page ? 'default' : 'outline'}
                         size="sm"
                         onClick={() => table.setPageIndex(page - 1)}
-                        className="min-w-[2.5rem] flex-shrink-0"
+                        className="min-w-[2.5rem] flex-shrink-0 touch-target"
                       >
                         {page}
                       </Button>
@@ -987,7 +994,7 @@ export function DataTable<TData, TValue>({
                 size="sm"
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
-                className="flex-shrink-0"
+                className="flex-shrink-0 touch-target"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -996,7 +1003,7 @@ export function DataTable<TData, TValue>({
                 size="sm"
                 onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                 disabled={!table.getCanNextPage()}
-                className="flex-shrink-0"
+                className="flex-shrink-0 touch-target"
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>

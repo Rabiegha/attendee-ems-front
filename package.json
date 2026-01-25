@@ -51,6 +51,7 @@
     "react-google-autocomplete": "^2.7.5",
     "react-hook-form": "^7.48.2",
     "react-i18next": "^13.5.0",
+    "react-qr-code": "^2.0.18",
     "react-redux": "^9.0.4",
     "react-router-dom": "^6.20.1",
     "react-zoom-pan-pinch": "^3.7.0",

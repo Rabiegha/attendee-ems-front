@@ -1,11 +1,13 @@
 import React from 'react'
-import { Download, Smartphone, CheckCircle } from 'lucide-react'
+import { Download, Smartphone, CheckCircle, QrCode } from 'lucide-react'
+import QRCode from 'react-qr-code'
 import { PageContainer, PageHeader, PageSection } from '@/shared/ui'
 import { Card } from '@/shared/ui/Card'
 import { Button } from '@/shared/ui/Button'
 
 export const ApplicationDownloadPage: React.FC = () => {
   const apkUrl = '/downloads/attendeeV1.apk'
+  const fullApkUrl = `${window.location.origin}${apkUrl}`
   
   const features = [
     'Consultation des événements en cours, à venir et passés',
@@ -39,6 +41,27 @@ export const ApplicationDownloadPage: React.FC = () => {
             </div>
 
             <div className="space-form">
+              {/* QR Code Section */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700 flex flex-col items-center">
+                <div className="flex items-center gap-2 mb-4">
+                  <QrCode className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Scanner pour télécharger
+                  </h3>
+                </div>
+                <div className="bg-white p-4 rounded-xl shadow-inner border-4 border-gray-100">
+                  <QRCode
+                    value={fullApkUrl}
+                    size={200}
+                    level="H"
+                    className="w-full h-auto"
+                  />
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
+                  Scannez ce QR code avec votre téléphone pour télécharger directement l'application
+                </p>
+              </div>
+
               {/* Bouton de téléchargement */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
                 <div className="flex flex-col items-center text-center gap-4">

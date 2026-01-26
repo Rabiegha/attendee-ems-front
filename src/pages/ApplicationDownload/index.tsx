@@ -6,7 +6,7 @@ import { Card } from '@/shared/ui/Card'
 import { Button } from '@/shared/ui/Button'
 
 export const ApplicationDownloadPage: React.FC = () => {
-  const apkUrl = '/downloads/AttendeeV1.apk'
+  const apkUrl = '/downloads/AttendeeV2.apk'
   const fullApkUrl = `${window.location.origin}${apkUrl}`
   
   const features = [
@@ -78,14 +78,14 @@ export const ApplicationDownloadPage: React.FC = () => {
                   </div>
                   <a
                     href={apkUrl}
-                    download="AttendeeV1.apk"
+                    download="AttendeeV2.apk"
                     className="w-full max-w-xs"
                     onClick={(e) => {
                       // Forcer le téléchargement
                       e.preventDefault()
                       const link = document.createElement('a')
                       link.href = apkUrl
-                      link.download = 'AttendeeV1.apk'
+                      link.download = 'AttendeeV2.apk'
                       document.body.appendChild(link)
                       link.click()
                       document.body.removeChild(link)

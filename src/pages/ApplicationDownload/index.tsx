@@ -6,7 +6,7 @@ import { Card } from '@/shared/ui/Card'
 import { Button } from '@/shared/ui/Button'
 
 export const ApplicationDownloadPage: React.FC = () => {
-  const apkUrl = '/downloads/attendeeV1.apk'
+  const apkUrl = '/downloads/AttendeeV1.apk'
   const fullApkUrl = `${window.location.origin}${apkUrl}`
   
   const features = [
@@ -78,8 +78,18 @@ export const ApplicationDownloadPage: React.FC = () => {
                   </div>
                   <a
                     href={apkUrl}
-                    download="attendeeV1.apk"
+                    download="AttendeeV1.apk"
                     className="w-full max-w-xs"
+                    onClick={(e) => {
+                      // Forcer le téléchargement
+                      e.preventDefault()
+                      const link = document.createElement('a')
+                      link.href = apkUrl
+                      link.download = 'AttendeeV1.apk'
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                    }}
                   >
                     <Button
                       type="button"
@@ -89,6 +99,12 @@ export const ApplicationDownloadPage: React.FC = () => {
                       Télécharger l'APK
                     </Button>
                   </a>
+                  <p className="text-xs text-center text-gray-500 dark:text-gray-400 max-w-xs">
+                    Le téléchargement devrait commencer automatiquement. Si ce n'est pas le cas,{' '}
+                    <a href={apkUrl} className="text-blue-600 dark:text-blue-400 hover:underline">
+                      cliquez ici
+                    </a>
+                  </p>
                 </div>
               </div>
 

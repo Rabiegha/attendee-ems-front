@@ -21,6 +21,7 @@ import {
   FileText,
   Image as ImageIcon,
   Loader2,
+  Printer,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button, TableSelector, type TableSelectorOption, ActionButtons } from '@/shared/ui'
@@ -197,6 +198,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [badgeDownloadRegistration, setBadgeDownloadRegistration] =
     useState<RegistrationDPO | null>(null)
   const [quickDownloadingKeys, setQuickDownloadingKeys] = useState<Set<string>>(new Set())
+  const [printingKeys, setPrintingKeys] = useState<Set<string>>(new Set())
   const downloadQueueRef = useRef<Array<{ registration: RegistrationDPO; format: 'pdf' | 'image' }>>([])
   const isProcessingQueueRef = useRef(false)
   const toast = useToast()
@@ -283,6 +285,85 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     
     // Démarrer le traitement
     processDownloadQueue()
+  }
+
+  // Fonction d'impression de badge
+  const handlePrintBadge = async (registration: RegistrationDPO) => {
+    const printKey = registration.id
+    setPrintingKeys(prev => new Set(prev).add(printKey))
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      
+      if (!token) {
+        toast.error('Vous devez être connecté pour imprimer un badge')
+        return
+      }
+
+      // Récupérer le badge PDF en base64
+      const badgeId = registration.badge_id
+      if (!badgeId) {
+        toast.error('Ce participant n\'a pas encore de badge généré')
+        return
+      }
+
+      const response = await fetch(
+        `${API_URL}/badge-generation/${badgeId}/pdf-base64`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error('Échec de la récupération du badge')
+      }
+
+      const pdfBase64 = await response.text()
+
+      // Ouvrir une fenêtre d'impression
+      const printWindow = window.open('', '_blank')
+      if (!printWindow) {
+        toast.error('Impossible d\'ouvrir la fenêtre d\'impression. Veuillez autoriser les popups.')
+        return
+      }
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Impression Badge - ${registration.attendee.first_name} ${registration.attendee.last_name}</title>
+            <style>
+              body { margin: 0; padding: 0; }
+              iframe { border: none; width: 100%; height: 100vh; }
+            </style>
+          </head>
+          <body>
+            <iframe src="data:application/pdf;base64,${pdfBase64}"></iframe>
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+
+      toast.success(`Badge de ${registration.attendee.first_name} ${registration.attendee.last_name} prêt à imprimer`)
+    } catch (error) {
+      console.error('Error printing badge:', error)
+      toast.error('Erreur lors de l\'impression du badge')
+    } finally {
+      setPrintingKeys(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(printKey)
+        return newSet
+      })
+    }
   }
 
   // Configuration des filtres pour le popup
@@ -1021,6 +1102,18 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               title="Voir le badge"
             >
               <Award className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => handlePrintBadge(row.original)}
+              disabled={printingKeys.has(row.original.id)}
+              className="inline-flex items-center justify-center p-2 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Imprimer le badge"
+            >
+              {printingKeys.has(row.original.id) ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Printer className="h-4 w-4" />
+              )}
             </button>
             <button
               onClick={() => handleQuickDownloadBadge(row.original, 'pdf')}

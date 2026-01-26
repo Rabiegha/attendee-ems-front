@@ -300,12 +300,20 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         return
       }
 
-      // Récupérer le badge PDF en base64
-      const badgeId = registration.badge_id
-      if (!badgeId) {
+      // Récupérer le badge ID depuis l'URL du badge
+      const badgeUrl = registration.badgePdfUrl || registration.badgeImageUrl
+      if (!badgeUrl) {
         toast.error('Ce participant n\'a pas encore de badge généré')
         return
       }
+
+      // Extraire le badge ID depuis l'URL (format: /api/badges/{badgeId}/pdf)
+      const badgeIdMatch = badgeUrl.match(/\/badges\/([a-f0-9-]+)\//i)
+      if (!badgeIdMatch) {
+        toast.error('Impossible d\'extraire l\'ID du badge')
+        return
+      }
+      const badgeId = badgeIdMatch[1]
 
       const response = await fetch(
         `${API_URL}/badge-generation/${badgeId}/pdf-base64`,
@@ -329,11 +337,15 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         return
       }
 
+      const attendeeName = registration.attendee 
+        ? `${registration.attendee.firstName} ${registration.attendee.lastName}`
+        : 'Participant'
+
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Impression Badge - ${registration.attendee.first_name} ${registration.attendee.last_name}</title>
+            <title>Impression Badge - ${attendeeName}</title>
             <style>
               body { margin: 0; padding: 0; }
               iframe { border: none; width: 100%; height: 100vh; }
@@ -353,7 +365,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       `)
       printWindow.document.close()
 
-      toast.success(`Badge de ${registration.attendee.first_name} ${registration.attendee.last_name} prêt à imprimer`)
+      toast.success(`Badge de ${attendeeName} prêt à imprimer`)
     } catch (error) {
       console.error('Error printing badge:', error)
       toast.error('Erreur lors de l\'impression du badge')

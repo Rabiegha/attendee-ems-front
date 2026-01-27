@@ -10,6 +10,7 @@ import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api'
 import { useGetEventBadgeRulesQuery } from '@/features/events/api/eventBadgeRulesApi'
 import { useToast } from '@/shared/hooks/useToast'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
+import { generateAndDownloadBadge, type BadgeFormat } from '../utils/badgeDownload'
 
 interface BadgePreviewModalProps {
   isOpen: boolean
@@ -171,35 +172,19 @@ export function BadgePreviewModal({
     try {
       setIsDownloading(true)
       
-      const response = await fetch(
-        `${API_URL}/events/${eventId}/registrations/${registration.id}/badge/download?format=${format}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
+      await generateAndDownloadBadge({
+        registrationId: registration.id,
+        eventId,
+        format,
+        firstName: registration.attendee?.firstName,
+        lastName: registration.attendee?.lastName,
+        token: token!,
+        apiUrl: API_URL,
+      })
       
-      const extension = format === 'pdf' ? 'pdf' : 'png'
-      const fileName = `badge-${registration.attendee?.firstName}-${registration.attendee?.lastName}.${extension}`
-      
-      link.download = fileName
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error(`Error downloading badge ${format}:`, error)
-      alert(`Erreur lors du téléchargement du badge ${format}`)
+      alert(`Erreur lors du téléchargement du badge ${format}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`)
     } finally {
       setIsDownloading(false)
     }

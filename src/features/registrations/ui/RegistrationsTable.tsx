@@ -67,6 +67,7 @@ import {
   getRegistrationCompany,
 } from '../utils/registration-helpers'
 import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
+import { generateAndDownloadBadge, type BadgeFormat } from '../utils/badgeDownload'
 
 interface RegistrationsTableProps {
   registrations: RegistrationDPO[]
@@ -223,35 +224,24 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     const downloadKey = `${registration.id}-${format}`
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
       
       if (!token) {
         toast.error('Vous devez être connecté pour télécharger un badge')
         return
       }
       
-      const response = await fetch(
-        `${API_URL}/events/${eventId}/registrations/${registration.id}/badge/download?format=${format}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Échec du téléchargement')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `badge-${registration.id}.${format === 'pdf' ? 'pdf' : 'png'}`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      // Utiliser la fonction utilitaire pour générer et télécharger
+      await generateAndDownloadBadge({
+        registrationId: registration.id,
+        eventId,
+        format,
+        firstName: registration.attendee?.firstName,
+        lastName: registration.attendee?.lastName,
+        token,
+        apiUrl: API_URL,
+      })
+      
     } catch (error) {
       console.error(`Error downloading badge ${format}:`, error)
       toast.error(`Erreur lors du téléchargement du badge ${format}`)
@@ -293,7 +283,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     setPrintingKeys(prev => new Set(prev).add(printKey))
 
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
       
       if (!token) {
         toast.error('Vous devez être connecté pour imprimer un badge')

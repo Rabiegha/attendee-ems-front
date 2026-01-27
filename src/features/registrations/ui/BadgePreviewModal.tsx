@@ -20,8 +20,6 @@ interface BadgePreviewModalProps {
   currentBadgeTemplateId?: string | null
 }
 
-type BadgeFormat = 'pdf' | 'image'
-
 export function BadgePreviewModal({ 
   isOpen, 
   onClose, 

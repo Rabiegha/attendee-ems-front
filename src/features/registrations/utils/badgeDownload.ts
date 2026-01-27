@@ -8,8 +8,8 @@ export interface BadgeDownloadOptions {
   registrationId: string
   eventId: string
   format: BadgeFormat
-  firstName?: string
-  lastName?: string
+  firstName?: string | undefined
+  lastName?: string | undefined
   token: string
   apiUrl: string
 }

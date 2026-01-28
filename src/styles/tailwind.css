@@ -298,6 +298,37 @@
   }
 
   /* ============================================
+     RESPONSIVE UTILITIES - Breakpoint-specific visibility
+     ============================================ */
+  
+  /* Hide/show for mobile */
+  .hidden-mobile {
+    @apply md:block hidden;
+  }
+  
+  .visible-mobile {
+    @apply md:hidden block;
+  }
+  
+  /* Hide/show for tablet */
+  .hidden-tablet {
+    @apply md:hidden lg:block;
+  }
+  
+  .visible-tablet {
+    @apply hidden md:block lg:hidden;
+  }
+  
+  /* Hide/show for desktop */
+  .hidden-desktop {
+    @apply lg:hidden;
+  }
+  
+  .visible-desktop {
+    @apply hidden lg:block;
+  }
+
+  /* ============================================
      ANIMATIONS
      ============================================ */
   

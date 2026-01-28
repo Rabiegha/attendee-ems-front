@@ -48,23 +48,26 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <div
       className={cn(
-        'flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700',
+        'flex flex-col gap-4 mb-4 pb-4 sm:mb-6 sm:pb-6 border-b border-gray-200 dark:border-gray-700',
+        'md:flex-row md:justify-between md:items-center',
         className
       )}
     >
       <div className="flex items-start gap-3">
         {Icon && (
           <div className="flex-shrink-0 mt-1">
-            <Icon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <Icon className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-blue-600 dark:text-blue-400" />
           </div>
         )}
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="page-title mb-0">{title}</h1>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight mb-0">
+              {title}
+            </h1>
             {badge && (
               <span
                 className={cn(
-                  'px-3 py-1 text-xs font-medium rounded-full',
+                  'px-2 py-0.5 sm:px-3 sm:py-1 text-xs font-medium rounded-full whitespace-nowrap',
                   badgeColors[badge.variant || 'blue']
                 )}
               >
@@ -73,12 +76,18 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             )}
           </div>
           {description && (
-            <p className="page-subtitle mb-0 mt-1.5">{description}</p>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 mb-0 mt-1 sm:mt-1.5">
+              {description}
+            </p>
           )}
         </div>
       </div>
 
-      {actions && <div className="flex items-center gap-3">{actions}</div>}
+      {actions && (
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 w-full md:w-auto">
+          {actions}
+        </div>
+      )}
     </div>
   )
 }

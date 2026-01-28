@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, Link } from 'react-router-dom'
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Menu, X } from 'lucide-react'
 import {
   selectUser,
   selectOrganization,
@@ -13,7 +13,11 @@ import { performLogout } from '@/features/auth/authLifecycle'
 import { Button } from '@/shared/ui/Button'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onMobileMenuToggle?: () => void
+}
+
+export const Header: React.FC<HeaderProps> = ({ onMobileMenuToggle }) => {
   const { t } = useTranslation('common')
   const navigate = useNavigate()
   const user = useSelector(selectUser)
@@ -43,34 +47,49 @@ export const Header: React.FC = () => {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 transition-colors duration-200">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
+      <div className="flex items-center justify-between px-4 py-3 sm:px-6 md:py-4">
+        {/* Left section: Mobile menu button + Logo */}
+        <div className="flex items-center space-x-3 sm:space-x-4">
+          {/* Mobile menu button - visible only on mobile/tablet */}
+          {onMobileMenuToggle && (
+            <button
+              onClick={onMobileMenuToggle}
+              className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-target"
+              aria-label="Toggle menu"
+            >
+              <Menu className="h-6 w-6 text-gray-700 dark:text-gray-200" />
+            </button>
+          )}
+          
           <Link to="/dashboard" className="flex items-center">
             {/* Logo bleu pour light mode */}
             <img
               src="/logo.png"
               alt="EMS Logo"
-              className="h-8 w-auto hover:opacity-80 transition-opacity cursor-pointer block dark:hidden"
+              className="h-7 w-auto sm:h-8 hover:opacity-80 transition-opacity cursor-pointer block dark:hidden"
             />
             {/* Logo blanc pour dark mode */}
             <img
               src="/logo-blanc.png"
               alt="EMS Logo"
-              className="h-8 w-auto hover:opacity-80 transition-opacity cursor-pointer hidden dark:block"
+              className="h-7 w-auto sm:h-8 hover:opacity-80 transition-opacity cursor-pointer hidden dark:block"
             />
           </Link>
+          
+          {/* Organization name - hidden on mobile */}
           {displayOrganization && (
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+            <span className="hidden sm:inline-block text-sm text-gray-500 dark:text-gray-400 truncate max-w-[200px] md:max-w-none">
               {displayOrganization.name}
             </span>
           )}
         </div>
 
-        <div className="flex items-center space-x-4">
+        {/* Right section: User info + Theme + Logout */}
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {user && (
-            <div className="flex items-center space-x-2">
-              <User className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <div className="hidden sm:flex items-center space-x-2">
+              <User className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
               <div className="text-sm">
                 <div className="text-gray-700 dark:text-gray-200 font-medium">
                   {/* Support both firstName/lastName and first_name/last_name formats */}
@@ -96,10 +115,10 @@ export const Header: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={handleLogout}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-1 sm:space-x-2 touch-target"
           >
             <LogOut className="h-4 w-4" />
-            <span>{t('navigation.logout')}</span>
+            <span className="hidden sm:inline">{t('navigation.logout')}</span>
           </Button>
         </div>
       </div>

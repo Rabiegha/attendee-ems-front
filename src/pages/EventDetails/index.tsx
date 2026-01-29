@@ -35,11 +35,13 @@ import {
   XCircle,
   Tag,
   CreditCard,
+  BarChart3,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
 import { EventAttendeeTypesTab } from './EventAttendeeTypesTab'
 import { EventBadgesTab } from './EventBadgesTab'
+import { EventStatsTab } from './EventStatsTab'
 import { AssignedTeam } from './components/AssignedTeam'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
@@ -55,7 +57,7 @@ import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 import { EventSessionsTab } from './EventSessionsTab'
 
-type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions'
+type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions' | 'stats'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -72,7 +74,7 @@ export const EventDetails: React.FC = () => {
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions', 'stats'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -546,6 +548,12 @@ export const EventDetails: React.FC = () => {
       id: 'registrations' as TabType,
       label: `Inscriptions (${activeMeta.total})`,
       icon: Users,
+      hasPermission: canReadRegistrations
+    },
+    { 
+      id: 'stats' as TabType, 
+      label: 'Statistiques', 
+      icon: BarChart3,
       hasPermission: canReadRegistrations
     },
     { 
@@ -1049,6 +1057,10 @@ export const EventDetails: React.FC = () => {
 
         {activeTab === 'settings' && (
           <EventSettingsTab event={event} />
+        )}
+
+        {activeTab === 'stats' && (
+          <EventStatsTab event={event} />
         )}
 
         {activeTab === 'team' && (

@@ -32,6 +32,7 @@ import { PrivacyPolicyPage } from '@/pages/PrivacyPolicy'
 import { BadgeDesigner } from '@/pages/BadgeDesigner'
 import { BadgeDesignerPage } from '@/pages/BadgeDesigner/BadgeDesignerPage'
 import { ApplicationDownloadPage } from '@/pages/ApplicationDownload'
+import { ReportsPage } from '@/pages/Reports'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -171,6 +172,10 @@ export const router = createBrowserRouter([
       {
         path: 'application',
         element: <ApplicationDownloadPage />,
+      },
+      {
+        path: 'reports',
+        element: <ReportsPage />,
       },
     ],
   },

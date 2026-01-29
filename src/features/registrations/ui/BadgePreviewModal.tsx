@@ -86,9 +86,18 @@ export function BadgePreviewModal({
       return
     }
 
-    // Attendre que le template soit calculé (règles chargées)
+    // Attendre que les règles soient chargées
+    if (isLoadingRules) {
+      console.log('[Badge] Rules are loading, waiting...')
+      return
+    }
+
+    // Si aucun template n'est disponible après le chargement des règles
     if (effectiveBadgeTemplateId === null) {
-      console.log('[Badge] Template not yet determined, waiting...')
+      console.log('[Badge] No template configured')
+      setError('Veuillez sélectionner un template de badge pour cet événement.')
+      setErrorType('no-template')
+      setIsLoading(false)
       return
     }
 
@@ -298,21 +307,23 @@ export function BadgePreviewModal({
                 <>
                   <AlertCircle className="h-16 w-16 text-orange-500 dark:text-orange-400" />
                   <div>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{error}</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                      Aucun template de badge configuré
+                    </p>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                      Pour générer des badges, vous devez d'abord créer un template de badge.
+                      Pour générer des badges, vous devez d'abord associer un template de badge à cet événement.
                     </p>
                   </div>
                   <div className="flex gap-3">
                     <Button
                       onClick={() => {
                         onClose()
-                        navigate(ROUTES.BADGES)
+                        navigate(`/events/${eventId}?tab=badges`)
                       }}
                       className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                     >
-                      <Plus className="h-4 w-4" />
-                      Créer un template de badge
+                      <Settings className="h-4 w-4" />
+                      Configurer les badges
                     </Button>
                     <Button
                       onClick={onClose}
@@ -324,12 +335,13 @@ export function BadgePreviewModal({
                   <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-800 dark:text-blue-200 text-left w-full">
                     <p className="font-semibold mb-2 flex items-center gap-2">
                       <Award className="h-4 w-4" />
-                      Comment créer un template de badge ?
+                      Comment configurer un badge pour cet événement ?
                     </p>
                     <ol className="space-y-1 list-decimal list-inside">
-                      <li>Accédez à la section "Badges" via le menu</li>
-                      <li>Cliquez sur "Créer un template"</li>
-                      <li>Personnalisez le design de votre badge</li>
+                      <li>Créez d'abord un template dans la section "Badges" (menu principal)</li>
+                      <li>Allez dans l'onglet "Badges" de cet événement</li>
+                      <li>Sélectionnez le template par défaut</li>
+                      <li>Configurez des règles selon les types de participants (optionnel)</li>
                       <li>Revenez ici pour générer les badges</li>
                     </ol>
                   </div>

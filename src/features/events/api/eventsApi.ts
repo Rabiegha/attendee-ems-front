@@ -251,7 +251,10 @@ export const eventsApi = rootApi.injectEndpoints({
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'AttendeeTypes', id: eventId }],
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'AttendeeTypes', id: eventId },
+        { type: 'Registrations', id: eventId }
+      ],
     }),
 
     getEventAssignedUsers: builder.query<EventAssignedUser[], string>({

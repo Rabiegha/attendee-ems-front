@@ -73,13 +73,13 @@ export const EventStatsTab: React.FC<EventStatsTabProps> = ({ event }) => {
       if (reg.eventAttendeeType?.attendeeType) {
         typeId = reg.eventAttendeeType.attendeeType.id
         typeName = reg.eventAttendeeType.attendeeType.name
-        typeColor = reg.eventAttendeeType.attendeeType.color_hex || '#94a3b8'
+        typeColor = reg.eventAttendeeType.color_hex || reg.eventAttendeeType.attendeeType.color_hex || '#94a3b8'
       } else if (reg.eventAttendeeTypeId) {
         const eventType = attendeeTypes.find((t) => t.id === reg.eventAttendeeTypeId)
         if (eventType?.attendeeType) {
           typeId = eventType.attendeeType.id
           typeName = eventType.attendeeType.name
-          typeColor = eventType.attendeeType.color_hex || '#94a3b8'
+          typeColor = eventType.color_hex || eventType.attendeeType.color_hex || '#94a3b8'
         }
       }
 

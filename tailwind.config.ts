@@ -10,9 +10,25 @@ const config: Config = {
   ],
   prefix: '',
   theme: {
+    // Define responsive breakpoints (mobile-first approach)
+    screens: {
+      'xs': '475px',     // Extra small devices
+      'sm': '640px',     // Mobile landscape / Small tablets
+      'md': '768px',     // Tablets
+      'lg': '1024px',    // Laptops / Small desktops
+      'xl': '1280px',    // Desktops
+      '2xl': '1536px',   // Large desktops
+    },
     container: {
       center: true,
-      padding: '2rem',
+      padding: {
+        DEFAULT: '1rem',
+        sm: '1.5rem',
+        md: '2rem',
+        lg: '2.5rem',
+        xl: '3rem',
+        '2xl': '4rem',
+      },
       screens: {
         '2xl': '1400px',
       },
@@ -76,6 +92,13 @@ const config: Config = {
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+      },
+      // Responsive spacing scale
+      spacing: {
+        'safe-top': 'env(safe-area-inset-top)',
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-left': 'env(safe-area-inset-left)',
+        'safe-right': 'env(safe-area-inset-right)',
       },
     },
   },

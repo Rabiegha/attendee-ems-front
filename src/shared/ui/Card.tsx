@@ -15,10 +15,10 @@ const cardVariants = cva('card-base transition-colors duration-200', {
     },
     padding: {
       none: 'p-0',
-      sm: 'p-4',
-      md: 'p-6', // Default
-      lg: 'p-8',
-      xl: 'p-10',
+      sm: 'p-3 sm:p-4',
+      md: 'p-4 sm:p-5 md:p-6', // Default
+      lg: 'p-5 sm:p-6 md:p-8',
+      xl: 'p-6 sm:p-8 md:p-10',
     },
     radius: {
       none: 'rounded-none',

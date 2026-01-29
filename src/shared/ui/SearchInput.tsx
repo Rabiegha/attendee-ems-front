@@ -31,7 +31,8 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={cn(
-          'w-full h-10 pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg',
+          'w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg',
+          'h-11 sm:h-10', // Taller on mobile for better touch
           'bg-white dark:bg-gray-700 text-gray-900 dark:text-white',
           'placeholder-gray-500 dark:placeholder-gray-400',
           'focus:ring-2 focus:ring-blue-500 focus:border-transparent',
@@ -44,7 +45,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         <button
           type="button"
           onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 touch-target"
           title="Effacer la recherche"
         >
           <X className="w-4 h-4" />

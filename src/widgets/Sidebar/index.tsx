@@ -22,6 +22,8 @@ import { cn } from '@/shared/lib/utils'
 interface SidebarProps {
   isOpen: boolean
   onToggle: () => void
+  isMobileMenuOpen?: boolean
+  onMobileMenuClose?: () => void
 }
 
 const navigation = [
@@ -109,112 +111,167 @@ const navigation = [
   },
 ]
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  isOpen, 
+  onToggle, 
+  isMobileMenuOpen = false, 
+  onMobileMenuClose 
+}) => {
   const { t } = useTranslation('common')
 
   return (
-    <aside
-      className={cn(
-        'fixed left-0 z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen transition-all duration-300 overflow-hidden',
-        isOpen ? 'w-64' : 'w-16'
+    <>
+      {/* Mobile overlay backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden transition-opacity"
+          onClick={onMobileMenuClose}
+          aria-hidden="true"
+        />
       )}
-      style={{ top: '69px' }}
-    >
-      {/* Bouton chevrons en haut de la sidebar */}
-      <div className="flex items-center h-12 border-b border-gray-200 dark:border-gray-700 px-2 relative">
-        <button
-          onClick={onToggle}
-          className="absolute p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300"
-          style={{
-            right: isOpen ? '8px' : '50%',
-            transform: isOpen ? 'translateX(0)' : 'translateX(50%)',
-            transition: 'right 0.3s ease, transform 0.3s ease'
-          }}
-          aria-label="Toggle sidebar"
-        >
-          <svg
-            className={cn(
-              "w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-300",
-              isOpen ? "rotate-0" : "rotate-180"
-            )}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed left-0 z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen transition-all duration-300 overflow-hidden',
+          // Desktop: Always visible, can collapse
+          'lg:translate-x-0',
+          isOpen ? 'lg:w-64' : 'lg:w-16',
+          // Mobile/Tablet: Overlay that slides in
+          'lg:top-[69px]',
+          isMobileMenuOpen 
+            ? 'translate-x-0 w-64 top-[57px] sm:top-[64px]' 
+            : '-translate-x-full w-64 top-[57px] sm:top-[64px]'
+        )}
+      >
+        {/* Desktop toggle button - only visible on desktop */}
+        <div className="hidden lg:flex items-center h-12 border-b border-gray-200 dark:border-gray-700 px-2 relative">
+          <button
+            onClick={onToggle}
+            className="absolute p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300"
+            style={{
+              right: isOpen ? '8px' : '50%',
+              transform: isOpen ? 'translateX(0)' : 'translateX(50%)',
+              transition: 'right 0.3s ease, transform 0.3s ease'
+            }}
+            aria-label="Toggle sidebar"
           >
-            {/* Chevrons doubles pointant vers la gauche */}
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M11 19l-7-7 7-7M19 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-      </div>
+            <svg
+              className={cn(
+                "w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform duration-300",
+                isOpen ? "rotate-0" : "rotate-180"
+              )}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {/* Chevrons doubles pointant vers la gauche */}
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 19l-7-7 7-7M19 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+        </div>
 
-      <nav className="px-2 overflow-y-auto pb-20">
-        <ul className="space-y-2 pt-4">
-          {navigation.map((item) => {
-            // Dashboard accessible à tous sans guard
-            if (!item.action || !item.subject) {
+        {/* Mobile close button - only visible on mobile */}
+        <div className="lg:hidden flex items-center justify-between h-12 border-b border-gray-200 dark:border-gray-700 px-4">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+            Menu
+          </span>
+          <button
+            onClick={onMobileMenuClose}
+            className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-target"
+            aria-label="Close menu"
+          >
+            <svg
+              className="w-5 h-5 text-gray-600 dark:text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <nav className="px-2 overflow-y-auto pb-20" style={{ height: 'calc(100vh - 121px)' }}>
+          <ul className="space-y-2 pt-4">
+            {navigation.map((item) => {
+              // Dashboard accessible à tous sans guard
+              if (!item.action || !item.subject) {
+                return (
+                  <li key={item.href}>
+                    <NavLink
+                      to={item.href}
+                      onClick={onMobileMenuClose}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center py-2 text-sm font-medium rounded-md transition-all duration-300 relative overflow-hidden group touch-target',
+                          'px-4',
+                          isActive
+                            ? 'bg-blue-600 text-white dark:bg-blue-700'
+                            : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+                        )
+                      }
+                      title={!isOpen ? t(item.name) : undefined}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
+                      <span className={cn(
+                        "whitespace-nowrap transition-opacity duration-300",
+                        // On mobile, always show text. On desktop, respect isOpen state
+                        "lg:opacity-100",
+                        isOpen ? "opacity-100" : "lg:opacity-0"
+                      )}>
+                        {t(item.name)}
+                      </span>
+                    </NavLink>
+                  </li>
+                )
+              }
+
+              // Autres items avec guard CASL
               return (
-                <li key={item.href}>
-                  <NavLink
-                    to={item.href}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex items-center py-2 text-sm font-medium rounded-md transition-all duration-300 relative overflow-hidden group',
-                        'px-4',
-                        isActive
-                          ? 'bg-blue-600 text-white dark:bg-blue-700'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                      )
-                    }
-                    title={!isOpen ? t(item.name) : undefined}
-                  >
-                    <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
-                    <span className={cn(
-                      "whitespace-nowrap transition-opacity duration-300",
-                      isOpen ? "opacity-100" : "opacity-0"
-                    )}>
-                      {t(item.name)}
-                    </span>
-                  </NavLink>
-                </li>
+                <Can key={item.href} do={item.action} on={item.subject}>
+                  <li>
+                    <NavLink
+                      to={item.href}
+                      onClick={onMobileMenuClose}
+                      className={({ isActive }) =>
+                        cn(
+                          'flex items-center py-2 text-sm font-medium rounded-md transition-all duration-300 relative overflow-hidden group touch-target',
+                          'px-4',
+                          isActive
+                            ? 'bg-blue-600 text-white dark:bg-blue-700'
+                            : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+                        )
+                      }
+                      title={!isOpen ? t(item.name) : undefined}
+                    >
+                      <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
+                      <span className={cn(
+                        "whitespace-nowrap transition-opacity duration-300",
+                        // On mobile, always show text. On desktop, respect isOpen state
+                        "lg:opacity-100",
+                        isOpen ? "opacity-100" : "lg:opacity-0"
+                      )}>
+                        {t(item.name)}
+                      </span>
+                    </NavLink>
+                  </li>
+                </Can>
               )
-            }
-
-            // Autres items avec guard CASL
-            return (
-              <Can key={item.href} do={item.action} on={item.subject}>
-                <li>
-                  <NavLink
-                    to={item.href}
-                    className={({ isActive }) =>
-                      cn(
-                        'flex items-center py-2 text-sm font-medium rounded-md transition-all duration-300 relative overflow-hidden group',
-                        'px-4',
-                        isActive
-                          ? 'bg-blue-600 text-white dark:bg-blue-700'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                      )
-                    }
-                    title={!isOpen ? t(item.name) : undefined}
-                  >
-                    <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
-                    <span className={cn(
-                      "whitespace-nowrap transition-opacity duration-300",
-                      isOpen ? "opacity-100" : "opacity-0"
-                    )}>
-                      {t(item.name)}
-                    </span>
-                  </NavLink>
-                </li>
-              </Can>
-            )
-          })}
-        </ul>
-      </nav>
-    </aside>
+            })}
+          </ul>
+        </nav>
+      </aside>
+    </>
   )
 }

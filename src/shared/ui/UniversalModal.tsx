@@ -202,24 +202,24 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
       showCloseButton={false}
       contentPadding={false}
     >
-      <div className="relative text-center py-10 px-8">
+      <div className="relative text-center py-8 px-4 sm:py-10 sm:px-6 md:px-8">
         {/* Bouton de fermeture moderne */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800/50 transition-all duration-200 hover:scale-110"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 text-gray-400 hover:text-white rounded-xl hover:bg-gray-800/50 transition-all duration-200 hover:scale-110 touch-target"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* Titre moderne */}
         <h2
-          className={`text-2xl font-bold mb-6 ${modalConfig.titleColor} leading-tight`}
+          className={`text-xl sm:text-2xl font-bold mb-4 sm:mb-6 ${modalConfig.titleColor} leading-tight px-8`}
         >
           {config.title}
         </h2>
 
         {/* Message épuré */}
-        <p className="text-gray-300 mb-8 text-lg leading-relaxed">
+        <p className="text-gray-300 mb-6 sm:mb-8 text-base sm:text-lg leading-relaxed">
           {config.message}
         </p>
 
@@ -227,7 +227,7 @@ export const UniversalModal: React.FC<UniversalModalProps> = ({
         {renderDetails()}
 
         {/* Actions modernes */}
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           {config.actions?.secondary && (
             <Button
               variant="outline"

@@ -6,10 +6,10 @@ import type { EChartsOption } from 'echarts'
 import { format, parseISO, isValid, startOfDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Users, TrendingUp, UserCheck, Activity } from 'lucide-react'
-import type { Event } from '@/features/events/types'
+import type { EventDPO } from '@/features/events/dpo/event.dpo'
 
 interface EventStatsTabProps {
-  event: Event
+  event: EventDPO
 }
 
 interface Registration {
@@ -170,7 +170,6 @@ export const EventStatsTab: React.FC<EventStatsTabProps> = ({ event }) => {
       },
       xAxis: {
         type: 'time',
-        boundaryGap: false,
         axisLabel: {
           rotate: 45,
           formatter: (value: number) => {
@@ -305,7 +304,6 @@ export const EventStatsTab: React.FC<EventStatsTabProps> = ({ event }) => {
       },
       xAxis: {
         type: 'time',
-        boundaryGap: false,
         axisLabel: {
           rotate: 45,
           formatter: (value: number) => {

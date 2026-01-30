@@ -132,6 +132,7 @@ export const rootApi = createApi({
     'Events',
     'Event',
     'EventBadgeRules',
+    'Registrations',
     'Users',
     'User',
     'Roles',

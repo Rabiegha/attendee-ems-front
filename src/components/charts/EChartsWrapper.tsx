@@ -29,8 +29,8 @@ export const EChartsWrapper: React.FC<EChartsWrapperProps> = ({ option, style, o
     <ReactECharts
       option={mergedOption}
       style={{ height: '100%', width: '100%', ...style }}
-      theme={isDark ? 'dark' : undefined}
-      onEvents={onEvents}
+      theme={isDark ? 'dark' : ''}
+      {...(onEvents && { onEvents })}
       notMerge={true}
       lazyUpdate={true}
     />

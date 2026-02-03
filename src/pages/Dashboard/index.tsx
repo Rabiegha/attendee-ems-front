@@ -51,10 +51,10 @@ export const Dashboard: React.FC = () => {
   // Si l'utilisateur a "read:assigned", le backend retourne seulement les éléments assignés
   // Si l'utilisateur a "read:any", le backend retourne tout
 
-  // Récupérer les 5 derniers événements pour l'affichage (seulement si l'utilisateur a la permission)
+  // Récupérer les 10 derniers événements pour l'affichage (seulement si l'utilisateur a la permission)
   const { data: events = [], isLoading: eventsLoading } = useGetEventsQuery(
     {
-      limit: 5,
+      limit: 10, // Augmenté de 5 à 10 pour afficher plus d'événements récents
       sortBy: 'created_at',
       sortOrder: 'desc',
     },

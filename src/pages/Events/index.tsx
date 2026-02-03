@@ -61,7 +61,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
     const params: any = {
       sortBy,
       sortOrder,
-      limit: 50,
+      limit: 500, // Augmenté de 50 à 100 pour afficher plus d'événements
     }
 
     if (searchQuery) {

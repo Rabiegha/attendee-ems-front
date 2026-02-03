@@ -90,7 +90,7 @@ export const EventDetails: React.FC = () => {
 
   // State pour la pagination des inscriptions
   const [registrationsPage, setRegistrationsPage] = useState(1)
-  const [registrationsPageSize, setRegistrationsPageSize] = useState(50)
+  const [registrationsPageSize, setRegistrationsPageSize] = useState(1000) // Augmenté de 50 à 100 pour afficher plus de participants
   const [registrationsIsActive, setRegistrationsIsActive] = useState(true)
   const [registrationsActiveTab, setRegistrationsActiveTab] = useState<'active' | 'deleted'>('active')
 
@@ -352,6 +352,14 @@ export const EventDetails: React.FC = () => {
       pollingInterval: activeTab === 'registrations' ? pollingInterval : 0,
     }
   )
+
+  // 🐛 DEBUG: Log pour voir les paramètres de pagination
+  console.log('📊 [EventDetails] Pagination params:', {
+    registrationsPage,
+    registrationsPageSize,
+    metaFromResponse: registrationsResponse?.meta,
+    dataLength: registrationsResponse?.data?.length,
+  })
 
   // Hook séparé pour récupérer tous les IDs lors de l'export (avec limite haute)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -996,7 +1004,7 @@ export const EventDetails: React.FC = () => {
               stats={activeMeta}
               // Server-side pagination props
               currentPage={registrationsMeta.page}
-              pageSize={registrationsMeta.limit}
+              pageSize={registrationsPageSize} // Utiliser le state local au lieu de registrationsMeta.limit
               totalPages={registrationsMeta.totalPages}
               onPageChange={(page) => setRegistrationsPage(page)}
               onPageSizeChange={(pageSize) => {

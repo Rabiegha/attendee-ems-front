@@ -60,7 +60,7 @@ const EventsList = () => {
   const [search, setSearch] = useState('')
   const [filterValues, setFilterValues] = useState<FilterValues>({})
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 10
+  const itemsPerPage = 50 // Augmenté de 10 à 50 pour afficher plus d'événements
 
   // Extract filter values
   const statusFilter = filterValues.status as string | undefined

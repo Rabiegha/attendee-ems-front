@@ -37,7 +37,7 @@ export const AttendeeDetail: React.FC = () => {
 
   // État de pagination pour l'historique
   const [historyPage, setHistoryPage] = React.useState(1)
-  const [historyPageSize, setHistoryPageSize] = React.useState(10)
+  const [historyPageSize, setHistoryPageSize] = React.useState(100)
 
   // Vérifier si l'utilisateur est SUPER_ADMIN
   const isSuperAdmin = user?.roles?.[0] === 'SUPER_ADMIN'

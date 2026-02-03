@@ -7,7 +7,7 @@ import i18n from '@/shared/lib/i18n'
 let refreshPromise: Promise<any> | null = null
 
 const rawBaseQuery = fetchBaseQuery({
-  baseUrl: (import.meta.env.VITE_API_BASE_URL || '') + '/api', // Ajouter le prefix /api global du backend NestJS
+  baseUrl: import.meta.env.VITE_API_BASE_URL || '',
   credentials: 'include', // Obligatoire pour envoyer les cookies httpOnly
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).session.token

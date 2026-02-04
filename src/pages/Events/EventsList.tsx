@@ -68,14 +68,19 @@ const EventsList = () => {
 
   // API calls - Real data instead of mocks
   const {
-    data: events = [],
+    data: eventsResponse,
     isLoading,
     error,
   } = useGetEventsQuery({
     page: currentPage,
     limit: itemsPerPage,
     ...(search && { search }),
+    ...(statusFilter && statusFilter !== 'all' && { status: statusFilter }),
   })
+
+  const events = eventsResponse?.data || []
+  const totalPages = eventsResponse?.meta.totalPages || 1
+  const totalEvents = eventsResponse?.meta.total || 0
 
   const [deleteEvent] = useDeleteEventMutation()
   const [bulkDeleteEvents] = useBulkDeleteEventsMutation()
@@ -85,26 +90,14 @@ const EventsList = () => {
   const userRole = user?.roles?.[0] || 'VIEWER'
   const isSuperAdmin = userRole === 'SUPER_ADMIN'
 
-  // Filter events based on user role and filters
+  // Filter events based on user role (RBAC still needed on frontend for security)
   const filteredEvents = events.filter((event) => {
     // RBAC: SUPER_ADMIN sees all events, others see only their org events
     if (!isSuperAdmin && event.orgId !== orgId) {
       return false
     }
     
-    // Filter by status (single select)
-    if (statusFilter && statusFilter !== 'all' && event.status !== statusFilter) {
-      return false
-    }
-
-    // Filter by check-in
-    if (hasCheckinFilter && hasCheckinFilter !== 'all') {
-      // TODO: Add enableCheckin property to EventDPO
-      const hasCheckin = (event as any).enableCheckin || false
-      if (hasCheckinFilter === 'yes' && !hasCheckin) return false
-      if (hasCheckinFilter === 'no' && hasCheckin) return false
-    }
-    
+    // Other filters are now handled by the API
     return true
   })
 
@@ -143,8 +136,7 @@ const EventsList = () => {
     dispatch(eventsApi.util.invalidateTags(['Events']))
   }
 
-  // Pagination (if not handled by API)
-  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage)
+  // Use filtered events directly (already paginated by API)
   const paginatedEvents = filteredEvents
 
   // Multi-select logic
@@ -301,7 +293,7 @@ const EventsList = () => {
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <FilterBar
-          resultCount={filteredEvents.length}
+          resultCount={totalEvents}
           resultLabel="événement"
           onReset={handleResetFilters}
           showResetButton={search !== '' || Object.keys(filterValues).length > 0}

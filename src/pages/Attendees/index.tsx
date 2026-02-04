@@ -209,8 +209,8 @@ const AttendeesPage: React.FC = () => {
                 />
               }
               // Server-side pagination
-              currentPage={meta.page}
-              pageSize={meta.pageSize}
+              currentPage={filters.page || 1}
+              pageSize={filters.pageSize || 50}
               totalPages={meta.totalPages}
               totalItems={meta.total}
               onPageChange={handlePageChange}

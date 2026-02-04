@@ -372,6 +372,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         // Server-side pagination
         enablePagination={true}
         pageSize={pageSize || 50}
+        currentPage={currentPage || 1}
         totalItems={totalItems || 0}
         onPageChange={onPageChange || (() => {})}
         onPageSizeChange={onPageSizeChange || (() => {})}

@@ -84,6 +84,7 @@ export function AttendeeTypesPage() {
   // États locaux
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active')
+  const [pageSize, setPageSize] = useState(20)
   const [editingType, setEditingType] = useState<AttendeeType | null>(null)
   const [deactivatingType, setDeactivatingType] = useState<AttendeeType | null>(null)
   const [restoringType, setRestoringType] = useState<AttendeeType | null>(null)
@@ -575,6 +576,8 @@ export function AttendeeTypesPage() {
             bulkActions={bulkActions}
             getItemId={(type) => type.id}
             itemType="types"
+            pageSize={pageSize}
+            onPageSizeChange={setPageSize}
             emptyMessage={
               searchQuery
                 ? 'Aucun type ne correspond à votre recherche'

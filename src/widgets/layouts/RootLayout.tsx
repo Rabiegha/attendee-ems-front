@@ -9,6 +9,7 @@ import {
 import { Header } from '@/widgets/Header'
 import { Sidebar } from '@/widgets/Sidebar'
 import { PageTransition } from '@/shared/ui/PageTransition'
+import { cn } from '@/shared/lib/utils'
 
 export const RootLayout: React.FC = () => {
   const dispatch = useDispatch()
@@ -25,10 +26,18 @@ export const RootLayout: React.FC = () => {
     return saved !== null ? JSON.parse(saved) : true
   })
 
+  // State pour le menu mobile
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
   // Sauvegarder l'état de la sidebar dans le localStorage
   useEffect(() => {
     localStorage.setItem('sidebarOpen', JSON.stringify(isSidebarOpen))
   }, [isSidebarOpen])
+
+  // Fermer le menu mobile quand on change de route
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [location.pathname])
 
   // Protection anti-boucle : compter les redirections
   const redirectCountRef = useRef(0)
@@ -135,11 +144,25 @@ export const RootLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-69px)] bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      <Header />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <Header onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
       <div className="flex">
-        <Sidebar isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <main className={`flex-1 pt-[69px] transition-all duration-300 min-w-0 ${isSidebarOpen ? 'ml-64' : 'ml-16'}`}>
+        <Sidebar 
+          isOpen={isSidebarOpen} 
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+          isMobileMenuOpen={isMobileMenuOpen}
+          onMobileMenuClose={() => setIsMobileMenuOpen(false)}
+        />
+        <main 
+          className={cn(
+            'flex-1 min-w-0 transition-all duration-300',
+            // Mobile: Full width with top padding for header
+            'pt-[57px] sm:pt-[64px]',
+            // Desktop: Account for sidebar and header
+            'lg:pt-[69px]',
+            isSidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
+          )}
+        >
           <PageTransition>
             <Outlet />
           </PageTransition>

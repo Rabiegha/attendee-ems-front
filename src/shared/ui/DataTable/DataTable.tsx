@@ -104,6 +104,7 @@ interface DataTableProps<TData, TValue> {
   pageSize?: number
   enablePagination?: boolean
   totalItems?: number
+  currentPage?: number // Page actuelle (1-based) pour pagination côté serveur
   onPageChange?: (page: number) => void
   onPageSizeChange?: (pageSize: number) => void
   // Column features
@@ -204,6 +205,10 @@ export function DataTable<TData, TValue>({
   className,
   isLoading = false,
   emptyMessage = 'Aucune donnée disponible',
+  onPageChange,
+  onPageSizeChange,
+  totalItems,
+  currentPage,
 }: DataTableProps<TData, TValue>) {
   // Generate a stable key for localStorage based on column IDs
   const storageKey = React.useMemo(() => {
@@ -253,6 +258,13 @@ export function DataTable<TData, TValue>({
   const [showColumnSettings, setShowColumnSettings] = React.useState(false)
   const [activeId, setActiveId] = React.useState<string | null>(null)
   const [lastSelectedIndex, setLastSelectedIndex] = React.useState<number | null>(null)
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: pageSize,
+  })
+  
+  // Ref pour éviter les boucles infinies entre props et state
+  const isUpdatingFromProps = React.useRef(false)
 
   // Helper pour les styles de pinning (sticky positioning)
   const getCommonPinningStyles = (column: Column<TData>): React.CSSProperties => {
@@ -361,13 +373,20 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    ...(enablePagination && { getPaginationRowModel: getPaginationRowModel() }),
+    ...(enablePagination && { 
+      getPaginationRowModel: getPaginationRowModel(),
+      ...(totalItems ? {
+        manualPagination: true,
+        pageCount: Math.ceil(totalItems / pageSize),
+      } : {}),
+    }),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onColumnOrderChange: setColumnOrder,
     onColumnPinningChange: setColumnPinning,
+    ...(totalItems ? {} : { onPaginationChange: setPagination }), // Seulement pour pagination locale
     enableRowSelection,
     sortingFns: {
       caseInsensitive: caseInsensitiveSort,
@@ -379,11 +398,7 @@ export function DataTable<TData, TValue>({
       rowSelection,
       columnOrder,
       columnPinning,
-    },
-    initialState: {
-      pagination: {
-        pageSize,
-      },
+      ...(enablePagination && !totalItems && { pagination }), // Pagination dans state seulement si locale
     },
   })
 
@@ -895,16 +910,34 @@ export function DataTable<TData, TValue>({
             ) : (
               <>
                 <span>
-                  Affichage de {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} à {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} sur {table.getFilteredRowModel().rows.length} résultats
+                  {totalItems ? (
+                    // Pagination côté serveur : utiliser totalItems
+                    `Affichage de ${pagination.pageIndex * pagination.pageSize + 1} à ${Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalItems)} sur ${totalItems} résultats`
+                  ) : (
+                    // Pagination locale : utiliser les données filtrées
+                    `Affichage de ${table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} à ${Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} sur ${table.getFilteredRowModel().rows.length} résultats`
+                  )}
                 </span>
                 <div className="flex items-center gap-2">
                   <span className="whitespace-nowrap">Par page :</span>
                   <select
-                    value={table.getState().pagination.pageSize}
-                    onChange={(e) => table.setPageSize(Number(e.target.value))}
+                    value={totalItems ? pageSize : table.getState().pagination.pageSize}
+                    onChange={(e) => {
+                      const newSize = Number(e.target.value)
+                      if (totalItems && onPageSizeChange) {
+                        // Pagination serveur : appeler callback directement
+                        onPageSizeChange(newSize)
+                      } else {
+                        // Pagination locale : utiliser TanStack Table
+                        table.setPageSize(newSize)
+                        if (onPageSizeChange) {
+                          onPageSizeChange(newSize)
+                        }
+                      }
+                    }}
                     className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-none text-center"
                   >
-                    {[10, 20, 30, 50, 100, 200, 500].map((size) => (
+                    {[5, 10, 20, 30, 50, 100, 200, 500, 1000].map((size) => (
                       <option key={size} value={size}>
                         {size}
                       </option>
@@ -921,8 +954,14 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
+                onClick={() => {
+                  if (totalItems && onPageChange) {
+                    onPageChange(1)
+                  } else {
+                    table.setPageIndex(0)
+                  }
+                }}
+                disabled={totalItems ? (currentPage || 1) <= 1 : !table.getCanPreviousPage()}
                 className="flex-shrink-0"
               >
                 <ChevronsLeft className="h-4 w-4" />
@@ -930,8 +969,14 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
+                onClick={() => {
+                  if (totalItems && onPageChange) {
+                    onPageChange((currentPage || 1) - 1)
+                  } else {
+                    table.previousPage()
+                  }
+                }}
+                disabled={totalItems ? (currentPage || 1) <= 1 : !table.getCanPreviousPage()}
                 className="flex-shrink-0"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -940,7 +985,7 @@ export function DataTable<TData, TValue>({
               {/* Page numbers */}
               <div className="flex items-center gap-1">
                 {(() => {
-                  const currentPage = table.getState().pagination.pageIndex + 1
+                  const currentPageNum = totalItems ? (currentPage || 1) : table.getState().pagination.pageIndex + 1
                   const totalPages = table.getPageCount()
                   const pages: (number | string)[] = []
                   
@@ -951,14 +996,14 @@ export function DataTable<TData, TValue>({
                     // Always show first page
                     pages.push(1)
                     
-                    if (currentPage > 3) pages.push('...')
+                    if (currentPageNum > 3) pages.push('...')
                     
                     // Show pages around current
-                    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                    for (let i = Math.max(2, currentPageNum - 1); i <= Math.min(totalPages - 1, currentPageNum + 1); i++) {
                       pages.push(i)
                     }
                     
-                    if (currentPage < totalPages - 2) pages.push('...')
+                    if (currentPageNum < totalPages - 2) pages.push('...')
                     
                     // Always show last page
                     pages.push(totalPages)
@@ -968,9 +1013,15 @@ export function DataTable<TData, TValue>({
                     typeof page === 'number' ? (
                       <Button
                         key={page}
-                        variant={currentPage === page ? 'default' : 'outline'}
+                        variant={currentPageNum === page ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => table.setPageIndex(page - 1)}
+                        onClick={() => {
+                          if (totalItems && onPageChange) {
+                            onPageChange(page)
+                          } else {
+                            table.setPageIndex(page - 1)
+                          }
+                        }}
                         className="min-w-[2.5rem] flex-shrink-0"
                       >
                         {page}
@@ -985,8 +1036,14 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
+                onClick={() => {
+                  if (totalItems && onPageChange) {
+                    onPageChange((currentPage || 1) + 1)
+                  } else {
+                    table.nextPage()
+                  }
+                }}
+                disabled={totalItems ? (currentPage || 1) >= table.getPageCount() : !table.getCanNextPage()}
                 className="flex-shrink-0"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -994,8 +1051,14 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
+                onClick={() => {
+                  if (totalItems && onPageChange) {
+                    onPageChange(table.getPageCount())
+                  } else {
+                    table.setPageIndex(table.getPageCount() - 1)
+                  }
+                }}
+                disabled={totalItems ? (currentPage || 1) >= table.getPageCount() : !table.getCanNextPage()}
                 className="flex-shrink-0"
               >
                 <ChevronsRight className="h-4 w-4" />

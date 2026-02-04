@@ -26,9 +26,10 @@ export const ReportsPage: React.FC = () => {
   }>({ eventNames: [], checkInRates: [], avgCheckInRate: 0 })
 
   // Fetch all events
-  const { data: events = [], isLoading: eventsLoading } = useGetEventsQuery({
+  const { data: eventsResponse, isLoading: eventsLoading } = useGetEventsQuery({
     limit: 10000,
   })
+  const events = eventsResponse?.data || []
 
   // Fetch all attendees with pagination info
   const {

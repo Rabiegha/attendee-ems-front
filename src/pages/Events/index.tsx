@@ -45,6 +45,8 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   const [tagFilters, setTagFilters] = useState<string[]>([])
   const [filterValues, setFilterValues] = useState<FilterValues>({})
   const [sortValue, setSortValue] = useState<string>('createdAt-desc')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(12)
 
   // Récupérer l'utilisateur actuel
   const currentUser = useSelector(selectUser)
@@ -59,9 +61,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   // Récupération des événements avec filtres
   const queryParams = useMemo(() => {
     const params: any = {
+      page: currentPage,
+      limit: itemsPerPage,
       sortBy,
       sortOrder,
-      limit: 500, // Augmenté de 50 à 100 pour afficher plus d'événements
     }
 
     if (searchQuery) {
@@ -69,13 +72,21 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
     }
 
     return params
-  }, [searchQuery, sortBy, sortOrder])
+  }, [currentPage, itemsPerPage, searchQuery, sortBy, sortOrder])
 
-  const { data: events = [], isLoading, error } = useGetEventsQuery(queryParams)
+  const { data: eventsResponse, isLoading, error } = useGetEventsQuery(queryParams)
+  const events = eventsResponse?.data || []
+  const totalPages = eventsResponse?.meta?.totalPages || 1
+  const totalEvents = eventsResponse?.meta?.total || 0
 
   const handleRefresh = () => {
     dispatch(eventsApi.util.invalidateTags(['Events']))
   }
+
+  // Réinitialiser la page à 1 quand les filtres changent
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, tagFilters, filterValues, sortValue])
 
   // Filtrage côté client pour tags et autres filtres
   const filteredEvents = useMemo(() => {
@@ -229,7 +240,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
         {/* Filtres et recherche */}
         <PageSection spacing="lg">
           <FilterBar
-            resultCount={filteredEvents.length}
+            resultCount={totalEvents}
             resultLabel="événement"
             onReset={handleResetFilters}
             showResetButton={searchQuery !== '' || tagFilters.length > 0 || Object.keys(filterValues).length > 0}
@@ -486,6 +497,130 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 </Card>
               </Link>
             ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !error && filteredEvents.length > 0 && totalPages > 1 && (
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 dark:border-gray-700 pt-6">
+            {/* Info pagination et sélecteur de taille */}
+            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+              <span>
+                Affichage de {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, totalEvents)} sur {totalEvents} événement(s)
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="whitespace-nowrap">Par page :</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    const newSize = Number(e.target.value)
+                    setItemsPerPage(newSize)
+                    setCurrentPage(1) // Reset à la page 1 quand on change la taille
+                  }}
+                  className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {[12, 24, 48, 100].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            {/* Contrôles pagination */}
+            <div className="flex items-center gap-2">
+              {/* Première page */}
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                title="Première page"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              {/* Page précédente */}
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              {/* Numéros de pages */}
+              <div className="flex items-center gap-1">
+                {(() => {
+                  const pages: (number | string)[] = []
+                  
+                  if (totalPages <= 7) {
+                    // Afficher toutes les pages si 7 ou moins
+                    for (let i = 1; i <= totalPages; i++) pages.push(i)
+                  } else {
+                    // Toujours afficher la première page
+                    pages.push(1)
+                    
+                    if (currentPage > 3) pages.push('...')
+                    
+                    // Afficher les pages autour de la page courante
+                    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) {
+                      pages.push(i)
+                    }
+                    
+                    if (currentPage < totalPages - 2) pages.push('...')
+                    
+                    // Toujours afficher la dernière page
+                    pages.push(totalPages)
+                  }
+                  
+                  return pages.map((page, idx) =>
+                    typeof page === 'number' ? (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`min-w-[2.5rem] px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 ${
+                          currentPage === page
+                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ) : (
+                      <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">...</span>
+                    )
+                  )
+                })()}
+              </div>
+              
+              {/* Page suivante */}
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              
+              {/* Dernière page */}
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                title="Dernière page"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
       </PageSection>

@@ -598,7 +598,8 @@ function UsersPageContent() {
             }
             // Server-side pagination
             enablePagination={true}
-            pageSize={usersData?.limit || 10}
+            pageSize={filters.pageSize || 20}
+            currentPage={filters.page || 1}
             totalItems={usersData?.total || 0}
             onPageChange={(page: number) => {
               dispatch(setFilters({ page }))

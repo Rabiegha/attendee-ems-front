@@ -1556,6 +1556,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           // Server-side pagination
           enablePagination={true}
           pageSize={pageSize || 50}
+          currentPage={currentPage || 1}
           totalItems={meta?.total || 0}
           onPageChange={onPageChange || (() => {})}
           onPageSizeChange={onPageSizeChange || (() => {})}

@@ -90,7 +90,14 @@ export const EventDetails: React.FC = () => {
 
   // State pour la pagination des inscriptions
   const [registrationsPage, setRegistrationsPage] = useState(1)
-  const [registrationsPageSize, setRegistrationsPageSize] = useState(1000) // Augmenté de 50 à 100 pour afficher plus de participants
+  const [registrationsPageSize, setRegistrationsPageSize] = useState(50)
+
+  // DEBUG: Log pour voir les changements
+  console.log('🔍 EventDetails Pagination State:', {
+    registrationsPage,
+    registrationsPageSize,
+    activeTab,
+  })
   const [registrationsIsActive, setRegistrationsIsActive] = useState(true)
   const [registrationsActiveTab, setRegistrationsActiveTab] = useState<'active' | 'deleted'>('active')
 
@@ -1003,11 +1010,15 @@ export const EventDetails: React.FC = () => {
               meta={registrationsMeta}
               stats={activeMeta}
               // Server-side pagination props
-              currentPage={registrationsMeta.page}
-              pageSize={registrationsPageSize} // Utiliser le state local au lieu de registrationsMeta.limit
+              currentPage={registrationsPage}
+              pageSize={registrationsPageSize}
               totalPages={registrationsMeta.totalPages}
-              onPageChange={(page) => setRegistrationsPage(page)}
+              onPageChange={(page) => {
+                console.log('📄 Page changed to:', page)
+                setRegistrationsPage(page)
+              }}
               onPageSizeChange={(pageSize) => {
+                console.log('📏 PageSize changed to:', pageSize)
                 setRegistrationsPageSize(pageSize)
                 setRegistrationsPage(1) // Reset to first page when changing page size
               }}

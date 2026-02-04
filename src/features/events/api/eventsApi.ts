@@ -47,9 +47,19 @@ export interface EventsListResponse {
   }
 }
 
+export interface EventsListResult {
+  data: EventDPO[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
 export const eventsApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    getEvents: builder.query<EventDPO[], EventsListParams>({
+    getEvents: builder.query<EventsListResult, EventsListParams>({
       query: (params) => {
         const searchParams = new URLSearchParams()
         Object.entries(params).forEach(([key, value]) => {
@@ -63,12 +73,14 @@ export const eventsApi = rootApi.injectEndpoints({
         })
         return `${API_ENDPOINTS.EVENTS.LIST}?${searchParams.toString()}`
       },
-      transformResponse: (response: EventsListResponse) =>
-        response.data.map(mapEventDTOtoDPO),
+      transformResponse: (response: EventsListResponse) => ({
+        data: response.data.map(mapEventDTOtoDPO),
+        meta: response.meta,
+      }),
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'Event' as const, id })),
+              ...result.data.map(({ id }) => ({ type: 'Event' as const, id })),
               { type: 'Events', id: 'LIST' },
             ]
           : [{ type: 'Events', id: 'LIST' }],

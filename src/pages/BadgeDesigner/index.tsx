@@ -17,8 +17,6 @@ import {
   type SortOption
 } from '@/shared/ui';
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api';
-import { TemplatePreviewModal } from './components/TemplatePreviewModal';
-import type { BadgeTemplate } from '@/shared/types/badge.types';
 
 export const BadgeDesigner: React.FC = () => {
   const navigate = useNavigate();
@@ -36,9 +34,6 @@ export const BadgeDesigner: React.FC = () => {
   const statusFilter = filterValues.status as string | undefined;
   const isDefaultFilter = filterValues.isDefault as string | undefined;
   const [sortBy, sortOrder] = sortValue.split('-') as [string, 'asc' | 'desc'];
-  
-  // État pour la modal d'aperçu
-  const [previewTemplate, setPreviewTemplate] = useState<BadgeTemplate | null>(null);
   
   const { 
     data: badgeTemplatesResponse, 
@@ -228,13 +223,6 @@ export const BadgeDesigner: React.FC = () => {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => setPreviewTemplate(template)}
-                    >
-                      Aperçu
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
                       onClick={() => navigate(`/badges/designer/${template.id}`)}
                     >
                       Modifier
@@ -281,15 +269,6 @@ export const BadgeDesigner: React.FC = () => {
         )}
       </Card>
       </div>
-
-      {/* Modal d'aperçu */}
-      {previewTemplate && (
-        <TemplatePreviewModal
-          isOpen={true}
-          onClose={() => setPreviewTemplate(null)}
-          template={previewTemplate}
-        />
-      )}
     </PageContainer>
   );
 };

@@ -90,16 +90,9 @@ const EventsList = () => {
   const userRole = user?.roles?.[0] || 'VIEWER'
   const isSuperAdmin = userRole === 'SUPER_ADMIN'
 
-  // Filter events based on user role (RBAC still needed on frontend for security)
-  const filteredEvents = events.filter((event) => {
-    // RBAC: SUPER_ADMIN sees all events, others see only their org events
-    if (!isSuperAdmin && event.orgId !== orgId) {
-      return false
-    }
-    
-    // Other filters are now handled by the API
-    return true
-  })
+  // Le filtrage RBAC est maintenant géré par le backend
+  // On utilise directement les événements de l'API
+  const filteredEvents = events
 
   // Configuration des filtres pour le popup
   const filterConfig = {

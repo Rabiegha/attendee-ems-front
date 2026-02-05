@@ -88,6 +88,13 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
     setCurrentPage(1)
   }, [searchQuery, tagFilters, filterValues, sortValue])
 
+  // Détecte si des filtres locaux (non gérés par l'API) sont actifs
+  const hasLocalFilters = tagFilters.length > 0 
+    || (statusFilter && statusFilter !== 'all') 
+    || (locationTypeFilter && locationTypeFilter !== 'all')
+    || (eventStateFilter && eventStateFilter !== 'all')
+    || (assignedToMeFilter && assignedToMeFilter !== 'all')
+
   // Filtrage côté client pour tags et autres filtres
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
@@ -136,6 +143,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       return true
     })
   }, [events, tagFilters, statusFilter, locationTypeFilter, eventStateFilter, assignedToMeFilter, currentUser])
+
+  // Nombre total à afficher : si des filtres locaux sont actifs, on affiche le nombre filtré
+  // Sinon on affiche le total de l'API qui prend en compte la recherche
+  const displayCount = hasLocalFilters ? filteredEvents.length : totalEvents
 
   const handleCreateEvent = () => {
     navigate('/events/create')
@@ -240,7 +251,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
         {/* Filtres et recherche */}
         <PageSection spacing="lg">
           <FilterBar
-            resultCount={totalEvents}
+            resultCount={displayCount}
             resultLabel="événement"
             onReset={handleResetFilters}
             showResetButton={searchQuery !== '' || tagFilters.length > 0 || Object.keys(filterValues).length > 0}
@@ -342,7 +353,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       {/* Filtres et recherche */}
       <PageSection spacing="lg">
         <FilterBar
-          resultCount={filteredEvents.length}
+          resultCount={displayCount}
           resultLabel="événement"
           onReset={handleResetFilters}
           showResetButton={searchQuery !== '' || tagFilters.length > 0 || Object.keys(filterValues).length > 0}

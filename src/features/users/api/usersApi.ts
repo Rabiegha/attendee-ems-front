@@ -80,16 +80,16 @@ export const usersApi = rootApi.injectEndpoints({
       },
       {
         page?: number
-        pageSize?: number
+        limit?: number
         search?: string
         isActive?: boolean
       }
     >({
-      query: ({ page = 1, pageSize = 10, search, isActive }) => ({
+      query: ({ page = 1, limit = 10, search, isActive }) => ({
         url: API_ENDPOINTS.USERS.LIST,
         params: {
           page: page.toString(),
-          limit: pageSize.toString(),
+          limit: limit.toString(),
           ...(search && { q: search }),
           ...(isActive !== undefined && { isActive: isActive.toString() }),
         },
@@ -101,7 +101,7 @@ export const usersApi = rootApi.injectEndpoints({
       keepUnusedDataFor: 0, // Désactiver complètement le cache
       // Force RTK Query à considérer chaque combinaison de paramètres comme unique
       serializeQueryArgs: ({ queryArgs }) => {
-        return `users-${queryArgs.isActive}-${queryArgs.page}-${queryArgs.pageSize}-${queryArgs.search || ''}`
+        return `users-${queryArgs.isActive}-${queryArgs.page}-${queryArgs.limit}-${queryArgs.search || ''}`
       },
     }),
 

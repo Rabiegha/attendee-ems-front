@@ -221,12 +221,13 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
   })
 
   const { 
-    data: globalTypes, 
+    data: globalTypesResponse, 
     isLoading: isLoadingGlobal,
     refetch: refetchGlobal 
-  } = useGetAttendeeTypesQuery(orgId, {
+  } = useGetAttendeeTypesQuery({ orgId, limit: 1000 }, {
     skip: !orgId,
   })
+  const globalTypes = globalTypesResponse?.data || []
 
   const { 
     data: eventTypes, 

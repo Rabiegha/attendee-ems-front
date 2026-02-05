@@ -12,13 +12,13 @@ import {
   FilterBar,
   FilterButton,
   FilterSort,
+  Pagination,
   type FilterValues,
   type SortOption
 } from '@/shared/ui';
 import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api';
 import { TemplatePreviewModal } from './components/TemplatePreviewModal';
 import type { BadgeTemplate } from '@/shared/types/badge.types';
-import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch';
 
 export const BadgeDesigner: React.FC = () => {
   const navigate = useNavigate();
@@ -28,18 +28,36 @@ export const BadgeDesigner: React.FC = () => {
   const [filterValues, setFilterValues] = useState<FilterValues>({});
   const [sortValue, setSortValue] = useState<string>('createdAt-desc');
   
+  // États de pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(12);
+  
+  // Extraction des valeurs de filtres et tri
+  const statusFilter = filterValues.status as string | undefined;
+  const isDefaultFilter = filterValues.isDefault as string | undefined;
+  const [sortBy, sortOrder] = sortValue.split('-') as [string, 'asc' | 'desc'];
+  
   // État pour la modal d'aperçu
   const [previewTemplate, setPreviewTemplate] = useState<BadgeTemplate | null>(null);
   
   const { 
-    data, 
+    data: badgeTemplatesResponse, 
     isLoading, 
     error,
     refetch 
   } = useGetBadgeTemplatesQuery({ 
-    page: 1, 
-    limit: 100 
+    page: currentPage, 
+    limit: pageSize,
+    search: searchQuery || undefined,
+    isActive: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined,
+    isDefault: isDefaultFilter === 'default' ? true : isDefaultFilter === 'custom' ? false : undefined,
+    sortBy: sortBy,
+    sortOrder: sortOrder
   });
+
+  const templates = badgeTemplatesResponse?.data || [];
+  const totalTemplates = badgeTemplatesResponse?.meta?.total || 0;
+  const totalPages = badgeTemplatesResponse?.meta?.totalPages || 1;
 
   // Configuration des filtres
   const filterConfig: Record<string, any> = {
@@ -73,67 +91,12 @@ export const BadgeDesigner: React.FC = () => {
     { value: 'usageCount-asc', label: 'Moins utilisé' },
   ];
 
-  // Extraction des valeurs de filtres et tri
-  const statusFilter = filterValues.status as string | undefined;
-  const isDefaultFilter = filterValues.isDefault as string | undefined;
-  const [sortBy, sortOrder] = sortValue.split('-') as [string, 'asc' | 'desc'];
-
-  // 1. Recherche floue
-  const searchResults = useFuzzySearch(
-    data?.data || [],
-    searchQuery,
-    ['name', 'description']
-  );
-
-  // Filtrage et tri des templates
-  const filteredAndSortedTemplates = useMemo(() => {
-    if (!data?.data) return [];
-
-    let filtered = [...searchResults];
-
-    // Filtrage par statut
-    if (statusFilter) {
-      filtered = filtered.filter((template) =>
-        statusFilter === 'active' ? template.is_active : !template.is_active
-      );
-    }
-
-    // Filtrage par type (défaut/personnalisé)
-    if (isDefaultFilter) {
-      filtered = filtered.filter((template) =>
-        isDefaultFilter === 'default' ? template.is_default : !template.is_default
-      );
-    }
-
-    // Tri
-    filtered.sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortBy) {
-        case 'createdAt':
-          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-          break;
-        case 'name':
-          comparison = a.name.localeCompare(b.name, 'fr');
-          break;
-        case 'usageCount':
-          comparison = (a.usage_count || 0) - (b.usage_count || 0);
-          break;
-        default:
-          comparison = 0;
-      }
-
-      return sortOrder === 'desc' ? -comparison : comparison;
-    });
-
-    return filtered;
-  }, [searchResults, statusFilter, isDefaultFilter, sortBy, sortOrder, data?.data]);
-
   // Fonction pour réinitialiser les filtres
   const handleResetFilters = () => {
     setSearchQuery('');
     setFilterValues({});
     setSortValue('createdAt-desc');
+    setCurrentPage(1);
   };
 
   return (
@@ -155,7 +118,7 @@ export const BadgeDesigner: React.FC = () => {
 
       {/* Barre de recherche et filtres */}
       <FilterBar
-        resultCount={filteredAndSortedTemplates.length}
+        resultCount={totalTemplates}
         resultLabel="template"
         onReset={handleResetFilters}
         showResetButton={searchQuery !== '' || Object.keys(filterValues).length > 0}
@@ -197,10 +160,10 @@ export const BadgeDesigner: React.FC = () => {
           </div>
         )}
 
-        {!isLoading && !error && data?.data && data.data.length > 0 && (
+        {!isLoading && !error && templates && templates.length > 0 && (
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAndSortedTemplates.map((template) => (
+              {templates.map((template) => (
                 <div 
                   key={template.id}
                   className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -280,10 +243,24 @@ export const BadgeDesigner: React.FC = () => {
                 </div>
               ))}
             </div>
+            
+            {/* Pagination */}
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={pageSize}
+              total={totalTemplates}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
+              pageSizeOptions={[12, 24, 48, 96]}
+            />
           </div>
         )}
 
-        {!isLoading && !error && (!data?.data || data.data.length === 0) && (
+        {!isLoading && !error && (!templates || templates.length === 0) && (
           <div className="p-8 text-center">
             <CreditCard className="h-16 w-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
             <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300 mb-2">

@@ -27,17 +27,20 @@ export const invitationsApi = rootApi.injectEndpoints({
         invitations: UserInvitation[]
         total: number
         pending: number
+        page: number
+        limit: number
+        totalPages: number
       },
       {
         status?: 'pending' | 'accepted' | 'expired' | 'cancelled'
         limit?: number
-        offset?: number
+        page?: number
       }
     >({
-      query: ({ status, limit = 20, offset = 0 } = {}) => {
+      query: ({ status, limit = 20, page = 1 } = {}) => {
         const params = new URLSearchParams({
           limit: limit.toString(),
-          offset: offset.toString(),
+          page: page.toString(),
         })
         if (status) {
           params.append('status', status)

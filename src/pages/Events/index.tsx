@@ -512,7 +512,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
         )}
 
         {/* Pagination */}
-        {!isLoading && !error && filteredEvents.length > 0 && totalPages > 1 && (
+        {!isLoading && !error && filteredEvents.length > 0 && (
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-gray-200 dark:border-gray-700 pt-6">
             {/* Info pagination et sélecteur de taille */}
             <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
@@ -539,7 +539,8 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
               </div>
             </div>
             
-            {/* Contrôles pagination */}
+            {/* Contrôles pagination - affichés seulement s'il y a plusieurs pages */}
+            {totalPages > 1 && (
             <div className="flex items-center gap-2">
               {/* Première page */}
               <button
@@ -632,6 +633,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 </svg>
               </button>
             </div>
+            )}
           </div>
         )}
       </PageSection>

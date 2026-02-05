@@ -12,6 +12,11 @@ export interface BadgeTemplatesQuery {
   search?: string;
   page?: number;
   limit?: number;
+  eventId?: string;
+  isActive?: boolean;
+  isDefault?: boolean;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export const badgeTemplatesApi = rootApi.injectEndpoints({
@@ -23,8 +28,23 @@ export const badgeTemplatesApi = rootApi.injectEndpoints({
           search: params.search,
           page: params.page || 1,
           limit: params.limit || 10,
+          eventId: params.eventId,
+          isActive: params.isActive,
+          isDefault: params.isDefault,
+          sortBy: params.sortBy,
+          sortOrder: params.sortOrder,
         },
       }),
+      transformResponse: (response: any) => {
+        // Normaliser la réponse : pagination -> meta (pour compatibilité)
+        if (response.pagination && !response.meta) {
+          return {
+            data: response.data,
+            meta: response.pagination
+          };
+        }
+        return response;
+      },
       providesTags: ['Badges'],
     }),
 

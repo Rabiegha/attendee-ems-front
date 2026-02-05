@@ -31,7 +31,7 @@ export function StepTwo({ formData, updateFormData }: StepTwoProps) {
   const [searchTerm, setSearchTerm] = useState('')
 
   // Récupérer tous les utilisateurs de l'organisation
-  const { data: usersData } = useGetUsersQuery({ page: 1, pageSize: 1000 })
+  const { data: usersData } = useGetUsersQuery({ page: 1, limit: 1000 })
   const users = usersData?.users || []
 
   // Filtrer les utilisateurs par recherche (Fuzzy Search)

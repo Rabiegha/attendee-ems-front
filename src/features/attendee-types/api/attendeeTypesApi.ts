@@ -32,10 +32,36 @@ export interface UpdateAttendeeTypeDto {
   is_active?: boolean
 }
 
+export interface ListAttendeeTypesParams {
+  page?: number
+  limit?: number
+  sortBy?: 'name' | 'code' | 'created_at'
+  sortOrder?: 'asc' | 'desc'
+}
+
+export interface AttendeeTypesListResponse {
+  data: AttendeeType[]
+  meta: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
 export const attendeeTypesApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAttendeeTypes: builder.query<AttendeeType[], string>({
-      query: (orgId) => `/orgs/${orgId}/attendee-types`,
+    getAttendeeTypes: builder.query<AttendeeTypesListResponse, { orgId: string } & ListAttendeeTypesParams>({
+      query: ({ orgId, ...params }) => {
+        const searchParams = new URLSearchParams()
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined) {
+            searchParams.append(key, String(value))
+          }
+        })
+        const queryString = searchParams.toString()
+        return `/orgs/${orgId}/attendee-types${queryString ? `?${queryString}` : ''}`
+      },
       providesTags: ['AttendeeTypes'],
     }),
 

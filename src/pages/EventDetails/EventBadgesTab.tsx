@@ -192,7 +192,8 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
   const [deleteBadgeRule] = useDeleteEventBadgeRuleMutation()
 
   // Récupérer les templates de badges disponibles
-const { data: badgeTemplatesData } = useGetBadgeTemplatesQuery({})
+  const { data: badgeTemplatesResponse } = useGetBadgeTemplatesQuery({})
+  const badgeTemplatesData = badgeTemplatesResponse?.data || [];
 
   // Récupérer les attendee types de l'événement
   const { data: eventAttendeeTypesData = [] } = useGetEventAttendeeTypesQuery(event.id)

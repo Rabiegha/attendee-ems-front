@@ -60,7 +60,6 @@ export interface AttendeesListParams {
   eventId?: string
   page?: number
   limit?: number
-  pageSize?: number
   status?: string
   isActive?: boolean
   search?: string
@@ -75,7 +74,7 @@ export interface AttendeesListResponse {
   data: AttendeeDPO[]
   meta: {
     page: number
-    pageSize: number
+    limit: number
     total: number
     totalPages: number
   }

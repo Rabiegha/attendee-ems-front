@@ -21,7 +21,7 @@ export interface BadgeTemplate {
 
 export interface BadgeTemplateListResponse {
   data: BadgeTemplate[];
-  pagination: {
+  meta: {
     page: number;
     limit: number;
     total: number;

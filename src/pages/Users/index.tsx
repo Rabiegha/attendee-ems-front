@@ -89,14 +89,14 @@ function UsersPageContent() {
   // Queries for stats (active users count)
   const { data: activeUsersStats } = useGetUsersQuery({
     page: 1,
-    pageSize: 1,
+    limit: 1,
     isActive: true,
   })
 
   // Query for stats (deleted users count)
   const { data: deletedUsersStats } = useGetUsersQuery({
     page: 1,
-    pageSize: 1,
+    limit: 1,
     isActive: false,
   })
 

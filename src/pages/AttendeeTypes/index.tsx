@@ -96,10 +96,11 @@ export function AttendeeTypesPage() {
   console.log('[AttendeeTypes] Org ID:', currentOrg?.id)
 
   // API queries and mutations
-  const { data: attendeeTypes = [], isLoading, refetch } = useGetAttendeeTypesQuery(
-    currentOrg?.id || '',
+  const { data: attendeeTypesResponse, isLoading, refetch } = useGetAttendeeTypesQuery(
+    { orgId: currentOrg?.id || '', limit: 1000 },
     { skip: !currentOrg?.id }
   )
+  const attendeeTypes = attendeeTypesResponse?.data || []
   const [createType] = useCreateAttendeeTypeMutation()
   const [updateType] = useUpdateAttendeeTypeMutation()
   const [deleteType] = useDeleteAttendeeTypeMutation()

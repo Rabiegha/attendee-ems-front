@@ -31,7 +31,7 @@ export function AssignedTeam({ eventId }: AssignedTeamProps) {
   } = useGetEventAssignedUsersQuery(eventId)
 
   // Récupérer tous les utilisateurs
-  const { data: usersData } = useGetUsersQuery({ page: 1, pageSize: 1000 })
+  const { data: usersData } = useGetUsersQuery({ page: 1, limit: 1000 })
   const allUsers = usersData?.users || []
 
   // Mutations

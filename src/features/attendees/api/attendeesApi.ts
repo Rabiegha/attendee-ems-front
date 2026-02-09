@@ -82,10 +82,16 @@ export interface AttendeesListResponse {
 
 export const attendeesApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAttendees: builder.query<AttendeesListResponse, AttendeesListParams>({
+    getAttendees: builder.query<AttendeesListResponse, AttendeesListParams & { pageSize?: number }>({
       query: (params) => {
         const searchParams = new URLSearchParams()
-        Object.entries(params).forEach(([key, value]) => {
+        // Transformer pageSize en limit pour le backend
+        const { pageSize, ...restParams } = params
+        const normalizedParams = {
+          ...restParams,
+          ...(pageSize !== undefined && { limit: pageSize }),
+        }
+        Object.entries(normalizedParams).forEach(([key, value]) => {
           if (value !== undefined) {
             if (Array.isArray(value)) {
               value.forEach((v) => searchParams.append(key, v))

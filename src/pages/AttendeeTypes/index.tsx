@@ -96,10 +96,20 @@ export function AttendeeTypesPage() {
   console.log('[AttendeeTypes] Org ID:', currentOrg?.id)
 
   // API queries and mutations
-  const { data: attendeeTypesResponse, isLoading, refetch } = useGetAttendeeTypesQuery(
+  const { data: attendeeTypesResponse, isLoading, error, refetch } = useGetAttendeeTypesQuery(
     { orgId: currentOrg?.id || '', limit: 1000 },
     { skip: !currentOrg?.id }
   )
+  
+  // Debug: logs détaillés
+  console.log('[AttendeeTypes] Query params:', { orgId: currentOrg?.id, limit: 1000 })
+  console.log('[AttendeeTypes] Skip query?', !currentOrg?.id)
+  console.log('[AttendeeTypes] isLoading:', isLoading)
+  console.log('[AttendeeTypes] error:', error)
+  console.log('[AttendeeTypes] Response:', attendeeTypesResponse)
+  console.log('[AttendeeTypes] Fetched from DB:', attendeeTypesResponse?.data)
+  console.log('[AttendeeTypes] Total count:', attendeeTypesResponse?.data?.length)
+  
   const attendeeTypes = attendeeTypesResponse?.data || []
   const [createType] = useCreateAttendeeTypeMutation()
   const [updateType] = useUpdateAttendeeTypeMutation()
@@ -116,7 +126,7 @@ export function AttendeeTypesPage() {
   const searchResults = useFuzzySearch(
     typesByTab,
     searchQuery,
-    ['code', 'name']
+    ['code', 'name'],
   )
 
   // Stats pour les onglets

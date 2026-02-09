@@ -46,7 +46,7 @@ const AttendeesPage: React.FC = () => {
   // Hook pour récupérer tous les IDs lors de l'export global
   const { data: allAttendeesForExport } = useGetAttendeesQuery({
     page: 1,
-    pageSize: 10000,
+    limit: 10000,
     isActive: activeTab === 'active',
   })
 
@@ -55,14 +55,14 @@ const AttendeesPage: React.FC = () => {
   // Query for stats (active attendees count)
   const { data: activeStatsResponse } = useGetAttendeesQuery({
     page: 1,
-    pageSize: 1,
+    limit: 1,
     isActive: true,
   })
 
   // Query for stats (deleted attendees count)
   const { data: deletedStatsResponse } = useGetAttendeesQuery({
     page: 1,
-    pageSize: 1,
+    limit: 1,
     isActive: false,
   })
 

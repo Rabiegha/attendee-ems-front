@@ -37,7 +37,7 @@ export const ReportsPage: React.FC = () => {
     isLoading: attendeesLoading,
   } = useGetAttendeesQuery({
     page: 1,
-    pageSize: 10000,
+    limit: 10000,
   })
 
   const attendees = attendeesResponse?.data || []

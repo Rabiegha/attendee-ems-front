@@ -110,6 +110,7 @@ interface DataTableProps<TData, TValue> {
   // Column features
   enableColumnOrdering?: boolean
   enableColumnVisibility?: boolean
+  initialColumnVisibility?: Record<string, boolean>
   // Tabs
   tabsElement?: React.ReactNode
   // Style
@@ -201,6 +202,7 @@ export function DataTable<TData, TValue>({
   enablePagination = true,
   enableColumnOrdering = true,
   enableColumnVisibility = true,
+  initialColumnVisibility,
   tabsElement,
   className,
   isLoading = false,
@@ -245,15 +247,33 @@ export function DataTable<TData, TValue>({
     return defaultOrder
   }, [columns, storageKey, enableColumnOrdering])
 
+  // Initialize columnVisibility from localStorage or default
+  const getInitialColumnVisibility = React.useCallback((): VisibilityState => {
+    if (!enableColumnVisibility) return {}
+    
+    const visibilityStorageKey = `${storageKey}-visibility`
+    try {
+      const stored = localStorage.getItem(visibilityStorageKey)
+      if (stored) {
+        return JSON.parse(stored) as VisibilityState
+      }
+    } catch (e) {
+      console.warn('Failed to load column visibility from localStorage:', e)
+    }
+    
+    // Si pas de localStorage, utiliser initialColumnVisibility si fourni
+    return initialColumnVisibility || {}
+  }, [storageKey, enableColumnVisibility, initialColumnVisibility])
+
   // States
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(getInitialColumnVisibility)
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
   const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(getInitialColumnOrder)
   const [columnPinning, setColumnPinning] = React.useState<ColumnPinningState>({
     left: ['select'], // Pin la colonne select à gauche par défaut
-    right: [],
+    right: ['actions'], // Pin la colonne actions à droite par défaut
   })
   const [showColumnSettings, setShowColumnSettings] = React.useState(false)
   const [activeId, setActiveId] = React.useState<string | null>(null)
@@ -462,6 +482,18 @@ export function DataTable<TData, TValue>({
     }
   }, [rowSelection, onRowSelectionChange, selectedItems])
 
+  // Save column visibility to localStorage when it changes
+  React.useEffect(() => {
+    if (!enableColumnVisibility) return
+    
+    const visibilityStorageKey = `${storageKey}-visibility`
+    try {
+      localStorage.setItem(visibilityStorageKey, JSON.stringify(columnVisibility))
+    } catch (e) {
+      console.warn('Failed to save column visibility to localStorage:', e)
+    }
+  }, [columnVisibility, storageKey, enableColumnVisibility])
+
   // Get visible columns for ordering (exclude pinned columns)
   const columnIds = React.useMemo(
     () => columnOrder.filter(id => {
@@ -521,6 +553,7 @@ export function DataTable<TData, TValue>({
     
     // Reset column visibility to all visible
     setColumnVisibility({})
+    localStorage.removeItem(`${storageKey}-visibility`)
   }
 
   // Count visible columns
@@ -701,48 +734,44 @@ export function DataTable<TData, TValue>({
                   <tr key={headerGroup.id}>
                     {enableColumnOrdering ? (
                       <>
-                        {headerGroup.headers.map((header) => {
-                          const isPinned = header.column.getIsPinned()
+                        {/* Colonnes pinnées à gauche */}
+                        {headerGroup.headers
+                          .filter(header => header.column.getIsPinned() === 'left')
+                          .map((header) => {
                           const sortHandler = header.column.getToggleSortingHandler()
                           
-                          // Si la colonne est pinnée, utiliser un th simple
-                          if (isPinned) {
-                            return (
-                              <th
-                                key={header.id}
-                                className={cn(
-                                  'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
-                                  header.column.getCanSort() &&
-                                    'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
-                                  'bg-gray-50 dark:bg-gray-700'
+                          return (
+                            <th
+                              key={header.id}
+                              className={cn(
+                                'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
+                                header.column.getCanSort() &&
+                                  'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
+                                'bg-gray-50 dark:bg-gray-700'
+                              )}
+                              onClick={header.column.getCanSort() && sortHandler ? (e) => sortHandler(e) : undefined}
+                              style={getCommonPinningStyles(header.column)}
+                            >
+                              <div className="flex items-center gap-2">
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext()
+                                    )}
+                                {header.column.getCanSort() && (
+                                  <span className="ml-auto flex-shrink-0">
+                                    {{
+                                      asc: <ChevronUp className="h-4 w-4" />,
+                                      desc: <ChevronDown className="h-4 w-4" />,
+                                    }[header.column.getIsSorted() as string] ?? (
+                                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                                    )}
+                                  </span>
                                 )}
-                                onClick={header.column.getCanSort() && sortHandler ? (e) => sortHandler(e) : undefined}
-                                style={getCommonPinningStyles(header.column)}
-                              >
-                                <div className="flex items-center gap-2">
-                                  {header.isPlaceholder
-                                    ? null
-                                    : flexRender(
-                                        header.column.columnDef.header,
-                                        header.getContext()
-                                      )}
-                                  {header.column.getCanSort() && (
-                                    <span className="ml-auto flex-shrink-0">
-                                      {{
-                                        asc: <ChevronUp className="h-4 w-4" />,
-                                        desc: <ChevronDown className="h-4 w-4" />,
-                                      }[header.column.getIsSorted() as string] ?? (
-                                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                                      )}
-                                    </span>
-                                  )}
-                                </div>
-                              </th>
-                            )
-                          }
-                          
-                          // Sinon, wrapper dans SortableContext et utiliser DraggableTableHeader
-                          return null // Sera rendu dans le SortableContext ci-dessous
+                              </div>
+                            </th>
+                          )
                         })}
                         
                         {/* Colonnes draggables dans SortableContext */}
@@ -779,6 +808,46 @@ export function DataTable<TData, TValue>({
                               )
                             })}
                         </SortableContext>
+
+                        {/* Colonnes pinnées à droite */}
+                        {headerGroup.headers
+                          .filter(header => header.column.getIsPinned() === 'right')
+                          .map((header) => {
+                          const sortHandler = header.column.getToggleSortingHandler()
+                          
+                          return (
+                            <th
+                              key={header.id}
+                              className={cn(
+                                'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
+                                header.column.getCanSort() &&
+                                  'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
+                                'bg-gray-50 dark:bg-gray-700'
+                              )}
+                              onClick={header.column.getCanSort() && sortHandler ? (e) => sortHandler(e) : undefined}
+                              style={getCommonPinningStyles(header.column)}
+                            >
+                              <div className="flex items-center gap-2">
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.header,
+                                      header.getContext()
+                                    )}
+                                {header.column.getCanSort() && (
+                                  <span className="ml-auto flex-shrink-0">
+                                    {{
+                                      asc: <ChevronUp className="h-4 w-4" />,
+                                      desc: <ChevronDown className="h-4 w-4" />,
+                                    }[header.column.getIsSorted() as string] ?? (
+                                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                            </th>
+                          )
+                        })}
                       </>
                     ) : (
                       headerGroup.headers.map((header) => (

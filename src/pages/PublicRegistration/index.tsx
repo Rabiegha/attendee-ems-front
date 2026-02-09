@@ -40,6 +40,7 @@ const PublicRegistration: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<Record<string, string | boolean>>({})
+  const [gdprConsent, setGdprConsent] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionResult, setSubmissionResult] = useState<{
     type: 'success' | 'already_registered' | 'full' | 'error'
@@ -140,23 +141,37 @@ const PublicRegistration: React.FC = () => {
 
       event?.registration_fields?.forEach((field: any) => {
         const value = formData[field.id]
-        if (!value) return
-
-        if (field.attendeeField) {
+        
+        // Champs custom (type: 'custom') -> stockés dans answers comme objets
+        if (field.type === 'custom') {
+          // Pour les champs custom, on stocke même si vide (sauf undefined/null)
+          if (value !== undefined && value !== null) {
+            answers[field.id] = {
+              label: field.label,
+              value: value,
+              fieldType: field.fieldType
+            }
+          }
+        }
+        // Champs standard - on skip si pas de valeur
+        else if (!value) {
+          return
+        }
+        // Champs standard mappés aux colonnes attendee
+        else if (field.attendeeField) {
           // Convertir de camelCase à snake_case pour le backend
           const backendFieldName = toSnakeCase(field.attendeeField)
           attendee[backendFieldName] = value
-        } else if (field.registrationField) {
+        } 
+        // Champs mappés aux colonnes registration
+        else if (field.registrationField) {
           registrationData[field.registrationField] = value
-        } else if (field.storeInAnswers) {
+        } 
+        // Anciens champs avec storeInAnswers (compatibilité)
+        else if (field.storeInAnswers) {
           answers[field.key] = value
         }
       })
-
-      // Ajouter le consentement RGPD dans les réponses
-      if (formData.gdpr_consent) {
-        answers.gdpr_consent = true
-      }
 
       // Email est requis
       if (!attendee.email) {
@@ -170,10 +185,8 @@ const PublicRegistration: React.FC = () => {
         attendance_type: registrationData.attendance_type || 'onsite',
         source: 'public_form',
         ...registrationData,
-        answers: Object.keys(answers).length > 0 ? answers : undefined,
+        ...(Object.keys(answers).length > 0 && { answers }),
       }
-
-      console.log('📤 Payload envoyé:', payload)
 
       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
       const response = await fetch(
@@ -257,7 +270,11 @@ const PublicRegistration: React.FC = () => {
     const stringValue = typeof value === 'boolean' ? '' : value
     const baseClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
 
-    switch (field.type) {
+    // Déterminer le type de champ à rendre
+    // Pour les champs custom, utiliser field.fieldType, sinon field.type pour les champs standard
+    const fieldType = field.type === 'custom' ? field.fieldType : field.type
+
+    switch (fieldType) {
       case 'textarea':
         return (
           <textarea
@@ -268,6 +285,8 @@ const PublicRegistration: React.FC = () => {
             disabled={disabled}
             rows={4}
             className={baseClasses}
+            {...(field.validation?.minLength ? { minLength: field.validation.minLength } : {})}
+            {...(field.validation?.maxLength ? { maxLength: field.validation.maxLength } : {})}
           />
         )
       case 'select':
@@ -306,16 +325,81 @@ const PublicRegistration: React.FC = () => {
             ))}
           </select>
         )
+      case 'radio':
+        return (
+          <div className="space-y-2">
+            {field.options?.map((option: any) => (
+              <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={field.id}
+                  value={option.value}
+                  checked={value === option.value}
+                  onChange={(e) => handleInputChange(field.id, e.target.value)}
+                  required={field.required}
+                  disabled={disabled}
+                  className="text-blue-600"
+                />
+                <span className="text-gray-900 dark:text-white">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        )
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={value === true}
+              onChange={(e) => handleInputChange(field.id, e.target.checked)}
+              required={field.required}
+              disabled={disabled}
+              className="text-blue-600 w-5 h-5"
+            />
+            <span className="text-gray-900 dark:text-white">{(field as any).checkboxText || field.label}</span>
+          </div>
+        )
+      case 'multiselect':
+        return (
+          <div className="space-y-2">
+            {field.options?.map((option: any) => {
+              const currentValues = value ? (Array.isArray(value) ? value : value.split(',')) : []
+              const isChecked = currentValues.includes(option.value)
+              return (
+                <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        handleInputChange(field.id, [...currentValues, option.value].join(','))
+                      } else {
+                        handleInputChange(field.id, currentValues.filter(v => v !== option.value).join(','))
+                      }
+                    }}
+                    disabled={disabled}
+                    className="text-blue-600"
+                  />
+                  <span className="text-gray-900 dark:text-white">{option.label}</span>
+                </label>
+              )
+            })}
+          </div>
+        )
       default:
         return (
           <input
-            type={field.type}
+            type={fieldType === 'phone' ? 'tel' : (fieldType === 'text' || fieldType === 'email' || fieldType === 'number' || fieldType === 'date') ? fieldType : 'text'}
             value={stringValue}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             placeholder={field.placeholder}
             required={field.required}
             disabled={disabled}
             className={baseClasses}
+            {...((fieldType === 'text' || fieldType === 'email') && field.validation?.minLength ? { minLength: field.validation.minLength } : {})}
+            {...((fieldType === 'text' || fieldType === 'email') && field.validation?.maxLength ? { maxLength: field.validation.maxLength } : {})}
+            {...((fieldType === 'number' || fieldType === 'date') && field.validation?.min ? { min: field.validation.min } : {})}
+            {...((fieldType === 'number' || fieldType === 'date') && field.validation?.max ? { max: field.validation.max } : {})}
           />
         )
     }
@@ -433,7 +517,9 @@ const PublicRegistration: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {event.registration_fields?.map((field: any) => {
+                    {event.registration_fields
+                      ?.filter((field: any) => field.visibleInPublicForm !== false)
+                      .map((field: any) => {
                       // Determine if this field should be full width or half
                       const isFullWidth = field.width !== 'half'
                       const isDisabled =
@@ -456,6 +542,11 @@ const PublicRegistration: React.FC = () => {
                             </label>
                           )}
                           {renderField(field, isDisabled)}
+                          {field.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {field.description}
+                            </p>
+                          )}
                         </div>
                       )
                     })}
@@ -466,8 +557,8 @@ const PublicRegistration: React.FC = () => {
                     <label className="flex items-start gap-3 cursor-pointer group">
                       <input
                         type="checkbox"
-                        checked={!!formData.gdpr_consent}
-                        onChange={(e) => handleInputChange('gdpr_consent', e.target.checked)}
+                        checked={gdprConsent}
+                        onChange={(e) => setGdprConsent(e.target.checked)}
                         required
                         disabled={
                           event.status === 'draft' ||

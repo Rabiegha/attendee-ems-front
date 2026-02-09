@@ -68,6 +68,8 @@ import {
 } from '../utils/registration-helpers'
 import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 import { generateAndDownloadBadge, type BadgeFormat } from '../utils/badgeDownload'
+import type { FormField, CustomField } from '@/features/events/components/FormBuilder/types'
+import { isCustomField } from '@/features/events/components/FormBuilder/types'
 
 interface RegistrationsTableProps {
   registrations: RegistrationDPO[]
@@ -102,6 +104,7 @@ interface RegistrationsTableProps {
   onPageSizeChange?: (pageSize: number) => void
   eventAttendeeTypes?: EventAttendeeType[] | undefined
   isLoadingAttendeeTypes?: boolean
+  formFields?: FormField[]
 }
 
 const STATUS_CONFIG = {
@@ -179,6 +182,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   onPageSizeChange,
   eventAttendeeTypes,
   isLoadingAttendeeTypes = false,
+  formFields = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterValues, setFilterValues] = useState<FilterValues>({})
@@ -825,9 +829,136 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     })
   }, [searchResults, statusFilter, checkinFilter, attendeeTypeFilter])
 
+  // Helper function pour formater les valeurs des champs custom
+  const formatCustomValue = (value: any, field: CustomField): string => {
+    if (value === null || value === undefined) return '-'
+
+    switch (field.fieldType) {
+      case 'date':
+        try {
+          return new Date(value).toLocaleDateString('fr-FR')
+        } catch {
+          return String(value)
+        }
+      case 'checkbox':
+        return value === true ? '✓' : '✗'
+      case 'multiselect':
+        if (Array.isArray(value)) {
+          return value.join(', ')
+        }
+        return String(value)
+      case 'select':
+      case 'radio':
+        // Trouver le label de l'option sélectionnée
+        const option = field.options?.find(opt => opt.value === value)
+        return option?.label || String(value)
+      default:
+        return String(value)
+    }
+  }
+
+  // Extraire toutes les clés d'answers présentes dans les données
+  const allAnswerKeys = useMemo(() => {
+    const keys = new Set<string>()
+    registrations.forEach(reg => {
+      if (reg.answers && typeof reg.answers === 'object') {
+        Object.keys(reg.answers).forEach(key => keys.add(key))
+      }
+    })
+    return Array.from(keys)
+  }, [registrations])
+
+  // Calculer la visibilité initiale des colonnes basée sur le contenu
+  const initialColumnVisibility = useMemo(() => {
+    const visibility: Record<string, boolean> = {}
+    
+    // Toujours afficher select, participant et actions
+    // Les autres colonnes ne sont affichées que si elles ont au moins une valeur
+    
+    // Contact : masquer si aucun email ET aucun téléphone ET aucun commentaire
+    const hasContactData = registrations.some(reg => 
+      getRegistrationEmail(reg) || getRegistrationPhone(reg) || reg.comment
+    )
+    visibility['contact'] = hasContactData
+    
+    // AttendeeType : masquer si tous sont 'Aucun' ou undefined
+    const hasAttendeeType = registrations.some(reg => 
+      reg.eventAttendeeType?.attendeeType?.name
+    )
+    visibility['attendeeType'] = hasAttendeeType
+    
+    // Status : toujours afficher
+    visibility['status'] = true
+    
+    // CreatedAt : masquer si tous vides
+    const hasCreatedAt = registrations.some(reg => reg.createdAt)
+    visibility['createdAt'] = hasCreatedAt
+    
+    // CheckIn : masquer si aucun check-in
+    const hasCheckIn = registrations.some(reg => reg.checkedInAt)
+    visibility['checkIn'] = hasCheckIn
+    
+    // CheckOut : masquer si aucun check-out
+    const hasCheckOut = registrations.some(reg => reg.checkedOutAt)
+    visibility['checkOut'] = hasCheckOut
+    
+    // Pour les colonnes custom, vérifier si au moins une valeur existe
+    allAnswerKeys.forEach(fieldId => {
+      const hasData = registrations.some(reg => {
+        const answer = reg.answers?.[fieldId]
+        // Support ancien et nouveau format
+        const value = typeof answer === 'object' && answer !== null && 'value' in answer ? answer.value : answer
+        return value !== undefined && value !== null && value !== ''
+      })
+      visibility[`custom_${fieldId}`] = hasData
+    })
+    
+    return visibility
+  }, [registrations, allAnswerKeys])
+
+  // Générer les colonnes dynamiques pour les champs custom
+  const customColumns = useMemo<ColumnDef<RegistrationDPO>[]>(() => {
+    // Pour chaque clé trouvée dans answers, créer une colonne
+    return allAnswerKeys.map((fieldId) => {
+      // Chercher le champ dans le formulaire pour avoir le type et les options
+      const field = formFields?.find(f => f.id === fieldId && isCustomField(f)) as CustomField | undefined
+      
+      // Récupérer le label depuis les données (première inscription qui a ce champ)
+      const sampleAnswer = registrations.find(reg => reg.answers?.[fieldId])?.answers?.[fieldId]
+      const storedLabel = typeof sampleAnswer === 'object' && sampleAnswer !== null && 'label' in sampleAnswer 
+        ? sampleAnswer.label 
+        : field?.label || `Champ ${fieldId.slice(0, 8)}...`
+      
+      return {
+        id: `custom_${fieldId}`,
+        header: storedLabel,
+        accessorFn: (row) => {
+          const answer = row.answers?.[fieldId]
+          // Support ancien format (valeur directe) et nouveau format (objet)
+          return typeof answer === 'object' && answer !== null && 'value' in answer ? answer.value : answer
+        },
+        cell: ({ row }) => {
+          const answer = row.original.answers?.[fieldId]
+          const value = typeof answer === 'object' && answer !== null && 'value' in answer ? answer.value : answer
+          const fieldType = typeof answer === 'object' && answer !== null && 'fieldType' in answer ? answer.fieldType : field?.fieldType
+          
+          return (
+            <div 
+              className="cursor-pointer text-sm text-gray-900 dark:text-white"
+              onClick={() => handleRowClick(row.original)}
+            >
+              {field && fieldType ? formatCustomValue(value, { ...field, fieldType }) : (value ? String(value) : '—')}
+            </div>
+          )
+        },
+      }
+    })
+  }, [allAnswerKeys, formFields, registrations])
+
   // Columns definition
   const columns = useMemo<ColumnDef<RegistrationDPO>[]>(
-    () => [
+    () => {
+      const baseColumns: ColumnDef<RegistrationDPO>[] = [
       createSelectionColumn<RegistrationDPO>(),
       {
         id: 'participant',
@@ -873,6 +1004,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           </div>
         ),
       },
+      // Injecter les colonnes custom ici
+      ...customColumns,
       {
         id: 'attendeeType',
         header: 'Type',
@@ -1209,8 +1342,11 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         enableSorting: false,
         enableHiding: false,
       },
-    ],
-    [isUpdating, isDeletedTab, optimisticStatusUpdates, updateStatus, quickDownloadingKeys]
+    ]
+    
+    return baseColumns
+  },
+    [isUpdating, isDeletedTab, optimisticStatusUpdates, updateStatus, quickDownloadingKeys, customColumns]
   )
 
   // Bulk actions
@@ -1560,6 +1696,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           totalItems={meta?.total || 0}
           onPageChange={onPageChange || (() => {})}
           onPageSizeChange={onPageSizeChange || (() => {})}
+          initialColumnVisibility={initialColumnVisibility}
         />
       </Card>
 

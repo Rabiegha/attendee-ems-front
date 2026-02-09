@@ -9,6 +9,11 @@ import {
   RotateCcw,
   Columns,
   AlertCircle,
+  Sparkles,
+  AlertTriangle,
+  Settings,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import {
   DndContext,
@@ -30,12 +35,13 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { PredefinedFieldTemplate, PREDEFINED_FIELDS } from './FormFieldLibrary'
+import { CustomFieldCreator } from './CustomFieldCreator'
+import type { FormField as FormFieldType, CreateCustomFieldData, CustomField, StandardField } from './types'
+import { isCustomField, isStandardField } from './types'
+import { v4 as uuidv4 } from 'uuid'
 
-export interface FormField extends Omit<PredefinedFieldTemplate, 'id'> {
-  id: string
-  order: number
-  width?: 'full' | 'half'
-}
+// Export le type FormField pour compatibilité
+export type FormField = FormFieldType
 
 export interface FormConfig {
   fields: FormField[]
@@ -61,34 +67,74 @@ interface FormBuilderProps {
     isDarkMode?: boolean
   }) => void
   className?: string
+  eventId?: string
+  onFieldDelete?: (fieldId: string) => Promise<{ affectedCount: number; canDelete: boolean }>
 }
 
 // Champs obligatoires qui ne peuvent pas être supprimés
 const MANDATORY_FIELDS = ['first_name', 'last_name', 'email']
 
+// Champs dont le statut required est verrouillé (toujours required)
+const REQUIRED_LOCKED_FIELDS = ['email']
+
 // Vérifie si un champ est obligatoire (non supprimable)
 const isMandatoryField = (field: FormField): boolean => {
-  return MANDATORY_FIELDS.some(mandatoryKey => field.key === mandatoryKey)
+  // Vérifier d'abord si c'est un champ standard
+  if (isStandardField(field)) {
+    const isMandatory = MANDATORY_FIELDS.some(mandatoryKey => field.key === mandatoryKey)
+    console.log('🔒 isMandatoryField check (standard):', { fieldKey: field.key, fieldLabel: field.label, isMandatory })
+    return isMandatory
+  }
+  // Fallback: vérifier si le champ a une clé qui correspond (pour les anciens champs)
+  if ('key' in field) {
+    const isMandatory = MANDATORY_FIELDS.includes((field as any).key)
+    console.log('🔒 isMandatoryField check (legacy):', { fieldKey: (field as any).key, fieldLabel: field.label, isMandatory })
+    return isMandatory
+  }
+  return false // Les champs custom ne sont jamais mandatory
+}
+
+// Vérifie si le statut required d'un champ est verrouillé
+const isRequiredLocked = (field: FormField): boolean => {
+  // Vérifier d'abord si c'est un champ standard
+  if (isStandardField(field)) {
+    const isLocked = REQUIRED_LOCKED_FIELDS.some(lockedKey => field.key === lockedKey)
+    console.log('🔐 isRequiredLocked check (standard):', { fieldKey: field.key, fieldLabel: field.label, isLocked })
+    return isLocked
+  }
+  // Fallback: vérifier si le champ a une clé qui correspond (pour les anciens champs)
+  if ('key' in field) {
+    const isLocked = REQUIRED_LOCKED_FIELDS.includes((field as any).key)
+    console.log('🔐 isRequiredLocked check (legacy):', { fieldKey: (field as any).key, fieldLabel: field.label, isLocked })
+    return isLocked
+  }
+  return false
 }
 
 // Composant pour un champ draggable et sortable
 interface SortableFieldItemProps {
   field: FormField
   onRemove: () => void
+  onEdit?: () => void
   onToggleWidth: () => void
   onToggleRequired: () => void
+  onToggleVisibility?: () => void
   isRemoveDisabled?: boolean
   isRequiredDisabled?: boolean
+  isVisibilityDisabled?: boolean
   children: React.ReactNode
 }
 
 const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
   field,
   onRemove,
+  onEdit,
   onToggleWidth,
   onToggleRequired,
+  onToggleVisibility,
   isRemoveDisabled = false,
   isRequiredDisabled = false,
+  isVisibilityDisabled = false,
   children,
 }) => {
   const {
@@ -108,6 +154,7 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
   } as React.CSSProperties
 
   const Icon = field.icon
+  const isHidden = field.visibleInPublicForm === false
 
   return (
     <div
@@ -116,31 +163,36 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
       className={`group relative bg-white dark:bg-gray-800 border-2 rounded-lg p-3 transition-all ${
         isDragging
           ? 'border-dashed border-gray-300 dark:border-gray-600'
+          : isHidden
+          ? 'border-gray-200 dark:border-gray-700 opacity-60'
           : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
       } ${field.width === 'half' ? 'col-span-1' : 'col-span-2'}`}
     >
-      <div className="flex items-start gap-3">
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing mt-1 text-gray-400 hover:text-blue-500 transition-colors"
-        >
-          <GripVertical className="h-5 w-5" />
-        </div>
-
-        {/* Field Icon & Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            {Icon && <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />}
-            <span className="font-medium text-gray-900 dark:text-white text-sm truncate">
-              {field.label}
-            </span>
-            {field.required && (
-              <span className="text-red-500 text-xs">*</span>
-            )}
+      {/* Header avec icône, label et actions */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          {/* Drag Handle */}
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-blue-500 transition-colors"
+          >
+            <GripVertical className="h-5 w-5" />
           </div>
-          {children}
+          
+          {/* Icon & Label */}
+          {Icon && <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />}
+          <span className={`font-medium text-sm truncate ${isHidden ? 'text-gray-500 dark:text-gray-400 line-through' : 'text-gray-900 dark:text-white'}`}>
+            {field.label}
+          </span>
+          {field.required && !isHidden && (
+            <span className="text-red-500 text-xs">*</span>
+          )}
+          {isHidden && (
+            <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded ml-2">
+              Masqué
+            </span>
+          )}
         </div>
 
         {/* Actions */}
@@ -176,6 +228,36 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
           >
             <Columns className="h-4 w-4" />
           </button>
+          
+          {onToggleVisibility && (
+            <button
+              type="button"
+              onClick={onToggleVisibility}
+              disabled={isVisibilityDisabled}
+              className={`p-1.5 rounded transition-colors ${
+                isHidden
+                  ? 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                  : 'text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+              } ${isVisibilityDisabled ? 'opacity-30 cursor-not-allowed' : ''}`}
+              title={
+                 isVisibilityDisabled ? 'La visibilité de ce champ ne peut pas être modifiée' :
+                 isHidden ? 'Afficher le champ' : 'Masquer le champ'
+              }
+            >
+              {isHidden ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          )}
+
+          {onEdit && (
+            <button
+              type="button"
+              onClick={onEdit}
+              className="p-1.5 rounded transition-colors text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+              title="Modifier"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+          )}
           <button
             type="button"
             onClick={onRemove}
@@ -191,6 +273,11 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Field Content - prend toute la largeur */}
+      <div className={`w-full ${isHidden ? 'opacity-50 pointer-events-none' : ''}`}>
+        {children}
+      </div>
     </div>
   )
 }
@@ -205,25 +292,35 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   isDarkMode = false,
   onConfigChange,
   className = '',
+  eventId,
+  onFieldDelete,
 }) => {
   const [newOptions, setNewOptions] = useState<Record<string, string>>({})
   const [customColor, setCustomColor] = useState<string>(submitButtonColor)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [showCustomFieldCreator, setShowCustomFieldCreator] = useState(false)
+  const [editingField, setEditingField] = useState<FormField | null>(null)
+  const [deleteFieldId, setDeleteFieldId] = useState<string | null>(null)
+  const [deleteAffectedCount, setDeleteAffectedCount] = useState<number>(0)
 
   // Undo/Redo History
   const [history, setHistory] = useState<FormField[][]>([fields])
   const [historyIndex, setHistoryIndex] = useState(0)
   const [isUpdatingFromHistory, setIsUpdatingFromHistory] = useState(false)
 
+  // Séparer les champs standard et custom
+  const standardFields = React.useMemo(() => fields.filter(isStandardField), [fields])
+  const customFields = React.useMemo(() => fields.filter(isCustomField), [fields])
+
   // Calculer les champs disponibles (non encore ajoutés)
   const availableFields = React.useMemo(() => {
-    const usedKeys = new Set(fields.map(f => f.key))
+    const usedKeys = new Set(standardFields.map(f => f.key))
     return PREDEFINED_FIELDS.filter(
       // Exclure attendee_type ET gdpr_consent (champs spéciaux non configurables)
       (field) => field.key !== 'attendee_type' && field.key !== 'gdpr_consent' && !usedKeys.has(field.key)
     )
-  }, [fields])
+  }, [standardFields])
 
   // Update history when fields change externally (not from undo/redo)
   useEffect(() => {
@@ -293,28 +390,129 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const template = PREDEFINED_FIELDS.find((f) => f.key === fieldKey)
     if (!template) return
 
-    const newField: FormField = {
+    const newField: StandardField = {
       ...template,
+      type: 'standard',
       id: `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       order: fields.length,
       placeholder: '', // Vide par défaut
       width: 'full', // Par défaut les nouveaux champs sont en 100%
+      fieldType: template.type as 'text' | 'email' | 'phone' | 'textarea',
+      visibleInPublicForm: template.visibleInPublicForm ?? true,
+      visibleInAdminForm: template.visibleInAdminForm ?? true,
+      visibleInAttendeeTable: template.visibleInAttendeeTable ?? true,
+      visibleInExport: template.visibleInExport ?? true,
     }
     onChange([...fields, newField])
   }
 
-  const handleRemoveField = (fieldId: string) => {
+  const handleSaveCustomField = (data: CreateCustomFieldData, fieldId?: string) => {
+    if (fieldId) {
+      // Mode édition: mettre à jour le champ existant
+      onChange(
+        fields.map((field) => {
+          if (field.id === fieldId) {
+            return {
+              ...field,
+              fieldType: data.fieldType,
+              label: data.label,
+              placeholder: data.placeholder,
+              description: data.description,
+              checkboxText: data.checkboxText,
+              required: data.required ?? false,
+              options: data.options,
+              validation: data.validation,
+              width: data.width ?? field.width,
+              visibleInPublicForm: data.visibleInPublicForm ?? true,
+              visibleInAdminForm: data.visibleInAdminForm ?? true,
+              visibleInAttendeeTable: data.visibleInAttendeeTable ?? true,
+              visibleInExport: data.visibleInExport ?? true,
+            }
+          }
+          return field
+        })
+      )
+      setEditingField(null)
+    } else {
+      // Mode création: ajouter un nouveau champ
+      const newField: CustomField = {
+        id: uuidv4(),
+        type: 'custom',
+        fieldType: data.fieldType,
+        label: data.label,
+        placeholder: data.placeholder,
+        description: data.description,
+        checkboxText: data.checkboxText,
+        required: data.required ?? false,
+        options: data.options,
+        validation: data.validation,
+        order: fields.length,
+        width: data.width ?? 'full',
+        visibleInPublicForm: data.visibleInPublicForm ?? true,
+        visibleInAdminForm: data.visibleInAdminForm ?? true,
+        visibleInAttendeeTable: data.visibleInAttendeeTable ?? true,
+        visibleInExport: data.visibleInExport ?? true,
+        createdAt: new Date().toISOString(),
+      }
+      onChange([...fields, newField])
+    }
+  }
+
+  const handleRemoveField = async (fieldId: string) => {
     const fieldToRemove = fields.find((f) => f.id === fieldId)
+    
+    console.log('🗑️ handleRemoveField called for:', fieldId, fieldToRemove)
     
     // Empêcher la suppression des champs obligatoires
     if (fieldToRemove && isMandatoryField(fieldToRemove)) {
+      console.log('❌ Cannot delete mandatory field')
       return
     }
     
+    // Pour les champs custom, vérifier s'il y a des données existantes
+    if (fieldToRemove && isCustomField(fieldToRemove) && onFieldDelete && eventId) {
+      console.log('🔍 Checking for existing data...', { eventId, fieldId, hasCallback: !!onFieldDelete })
+      try {
+        const result = await onFieldDelete(fieldId)
+        console.log('📊 Field data check result:', result)
+        
+        if (result.affectedCount > 0) {
+          // Il y a des données, montrer le modal de confirmation
+          console.log('⚠️ Found data, showing modal')
+          setDeleteFieldId(fieldId)
+          setDeleteAffectedCount(result.affectedCount)
+          return
+        }
+        console.log('✅ No data found, proceeding with deletion')
+      } catch (error) {
+        console.error('❌ Error checking field data:', error)
+        // En cas d'erreur, continuer avec la suppression normale
+      }
+    } else {
+      console.log('ℹ️ Skipping data check:', { 
+        isCustom: fieldToRemove && isCustomField(fieldToRemove),
+        hasCallback: !!onFieldDelete,
+        hasEventId: !!eventId
+      })
+    }
+    
+    // Pas de données ou pas de vérification nécessaire, supprimer directement
+    console.log('🗑️ Performing field deletion')
+    performFieldDeletion(fieldId)
+  }
+
+  const performFieldDeletion = (fieldId: string) => {
     const updatedFields = fields
       .filter((f) => f.id !== fieldId)
       .map((f, index) => ({ ...f, order: index }))
     onChange(updatedFields)
+    setDeleteFieldId(null)
+  }
+
+  const handleConfirmDelete = () => {
+    if (deleteFieldId) {
+      performFieldDeletion(deleteFieldId)
+    }
   }
 
   const handleUpdateField = (fieldId: string, updates: Partial<FormField>) => {
@@ -333,13 +531,26 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     handleUpdateField(fieldId, { width: newWidth })
   }
 
+  // Toggle field visibility
+  const handleToggleVisibility = (fieldId: string) => {
+    const field = fields.find((f) => f.id === fieldId)
+    if (!field) return
+
+    // Les champs obligatoires ne peuvent pas être masqués
+    if (isMandatoryField(field)) {
+      return
+    }
+
+    handleUpdateField(fieldId, { visibleInPublicForm: !field.visibleInPublicForm })
+  }
+
   // Toggle field required status
   const handleToggleRequired = (fieldId: string) => {
     const field = fields.find((f) => f.id === fieldId)
     if (!field) return
     
-    // Les champs obligatoires doivent toujours être required
-    if (isMandatoryField(field)) {
+    // Les champs avec required verrouillé ne peuvent pas changer
+    if (isRequiredLocked(field)) {
       return
     }
 
@@ -442,6 +653,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         id: `field_${Date.now()}_lastname`,
         order: 0,
         placeholder: lastNameTemplate.placeholder || '',
+        description: undefined,
         width: 'half',
         required: true,
       },
@@ -450,6 +662,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         id: `field_${Date.now() + 1}_firstname`,
         order: 1,
         placeholder: firstNameTemplate.placeholder || '',
+        description: undefined,
         width: 'half',
         required: true,
       },
@@ -458,6 +671,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         id: `field_${Date.now() + 2}_email`,
         order: 2,
         placeholder: emailTemplate.placeholder || '',
+        description: undefined,
         width: 'full',
         required: true,
       },
@@ -516,7 +730,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       {/* Add Field Dropdown */}
       <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-indigo-200 dark:border-indigo-800">
         <label className="block text-sm font-medium text-indigo-900 dark:text-indigo-200 mb-2">
-          ➕ Ajouter un champ
+          ➕ Ajouter un champ standard
         </label>
         {availableFields.length > 0 ? (
           <select
@@ -540,6 +754,33 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             ✅ Tous les champs prédéfinis ont été ajoutés
           </div>
         )}
+      </div>
+
+      {/* Custom Fields Section */}
+      <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <label className="text-sm font-medium text-purple-900 dark:text-purple-200">
+              Champs personnalisés
+            </label>
+          </div>
+          {customFields.length > 0 && (
+            <span className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+              {customFields.length} champ{customFields.length !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => setShowCustomFieldCreator(true)}
+          className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-lg transition-all flex items-center justify-center gap-2"
+        >
+          <Plus className="h-4 w-4" />
+          Créer un champ personnalisé
+        </button>
+        <p className="text-xs text-purple-700 dark:text-purple-300 mt-2">
+          Créez des champs illimités : texte, nombre, date, liste, etc.
+        </p>
       </div>
 
       {/* Field List */}
@@ -569,10 +810,13 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   key={field.id}
                   field={field}
                   onRemove={() => handleRemoveField(field.id)}
+                  onEdit={field.type === 'custom' ? () => setEditingField(field) : undefined}
                   onToggleWidth={() => handleToggleWidth(field.id)}
                   onToggleRequired={() => handleToggleRequired(field.id)}
+                  onToggleVisibility={() => handleToggleVisibility(field.id)}
                   isRemoveDisabled={isMandatoryField(field)}
-                  isRequiredDisabled={isMandatoryField(field)}
+                  isRequiredDisabled={isRequiredLocked(field)}
+                  isVisibilityDisabled={isMandatoryField(field)}
                 >
                   {/* Field Content */}
                   <div className="space-y-3">
@@ -611,6 +855,25 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                           className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         />
                       </div>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                        Description{' '}
+                        <span className="text-gray-400">(texte d'aide sous le champ)</span>
+                      </label>
+                      <textarea
+                        value={field.description || ''}
+                        onChange={(e) =>
+                          handleUpdateField(field.id, {
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Ex: Vous trouverez cette information sur votre badge"
+                        rows={2}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                      />
                     </div>
 
                     {/* Info */}
@@ -942,6 +1205,63 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </div>
         </div>
       )}
+      
+      {/* Delete Field Confirmation Modal */}
+      {deleteFieldId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-red-200 dark:border-red-800">
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Supprimer ce champ ?
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Nous avons détecté que <strong>{deleteAffectedCount} inscription(s)</strong> contiennent des données pour ce champ.
+                </p>
+                <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-2">
+                  ⚠️ En supprimant ce champ, toutes les données associées seront définitivement perdues.
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Cette action est irréversible.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 mt-6">
+              <button
+                onClick={() => {
+                  setDeleteFieldId(null)
+                  setDeleteAffectedCount(0)
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Supprimer définitivement</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Custom Field Creator Modal */}
+      <CustomFieldCreator
+        open={showCustomFieldCreator || !!editingField}
+        onClose={() => {
+          setShowCustomFieldCreator(false)
+          setEditingField(null)
+        }}
+        onSave={handleSaveCustomField}
+        editingField={editingField}
+      />
     </div>
   )
 }

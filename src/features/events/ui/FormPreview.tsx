@@ -65,16 +65,35 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       // Group form data by field configuration
       fields.forEach((field) => {
         const value = formData[field.id]
-        if (!value) return
-
-        if (field.attendeeField) {
+        
+        // Champs custom (type: 'custom') -> stockés dans answers comme objets
+        if (field.type === 'custom') {
+          // Pour les champs custom, on stocke même si vide (sauf undefined/null)
+          if (value !== undefined && value !== null) {
+            answers[field.id] = {
+              label: field.label,
+              value: value,
+              fieldType: field.fieldType
+            }
+          }
+        }
+        // Champs standard - on skip si pas de valeur
+        else if (!value) {
+          return
+        }
+        // Champs standard mappés aux colonnes attendee
+        else if (field.attendeeField) {
           // Map to attendee table column (convert camelCase to snake_case)
           const backendFieldName = toSnakeCase(field.attendeeField)
           attendee[backendFieldName] = value
-        } else if (field.registrationField) {
+        } 
+        // Champs mappés aux colonnes registration
+        else if (field.registrationField) {
           // Map to registration table column
           registrationData[field.registrationField] = value
-        } else if (field.storeInAnswers) {
+        } 
+        // Anciens champs avec storeInAnswers (compatibilité)
+        else if (field.storeInAnswers) {
           // Store in answers JSON
           answers[field.key] = value
         }
@@ -174,7 +193,11 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
     const value = formData[field.id] || ''
     const disabled = !functional || isSubmitted
 
-    switch (field.type) {
+    // Déterminer le type de champ à rendre
+    // Pour les champs custom, utiliser field.fieldType, sinon field.type pour les champs standard
+    const fieldType = field.type === 'custom' ? field.fieldType : field.type
+
+    switch (fieldType) {
       case 'textarea':
         return (
           <textarea
@@ -185,6 +208,8 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             rows={4}
             className={baseClasses}
             disabled={disabled}
+            {...(field.validation?.minLength ? { minLength: field.validation.minLength } : {})}
+            {...(field.validation?.maxLength ? { maxLength: field.validation.maxLength } : {})}
           />
         )
       case 'select':
@@ -223,16 +248,81 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             ))}
           </select>
         )
+      case 'radio':
+        return (
+          <div className="space-y-2">
+            {field.options?.map((option: any) => (
+              <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={field.id}
+                  value={option.value}
+                  checked={value === option.value}
+                  onChange={(e) => handleInputChange(field.id, e.target.value)}
+                  required={field.required}
+                  disabled={disabled}
+                  className="text-blue-600"
+                />
+                <span className="text-gray-900 dark:text-white">{option.label}</span>
+              </label>
+            ))}
+          </div>
+        )
+      case 'checkbox':
+        return (
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={value === true}
+              onChange={(e) => handleInputChange(field.id, e.target.checked)}
+              required={field.required}
+              disabled={disabled}
+              className="text-blue-600 w-5 h-5"
+            />
+            <span className="text-gray-900 dark:text-white">{(field as any).checkboxText || field.label}</span>
+          </div>
+        )
+      case 'multiselect':
+        return (
+          <div className="space-y-2">
+            {field.options?.map((option: any) => {
+              const currentValues = value ? (Array.isArray(value) ? value : value.split(',')) : []
+              const isChecked = currentValues.includes(option.value)
+              return (
+                <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        handleInputChange(field.id, [...currentValues, option.value].join(','))
+                      } else {
+                        handleInputChange(field.id, currentValues.filter(v => v !== option.value).join(','))
+                      }
+                    }}
+                    disabled={disabled}
+                    className="text-blue-600"
+                  />
+                  <span className="text-gray-900 dark:text-white">{option.label}</span>
+                </label>
+              )
+            })}
+          </div>
+        )
       default:
         return (
           <input
-            type={field.type}
+            type={fieldType === 'phone' ? 'tel' : (fieldType === 'text' || fieldType === 'email' || fieldType === 'number' || fieldType === 'date') ? fieldType : 'text'}
             value={value}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             placeholder={field.placeholder}
             required={field.required}
             className={baseClasses}
             disabled={disabled}
+            {...((fieldType === 'text' || fieldType === 'email') && field.validation?.minLength ? { minLength: field.validation.minLength } : {})}
+            {...((fieldType === 'text' || fieldType === 'email') && field.validation?.maxLength ? { maxLength: field.validation.maxLength } : {})}
+            {...((fieldType === 'number' || fieldType === 'date') && field.validation?.min ? { min: field.validation.min } : {})}
+            {...((fieldType === 'number' || fieldType === 'date') && field.validation?.max ? { max: field.validation.max } : {})}
           />
         )
     }
@@ -359,7 +449,9 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {fields.map((field) => {
+                {fields
+                  .filter((field) => field.visibleInPublicForm !== false)
+                  .map((field) => {
                   // Determine if this field should be full width or half
                   const isFullWidth = field.width !== 'half'
                   
@@ -375,6 +467,11 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
                         )}
                       </label>
                       {renderField(field)}
+                      {field.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {field.description}
+                        </p>
+                      )}
                     </div>
                   )
                 })}

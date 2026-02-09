@@ -74,14 +74,33 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
 
       fields.forEach((field) => {
         const value = formData[field.id]
-        if (!value) return
-
-        if (field.attendeeField) {
+        
+        // Champs custom (type: 'custom') -> stockés dans answers comme objets
+        if (field.type === 'custom') {
+          // Pour les champs custom, on stocke même si vide (sauf undefined/null)
+          if (value !== undefined && value !== null) {
+            answers[field.id] = {
+              label: field.label,
+              value: value,
+              fieldType: field.fieldType
+            }
+          }
+        }
+        // Champs standard - on skip si pas de valeur
+        else if (!value) {
+          return
+        }
+        // Champs standard mappés aux colonnes attendee
+        else if (field.attendeeField) {
           const backendFieldName = toSnakeCase(field.attendeeField)
           attendee[backendFieldName] = value
-        } else if (field.registrationField) {
+        } 
+        // Champs mappés aux colonnes registration
+        else if (field.registrationField) {
           registrationData[field.registrationField] = value
-        } else if (field.storeInAnswers) {
+        } 
+        // Anciens champs avec storeInAnswers (compatibilité)
+        else if (field.storeInAnswers) {
           answers[field.key] = value
         }
       })
@@ -163,18 +182,29 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
     const value = formData[field.id] || ''
     const commonClasses = 'w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white'
 
-    switch (field.type) {
+    // Déterminer le type de champ à rendre
+    // Pour les champs custom, utiliser field.fieldType, sinon field.type pour les champs standard
+    const fieldType = field.type === 'custom' ? field.fieldType : field.type
+
+    switch (fieldType) {
       case 'text':
       case 'email':
+      case 'phone':
+      case 'number':
+      case 'date':
         return (
           <input
-            type={field.type}
+            type={fieldType === 'phone' ? 'tel' : fieldType}
             id={field.id}
             value={value}
             onChange={(e) => handleInputChange(field.id, e.target.value)}
             required={field.required}
             placeholder={field.placeholder}
             className={commonClasses}
+            {...((fieldType === 'text' || fieldType === 'email' || fieldType === 'phone') && field.validation?.minLength ? { minLength: field.validation.minLength } : {})}
+            {...((fieldType === 'text' || fieldType === 'email' || fieldType === 'phone') && field.validation?.maxLength ? { maxLength: field.validation.maxLength } : {})}
+            {...((fieldType === 'number' || fieldType === 'date') && field.validation?.min ? { min: field.validation.min } : {})}
+            {...((fieldType === 'number' || fieldType === 'date') && field.validation?.max ? { max: field.validation.max } : {})}
           />
         )
 
@@ -188,6 +218,8 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
             placeholder={field.placeholder}
             rows={4}
             className={commonClasses}
+            {...(field.validation?.minLength ? { minLength: field.validation.minLength } : {})}
+            {...(field.validation?.maxLength ? { maxLength: field.validation.maxLength } : {})}
           />
         )
 
@@ -241,6 +273,33 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
                     checked={isChecked}
                     onChange={(e) => {
                       const currentValues = value ? value.split(',') : []
+                      if (e.target.checked) {
+                        handleInputChange(field.id, [...currentValues, option.value].join(','))
+                      } else {
+                        handleInputChange(field.id, currentValues.filter(v => v !== option.value).join(','))
+                      }
+                    }}
+                    className="text-blue-600"
+                  />
+                  <span className="dark:text-white">{option.label}</span>
+                </label>
+              )
+            })}
+          </div>
+        )
+
+      case 'multiselect':
+        return (
+          <div className="space-y-2">
+            {field.options?.map((option) => {
+              const currentValues = value ? (Array.isArray(value) ? value : value.split(',')) : []
+              const isChecked = currentValues.includes(option.value)
+              return (
+                <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={(e) => {
                       if (e.target.checked) {
                         handleInputChange(field.id, [...currentValues, option.value].join(','))
                       } else {

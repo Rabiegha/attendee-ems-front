@@ -9,6 +9,8 @@ import {
 import {
   useGetRegistrationsQuery,
   useBulkExportRegistrationsMutation,
+  useCheckFieldDataMutation,
+  useCleanFieldDataMutation,
 } from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
@@ -251,6 +253,41 @@ export const EventDetails: React.FC = () => {
           JSON.stringify(error.data, null, 2)
         )
       }
+    }
+  }
+
+  // RTK Query mutations pour la suppression de champ
+  const [checkFieldData] = useCheckFieldDataMutation()
+  const [cleanFieldData] = useCleanFieldDataMutation()
+
+  // Fonction pour vérifier et nettoyer les données d'un champ avant suppression
+  const handleFieldDelete = async (fieldId: string): Promise<{ affectedCount: number; canDelete: boolean }> => {
+    if (!id) {
+      return { affectedCount: 0, canDelete: true }
+    }
+
+    try {
+      // Vérifier si des données existent
+      const checkResult = await checkFieldData({
+        eventId: id,
+        fieldId,
+      }).unwrap()
+
+      // Si des données existent, les nettoyer
+      if (checkResult.affectedCount > 0) {
+        await cleanFieldData({
+          eventId: id,
+          fieldId,
+        }).unwrap()
+      }
+
+      return {
+        affectedCount: checkResult.affectedCount,
+        canDelete: checkResult.canDelete,
+      }
+    } catch (error) {
+      console.error('Error in handleFieldDelete:', error)
+      return { affectedCount: 0, canDelete: true }
     }
   }
 
@@ -1000,6 +1037,7 @@ export const EventDetails: React.FC = () => {
               isDeletedTab={registrationsActiveTab === 'deleted'}
               eventAttendeeTypes={eventAttendeeTypes}
               isLoadingAttendeeTypes={isLoadingAttendeeTypes}
+              formFields={formFields}
               tabsElement={
                 <Tabs
                   items={registrationsTabs}
@@ -1046,7 +1084,10 @@ export const EventDetails: React.FC = () => {
                 showDescription={showDescription}
                 isDarkMode={isDarkMode}
                 onConfigChange={handleConfigChange}
+                eventId={id}
+                onFieldDelete={handleFieldDelete}
               />
+              {console.log('FormBuilder props:', { eventId: id, hasOnFieldDelete: !!handleFieldDelete })}
 
               <EmbedCodeGenerator eventId={event.id} publicToken={event.id} />
             </div>

@@ -34,6 +34,7 @@ export interface EventDTO {
     registration_auto_approve?: boolean
     registration_fields?: any[]
     badge_template_id?: string
+    include_qr_code_in_approval?: boolean
     [key: string]: any
   }
   emailSettings?: {
@@ -86,6 +87,7 @@ export interface CreateEventDTO {
   confirmation_enabled?: boolean
   approval_enabled?: boolean
   reminder_enabled?: boolean
+  include_qr_code_in_approval?: boolean
   badge_template_id?: string
 }
 

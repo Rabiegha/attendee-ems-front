@@ -363,7 +363,7 @@ const PublicRegistration: React.FC = () => {
         return (
           <div className="space-y-2">
             {field.options?.map((option: any) => {
-              const currentValues = value ? (Array.isArray(value) ? value : value.split(',')) : []
+              const currentValues = value ? (Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : []) : []
               const isChecked = currentValues.includes(option.value)
               return (
                 <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
@@ -374,7 +374,7 @@ const PublicRegistration: React.FC = () => {
                       if (e.target.checked) {
                         handleInputChange(field.id, [...currentValues, option.value].join(','))
                       } else {
-                        handleInputChange(field.id, currentValues.filter(v => v !== option.value).join(','))
+                        handleInputChange(field.id, currentValues.filter((v: string) => v !== option.value).join(','))
                       }
                     }}
                     disabled={disabled}

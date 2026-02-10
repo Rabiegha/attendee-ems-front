@@ -36,7 +36,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { PredefinedFieldTemplate, PREDEFINED_FIELDS } from './FormFieldLibrary'
 import { CustomFieldCreator } from './CustomFieldCreator'
-import type { FormField as FormFieldType, CreateCustomFieldData, CustomField, StandardField } from './types'
+import type { FormField as FormFieldType, CreateCustomFieldData, CustomField, StandardField, CustomFieldValidation } from './types'
 import { isCustomField, isStandardField } from './types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -153,7 +153,7 @@ const SortableFieldItem: React.FC<SortableFieldItemProps> = ({
     pointerEvents: isDragging ? 'none' : 'auto',
   } as React.CSSProperties
 
-  const Icon = field.icon
+  const Icon = 'icon' in field ? field.icon : undefined
   const isHidden = field.visibleInPublicForm === false
 
   return (
@@ -390,18 +390,43 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     const template = PREDEFINED_FIELDS.find((f) => f.key === fieldKey)
     if (!template) return
 
-    const newField: StandardField = {
-      ...template,
+    const newId = `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    
+    // Convert validation: RegExp → string
+    let validation: CustomFieldValidation | undefined
+    if (template.validation) {
+      const { pattern, ...rest } = template.validation
+      validation = {
+        ...rest,
+        ...(pattern && { pattern: typeof pattern === 'string' ? pattern : pattern.source })
+      }
+    }
+    
+    const newField: FormField = {
       type: 'standard',
-      id: `field_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: newId,
       order: fields.length,
-      placeholder: '', // Vide par défaut
-      width: 'full', // Par défaut les nouveaux champs sont en 100%
+      width: 'full',
+      label: template.label,
       fieldType: template.type as 'text' | 'email' | 'phone' | 'textarea',
+      required: template.required ?? false,
       visibleInPublicForm: template.visibleInPublicForm ?? true,
       visibleInAdminForm: template.visibleInAdminForm ?? true,
       visibleInAttendeeTable: template.visibleInAttendeeTable ?? true,
       visibleInExport: template.visibleInExport ?? true,
+      ...(template.placeholder && { placeholder: template.placeholder }),
+      ...(template.description && { description: template.description }),
+      ...(template.key && { key: template.key }),
+      ...(template.attendeeField && { attendeeField: template.attendeeField }),
+      ...(template.registrationField && { registrationField: template.registrationField }),
+      ...(template.storeInAnswers && { storeInAnswers: template.storeInAnswers }),
+      ...(template.icon && { icon: template.icon }),
+      ...(template.category && { category: template.category }),
+      ...(validation && { validation }),
+      ...(template.options && { options: template.options }),
+      ...(template.optionsKey && { optionsKey: template.optionsKey }),
+      ...(template.helpText && { helpText: template.helpText }),
+      ...(template.isSystemField && { isSystemField: template.isSystemField }),
     }
     onChange([...fields, newField])
   }
@@ -412,22 +437,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       onChange(
         fields.map((field) => {
           if (field.id === fieldId) {
-            return {
+            const updated: any = {
               ...field,
               fieldType: data.fieldType,
               label: data.label,
-              placeholder: data.placeholder,
-              description: data.description,
-              checkboxText: data.checkboxText,
               required: data.required ?? false,
-              options: data.options,
-              validation: data.validation,
               width: data.width ?? field.width,
               visibleInPublicForm: data.visibleInPublicForm ?? true,
               visibleInAdminForm: data.visibleInAdminForm ?? true,
               visibleInAttendeeTable: data.visibleInAttendeeTable ?? true,
               visibleInExport: data.visibleInExport ?? true,
             }
+            if (data.placeholder) updated.placeholder = data.placeholder
+            if (data.description) updated.description = data.description
+            if (data.checkboxText) updated.checkboxText = data.checkboxText
+            if (data.options) updated.options = data.options
+            if (data.validation) updated.validation = data.validation
+            return updated
           }
           return field
         })
@@ -435,17 +461,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       setEditingField(null)
     } else {
       // Mode création: ajouter un nouveau champ
-      const newField: CustomField = {
+      const newField: any = {
         id: uuidv4(),
         type: 'custom',
         fieldType: data.fieldType,
         label: data.label,
-        placeholder: data.placeholder,
-        description: data.description,
-        checkboxText: data.checkboxText,
         required: data.required ?? false,
-        options: data.options,
-        validation: data.validation,
         order: fields.length,
         width: data.width ?? 'full',
         visibleInPublicForm: data.visibleInPublicForm ?? true,
@@ -454,7 +475,12 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
         visibleInExport: data.visibleInExport ?? true,
         createdAt: new Date().toISOString(),
       }
-      onChange([...fields, newField])
+      if (data.placeholder) newField.placeholder = data.placeholder
+      if (data.description) newField.description = data.description
+      if (data.checkboxText) newField.checkboxText = data.checkboxText
+      if (data.options) newField.options = data.options
+      if (data.validation) newField.validation = data.validation
+      onChange([...fields, newField as CustomField])
     }
   }
 
@@ -517,7 +543,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   const handleUpdateField = (fieldId: string, updates: Partial<FormField>) => {
     const updatedFields = fields.map((f) =>
-      f.id === fieldId ? { ...f, ...updates } : f
+      f.id === fieldId ? { ...f, ...updates } as FormField : f
     )
     onChange(updatedFields)
   }
@@ -596,7 +622,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     if (!optionValue) return
 
     const field = fields.find((f) => f.id === fieldId)
-    if (!field || field.type !== 'select') return
+    if (!field || !('options' in field)) return
 
     const currentOptions = field.options || []
     const newOption = { value: optionValue, label: optionValue }
@@ -610,9 +636,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
 
   const handleRemoveOption = (fieldId: string, optionIndex: number) => {
     const field = fields.find((f) => f.id === fieldId)
-    if (!field || field.type !== 'select' || !field.options) return
+    if (!field || !('options' in field) || !field.options) return
 
-    const newOptions = field.options.filter((_, idx) => idx !== optionIndex)
+    const newOptions = field.options.filter((_: any, idx: number) => idx !== optionIndex)
     handleUpdateField(fieldId, { options: newOptions })
   }
 
@@ -622,9 +648,9 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     newLabel: string
   ) => {
     const field = fields.find((f) => f.id === fieldId)
-    if (!field || field.type !== 'select' || !field.options) return
+    if (!field || !('options' in field) || !field.options) return
 
-    const updatedOptions = field.options.map((opt, idx) =>
+    const updatedOptions = field.options.map((opt: any, idx: number) =>
       idx === optionIndex ? { value: newLabel, label: newLabel } : opt
     )
     handleUpdateField(fieldId, { options: updatedOptions })
@@ -647,33 +673,77 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       return
     }
 
+    // Convert validations: RegExp → string
+    const convertValidation = (val: any): CustomFieldValidation | undefined => {
+      if (!val) return undefined
+      const { pattern, ...rest } = val
+      return {
+        ...rest,
+        ...(pattern && { pattern: typeof pattern === 'string' ? pattern : pattern.source })
+      }
+    }
+
+    const lastValidation = convertValidation(lastNameTemplate.validation)
+    const firstValidation = convertValidation(firstNameTemplate.validation)
+    const emailValidation = convertValidation(emailTemplate.validation)
+
     const defaultFields: FormField[] = [
       {
-        ...lastNameTemplate,
+        type: 'standard',
         id: `field_${Date.now()}_lastname`,
         order: 0,
-        placeholder: lastNameTemplate.placeholder || '',
-        description: undefined,
         width: 'half',
         required: true,
+        label: lastNameTemplate.label,
+        fieldType: 'text' as const,
+        visibleInPublicForm: lastNameTemplate.visibleInPublicForm ?? true,
+        visibleInAdminForm: lastNameTemplate.visibleInAdminForm ?? true,
+        visibleInAttendeeTable: lastNameTemplate.visibleInAttendeeTable ?? true,
+        visibleInExport: lastNameTemplate.visibleInExport ?? true,
+        ...(lastNameTemplate.placeholder && { placeholder: lastNameTemplate.placeholder }),
+        ...(lastNameTemplate.key && { key: lastNameTemplate.key }),
+        ...(lastNameTemplate.attendeeField && { attendeeField: lastNameTemplate.attendeeField }),
+        ...(lastNameTemplate.icon && { icon: lastNameTemplate.icon }),
+        ...(lastNameTemplate.category && { category: lastNameTemplate.category }),
+        ...(lastValidation && { validation: lastValidation }),
       },
       {
-        ...firstNameTemplate,
+        type: 'standard',
         id: `field_${Date.now() + 1}_firstname`,
         order: 1,
-        placeholder: firstNameTemplate.placeholder || '',
-        description: undefined,
         width: 'half',
         required: true,
+        label: firstNameTemplate.label,
+        fieldType: 'text' as const,
+        visibleInPublicForm: firstNameTemplate.visibleInPublicForm ?? true,
+        visibleInAdminForm: firstNameTemplate.visibleInAdminForm ?? true,
+        visibleInAttendeeTable: firstNameTemplate.visibleInAttendeeTable ?? true,
+        visibleInExport: firstNameTemplate.visibleInExport ?? true,
+        ...(firstNameTemplate.placeholder && { placeholder: firstNameTemplate.placeholder }),
+        ...(firstNameTemplate.key && { key: firstNameTemplate.key }),
+        ...(firstNameTemplate.attendeeField && { attendeeField: firstNameTemplate.attendeeField }),
+        ...(firstNameTemplate.icon && { icon: firstNameTemplate.icon }),
+        ...(firstNameTemplate.category && { category: firstNameTemplate.category }),
+        ...(firstValidation && { validation: firstValidation }),
       },
       {
-        ...emailTemplate,
+        type: 'standard',
         id: `field_${Date.now() + 2}_email`,
         order: 2,
-        placeholder: emailTemplate.placeholder || '',
-        description: undefined,
         width: 'full',
         required: true,
+        label: emailTemplate.label,
+        fieldType: 'email' as const,
+        visibleInPublicForm: emailTemplate.visibleInPublicForm ?? true,
+        visibleInAdminForm: emailTemplate.visibleInAdminForm ?? true,
+        visibleInAttendeeTable: emailTemplate.visibleInAttendeeTable ?? true,
+        visibleInExport: emailTemplate.visibleInExport ?? true,
+        ...(emailTemplate.placeholder && { placeholder: emailTemplate.placeholder }),
+        ...(emailTemplate.key && { key: emailTemplate.key }),
+        ...(emailTemplate.attendeeField && { attendeeField: emailTemplate.attendeeField }),
+        ...(emailTemplate.icon && { icon: emailTemplate.icon }),
+        ...(emailTemplate.category && { category: emailTemplate.category }),
+        ...(emailValidation && { validation: emailValidation }),
       },
     ]
 
@@ -805,21 +875,23 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
             strategy={rectSortingStrategy}
           >
             <div className="grid grid-cols-2 gap-3 auto-rows-min">
-              {fields.map((field) => (
-                <SortableFieldItem
-                  key={field.id}
-                  field={field}
-                  onRemove={() => handleRemoveField(field.id)}
-                  onEdit={field.type === 'custom' ? () => setEditingField(field) : undefined}
-                  onToggleWidth={() => handleToggleWidth(field.id)}
-                  onToggleRequired={() => handleToggleRequired(field.id)}
-                  onToggleVisibility={() => handleToggleVisibility(field.id)}
-                  isRemoveDisabled={isMandatoryField(field)}
-                  isRequiredDisabled={isRequiredLocked(field)}
-                  isVisibilityDisabled={isMandatoryField(field)}
-                >
-                  {/* Field Content */}
-                  <div className="space-y-3">
+              {fields.map((field) => {
+                const onEditHandler = field.type === 'custom' ? () => setEditingField(field) : undefined
+                return (
+                  <SortableFieldItem
+                    key={field.id}
+                    field={field}
+                    onRemove={() => handleRemoveField(field.id)}
+                    {...(onEditHandler && { onEdit: onEditHandler })}
+                    onToggleWidth={() => handleToggleWidth(field.id)}
+                    onToggleRequired={() => handleToggleRequired(field.id)}
+                    onToggleVisibility={() => handleToggleVisibility(field.id)}
+                    isRemoveDisabled={isMandatoryField(field)}
+                    isRequiredDisabled={isRequiredLocked(field)}
+                    isVisibilityDisabled={isMandatoryField(field)}
+                  >
+                    {/* Field Content */}
+                    <div className="space-y-3">
                     {/* Label & Placeholder */}
                     <div className={field.width === 'full' ? 'grid grid-cols-2 gap-3' : 'space-y-3'}>
                       <div>
@@ -879,10 +951,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     {/* Info */}
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                       <span className="capitalize font-medium">
-                        {field.type === 'attendee_type' ? 'Type de participant' : field.type}
+                        {('key' in field && field.key === 'event_attendee_type_id') ? 'Type de participant' : field.type}
                       </span>
                       <span>•</span>
-                      <span className="font-mono">{field.key}</span>
+                      <span className="font-mono">{'key' in field ? field.key : field.id}</span>
                       {field.required && (
                         <>
                           <span>•</span>
@@ -894,14 +966,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     </div>
 
                     {/* Attendee Type Info */}
-                    {field.type === 'attendee_type' && (
+                    {('key' in field && field.key === 'event_attendee_type_id') && (
                       <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-700 dark:text-blue-300">
                         ℹ️ Ce champ affichera automatiquement la liste des types de participants configurés dans l'onglet "Types de participants".
                       </div>
                     )}
 
                     {/* Options for Select Fields */}
-                    {field.type === 'select' && (
+                    {('options' in field) && (
                       <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
                           Options de choix
@@ -967,9 +1039,10 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                       </div>
                     </div>
                   )}
-                  </div>
+                    </div>
                 </SortableFieldItem>
-              ))}
+                )
+              })}
             </div>
           </SortableContext>
           
@@ -980,7 +1053,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                   <GripVertical className="h-5 w-5 text-blue-500" />
                   {(() => {
                     const field = fields.find((f) => f.id === activeId)
-                    const Icon = field?.icon
+                    const Icon = field && 'icon' in field ? field.icon : undefined
                     return Icon ? <Icon className="h-4 w-4 text-blue-600" /> : null
                   })()}
                   <span className="font-medium text-gray-900 dark:text-white text-sm">

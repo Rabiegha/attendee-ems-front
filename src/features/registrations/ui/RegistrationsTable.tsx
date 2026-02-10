@@ -48,6 +48,7 @@ import {
   useUndoCheckInMutation,
   useCheckOutMutation,
   useUndoCheckOutMutation,
+  useApproveWithEmailMutation,
 } from '../api/registrationsApi'
 import { EventAttendeeType } from '@/features/events/api/eventsApi'
 import { useToast } from '@/shared/hooks/useToast'
@@ -59,6 +60,7 @@ import { QrCodeModal } from './QrCodeModal'
 import { BadgePreviewModal } from './BadgePreviewModal'
 import { BulkStatusChangeModal } from './BulkStatusChangeModal'
 import { BulkAttendeeTypeChangeModal } from './BulkAttendeeTypeChangeModal'
+import { ApprovalConfirmationModal } from './ApprovalConfirmationModal'
 import { createBulkActions } from '@/shared/ui/BulkActions'
 import {
   getRegistrationFullName,
@@ -193,6 +195,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [editingRegistration, setEditingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [deletingRegistration, setDeletingRegistration] =
+    useState<RegistrationDPO | null>(null)
+  const [approvingRegistration, setApprovingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [restoringRegistration, setRestoringRegistration] =
     useState<RegistrationDPO | null>(null)
@@ -492,6 +496,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   }, [registrations, optimisticStatusUpdates, optimisticTypeUpdates])
 
   const [updateStatus] = useUpdateRegistrationStatusMutation()
+  const [approveWithEmail, { isLoading: isApproving }] = useApproveWithEmailMutation()
   const [updateRegistration, { isLoading: isUpdating }] =
     useUpdateRegistrationMutation()
   const [deleteRegistration] = useDeleteRegistrationMutation()
@@ -573,6 +578,38 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         return next
       })
       toast.error('Erreur', 'Impossible de mettre à jour le type')
+    }
+  }
+
+  const handleApproveWithEmail = async (sendEmail: boolean) => {
+    if (!approvingRegistration) return
+
+    try {
+      await approveWithEmail({
+        id: approvingRegistration.id,
+        sendEmail,
+      }).unwrap()
+      
+      const message = sendEmail 
+        ? "L'inscription a été approuvée et l'email de confirmation a été envoyé"
+        : "L'inscription a été approuvée sans envoi d'email"
+      
+      toast.success('Inscription approuvée', message)
+      setApprovingRegistration(null)
+    } catch (error: any) {
+      console.error('Error approving with email:', error)
+      
+      let title = 'Erreur'
+      let message = "Impossible d'approuver l'inscription"
+
+      if (error?.status === 409) {
+        title = 'Capacité atteinte'
+        message = "L'événement est complet. Impossible d'approuver ce participant."
+      } else if (error?.data?.message) {
+        message = error.data.message
+      }
+
+      toast.error(title, message)
     }
   }
 
@@ -1318,7 +1355,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleStatusChange(row.original.id, 'approved')}
+                    onClick={() => setApprovingRegistration(row.original)}
                     disabled={isUpdating}
                     className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 min-w-[32px] p-1.5"
                     title="Approuver"
@@ -1715,6 +1752,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         onClose={() => setDeletingRegistration(null)}
         onConfirm={handleDelete}
         attendeeName={deletingRegistration ? getRegistrationFullName(deletingRegistration) : ''}
+      />
+
+      <ApprovalConfirmationModal
+        isOpen={!!approvingRegistration}
+        onClose={() => setApprovingRegistration(null)}
+        registrationName={approvingRegistration ? getRegistrationFullName(approvingRegistration) : ''}
+        onApprove={handleApproveWithEmail}
+        isApproving={isApproving}
       />
 
       <RestoreRegistrationModal

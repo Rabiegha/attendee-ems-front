@@ -45,13 +45,15 @@ export interface CustomFieldValidation {
 export interface StandardField {
   id: string
   type: 'standard'
-  key: string                    // 'first_name', 'email', etc.
-  attendeeField: string          // Nom de la colonne BDD
+  key?: string                    // 'first_name', 'email', etc.
+  attendeeField?: string          // Nom de la colonne BDD
+  registrationField?: string      // Pour les champs liés aux registrations
+  storeInAnswers?: boolean        // Si true, stocké dans answers plutôt que dans attendee
   label: string
   placeholder?: string
-  fieldType: 'text' | 'email' | 'phone' | 'textarea'
+  fieldType?: 'text' | 'email' | 'phone' | 'textarea'
   icon?: LucideIcon
-  category: 'identity' | 'contact' | 'professional' | 'event' | 'legal'
+  category?: 'identity' | 'contact' | 'professional' | 'event' | 'custom' | 'legal'
   description?: string
   required: boolean
   
@@ -67,6 +69,14 @@ export interface StandardField {
   
   // Validation
   validation?: CustomFieldValidation
+  
+  // Champ système
+  isSystemField?: boolean
+  
+  // Pour les champs select personnalisés
+  options?: FieldOption[]
+  optionsKey?: string
+  helpText?: string
 }
 
 /**
@@ -97,6 +107,12 @@ export interface CustomField {
   visibleInAdminForm: boolean
   visibleInAttendeeTable: boolean
   visibleInExport: boolean
+  
+  // Texte d'aide
+  helpText?: string
+  
+  // Icon
+  icon?: LucideIcon
   
   // Métadonnées
   createdAt?: string

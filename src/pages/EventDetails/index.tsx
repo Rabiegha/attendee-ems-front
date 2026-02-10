@@ -38,12 +38,14 @@ import {
   Tag,
   CreditCard,
   BarChart3,
+  Mail,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
 import { EventAttendeeTypesTab } from './EventAttendeeTypesTab'
 import { EventBadgesTab } from './EventBadgesTab'
 import { EventStatsTab } from './EventStatsTab'
+import { EventEmailsTab } from './EventEmailsTab'
 import { AssignedTeam } from './components/AssignedTeam'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
@@ -59,7 +61,7 @@ import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 import { EventSessionsTab } from './EventSessionsTab'
 
-type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions' | 'stats'
+type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions' | 'stats' | 'emails'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -76,7 +78,7 @@ export const EventDetails: React.FC = () => {
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions', 'stats'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions', 'stats', 'emails'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -178,10 +180,78 @@ export const EventDetails: React.FC = () => {
       const email = getFieldById('email')
 
       if (firstName && lastName && email) {
+        // Convert validations: RegExp → string
+        const convertValidation = (val: any) => {
+          if (!val) return undefined
+          const { pattern, ...rest } = val
+          return {
+            ...rest,
+            ...(pattern && { pattern: typeof pattern === 'string' ? pattern : pattern.source })
+          }
+        }
+
+        const lastValidation = convertValidation(lastName.validation)
+        const firstValidation = convertValidation(firstName.validation)
+        const emailValidation = convertValidation(email.validation)
+
         const defaultFields: FormField[] = [
-          { ...lastName, id: `field_${Date.now()}_1`, order: 0, width: 'half' as const, required: true },
-          { ...firstName, id: `field_${Date.now()}_2`, order: 1, width: 'half' as const, required: true },
-          { ...email, id: `field_${Date.now()}_3`, order: 2, width: 'full' as const, required: true },
+          { 
+            type: 'standard', 
+            id: `field_${Date.now()}_1`, 
+            order: 0, 
+            width: 'half' as const, 
+            required: true, 
+            label: lastName.label,
+            fieldType: 'text' as const,
+            visibleInPublicForm: lastName.visibleInPublicForm ?? true,
+            visibleInAdminForm: lastName.visibleInAdminForm ?? true,
+            visibleInAttendeeTable: lastName.visibleInAttendeeTable ?? true,
+            visibleInExport: lastName.visibleInExport ?? true,
+            ...(lastName.placeholder && { placeholder: lastName.placeholder }),
+            ...(lastName.key && { key: lastName.key }),
+            ...(lastName.attendeeField && { attendeeField: lastName.attendeeField }),
+            ...(lastName.icon && { icon: lastName.icon }),
+            ...(lastName.category && { category: lastName.category }),
+            ...(lastValidation && { validation: lastValidation }),
+          },
+          { 
+            type: 'standard', 
+            id: `field_${Date.now()}_2`, 
+            order: 1, 
+            width: 'half' as const, 
+            required: true, 
+            label: firstName.label,
+            fieldType: 'text' as const,
+            visibleInPublicForm: firstName.visibleInPublicForm ?? true,
+            visibleInAdminForm: firstName.visibleInAdminForm ?? true,
+            visibleInAttendeeTable: firstName.visibleInAttendeeTable ?? true,
+            visibleInExport: firstName.visibleInExport ?? true,
+            ...(firstName.placeholder && { placeholder: firstName.placeholder }),
+            ...(firstName.key && { key: firstName.key }),
+            ...(firstName.attendeeField && { attendeeField: firstName.attendeeField }),
+            ...(firstName.icon && { icon: firstName.icon }),
+            ...(firstName.category && { category: firstName.category }),
+            ...(firstValidation && { validation: firstValidation }),
+          },
+          { 
+            type: 'standard', 
+            id: `field_${Date.now()}_3`, 
+            order: 2, 
+            width: 'full' as const, 
+            required: true, 
+            label: email.label,
+            fieldType: 'email' as const,
+            visibleInPublicForm: email.visibleInPublicForm ?? true,
+            visibleInAdminForm: email.visibleInAdminForm ?? true,
+            visibleInAttendeeTable: email.visibleInAttendeeTable ?? true,
+            visibleInExport: email.visibleInExport ?? true,
+            ...(email.placeholder && { placeholder: email.placeholder }),
+            ...(email.key && { key: email.key }),
+            ...(email.attendeeField && { attendeeField: email.attendeeField }),
+            ...(email.icon && { icon: email.icon }),
+            ...(email.category && { category: email.category }),
+            ...(emailValidation && { validation: emailValidation }),
+          },
         ]
         setFormFields(defaultFields)
         
@@ -644,6 +714,13 @@ export const EventDetails: React.FC = () => {
       disabledIfDeleted: true 
     },
     { 
+      id: 'emails' as TabType, 
+      label: 'Emails', 
+      icon: Mail, 
+      hasPermission: canUpdateEvent,
+      disabledIfDeleted: true 
+    },
+    { 
       id: 'settings' as TabType, 
       label: 'Paramètres', 
       icon: Settings, 
@@ -1084,10 +1161,9 @@ export const EventDetails: React.FC = () => {
                 showDescription={showDescription}
                 isDarkMode={isDarkMode}
                 onConfigChange={handleConfigChange}
-                eventId={id}
+                eventId={id || ''}
                 onFieldDelete={handleFieldDelete}
               />
-              {console.log('FormBuilder props:', { eventId: id, hasOnFieldDelete: !!handleFieldDelete })}
 
               <EmbedCodeGenerator eventId={event.id} publicToken={event.id} />
             </div>
@@ -1137,6 +1213,10 @@ export const EventDetails: React.FC = () => {
             eventAttendeeTypes={eventAttendeeTypes || []} 
             isLoadingAttendeeTypes={isLoadingAttendeeTypes}
           />
+        )}
+
+        {activeTab === 'emails' && (
+          <EventEmailsTab event={event} />
         )}
       </div>
 

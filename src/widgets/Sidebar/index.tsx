@@ -95,6 +95,13 @@ const navigation = [
     subject: 'Invitation' as const,
   },
   {
+    name: 'navigation.email',
+    href: '/email',
+    icon: Mail,
+    action: 'read' as const,
+    subject: 'Email' as const,
+  },
+  {
     name: 'navigation.application',
     href: '/application',
     icon: Smartphone,

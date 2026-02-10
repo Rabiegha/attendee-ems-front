@@ -36,23 +36,23 @@ export const BadgeDesigner: React.FC = () => {
   const [sortBy, sortOrder] = sortValue.split('-') as [string, 'asc' | 'desc'];
   
   const { 
-    data: badgeTemplatesResponse, 
+    data: badgeTemplatesData = [], 
     isLoading, 
     error,
     refetch 
   } = useGetBadgeTemplatesQuery({ 
     page: currentPage, 
     limit: pageSize,
-    search: searchQuery || undefined,
-    isActive: statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined,
-    isDefault: isDefaultFilter === 'default' ? true : isDefaultFilter === 'custom' ? false : undefined,
+    ...(searchQuery ? { search: String(searchQuery) } : {}),
+    ...(statusFilter === 'active' || statusFilter === 'inactive' ? { isActive: statusFilter === 'active' } : {}),
+    ...(isDefaultFilter === 'default' || isDefaultFilter === 'custom' ? { isDefault: isDefaultFilter === 'default' } : {}),
     sortBy: sortBy,
     sortOrder: sortOrder
   });
 
-  const templates = badgeTemplatesResponse?.data || [];
-  const totalTemplates = badgeTemplatesResponse?.meta?.total || 0;
-  const totalPages = badgeTemplatesResponse?.meta?.totalPages || 1;
+  const templates = badgeTemplatesData || [];
+  const totalTemplates = templates.length;
+  const totalPages = Math.ceil(totalTemplates / pageSize);
 
   // Configuration des filtres
   const filterConfig: Record<string, any> = {

@@ -122,6 +122,7 @@ export function mapPermissionsToCASlRules(
       'badge-templates': 'Badge',
       'attendee-types': 'AttendeeType',
       reports: 'Report',
+      email: 'Email',
     }
 
     const subject = subjectMap[resource] || resource
@@ -194,6 +195,7 @@ export function mapPermissionsToCASlRules(
           'badge-templates': 'Badge',
           'attendee-types': 'AttendeeType',
           reports: 'Report',
+          email: 'Email',
         }
         
         const subject = subjectMap[resource] || resource

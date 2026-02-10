@@ -98,7 +98,10 @@ export const sessionSlice = createSlice({
         if (rehydratedSession.organization !== undefined) {
           state.organization = rehydratedSession.organization
         }
-        if (rehydratedSession.rules) state.rules = rehydratedSession.rules
+        // Ne restaurer les règles que si elles ne sont pas vides
+        if (rehydratedSession.rules && rehydratedSession.rules.length > 0) {
+          state.rules = rehydratedSession.rules
+        }
         if (rehydratedSession.expiresAt) state.expiresAt = rehydratedSession.expiresAt
         
         // Restaurer l'état d'authentification

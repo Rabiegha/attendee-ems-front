@@ -53,7 +53,7 @@ export const AbilityProvider: React.FC<AbilityProviderProps> = ({
 
   // Mettre à jour les règles dans le store quand elles sont chargées
   useEffect(() => {
-    if (policyData?.rules) {
+    if (policyData?.rules && policyData.rules.length > 0) {
       dispatch(setRules(policyData.rules))
     }
   }, [policyData, dispatch])

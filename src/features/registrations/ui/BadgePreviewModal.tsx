@@ -39,12 +39,10 @@ export function BadgePreviewModal({
   const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
   
   // Récupérer les templates de badges disponibles
-  const { data: badgeTemplatesResponse } = useGetBadgeTemplatesQuery({ 
+  const { data: badgeTemplatesData = [] } = useGetBadgeTemplatesQuery({ 
     page: 1, 
     limit: 100 
   })
-  
-  const badgeTemplatesData = badgeTemplatesResponse?.data || [];
 
   // Récupérer les règles de badge pour cet événement
   const { data: badgeRules = [], isLoading: isLoadingRules } = useGetEventBadgeRulesQuery(eventId)
@@ -79,7 +77,7 @@ export function BadgePreviewModal({
   }, [badgeRules, registration.eventAttendeeType, currentBadgeTemplateId, isLoadingRules])
 
   // Trouver le template utilisé
-  const usedTemplate = badgeTemplatesData?.data?.find(t => t.id === effectiveBadgeTemplateId)
+  const usedTemplate = badgeTemplatesData?.find((t: any) => t.id === effectiveBadgeTemplateId)
 
   // Fonction pour charger/régénérer le badge
   const loadBadgePreview = async () => {

@@ -21,11 +21,11 @@ export interface BadgeTemplatesQuery {
 
 export const badgeTemplatesApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
-    getBadgeTemplates: builder.query<BadgeTemplateListResponse, BadgeTemplatesQuery>({
+    getBadgeTemplates: builder.query<BadgeTemplate[], BadgeTemplatesQuery>({
       query: (params = {}) => ({
         url: '/badges/templates',
         params: {
-          search: params.search,
+          search: params.search || undefined,
           page: params.page || 1,
           limit: params.limit || 10,
           eventId: params.eventId,
@@ -36,14 +36,8 @@ export const badgeTemplatesApi = rootApi.injectEndpoints({
         },
       }),
       transformResponse: (response: any) => {
-        // Normaliser la réponse : pagination -> meta (pour compatibilité)
-        if (response.pagination && !response.meta) {
-          return {
-            data: response.data,
-            meta: response.pagination
-          };
-        }
-        return response;
+        // Retourner directement le tableau data
+        return response?.data || response || [];
       },
       providesTags: ['Badges'],
     }),

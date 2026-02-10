@@ -96,12 +96,13 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
           attendee[backendFieldName] = value
         } 
         // Champs mappés aux colonnes registration
-        else if (field.registrationField) {
+        else if (('registrationField' in field) && field.registrationField) {
           registrationData[field.registrationField] = value
         } 
         // Anciens champs avec storeInAnswers (compatibilité)
-        else if (field.storeInAnswers) {
-          answers[field.key] = value
+        else if (('storeInAnswers' in field) && field.storeInAnswers) {
+          const key = ('key' in field && field.key) ? field.key : field.id
+          answers[key] = value
         }
       })
 
@@ -233,7 +234,7 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
             className={commonClasses}
           >
             <option value="">Sélectionner...</option>
-            {field.options?.map((option) => (
+            {('options' in field) && field.options?.map((option: any) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -244,7 +245,7 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
       case 'radio':
         return (
           <div className="space-y-2">
-            {field.options?.map((option) => (
+            {('options' in field) && field.options?.map((option: any) => (
               <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="radio"
@@ -264,7 +265,7 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
       case 'checkbox':
         return (
           <div className="space-y-2">
-            {field.options?.map((option) => {
+            {('options' in field) && field.options?.map((option: any) => {
               const isChecked = value.split(',').includes(option.value)
               return (
                 <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
@@ -291,7 +292,7 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
       case 'multiselect':
         return (
           <div className="space-y-2">
-            {field.options?.map((option) => {
+            {('options' in field) && field.options?.map((option: any) => {
               const currentValues = value ? (Array.isArray(value) ? value : value.split(',')) : []
               const isChecked = currentValues.includes(option.value)
               return (
@@ -334,7 +335,7 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
               {field.required && <span className="text-red-500 ml-1">*</span>}
             </label>
             {renderField(field)}
-            {field.helpText && (
+            {('helpText' in field) && field.helpText && (
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 {field.helpText}
               </p>

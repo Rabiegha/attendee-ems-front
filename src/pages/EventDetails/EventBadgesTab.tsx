@@ -192,8 +192,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
   const [deleteBadgeRule] = useDeleteEventBadgeRuleMutation()
 
   // Récupérer les templates de badges disponibles
-  const { data: badgeTemplatesResponse } = useGetBadgeTemplatesQuery({})
-  const badgeTemplatesData = badgeTemplatesResponse?.data || [];
+  const { data: badgeTemplatesData = [] } = useGetBadgeTemplatesQuery({});
 
   // Récupérer les attendee types de l'événement
   const { data: eventAttendeeTypesData = [] } = useGetEventAttendeeTypesQuery(event.id)
@@ -499,7 +498,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
 
   // Obtenir le nom d'un template
   const getTemplateName = (templateId: string) => {
-    return badgeTemplatesData?.data?.find(t => t.id === templateId)?.name || 'Template inconnu'
+    return badgeTemplatesData?.find((t: any) => t.id === templateId)?.name || 'Template inconnu'
   }
 
   // Obtenir la règle à supprimer pour l'affichage
@@ -555,7 +554,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
             <TemplateSelect
               value={formData.badgeTemplateId}
               onChange={(value) => setFormData((prev) => ({ ...prev, badgeTemplateId: value }))}
-              templates={badgeTemplatesData?.data?.filter(t => t.is_active) || []}
+              templates={badgeTemplatesData?.filter((t: any) => t.is_active) || []}
               onModify={formData.badgeTemplateId ? () => navigate(`/badges/designer/${formData.badgeTemplateId}`) : undefined}
             />
           </div>
@@ -719,7 +718,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
                         <TemplateSelect
                           value={rule.badgeTemplateId}
                           onChange={(value) => handleUpdateRuleBadge(rule.id, value)}
-                          templates={badgeTemplatesData?.data?.filter(t => t.is_active) || []}
+                          templates={badgeTemplatesData?.filter((t: any) => t.is_active) || []}
                           onModify={rule.badgeTemplateId ? () => navigate(`/badges/designer/${rule.badgeTemplateId}`) : undefined}
                         />
                       </FormField>
@@ -848,7 +847,7 @@ export const EventBadgesTab: React.FC<EventBadgesTabProps> = ({ event }) => {
                     <TemplateSelect
                       value={newRule.badgeTemplateId}
                       onChange={(value) => handleUpdateRuleBadge('new', value)}
-                      templates={badgeTemplatesData?.data?.filter(t => t.is_active) || []}
+                      templates={badgeTemplatesData?.filter((t: any) => t.is_active) || []}
                       onModify={newRule.badgeTemplateId ? () => navigate(`/badges/designer/${newRule.badgeTemplateId}`) : undefined}
                     />
                   </FormField>

@@ -33,6 +33,7 @@ export interface EventDPO {
   confirmationEmailEnabled?: boolean
   approvalEmailEnabled?: boolean
   reminderEmailEnabled?: boolean
+  includeQrCodeInApproval?: boolean
   badgeTemplateId?: string
   settings?: {
     registration_fields?: any[]
@@ -82,6 +83,7 @@ export interface CreateEventDPO {
   confirmationEmailEnabled?: boolean
   approvalEmailEnabled?: boolean
   reminderEmailEnabled?: boolean
+  includeQrCodeInApproval?: boolean
   badgeTemplateId?: string | undefined
 }
 

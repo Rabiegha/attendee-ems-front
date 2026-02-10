@@ -150,6 +150,7 @@ export const rootApi = createApi({
     'Badge',
     'Sessions',
     'SessionHistory',
+    'EmailTemplates',
   ],
   // Pas d'endpoints ici, ils seront injectés par chaque feature
   endpoints: () => ({}),

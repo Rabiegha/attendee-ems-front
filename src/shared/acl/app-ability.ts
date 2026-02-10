@@ -38,6 +38,7 @@ export type Subjects =
   | 'Invoice'
   | 'Registration'
   | 'Analytics'
+  | 'Email'
   | 'all'
 
 // Define the shape of our ability using MongoAbility for conditions support

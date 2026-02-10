@@ -1,5 +1,6 @@
 // Core Components - Design System
 export { Button } from './Button'
+export { Badge } from './Badge'
 export { Input } from './Input'
 export { SearchInput } from './SearchInput'
 export { Textarea } from './Textarea'

@@ -60,6 +60,7 @@ export interface AttendeesListParams {
   eventId?: string
   page?: number
   limit?: number
+  pageSize?: number
   status?: string
   isActive?: boolean
   search?: string

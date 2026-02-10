@@ -82,20 +82,21 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
           return
         }
         // Champs standard mappés aux colonnes attendee
-        else if (field.attendeeField) {
+        else if ('attendeeField' in field && field.attendeeField) {
           // Map to attendee table column (convert camelCase to snake_case)
           const backendFieldName = toSnakeCase(field.attendeeField)
           attendee[backendFieldName] = value
         } 
         // Champs mappés aux colonnes registration
-        else if (field.registrationField) {
+        else if ('registrationField' in field && field.registrationField) {
           // Map to registration table column
           registrationData[field.registrationField] = value
         } 
         // Anciens champs avec storeInAnswers (compatibilité)
-        else if (field.storeInAnswers) {
+        else if ('storeInAnswers' in field && field.storeInAnswers) {
           // Store in answers JSON
-          answers[field.key] = value
+          const key = 'key' in field && field.key ? field.key : field.id
+          answers[key] = value
         }
       })
 
@@ -213,6 +214,26 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
           />
         )
       case 'select':
+        // Vérifier si c'est un champ attendee_type spécial
+        if ('key' in field && field.key === 'event_attendee_type_id') {
+          return (
+            <select
+              value={value}
+              onChange={(e) => handleInputChange(field.id, e.target.value)}
+              className={baseClasses}
+              required={field.required}
+              disabled={disabled}
+            >
+              <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
+              {eventAttendeeTypes?.map((type: any) => (
+                <option key={type.id} value={type.id} className="dark:bg-gray-700 dark:text-white">
+                  {type.attendeeType?.name || type.name}
+                </option>
+              ))}
+            </select>
+          )
+        }
+        // Champ select normal
         return (
           <select
             value={value}
@@ -222,7 +243,7 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             disabled={disabled}
           >
             <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez une option</option>
-            {field.options?.map(
+            {('options' in field) && field.options?.map(
               (option: { value: string; label: string }, idx: number) => (
                 <option key={idx} value={option.value} className="dark:bg-gray-700 dark:text-white">
                   {option.label}
@@ -231,27 +252,10 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             )}
           </select>
         )
-      case 'attendee_type':
-        return (
-          <select
-            value={value}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
-            className={baseClasses}
-            required={field.required}
-            disabled={disabled}
-          >
-            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
-            {eventAttendeeTypes?.filter(type => type.is_active && type.attendeeType.is_active).map((type) => (
-              <option key={type.id} value={type.id} className="dark:bg-gray-700 dark:text-white">
-                {type.attendeeType.name}
-              </option>
-            ))}
-          </select>
-        )
       case 'radio':
         return (
           <div className="space-y-2">
-            {field.options?.map((option: any) => (
+            {('options' in field) && field.options?.map((option: any) => (
               <label key={option.value} className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="radio"
@@ -273,8 +277,8 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
-              checked={value === true}
-              onChange={(e) => handleInputChange(field.id, e.target.checked)}
+              checked={!!value}
+              onChange={(e) => handleInputChange(field.id, e.target.checked ? 'true' : '')}
               required={field.required}
               disabled={disabled}
               className="text-blue-600 w-5 h-5"
@@ -285,8 +289,8 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       case 'multiselect':
         return (
           <div className="space-y-2">
-            {field.options?.map((option: any) => {
-              const currentValues = value ? (Array.isArray(value) ? value : value.split(',')) : []
+            {('options' in field) && field.options?.map((option: any) => {
+              const currentValues = value ? (Array.isArray(value) ? value : typeof value === 'string' ? value.split(',') : []) : []
               const isChecked = currentValues.includes(option.value)
               return (
                 <label key={option.value} className="flex items-center space-x-2 cursor-pointer">

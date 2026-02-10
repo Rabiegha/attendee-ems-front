@@ -116,12 +116,12 @@ export const CustomFieldCreator: React.FC<CustomFieldCreatorProps> = ({
         required: editingField.required,
         minLength: editingField.validation?.minLength,
         maxLength: editingField.validation?.maxLength,
-        minValue: editingField.validation?.min,
-        maxValue: editingField.validation?.max,
+        minValue: editingField.validation?.min?.toString() || undefined,
+        maxValue: editingField.validation?.max?.toString() || undefined,
       })
       
       // Initialiser les options si le champ en a
-      if (editingField.options && editingField.options.length > 0) {
+      if ('options' in editingField && editingField.options && editingField.options.length > 0) {
         setOptions(editingField.options)
       } else {
         setOptions([{ label: '', value: '' }])
@@ -440,7 +440,7 @@ export const CustomFieldCreator: React.FC<CustomFieldCreatorProps> = ({
                     min={watch('minValue') || undefined}
                     {...register('maxValue')}
                   />
-                  {watch('minValue') && watch('maxValue') && watch('minValue') >= watch('maxValue') && (
+                  {watch('minValue') && watch('maxValue') && (watch('minValue') || '') >= (watch('maxValue') || '') && (
                     <p className="text-red-500 text-xs">La date maximale doit être après la date minimale</p>
                   )}
                 </div>

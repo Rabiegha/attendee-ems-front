@@ -65,6 +65,20 @@ export const registrationsApi = rootApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Attendee', id }],
     }),
 
+    approveWithEmail: builder.mutation<
+      RegistrationDPO,
+      { id: string; sendEmail: boolean }
+    >({
+      query: ({ id, sendEmail }) => ({
+        url: `/registrations/${id}/approve-with-email`,
+        method: 'POST',
+        body: { sendEmail },
+      }),
+      transformResponse: (response: RegistrationDTO) =>
+        mapRegistrationDTOtoDPO(response),
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Attendee', id }],
+    }),
+
     importRegistrations: builder.mutation<
       { count: number; errors: string[] },
       { eventId: string; data: any[] }
@@ -536,6 +550,7 @@ export const registrationsApi = rootApi.injectEndpoints({
 export const {
   useGetRegistrationsQuery,
   useUpdateRegistrationStatusMutation,
+  useApproveWithEmailMutation,
   useImportRegistrationsMutation,
   useImportExcelRegistrationsMutation,
   useExportRegistrationsMutation,

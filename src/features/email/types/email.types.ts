@@ -1,8 +1,8 @@
 export enum EmailTemplateType {
   REGISTRATION_CONFIRMATION = 'registration_confirmation',
   REGISTRATION_APPROVED = 'registration_approved',
+  REGISTRATION_REJECTED = 'registration_rejected',
   INVITATION = 'invitation',
-  PASSWORD_RESET = 'password_reset',
 }
 
 export interface EmailTemplate {

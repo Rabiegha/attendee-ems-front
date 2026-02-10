@@ -49,6 +49,7 @@ import {
   useCheckOutMutation,
   useUndoCheckOutMutation,
   useApproveWithEmailMutation,
+  useRejectWithEmailMutation,
 } from '../api/registrationsApi'
 import { EventAttendeeType } from '@/features/events/api/eventsApi'
 import { useToast } from '@/shared/hooks/useToast'
@@ -61,6 +62,7 @@ import { BadgePreviewModal } from './BadgePreviewModal'
 import { BulkStatusChangeModal } from './BulkStatusChangeModal'
 import { BulkAttendeeTypeChangeModal } from './BulkAttendeeTypeChangeModal'
 import { ApprovalConfirmationModal } from './ApprovalConfirmationModal'
+import { RejectionConfirmationModal } from './RejectionConfirmationModal'
 import { createBulkActions } from '@/shared/ui/BulkActions'
 import {
   getRegistrationFullName,
@@ -197,6 +199,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [deletingRegistration, setDeletingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [approvingRegistration, setApprovingRegistration] =
+    useState<RegistrationDPO | null>(null)
+  const [rejectingRegistration, setRejectingRegistration] =
     useState<RegistrationDPO | null>(null)
   const [restoringRegistration, setRestoringRegistration] =
     useState<RegistrationDPO | null>(null)
@@ -497,6 +501,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
   const [updateStatus] = useUpdateRegistrationStatusMutation()
   const [approveWithEmail, { isLoading: isApproving }] = useApproveWithEmailMutation()
+  const [rejectWithEmail, { isLoading: isRejecting }] = useRejectWithEmailMutation()
   const [updateRegistration, { isLoading: isUpdating }] =
     useUpdateRegistrationMutation()
   const [deleteRegistration] = useDeleteRegistrationMutation()
@@ -606,6 +611,35 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         title = 'Capacité atteinte'
         message = "L'événement est complet. Impossible d'approuver ce participant."
       } else if (error?.data?.message) {
+        message = error.data.message
+      }
+
+      toast.error(title, message)
+    }
+  }
+
+  const handleRejectWithEmail = async (sendEmail: boolean) => {
+    if (!rejectingRegistration) return
+
+    try {
+      await rejectWithEmail({
+        id: rejectingRegistration.id,
+        sendEmail,
+      }).unwrap()
+      
+      const message = sendEmail 
+        ? "L'inscription a été refusée et l'email de notification a été envoyé"
+        : "L'inscription a été refusée sans envoi d'email"
+      
+      toast.success('Inscription refusée', message)
+      setRejectingRegistration(null)
+    } catch (error: any) {
+      console.error('Error rejecting with email:', error)
+      
+      let title = 'Erreur'
+      let message = "Impossible de refuser l'inscription"
+
+      if (error?.data?.message) {
         message = error.data.message
       }
 
@@ -1365,7 +1399,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleStatusChange(row.original.id, 'refused')}
+                    onClick={() => setRejectingRegistration(row.original)}
                     disabled={isUpdating}
                     className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                     title="Refuser"
@@ -1760,6 +1794,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         registrationName={approvingRegistration ? getRegistrationFullName(approvingRegistration) : ''}
         onApprove={handleApproveWithEmail}
         isApproving={isApproving}
+      />
+
+      <RejectionConfirmationModal
+        isOpen={!!rejectingRegistration}
+        onClose={() => setRejectingRegistration(null)}
+        registrationName={rejectingRegistration ? getRegistrationFullName(rejectingRegistration) : ''}
+        onReject={handleRejectWithEmail}
+        isRejecting={isRejecting}
       />
 
       <RestoreRegistrationModal

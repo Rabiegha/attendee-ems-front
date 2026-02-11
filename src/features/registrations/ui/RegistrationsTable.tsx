@@ -874,16 +874,16 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
   // Envoyer la recherche au backend via debounce
   useEffect(() => {
-    if (onSearchChange) {
-      const timer = setTimeout(() => {
-        // Ne pas appeler si la valeur n'a pas changé
-        if (searchQuery !== lastSearchRef.current) {
-          lastSearchRef.current = searchQuery
-          onSearchChange(searchQuery)
-        }
-      }, 500) // Debounce de 500ms
-      return () => clearTimeout(timer)
-    }
+    if (!onSearchChange) return
+    
+    const timer = setTimeout(() => {
+      // Ne pas appeler si la valeur n'a pas changé
+      if (searchQuery !== lastSearchRef.current) {
+        lastSearchRef.current = searchQuery
+        onSearchChange(searchQuery)
+      }
+    }, 500) // Debounce de 500ms
+    return () => clearTimeout(timer)
   }, [searchQuery, onSearchChange])
 
   // Filtrage côté client (uniquement pour les filtres non gérés par le backend)

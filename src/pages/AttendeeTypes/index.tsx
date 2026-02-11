@@ -106,7 +106,7 @@ export function AttendeeTypesPage() {
 
   // API queries and mutations
   const { data: attendeeTypesResponse, isLoading, error, refetch } = useGetAttendeeTypesQuery(
-    { orgId: currentOrg?.id || '', limit: 1000, search: debouncedSearch || undefined },
+    { orgId: currentOrg?.id || '', limit: 1000, ...(debouncedSearch && { search: debouncedSearch }) },
     { skip: !currentOrg?.id }
   )
   

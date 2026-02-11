@@ -126,7 +126,7 @@ function UsersPageContent() {
       // Ne pas appeler si la valeur n'a pas changé
       if (searchQuery !== lastSearchRef.current) {
         lastSearchRef.current = searchQuery
-        dispatch(setFilters({ search: searchQuery || undefined, page: 1 }))
+        dispatch(setFilters({ ...(searchQuery && { search: searchQuery }), page: 1 }))
       }
     }, 500) // Debounce de 500ms
     return () => clearTimeout(timer)
@@ -166,7 +166,7 @@ function UsersPageContent() {
   const handleResetFilters = () => {
     setSearchQuery('')
     setRoleFilters({})
-    dispatch(setFilters({ search: undefined }))
+    dispatch(setFilters({ page: 1 }))
   }
 
   const handleRefresh = () => {
@@ -557,7 +557,7 @@ function UsersPageContent() {
       {/* Section liste des utilisateurs */}
       <PageSection spacing="lg">
         <FilterBar
-          resultCount={usersData?.meta?.total || 0}
+          resultCount={usersData?.total || 0}
           resultLabel="utilisateur"
           onReset={handleResetFilters}
           showResetButton={searchQuery !== '' || (selectedRoleId !== undefined && selectedRoleId !== 'all')}

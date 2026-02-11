@@ -163,7 +163,7 @@ export const EventDetails: React.FC = () => {
           page: registrationsPage,
           limit: registrationsPageSize,
           isActive: registrationsIsActive,
-          search: registrationsSearch || undefined,
+          ...(registrationsSearch && { search: registrationsSearch }),
         }
       : skipToken,
     {

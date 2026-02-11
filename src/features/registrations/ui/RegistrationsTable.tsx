@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ColumnDef } from '@tanstack/react-table'
 import {
@@ -70,7 +70,6 @@ import {
   getRegistrationPhone,
   getRegistrationCompany,
 } from '../utils/registration-helpers'
-import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 import { generateAndDownloadBadge, type BadgeFormat } from '../utils/badgeDownload'
 import type { FormField, CustomField } from '@/features/events/components/FormBuilder/types'
 import { isCustomField } from '@/features/events/components/FormBuilder/types'
@@ -106,6 +105,8 @@ interface RegistrationsTableProps {
   totalPages?: number
   onPageChange?: (page: number) => void
   onPageSizeChange?: (pageSize: number) => void
+  // Server-side search
+  onSearchChange?: (search: string) => void
   eventAttendeeTypes?: EventAttendeeType[] | undefined
   isLoadingAttendeeTypes?: boolean
   formFields?: FormField[]
@@ -184,6 +185,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   totalPages,
   onPageChange,
   onPageSizeChange,
+  onSearchChange,
   eventAttendeeTypes,
   isLoadingAttendeeTypes = false,
   formFields = [],
@@ -867,22 +869,26 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const checkinFilter = (filterValues.checkin as string) || 'all'
   const attendeeTypeFilter = (filterValues.attendeeType as string) || 'all'
 
-  // 1. Recherche floue (Fuzzy Search)
-  const searchResults = useFuzzySearch(
-    registrations,
-    searchQuery,
-    [
-      'attendee.firstName',
-      'attendee.lastName',
-      'attendee.email',
-      'attendee.company',
-    ]
-  )
+  // Tracker la dernière valeur de recherche envoyée pour éviter les appels inutiles
+  const lastSearchRef = useRef<string>('')
 
-  // Filtrage
+  // Envoyer la recherche au backend via debounce
+  useEffect(() => {
+    if (onSearchChange) {
+      const timer = setTimeout(() => {
+        // Ne pas appeler si la valeur n'a pas changé
+        if (searchQuery !== lastSearchRef.current) {
+          lastSearchRef.current = searchQuery
+          onSearchChange(searchQuery)
+        }
+      }, 500) // Debounce de 500ms
+      return () => clearTimeout(timer)
+    }
+  }, [searchQuery, onSearchChange])
+
+  // Filtrage côté client (uniquement pour les filtres non gérés par le backend)
   const filteredRegistrations = useMemo(() => {
-    // 2. Autres filtres
-    return searchResults.filter((reg) => {
+    return registrations.filter((reg) => {
       const matchesStatus = statusFilter === 'all' || reg.status === statusFilter
 
       const matchesCheckin =
@@ -898,7 +904,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
       return matchesStatus && matchesCheckin && matchesAttendeeType
     })
-  }, [searchResults, statusFilter, checkinFilter, attendeeTypeFilter])
+  }, [registrations, statusFilter, checkinFilter, attendeeTypeFilter])
 
   // Helper function pour formater les valeurs des champs custom
   const formatCustomValue = (value: any, field: CustomField): string => {
@@ -1669,7 +1675,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     <div className="space-y-4">
       {/* Barre de recherche et filtres */}
       <FilterBar
-        resultCount={filteredRegistrations.length}
+        resultCount={meta?.total || 0}
         resultLabel="inscription"
         onReset={() => {
           setSearchQuery('')

@@ -4,7 +4,7 @@
  * Utilise DataTable (TanStack Table) au lieu de table HTML custom
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { ColumnDef } from '@tanstack/react-table'
@@ -64,7 +64,6 @@ import {
   type UsersTab,
 } from '@/features/users/model/usersSlice'
 import { useToast } from '@/shared/hooks/useToast'
-import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 
 function UsersPageContent() {
   const navigate = useNavigate()
@@ -116,21 +115,27 @@ function UsersPageContent() {
   // Filtres locaux (recherche + rôles)
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilters, setRoleFilters] = useState<FilterValues>({})
+  const lastSearchRef = useRef<string>('')
 
   // Tabs configuration
   const isDeletedTab = activeTab === 'deleted'
 
-  // 1. Recherche floue
-  const searchResults = useFuzzySearch(
-    usersData?.users || [],
-    searchQuery,
-    ['first_name', 'last_name', 'email']
-  )
+  // Envoyer la recherche au backend via debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // Ne pas appeler si la valeur n'a pas changé
+      if (searchQuery !== lastSearchRef.current) {
+        lastSearchRef.current = searchQuery
+        dispatch(setFilters({ search: searchQuery || undefined, page: 1 }))
+      }
+    }, 500) // Debounce de 500ms
+    return () => clearTimeout(timer)
+  }, [searchQuery, dispatch])
 
-  // Filtrage local côté client pour recherche et rôles
+  // Filtrage local côté client uniquement pour les rôles (car non géré par le backend)
   const selectedRoleId = roleFilters.roles as string | undefined
   const filteredUsers = useMemo(() => {
-    let users = searchResults
+    let users = usersData?.users || []
 
     // Filtre par rôle (single select)
     if (selectedRoleId && selectedRoleId !== 'all') {
@@ -141,7 +146,7 @@ function UsersPageContent() {
     }
 
     return users
-  }, [searchResults, selectedRoleId])
+  }, [usersData?.users, selectedRoleId])
 
   // Configuration des filtres pour le popup
   const filterConfig = useMemo(() => ({
@@ -161,6 +166,7 @@ function UsersPageContent() {
   const handleResetFilters = () => {
     setSearchQuery('')
     setRoleFilters({})
+    dispatch(setFilters({ search: undefined }))
   }
 
   const handleRefresh = () => {
@@ -551,7 +557,7 @@ function UsersPageContent() {
       {/* Section liste des utilisateurs */}
       <PageSection spacing="lg">
         <FilterBar
-          resultCount={filteredUsers.length}
+          resultCount={usersData?.meta?.total || 0}
           resultLabel="utilisateur"
           onReset={handleResetFilters}
           showResetButton={searchQuery !== '' || (selectedRoleId !== undefined && selectedRoleId !== 'all')}

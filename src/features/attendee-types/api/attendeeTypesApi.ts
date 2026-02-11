@@ -37,6 +37,7 @@ export interface ListAttendeeTypesParams {
   limit?: number
   sortBy?: 'name' | 'code' | 'created_at'
   sortOrder?: 'asc' | 'desc'
+  search?: string
 }
 
 export interface AttendeeTypesListResponse {

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+﻿import React, { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useSearchParams } from 'react-router-dom'
 import {
   useGetEventByIdQuery,
@@ -95,6 +95,7 @@ export const EventDetails: React.FC = () => {
   // State pour la pagination des inscriptions
   const [registrationsPage, setRegistrationsPage] = useState(1)
   const [registrationsPageSize, setRegistrationsPageSize] = useState(50)
+  const [registrationsSearch, setRegistrationsSearch] = useState('')
 
   // DEBUG: Log pour voir les changements
   console.log('🔍 EventDetails Pagination State:', {
@@ -107,6 +108,19 @@ export const EventDetails: React.FC = () => {
 
   // ⏰ POLLING AUTO - Refresh toutes les 5 secondes
   const [pollingInterval, setPollingInterval] = useState(5000)
+
+  // State pour le modal d'actions
+  const [showActionsModal, setShowActionsModal] = useState(false)
+
+  // State pour les champs du formulaire - chargé depuis la BDD ou valeurs par défaut
+  const [formFields, setFormFields] = useState<FormField[]>([])
+
+  // State pour la configuration du bouton submit
+  const [submitButtonText, setSubmitButtonText] = useState<string>("S'inscrire")
+  const [submitButtonColor, setSubmitButtonColor] = useState<string>('#4F46E5')
+  const [showTitle, setShowTitle] = useState<boolean>(true)
+  const [showDescription, setShowDescription] = useState<boolean>(true)
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
 
   // Hooks de permissions - DOIVENT être appelés avant les conditions
   const canReadEvents = useCan('read', 'Event')
@@ -133,18 +147,72 @@ export const EventDetails: React.FC = () => {
   const [updateEvent] = useUpdateEventMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
 
-  // State pour le modal d'actions
-  const [showActionsModal, setShowActionsModal] = useState(false)
+  // RTK Query mutations pour la suppression de champ
+  const [checkFieldData] = useCheckFieldDataMutation()
+  const [cleanFieldData] = useCleanFieldDataMutation()
 
-  // State pour les champs du formulaire - chargé depuis la BDD ou valeurs par défaut
-  const [formFields, setFormFields] = useState<FormField[]>([])
+  // Queries pour les registrations - DOIVENT être avant les early returns
+  const {
+    data: registrationsResponse,
+    isLoading: registrationsLoading,
+    refetch: refetchRegistrations,
+  } = useGetRegistrationsQuery(
+    id
+      ? {
+          eventId: id,
+          page: registrationsPage,
+          limit: registrationsPageSize,
+          isActive: registrationsIsActive,
+          search: registrationsSearch || undefined,
+        }
+      : skipToken,
+    {
+      pollingInterval: activeTab === 'registrations' ? pollingInterval : 0,
+    }
+  )
 
-  // State pour la configuration du bouton submit
-  const [submitButtonText, setSubmitButtonText] = useState<string>("S'inscrire")
-  const [submitButtonColor, setSubmitButtonColor] = useState<string>('#4F46E5')
-  const [showTitle, setShowTitle] = useState<boolean>(true)
-  const [showDescription, setShowDescription] = useState<boolean>(true)
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
+  // Hook séparé pour récupérer tous les IDs lors de l'export
+  const { data: allRegistrationsForExport } = useGetRegistrationsQuery(
+    id
+      ? {
+          eventId: id,
+          page: 1,
+          limit: 10000,
+        }
+      : skipToken,
+    {
+      skip: !id,
+    }
+  )
+
+  // Queries pour les stats des onglets
+  const { data: activeRegistrationsStats } = useGetRegistrationsQuery(
+    id
+      ? {
+          eventId: id,
+          page: 1,
+          limit: 1,
+          isActive: true,
+        }
+      : skipToken,
+    {
+      skip: !id,
+    }
+  )
+
+  const { data: deletedRegistrationsStats } = useGetRegistrationsQuery(
+    id
+      ? {
+          eventId: id,
+          page: 1,
+          limit: 1,
+          isActive: false,
+        }
+      : skipToken,
+    {
+      skip: !id,
+    }
+  )
 
   // Charger les champs depuis event.settings.registration_fields quand l'événement est chargé
   useEffect(() => {
@@ -326,10 +394,6 @@ export const EventDetails: React.FC = () => {
     }
   }
 
-  // RTK Query mutations pour la suppression de champ
-  const [checkFieldData] = useCheckFieldDataMutation()
-  const [cleanFieldData] = useCleanFieldDataMutation()
-
   // Fonction pour vérifier et nettoyer les données d'un champ avant suppression
   const handleFieldDelete = async (fieldId: string): Promise<{ affectedCount: number; canDelete: boolean }> => {
     if (!id) {
@@ -448,25 +512,6 @@ export const EventDetails: React.FC = () => {
     })
   }
 
-  const {
-    data: registrationsResponse,
-    isLoading: registrationsLoading,
-    refetch: refetchRegistrations,
-  } = useGetRegistrationsQuery(
-    id
-      ? {
-          eventId: id,
-          page: registrationsPage,
-          limit: registrationsPageSize,
-          isActive: registrationsIsActive,
-        }
-      : skipToken,
-    {
-      // ⏰ POLLING AUTO - Refresh toutes les 5 secondes
-      pollingInterval: activeTab === 'registrations' ? pollingInterval : 0,
-    }
-  )
-
   // 🐛 DEBUG: Log pour voir les paramètres de pagination
   console.log('📊 [EventDetails] Pagination params:', {
     registrationsPage,
@@ -475,56 +520,12 @@ export const EventDetails: React.FC = () => {
     dataLength: registrationsResponse?.data?.length,
   })
 
-  // Hook séparé pour récupérer tous les IDs lors de l'export (avec limite haute)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { data: allRegistrationsForExport } = useGetRegistrationsQuery(
-    id
-      ? {
-          eventId: id,
-          page: 1,
-          limit: 10000, // Limite haute pour récupérer tous les IDs
-        }
-      : skipToken,
-    {
-      skip: !id, // Ne pas exécuter si pas d'ID
-    }
-  )
-
   // Log pour debug
   console.log('📋 allRegistrationsForExport:', {
     hasData: !!allRegistrationsForExport,
     dataLength: allRegistrationsForExport?.data?.length,
     meta: allRegistrationsForExport?.meta,
   })
-
-  // Queries pour les stats des onglets (actives/supprimées)
-  const { data: activeRegistrationsStats } = useGetRegistrationsQuery(
-    id
-      ? {
-          eventId: id,
-          page: 1,
-          limit: 1,
-          isActive: true,
-        }
-      : skipToken,
-    {
-      skip: !id,
-    }
-  )
-
-  const { data: deletedRegistrationsStats } = useGetRegistrationsQuery(
-    id
-      ? {
-          eventId: id,
-          page: 1,
-          limit: 1,
-          isActive: false,
-        }
-      : skipToken,
-    {
-      skip: !id,
-    }
-  )
 
   // Les inscriptions sont récupérées via l'API RTK Query
   const allRegistrations = registrationsResponse?.data || []
@@ -559,6 +560,7 @@ export const EventDetails: React.FC = () => {
     setRegistrationsActiveTab(newTab)
     setRegistrationsIsActive(newTab === 'active')
     setRegistrationsPage(1) // Reset to first page
+    setRegistrationsSearch('') // Reset search when changing tab
   }
 
   // Callback pour l'import Excel - plus besoin du mode local
@@ -614,6 +616,13 @@ export const EventDetails: React.FC = () => {
       toast.error("Erreur lors de l'export des inscriptions")
     }
   }
+
+  // Callback mémorisé pour la recherche des inscriptions - DOIT être avant les early returns
+  const handleRegistrationsSearchChange = useCallback((search: string) => {
+    console.log('🔍 Search changed to:', search)
+    setRegistrationsSearch(search)
+    setRegistrationsPage(1) // Reset to first page when searching
+  }, [])
 
   if (eventLoading) {
     return (
@@ -1137,6 +1146,8 @@ export const EventDetails: React.FC = () => {
                 setRegistrationsPageSize(pageSize)
                 setRegistrationsPage(1) // Reset to first page when changing page size
               }}
+              // Server-side search
+              onSearchChange={handleRegistrationsSearchChange}
             />
           </div>
         )}

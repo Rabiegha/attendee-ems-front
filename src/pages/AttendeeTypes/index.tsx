@@ -2,7 +2,7 @@
  * AttendeeTypesPage - Page de gestion des types de participants
  */
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { ColumnDef } from '@tanstack/react-table'
 import {
@@ -28,7 +28,6 @@ import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
 import { type BulkAction } from '@/shared/ui/BulkActions'
 import { selectUser, selectOrganization } from '@/features/auth/model/sessionSlice'
 import { useToast } from '@/shared/hooks/useToast'
-import { useFuzzySearch } from '@/shared/hooks/useFuzzySearch'
 import { Can } from '@/shared/acl/guards/Can'
 import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
 import {
@@ -91,24 +90,25 @@ export function AttendeeTypesPage() {
   const [deletingType, setDeletingType] = useState<AttendeeType | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
-  // Debug: vérifier si l'organisation est disponible
-  console.log('[AttendeeTypes] Current org:', currentOrg)
-  console.log('[AttendeeTypes] Org ID:', currentOrg?.id)
+  // Debounced server-side search
+  const lastSearchRef = useRef<string>('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery !== lastSearchRef.current) {
+        lastSearchRef.current = searchQuery
+        setDebouncedSearch(searchQuery)
+      }
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
 
   // API queries and mutations
   const { data: attendeeTypesResponse, isLoading, error, refetch } = useGetAttendeeTypesQuery(
-    { orgId: currentOrg?.id || '', limit: 1000 },
+    { orgId: currentOrg?.id || '', limit: 1000, search: debouncedSearch || undefined },
     { skip: !currentOrg?.id }
   )
-  
-  // Debug: logs détaillés
-  console.log('[AttendeeTypes] Query params:', { orgId: currentOrg?.id, limit: 1000 })
-  console.log('[AttendeeTypes] Skip query?', !currentOrg?.id)
-  console.log('[AttendeeTypes] isLoading:', isLoading)
-  console.log('[AttendeeTypes] error:', error)
-  console.log('[AttendeeTypes] Response:', attendeeTypesResponse)
-  console.log('[AttendeeTypes] Fetched from DB:', attendeeTypesResponse?.data)
-  console.log('[AttendeeTypes] Total count:', attendeeTypesResponse?.data?.length)
   
   const attendeeTypes = attendeeTypesResponse?.data || []
   const [createType] = useCreateAttendeeTypeMutation()
@@ -121,13 +121,6 @@ export function AttendeeTypesPage() {
       activeTab === 'active' ? type.is_active : !type.is_active
     )
   }, [attendeeTypes, activeTab])
-
-  // Recherche floue
-  const searchResults = useFuzzySearch(
-    typesByTab,
-    searchQuery,
-    ['code', 'name'],
-  )
 
   // Stats pour les onglets
   const stats = useMemo(() => {
@@ -560,7 +553,7 @@ export function AttendeeTypesPage() {
       {/* Section FilterBar */}
       <PageSection spacing="lg">
         <FilterBar
-          resultCount={searchResults.length}
+          resultCount={typesByTab.length}
           resultLabel="type"
           onReset={() => setSearchQuery('')}
           showResetButton={searchQuery !== ''}
@@ -581,7 +574,7 @@ export function AttendeeTypesPage() {
           <DataTable
             key={activeTab}
             columns={activeTab === 'active' ? activeColumns : deletedColumns}
-            data={searchResults}
+            data={typesByTab}
             isLoading={isLoading}
             enableRowSelection
             bulkActions={bulkActions}

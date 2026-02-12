@@ -271,8 +271,8 @@ const PublicRegistration: React.FC = () => {
     const baseClasses = "w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
 
     // Déterminer le type de champ à rendre
-    // Pour les champs custom ou standard avec fieldType, utiliser field.fieldType, sinon field.type
-    const fieldType = (field.type === 'custom' || field.type === 'standard') ? field.fieldType : field.type
+    // Si fieldType existe, l'utiliser, sinon utiliser field.type (pour les anciens champs)
+    const fieldType = field.fieldType || field.type
 
     switch (fieldType) {
       case 'textarea':

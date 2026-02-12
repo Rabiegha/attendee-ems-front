@@ -195,8 +195,8 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
     const disabled = !functional || isSubmitted
 
     // Déterminer le type de champ à rendre
-    // Pour les champs custom, utiliser field.fieldType, sinon field.type pour les champs standard
-    const fieldType = field.type === 'custom' ? field.fieldType : field.type
+    // Pour les champs custom ou standard avec fieldType, utiliser field.fieldType, sinon field.type
+    const fieldType = (field.type === 'custom' || field.type === 'standard') ? field.fieldType : field.type
 
     switch (fieldType) {
       case 'textarea':

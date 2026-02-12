@@ -41,14 +41,14 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
               </h3>
               <div className="mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
                 <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  {formatDate(event.startDate)}
-                </div>
-                <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
                   {event.maxAttendees && event.maxAttendees > 0 && event.maxAttendees < 999999
                     ? `${event.currentAttendees}/${event.maxAttendees} participants`
                     : `${event.currentAttendees} participants`}
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  {formatDate(event.startDate)}
                 </div>
                 <div className="flex items-center">
                   <Globe className="h-4 w-4 mr-1 flex-shrink-0" />

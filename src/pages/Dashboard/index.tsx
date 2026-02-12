@@ -41,6 +41,7 @@ export const Dashboard: React.FC = () => {
   // États pour gérer le nombre d'éléments affichés
   const [eventsLimit, setEventsLimit] = useState(5)
   const [attendeesLimit, setAttendeesLimit] = useState(5)
+  const [registrationsLimit, setRegistrationsLimit] = useState(5)
 
   // Récupérer les infos à jour depuis l'API
   const { data: userProfile } = useMeQuery(undefined, {
@@ -97,15 +98,28 @@ export const Dashboard: React.FC = () => {
     )
 
   // Récupérer les inscriptions récentes pour l'affichage
-  const { data: recentRegistrations, isLoading: registrationsLoading } =
+  const { data: recentRegistrationsResponse, isLoading: registrationsLoading } =
     useGetRecentRegistrationsQuery(
       {
-        limit: 5,
+        limit: registrationsLimit,
       },
       {
         skip: !canReadAttendee, // Utilise la même permission que les attendees
       }
     )
+
+  const recentRegistrations = recentRegistrationsResponse || []
+
+  // Récupérer le total des inscriptions
+  const { data: allRegistrationsResponse } = useGetRecentRegistrationsQuery(
+    {
+      limit: 1000, // Limite haute pour avoir toutes les inscriptions
+    },
+    {
+      skip: !canReadAttendee,
+    }
+  )
+  const totalRegistrations = allRegistrationsResponse?.length || 0
 
   // Récupérer le total des participants depuis meta
   const attendees = attendeesResponse?.data || []
@@ -118,6 +132,10 @@ export const Dashboard: React.FC = () => {
   
   const handleLoadMoreAttendees = () => {
     setAttendeesLimit(prev => prev + 5)
+  }
+
+  const handleLoadMoreRegistrations = () => {
+    setRegistrationsLimit(prev => prev + 5)
   }
 
   // Dashboard unifié avec éléments conditionnels
@@ -172,64 +190,75 @@ export const Dashboard: React.FC = () => {
                     <p>Aucune inscription récente</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {recentRegistrations.map((registration) => (
-                      <Link
-                        key={registration.id}
-                        to={`/attendees/${registration.attendeeId}`}
-                        className="block border-l-4 border-green-500 dark:border-green-400 pl-4 pr-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                              {registration.attendee?.firstName} {registration.attendee?.lastName}
-                            </h3>
-                            <div className="mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                              <div className="flex items-center">
-                                <Mail className="h-4 w-4 mr-1 flex-shrink-0" />
-                                {registration.attendee?.email}
+                  <>
+                    <div className="space-y-4">
+                      {recentRegistrations.map((registration) => (
+                        <Link
+                          key={registration.id}
+                          to={`/attendees/${registration.attendeeId}`}
+                          className="block border-l-4 border-green-500 dark:border-green-400 pl-4 pr-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                                {registration.attendee?.firstName} {registration.attendee?.lastName}
+                              </h3>
+                              <div className="mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
+                                <div className="flex items-center">
+                                  <Mail className="h-4 w-4 mr-1 flex-shrink-0" />
+                                  {registration.attendee?.email}
+                                </div>
+                                {registration.createdAt && (
+                                  <div className="flex items-center">
+                                    <Calendar className="h-4 w-4 mr-1" />
+                                    {formatDateForDisplay(registration.createdAt)}
+                                  </div>
+                                )}
+                                {registration.event && (
+                                  <div className="flex items-center">
+                                    <CalendarDays className="h-4 w-4 mr-1 flex-shrink-0" />
+                                    <Link
+                                      to={`/events/${registration.event.id}`}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                                    >
+                                      {registration.event.name}
+                                    </Link>
+                                  </div>
+                                )}
                               </div>
-                              {registration.createdAt && (
-                                <div className="flex items-center">
-                                  <Calendar className="h-4 w-4 mr-1" />
-                                  {formatDateForDisplay(registration.createdAt)}
-                                </div>
-                              )}
-                              {registration.event && (
-                                <div className="flex items-center">
-                                  <CalendarDays className="h-4 w-4 mr-1 flex-shrink-0" />
-                                  <Link
-                                    to={`/events/${registration.event.id}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-blue-600 dark:text-blue-400 hover:underline"
-                                  >
-                                    {registration.event.name}
-                                  </Link>
-                                </div>
-                              )}
+                            </div>
+                            <div className="flex items-center ml-4">
+                              <span
+                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                  registration.status === 'approved'
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+                                    : registration.status === 'awaiting'
+                                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+                                      : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+                                }`}
+                              >
+                                {registration.status === 'approved'
+                                  ? 'Approuvé'
+                                  : registration.status === 'awaiting'
+                                    ? 'En attente'
+                                    : 'Refusé'}
+                              </span>
                             </div>
                           </div>
-                          <div className="flex items-center ml-4">
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                registration.status === 'approved'
-                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
-                                  : registration.status === 'awaiting'
-                                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
-                                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
-                              }`}
-                            >
-                              {registration.status === 'approved'
-                                ? 'Approuvé'
-                                : registration.status === 'awaiting'
-                                  ? 'En attente'
-                                  : 'Refusé'}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                        </Link>
+                      ))}
+                    </div>
+                    {recentRegistrations.length < totalRegistrations && (
+                      <button
+                        onClick={handleLoadMoreRegistrations}
+                        className="w-full py-2 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-200 flex items-center justify-center gap-2"
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                        Voir plus
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             )}

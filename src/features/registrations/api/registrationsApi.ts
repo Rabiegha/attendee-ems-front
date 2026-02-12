@@ -561,12 +561,32 @@ export const registrationsApi = rootApi.injectEndpoints({
         { type: 'Attendee', id: `EVENT-${eventId}` },
       ],
     }),
+
+    getRecentRegistrations: builder.query<
+      RegistrationDPO[],
+      { limit?: number }
+    >({
+      query: ({ limit = 5 }) => ({
+        url: '/registrations/recent',
+        params: { limit },
+      }),
+      transformResponse: (response: RegistrationDTO[]) =>
+        response.map(mapRegistrationDTOtoDPO),
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: 'Attendee' as const, id })),
+              { type: 'Attendee', id: 'RECENT' },
+            ]
+          : [{ type: 'Attendee', id: 'RECENT' }],
+    }),
   }),
   overrideExisting: false,
 })
 
 export const {
   useGetRegistrationsQuery,
+  useGetRecentRegistrationsQuery,
   useUpdateRegistrationStatusMutation,
   useApproveWithEmailMutation,
   useRejectWithEmailMutation,

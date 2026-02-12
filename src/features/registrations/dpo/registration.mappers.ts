@@ -22,6 +22,12 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
         text_color_hex: dto.eventAttendeeType.attendeeType.text_color_hex,
       }
     } : null,
+    event: dto.event ? {
+      id: dto.event.id,
+      name: dto.event.name,
+      startDate: dto.event.start_at,
+      status: dto.event.status,
+    } : null,
     badgeTemplateId: dto.badge_template_id || null,
     invitedAt: dto.invited_at || null,
     confirmedAt: dto.confirmed_at || null,

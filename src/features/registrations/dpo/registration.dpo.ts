@@ -19,6 +19,12 @@ export interface RegistrationDPO {
       text_color_hex: string | null
     }
   } | null
+  event?: {
+    id: string
+    name: string
+    startDate: string
+    status: string
+  } | null
   badgeTemplateId?: string | null
   invitedAt?: string | null
   confirmedAt?: string | null

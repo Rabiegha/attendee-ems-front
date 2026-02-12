@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Users } from 'lucide-react'
+import { Calendar, Users, Globe } from 'lucide-react'
 import type { EventDPO } from '../dpo/event.dpo'
 import { formatDate } from '@/shared/lib/utils'
 import { DashboardEventListSkeleton } from '@/shared/ui'
@@ -49,6 +49,22 @@ export const EventList: React.FC<EventListProps> = ({ events, isLoading }) => {
                   {event.maxAttendees && event.maxAttendees > 0 && event.maxAttendees < 999999
                     ? `${event.currentAttendees}/${event.maxAttendees} participants`
                     : `${event.currentAttendees} participants`}
+                </div>
+                <div className="flex items-center">
+                  <Globe className="h-4 w-4 mr-1 flex-shrink-0" />
+                  {event.websiteUrl ? (
+                    <a
+                      href={event.websiteUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-blue-600 dark:text-blue-400 hover:underline truncate"
+                    >
+                      {event.websiteUrl}
+                    </a>
+                  ) : (
+                    <span className="italic text-gray-400 dark:text-gray-500">Non spécifié</span>
+                  )}
                 </div>
               </div>
             </div>

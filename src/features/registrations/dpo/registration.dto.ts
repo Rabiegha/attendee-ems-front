@@ -19,6 +19,12 @@ export interface RegistrationDTO {
       text_color_hex: string | null
     }
   } | null
+  event?: {
+    id: string
+    name: string
+    start_at: string
+    status: string
+  } | null
   badge_template_id?: string | null
   invited_at?: string | null
   confirmed_at?: string | null

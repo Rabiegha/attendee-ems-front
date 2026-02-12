@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useGetEventsQuery } from '@/features/events/api/eventsApi'
 import { useGetAttendeesQuery } from '@/features/attendees/api/attendeesApi'
+import { useGetRecentRegistrationsQuery } from '@/features/registrations/api/registrationsApi'
 import { useSelector } from 'react-redux'
 import {
   selectUser,
@@ -29,6 +30,7 @@ import {
   LayoutDashboard,
   User,
   ChevronDown,
+  CalendarDays,
 } from 'lucide-react'
 
 export const Dashboard: React.FC = () => {
@@ -94,6 +96,17 @@ export const Dashboard: React.FC = () => {
       }
     )
 
+  // Récupérer les inscriptions récentes pour l'affichage
+  const { data: recentRegistrations, isLoading: registrationsLoading } =
+    useGetRecentRegistrationsQuery(
+      {
+        limit: 5,
+      },
+      {
+        skip: !canReadAttendee, // Utilise la même permission que les attendees
+      }
+    )
+
   // Récupérer le total des participants depuis meta
   const attendees = attendeesResponse?.data || []
   const totalAttendees = attendeesResponse?.meta?.total || attendees.length
@@ -151,59 +164,72 @@ export const Dashboard: React.FC = () => {
             {canReadAttendee && (
               <div className="space-y-4">
                 <h2 className="section-title">Inscriptions récentes</h2>
-                {attendeesLoading ? (
+                {registrationsLoading ? (
                   <DashboardAttendeeListSkeleton />
-                ) : attendees.length === 0 ? (
+                ) : !recentRegistrations || recentRegistrations.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <User className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-                    <p>{t('attendees:attendees.empty')}</p>
+                    <p>Aucune inscription récente</p>
                   </div>
                 ) : (
-                  <>
-                    <div className="space-y-4">
-                      {attendees.map((attendee) => (
-                        <Link
-                          key={attendee.id}
-                          to={`/attendees/${attendee.id}`}
-                          className="block border-l-4 border-blue-500 dark:border-blue-400 pl-4 pr-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                                {attendee.firstName} {attendee.lastName}
-                              </h3>
-                              <div className="mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                                <div className="flex items-center">
-                                  <Mail className="h-4 w-4 mr-1" />
-                                  {attendee.email}
-                                </div>
-                                {attendee.createdAt && (
-                                  <div className="flex items-center">
-                                    <Calendar className="h-4 w-4 mr-1" />
-                                    {formatDateForDisplay(attendee.createdAt)}
-                                  </div>
-                                )}
+                  <div className="space-y-4">
+                    {recentRegistrations.map((registration) => (
+                      <Link
+                        key={registration.id}
+                        to={`/attendees/${registration.attendeeId}`}
+                        className="block border-l-4 border-green-500 dark:border-green-400 pl-4 pr-4 py-2 bg-white dark:bg-gray-800 rounded-r-lg transition-all duration-200 hover:shadow-md hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              {registration.attendee?.firstName} {registration.attendee?.lastName}
+                            </h3>
+                            <div className="mt-1 space-y-1 text-sm text-gray-500 dark:text-gray-400">
+                              <div className="flex items-center">
+                                <Mail className="h-4 w-4 mr-1 flex-shrink-0" />
+                                {registration.attendee?.email}
                               </div>
-                            </div>
-                            <div className="flex items-center ml-4">
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200">
-                                Actif
-                              </span>
+                              {registration.createdAt && (
+                                <div className="flex items-center">
+                                  <Calendar className="h-4 w-4 mr-1" />
+                                  {formatDateForDisplay(registration.createdAt)}
+                                </div>
+                              )}
+                              {registration.event && (
+                                <div className="flex items-center">
+                                  <CalendarDays className="h-4 w-4 mr-1 flex-shrink-0" />
+                                  <Link
+                                    to={`/events/${registration.event.id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-blue-600 dark:text-blue-400 hover:underline"
+                                  >
+                                    {registration.event.name}
+                                  </Link>
+                                </div>
+                              )}
                             </div>
                           </div>
-                        </Link>
-                      ))}
-                    </div>
-                    {attendees.length < totalAttendees && (
-                      <button
-                        onClick={handleLoadMoreAttendees}
-                        className="w-full py-2 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-200 flex items-center justify-center gap-2"
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                        Voir plus
-                      </button>
-                    )}
-                  </>
+                          <div className="flex items-center ml-4">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                registration.status === 'approved'
+                                  ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200'
+                                  : registration.status === 'awaiting'
+                                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200'
+                                    : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+                              }`}
+                            >
+                              {registration.status === 'approved'
+                                ? 'Approuvé'
+                                : registration.status === 'awaiting'
+                                  ? 'En attente'
+                                  : 'Refusé'}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 )}
               </div>
             )}

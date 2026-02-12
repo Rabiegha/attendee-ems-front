@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react'
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link, useSearchParams } from 'react-router-dom'
 import {
   useGetEventByIdQuery,
@@ -74,6 +74,8 @@ export const EventDetails: React.FC = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isAddParticipantModalOpen, setIsAddParticipantModalOpen] = useState(false)
+  const tabsContainerRef = useRef<HTMLDivElement>(null)
+  const activeTabRef = useRef<HTMLButtonElement>(null)
 
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
@@ -82,6 +84,25 @@ export const EventDetails: React.FC = () => {
       setActiveTab(currentTab)
     }
   }, [searchParams])
+
+  // Auto-scroll vers l'onglet actif sur mobile
+  useEffect(() => {
+    if (activeTabRef.current && tabsContainerRef.current) {
+      const tabButton = activeTabRef.current
+      const container = tabsContainerRef.current
+      
+      // Calculer la position pour centrer l'onglet
+      const tabLeft = tabButton.offsetLeft
+      const tabWidth = tabButton.offsetWidth
+      const containerWidth = container.offsetWidth
+      const scrollPosition = tabLeft - (containerWidth / 2) + (tabWidth / 2)
+      
+      container.scrollTo({
+        left: scrollPosition,
+        behavior: 'smooth'
+      })
+    }
+  }, [activeTab])
 
   // Fonction pour changer d'onglet et mettre à jour l'URL
   const handleTabChange = (tab: TabType) => {
@@ -98,11 +119,11 @@ export const EventDetails: React.FC = () => {
   const [registrationsSearch, setRegistrationsSearch] = useState('')
 
   // DEBUG: Log pour voir les changements
-  console.log('🔍 EventDetails Pagination State:', {
-    registrationsPage,
-    registrationsPageSize,
-    activeTab,
-  })
+  // console.log('🔍 EventDetails Pagination State:', {
+  //   registrationsPage,
+  //   registrationsPageSize,
+  //   activeTab,
+  // })
   const [registrationsIsActive, setRegistrationsIsActive] = useState(true)
   const [registrationsActiveTab, setRegistrationsActiveTab] = useState<'active' | 'deleted'>('active')
 
@@ -513,19 +534,19 @@ export const EventDetails: React.FC = () => {
   }
 
   // 🐛 DEBUG: Log pour voir les paramètres de pagination
-  console.log('📊 [EventDetails] Pagination params:', {
-    registrationsPage,
-    registrationsPageSize,
-    metaFromResponse: registrationsResponse?.meta,
-    dataLength: registrationsResponse?.data?.length,
-  })
+  // console.log('📊 [EventDetails] Pagination params:', {
+  //   registrationsPage,
+  //   registrationsPageSize,
+  //   metaFromResponse: registrationsResponse?.meta,
+  //   dataLength: registrationsResponse?.data?.length,
+  // })
 
   // Log pour debug
-  console.log('📋 allRegistrationsForExport:', {
-    hasData: !!allRegistrationsForExport,
-    dataLength: allRegistrationsForExport?.data?.length,
-    meta: allRegistrationsForExport?.meta,
-  })
+  // console.log('📋 allRegistrationsForExport:', {
+  //   hasData: !!allRegistrationsForExport,
+  //   dataLength: allRegistrationsForExport?.data?.length,
+  //   meta: allRegistrationsForExport?.meta,
+  // })
 
   // Les inscriptions sont récupérées via l'API RTK Query
   const allRegistrations = registrationsResponse?.data || []
@@ -823,7 +844,7 @@ export const EventDetails: React.FC = () => {
             </div>
             <div className="flex items-center">
               <MapPin className="h-4 w-4 mr-2" />
-              {event.locationType === 'online' ? 'En ligne' : event.location}
+              {event.locationType === 'online' ? 'En ligne' : (event.location || 'Non renseigné')}
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
@@ -870,25 +891,36 @@ export const EventDetails: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <nav className="-mb-px flex space-x-8">
+      <div className="border-b border-gray-200 dark:border-gray-700 relative">
+        <nav 
+          ref={tabsContainerRef}
+          className="-mb-px flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto pb-px"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'rgb(209 213 219) transparent',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
           {tabs.map((tab) => {
             const Icon = tab.icon
+            const isActive = activeTab === tab.id
             return (
               <button
                 key={tab.id}
+                ref={isActive ? activeTabRef : null}
                 onClick={() => handleTabChange(tab.id)}
                 className={`
-                  flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors
+                  flex items-center py-4 px-3 sm:px-4 lg:px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap flex-shrink-0
                   ${
-                    activeTab === tab.id
+                    isActive
                       ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                       : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }
                 `}
               >
-                <Icon className="h-4 w-4 mr-2" />
-                {tab.label}
+                <Icon className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden text-xs">{tab.label.split(' ')[0]}</span>
               </button>
             )
           })}
@@ -941,7 +973,7 @@ export const EventDetails: React.FC = () => {
                     </label>
                     <p className="mt-1 text-gray-900 dark:text-white flex items-center">
                       <MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
-                      {event.locationType === 'online' ? 'En ligne' : event.location}
+                      {event.locationType === 'online' ? 'En ligne' : (event.location || <span className="text-gray-400 dark:text-gray-500 italic">Non renseigné</span>)}
                     </p>
                   </div>
                   {event.websiteUrl && (
@@ -1157,9 +1189,9 @@ export const EventDetails: React.FC = () => {
         )}
 
         {activeTab === 'form' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)]">
             {/* Left: Form Builder */}
-            <div className="space-y-6">
+            <div className="flex-1 lg:w-1/2 overflow-y-auto space-y-6 pr-2">
               <FormBuilder
                 fields={formFields}
                 onChange={(fields: FormField[]) => {
@@ -1180,24 +1212,22 @@ export const EventDetails: React.FC = () => {
             </div>
 
             {/* Right: Preview */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="hidden lg:block flex-1 lg:w-1/2 overflow-y-auto pl-2">
+              <div className="sticky top-0 bg-white dark:bg-gray-900 pb-4 pt-2 z-10">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Aperçu en temps réel
                 </h3>
               </div>
-              <div className="sticky top-6">
-                <FormPreview
-                  event={event}
-                  fields={formFields}
-                  functional={true}
-                  submitButtonText={submitButtonText}
-                  submitButtonColor={submitButtonColor}
-                  showTitle={showTitle}
-                  showDescription={showDescription}
-                  isDarkMode={isDarkMode}
-                />
-              </div>
+              <FormPreview
+                event={event}
+                fields={formFields}
+                functional={true}
+                submitButtonText={submitButtonText}
+                submitButtonColor={submitButtonColor}
+                showTitle={showTitle}
+                showDescription={showDescription}
+                isDarkMode={isDarkMode}
+              />
             </div>
           </div>
         )}

@@ -2,7 +2,7 @@
  * AttendeeTypesPage - Page de gestion des types de participants
  */
 
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { useSelector } from 'react-redux'
 import { ColumnDef } from '@tanstack/react-table'
 import {
@@ -25,7 +25,8 @@ import {
   Tabs,
 } from '@/shared/ui'
 import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
-import { type BulkAction } from '@/shared/ui/BulkActions'
+import { BulkConfirmationModal } from '@/shared/ui/BulkConfirmationModal'
+import { BulkActionsModal } from './BulkActionsModal'
 import { selectUser, selectOrganization } from '@/features/auth/model/sessionSlice'
 import { useToast } from '@/shared/hooks/useToast'
 import { Can } from '@/shared/acl/guards/Can'
@@ -89,6 +90,36 @@ export function AttendeeTypesPage() {
   const [restoringType, setRestoringType] = useState<AttendeeType | null>(null)
   const [deletingType, setDeletingType] = useState<AttendeeType | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+
+  // Bulk actions states
+  const [bulkActionsModalOpen, setBulkActionsModalOpen] = useState(false)
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set())
+  const [tableResetCounter, setTableResetCounter] = useState(0)
+  const [bulkConfirmation, setBulkConfirmation] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    variant: 'default' | 'success' | 'warning' | 'danger'
+    action: () => Promise<void>
+  } | null>(null)
+
+  const clearBulkSelection = useCallback(() => {
+    setBulkSelectedIds(new Set())
+    setTableResetCounter((prev) => prev + 1)
+  }, [])
+
+  const handleRowSelectionChange = useCallback((selectedRows: typeof typesByTab) => {
+    const ids = new Set(selectedRows.map((row) => row.id))
+    // Only update if selection actually changed
+    setBulkSelectedIds((prev) => {
+      const prevArray = Array.from(prev).sort()
+      const newArray = Array.from(ids).sort()
+      if (JSON.stringify(prevArray) === JSON.stringify(newArray)) {
+        return prev
+      }
+      return ids
+    })
+  }, [])
 
   // Debounced server-side search
   const lastSearchRef = useRef<string>('')
@@ -449,86 +480,52 @@ export function AttendeeTypesPage() {
     []
   )
 
-  // Bulk actions
-  const bulkActions = useMemo(() => {
-    const actions: BulkAction[] = []
-
-    if (activeTab === 'active') {
-      // Désactiver en masse
-      actions.push({
-        id: 'deactivate',
-        label: 'Désactiver',
-        icon: <Trash2 className="h-4 w-4" />,
-        variant: 'destructive',
-        requiresConfirmation: true,
-        actionType: 'delete',
-        onClick: async (selectedIds) => {
-          try {
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                updateType({ orgId: currentUser?.org_id!, id, data: { is_active: false } }).unwrap()
-              )
+  // Handlers pour les actions groupées
+  const handleBulkDeactivate = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Désactiver les types',
+      message: `Désactiver ${bulkSelectedIds.size} type(s) ?\n\nIls seront déplacés dans les éléments supprimés.`,
+      variant: 'warning',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              updateType({ orgId: currentOrg?.id!, id, data: { is_active: false } }).unwrap()
             )
-            toast.success(`${selectedIds.size} type(s) désactivé(s)`)
-          } catch (error) {
-            console.error('Erreur lors de la désactivation:', error)
-            toast.error('Erreur lors de la désactivation')
-            throw error
-          }
-        },
-      })
-    } else {
-      // Restaurer en masse
-      actions.push({
-        id: 'restore',
-        label: 'Restaurer',
-        icon: <RotateCcw className="h-4 w-4" />,
-        variant: 'default',
-        requiresConfirmation: true,
-        actionType: 'edit',
-        onClick: async (selectedIds) => {
-          try {
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                updateType({ orgId: currentUser?.org_id!, id, data: { is_active: true } }).unwrap()
-              )
-            )
-            toast.success(`${selectedIds.size} type(s) restauré(s)`)
-          } catch (error) {
-            console.error('Erreur lors de la restauration:', error)
-            toast.error('Erreur lors de la restauration')
-            throw error
-          }
-        },
-      })
+          )
+          toast.success(`${bulkSelectedIds.size} type(s) désactivé(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de la désactivation:', error)
+          toast.error('Erreur lors de la désactivation')
+        }
+      }
+    })
+  }
 
-      // Supprimer définitivement en masse
-      actions.push({
-        id: 'permanent-delete',
-        label: 'Supprimer définitivement',
-        icon: <Trash2 className="h-4 w-4" />,
-        variant: 'destructive',
-        requiresConfirmation: true,
-        actionType: 'delete',
-        onClick: async (selectedIds) => {
-          try {
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                deleteType({ orgId: currentUser?.org_id!, id }).unwrap()
-              )
+  const handleBulkActivate = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Activer les types',
+      message: `Activer ${bulkSelectedIds.size} type(s) ?`,
+      variant: 'success',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              updateType({ orgId: currentOrg?.id!, id, data: { is_active: true } }).unwrap()
             )
-            toast.success(`${selectedIds.size} type(s) supprimé(s) définitivement`)
-          } catch (error) {
-            console.error('Erreur lors de la suppression:', error)
-            toast.error('Erreur lors de la suppression')
-            throw error
-          }
-        },
-      })
-    }
-
-    return actions
-  }, [activeTab, updateType, deleteType, toast])
+          )
+          toast.success(`${bulkSelectedIds.size} type(s) activé(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de l\'activation:', error)
+          toast.error('Erreur lors de l\'activation')
+        }
+      }
+    })
+  }
 
   const handleOpenCreateModal = () => {
     setIsCreateModalOpen(true)
@@ -571,17 +568,47 @@ export function AttendeeTypesPage() {
       {/* Table des types */}
       <PageSection spacing="lg">
         <Card variant="default" padding="none">
+          {/* Barre d'actions groupées personnalisée */}
+          {bulkSelectedIds.size > 0 && (
+            <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    {bulkSelectedIds.size} sélectionné{bulkSelectedIds.size > 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={clearBulkSelection}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
+                  >
+                    Tout désélectionner
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setBulkActionsModalOpen(true)}
+                    leftIcon={<Tag className="h-4 w-4" />}
+                  >
+                    Actions
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <DataTable
-            key={activeTab}
+            key={`${activeTab}-${tableResetCounter}`}
             columns={activeTab === 'active' ? activeColumns : deletedColumns}
             data={typesByTab}
             isLoading={isLoading}
             enableRowSelection
-            bulkActions={bulkActions}
+            bulkActions={[]}
             getItemId={(type) => type.id}
             itemType="types"
             pageSize={pageSize}
             onPageSizeChange={setPageSize}
+            onRowSelectionChange={handleRowSelectionChange}
             emptyMessage={
               searchQuery
                 ? 'Aucun type ne correspond à votre recherche'
@@ -601,6 +628,33 @@ export function AttendeeTypesPage() {
       </PageSection>
 
       {/* Modals */}
+      <BulkActionsModal
+        isOpen={bulkActionsModalOpen}
+        onClose={() => setBulkActionsModalOpen(false)}
+        selectedCount={bulkSelectedIds.size}
+        isDeletedTab={activeTab === 'deleted'}
+        onActivate={handleBulkActivate}
+        onDeactivate={handleBulkDeactivate}
+      />
+
+      {bulkConfirmation && (
+        <BulkConfirmationModal
+          isOpen={bulkConfirmation.isOpen}
+          onClose={() => setBulkConfirmation(null)}
+          onBack={() => {
+            setBulkConfirmation(null)
+            setBulkActionsModalOpen(true)
+          }}
+          title={bulkConfirmation.title}
+          message={bulkConfirmation.message}
+          variant={bulkConfirmation.variant}
+          onConfirm={async () => {
+            await bulkConfirmation.action()
+            setBulkConfirmation(null)
+          }}
+        />
+      )}
+
       <CreateAttendeeTypeModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}

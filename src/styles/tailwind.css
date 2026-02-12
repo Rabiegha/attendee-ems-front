@@ -537,5 +537,62 @@
   .pac-logo:after {
     display: none;
   }
+
+  /* Scrollbar horizontale fine pour les onglets */
+  nav[class*="overflow-x-auto"]::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  nav[class*="overflow-x-auto"]::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  nav[class*="overflow-x-auto"]::-webkit-scrollbar-thumb {
+    background: rgb(209 213 219); /* gray-300 */
+    border-radius: 2px;
+  }
+
+  nav[class*="overflow-x-auto"]::-webkit-scrollbar-thumb:hover {
+    background: rgb(156 163 175); /* gray-400 */
+  }
+
+  .dark nav[class*="overflow-x-auto"]::-webkit-scrollbar-thumb {
+    background: rgb(75 85 99); /* gray-600 */
+  }
+
+  .dark nav[class*="overflow-x-auto"]::-webkit-scrollbar-thumb:hover {
+    background: rgb(107 114 128); /* gray-500 */
+  }
+
+  /* Animation slide-up pour le bouton de sauvegarde */
+  @keyframes slide-up {
+    0% {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-down {
+    0% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 

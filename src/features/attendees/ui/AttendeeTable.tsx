@@ -1,15 +1,15 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RotateCcw, Trash } from 'lucide-react'
+import { RotateCcw, Trash2, Users } from 'lucide-react'
 import { ColumnDef } from '@tanstack/react-table'
 import type { AttendeeDPO } from '../dpo/attendee.dpo'
 import { formatDate } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/Button'
-import { ActionButtons } from '@/shared/ui'
+import { ActionButtons, Card } from '@/shared/ui'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
 import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
-import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
-import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
+import { BulkConfirmationModal } from '@/shared/ui/BulkConfirmationModal'
+import { useToast } from '@/shared/hooks/useToast'
 import {
   useBulkDeleteAttendeesMutation,
   useBulkExportAttendeesMutation,
@@ -23,6 +23,7 @@ import { EditAttendeeModal } from './EditAttendeeModal'
 import { DeleteAttendeeModal } from './DeleteAttendeeModal'
 import { RestoreAttendeeModal } from './RestoreAttendeeModal'
 import { PermanentDeleteAttendeeModal } from './PermanentDeleteAttendeeModal'
+import { BulkActionsModal } from './BulkActionsModal'
 
 interface AttendeeTableProps {
   attendees: AttendeeDPO[]
@@ -61,6 +62,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   onPageSizeChange,
 }) => {
   const navigate = useNavigate()
+  const toast = useToast()
 
   // Bulk mutations
   const [bulkDeleteAttendees] = useBulkDeleteAttendeesMutation()
@@ -74,6 +76,20 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   const [restoreAttendee] = useRestoreAttendeeMutation()
   const [permanentDeleteAttendee] = usePermanentDeleteAttendeeMutation()
 
+  // Bulk actions states
+  const [bulkActionsModalOpen, setBulkActionsModalOpen] = useState(false)
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set())
+  const [tableResetCounter, setTableResetCounter] = useState(0)
+
+  // États pour les différentes confirmations bulk
+  const [bulkConfirmation, setBulkConfirmation] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    variant: 'default' | 'danger' | 'warning' | 'success'
+    action: () => Promise<void>
+  } | null>(null)
+
   // Modal states
   const [editingAttendee, setEditingAttendee] = useState<AttendeeDPO | null>(
     null
@@ -86,16 +102,11 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   const [permanentDeletingAttendee, setPermanentDeletingAttendee] =
     useState<AttendeeDPO | null>(null)
 
-  // Multi-select logic
-  const {
-    selectedIds,
-    unselectAll,
-    selectedCount,
-    selectedItems,
-  } = useMultiSelect({
-    items: attendees,
-    getItemId: (attendee) => attendee.id,
-  })
+  // Fonction pour désélectionner tous les éléments
+  const clearBulkSelection = useCallback(() => {
+    setBulkSelectedIds(new Set())
+    setTableResetCounter(prev => prev + 1)
+  }, [])
 
   const handleRowClick = (attendee: AttendeeDPO) => {
     navigate(`/attendees/${attendee.id}`)
@@ -265,7 +276,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
                   title="Supprimer définitivement"
                   className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                 >
-                  <Trash className="h-4 w-4 shrink-0" />
+                  <Trash2 className="h-4 w-4 shrink-0" />
                 </Button>
               </>
             ) : (
@@ -285,88 +296,135 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
     [isDeletedTab]
   )
 
-  // Bulk actions
-  const bulkActions = useMemo(() => {
-    const actions = []
+  // Handlers pour les actions groupées
+  const handleBulkExport = async () => {
+    try {
+      const response = await bulkExportAttendees({
+        ids: Array.from(bulkSelectedIds),
+        format: 'xlsx',
+      }).unwrap()
 
-    actions.push(
-      createBulkActions.export(async (selectedIds) => {
-        console.log('🔵 Export sélection multiple (Attendees) appelé', {
-          count: selectedIds.size,
-        })
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = response.downloadUrl
+      a.download = response.filename || 'participants.xlsx'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+
+      toast.success(`${bulkSelectedIds.size} participant(s) exporté(s)`)
+    } catch (error) {
+      console.error("Erreur lors de l'export:", error)
+      toast.error("Erreur lors de l'export")
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Supprimer les participants',
+      message: `Supprimer ${bulkSelectedIds.size} participant(s) ?\n\nIls seront déplacés dans les éléments supprimés.`,
+      variant: 'warning',
+      action: async () => {
         try {
-          const response = await bulkExportAttendees({
-            ids: Array.from(selectedIds),
-            format: 'xlsx',
-          }).unwrap()
-
-          console.log('✅ Réponse export sélection (Attendees):', response)
-
-          const a = document.createElement('a')
-          a.style.display = 'none'
-          a.href = response.downloadUrl
-          a.download = response.filename || 'participants.xlsx'
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-
-          unselectAll()
-        } catch (error) {
-          console.error('❌ Erreur lors de l\'export (Attendees):', error)
-          throw error
-        }
-      })
-    )
-
-    actions.push(
-      createBulkActions.delete(async (selectedIds) => {
-        try {
-          if (isDeletedTab) {
-            await bulkPermanentDeleteAttendees(Array.from(selectedIds)).unwrap()
-          } else {
-            await bulkDeleteAttendees(Array.from(selectedIds)).unwrap()
-          }
-          unselectAll()
+          await bulkDeleteAttendees(Array.from(bulkSelectedIds)).unwrap()
+          toast.success(`${bulkSelectedIds.size} participant(s) supprimé(s)`)
+          clearBulkSelection()
         } catch (error) {
           console.error('Erreur lors de la suppression:', error)
-          throw error
+          toast.error('Erreur lors de la suppression')
         }
-      })
-    )
+      }
+    })
+  }
 
-    if (onBulkExport) {
-      actions.push(createBulkActions.export(onBulkExport))
-    }
+  const handleBulkRestore = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Restaurer les participants',
+      message: `Restaurer ${bulkSelectedIds.size} participant(s) ?`,
+      variant: 'success',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              restoreAttendee(id).unwrap()
+            )
+          )
+          toast.success(`${bulkSelectedIds.size} participant(s) restauré(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de la restauration:', error)
+          toast.error('Erreur lors de la restauration')
+        }
+      }
+    })
+  }
 
-    if (onBulkDelete) {
-      actions.push(createBulkActions.delete(onBulkDelete))
-    }
-
-    return actions
-  }, [
-    onBulkDelete,
-    onBulkExport,
-    bulkDeleteAttendees,
-    bulkPermanentDeleteAttendees,
-    bulkExportAttendees,
-    unselectAll,
-    isDeletedTab,
-  ])
+  const handleBulkPermanentDelete = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Suppression définitive',
+      message: `⚠️ ATTENTION : Cette action est IRRÉVERSIBLE.\n\nSupprimer définitivement ${bulkSelectedIds.size} participant(s) ?`,
+      variant: 'danger',
+      action: async () => {
+        try {
+          await bulkPermanentDeleteAttendees(Array.from(bulkSelectedIds)).unwrap()
+          toast.success(`${bulkSelectedIds.size} participant(s) supprimé(s) définitivement`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de la suppression définitive:', error)
+          toast.error('Erreur lors de la suppression définitive')
+        }
+      }
+    })
+  }
 
   return (
-    <div>
+    <>
+      <Card variant="default" padding="none" className="min-w-full">
+        {/* Barre d'actions groupées personnalisée */}
+        {bulkSelectedIds.size > 0 && (
+        <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                {bulkSelectedIds.size} sélectionnée{bulkSelectedIds.size > 1 ? 's' : ''}
+              </span>
+              <button
+                onClick={clearBulkSelection}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
+              >
+                Tout désélectionner
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setBulkActionsModalOpen(true)}
+                leftIcon={<Users className="h-4 w-4" />}
+              >
+                Actions
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <DataTable
-        key={isDeletedTab ? 'deleted' : 'active'}
+        key={`${isDeletedTab ? 'deleted' : 'active'}-${tableResetCounter}`}
         columns={columns}
         data={attendees}
         isLoading={isLoading}
         enableRowSelection
-        bulkActions={bulkActions}
+        bulkActions={[]}
         getItemId={(attendee) => attendee.id}
         itemType="participants"
         tabsElement={tabsElement}
-        onRowSelectionChange={() => {
-          // TanStack Table handles selection internally
+        onRowSelectionChange={(selectedRows) => {
+          const ids = new Set(selectedRows.map((row) => row.id))
+          setBulkSelectedIds(ids)
         }}
         emptyMessage="Aucun participant trouvé"
         // Server-side pagination
@@ -377,7 +435,39 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         onPageChange={onPageChange || (() => {})}
         onPageSizeChange={onPageSizeChange || (() => {})}
       />
+    </Card>
 
+      {/* Modals */}
+      <BulkActionsModal
+        isOpen={bulkActionsModalOpen}
+        onClose={() => setBulkActionsModalOpen(false)}
+        selectedCount={bulkSelectedIds.size}
+        isDeletedTab={isDeletedTab}
+        onExport={handleBulkExport}
+        onDelete={handleBulkDelete}
+        onRestore={handleBulkRestore}
+        onPermanentDelete={handleBulkPermanentDelete}
+      />
+
+      {bulkConfirmation && (
+        <BulkConfirmationModal
+          isOpen={bulkConfirmation.isOpen}
+          onClose={() => setBulkConfirmation(null)}
+          onBack={() => {
+            setBulkConfirmation(null)
+            setBulkActionsModalOpen(true)
+          }}
+          title={bulkConfirmation.title}
+          message={bulkConfirmation.message}
+          variant={bulkConfirmation.variant}
+          onConfirm={async () => {
+            await bulkConfirmation.action()
+            setBulkConfirmation(null)
+          }}
+        />
+      )}
+
+      {/* Modals individuels */}
       <EditAttendeeModal
         isOpen={!!editingAttendee}
         onClose={() => setEditingAttendee(null)}
@@ -405,6 +495,6 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         attendee={permanentDeletingAttendee}
         onPermanentDelete={handleConfirmPermanentDelete}
       />
-    </div>
+    </>
   )
 }

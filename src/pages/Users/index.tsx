@@ -40,11 +40,13 @@ import {
   type FilterValues,
 } from '@/shared/ui'
 import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
-import { createBulkActions } from '@/shared/ui/BulkActions'
+import { BulkConfirmationModal } from '@/shared/ui/BulkConfirmationModal'
+import { BulkActionsModal } from './BulkActionsModal'
 import {
   useGetUsersQuery,
   useUpdateUserMutation,
   useBulkDeleteUsersMutation,
+  useBulkRestoreUsersMutation,
   usersApi,
   type User,
 } from '@/features/users/api/usersApi'
@@ -102,6 +104,7 @@ function UsersPageContent() {
   // Mutations
   const [updateUser] = useUpdateUserMutation()
   const [bulkDeleteUsers] = useBulkDeleteUsersMutation()
+  const [bulkRestoreUsers] = useBulkRestoreUsersMutation()
 
   // Optimistic updates: stocke temporairement les nouveaux roleId avant confirmation serveur
   const [optimisticRoleUpdates, setOptimisticRoleUpdates] = useState<Map<string, string>>(new Map())
@@ -111,6 +114,36 @@ function UsersPageContent() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null)
   const [restoringUser, setRestoringUser] = useState<User | null>(null)
   const [permanentDeletingUser, setPermanentDeletingUser] = useState<User | null>(null)
+
+  // Bulk actions states
+  const [bulkActionsModalOpen, setBulkActionsModalOpen] = useState(false)
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set())
+  const [tableResetCounter, setTableResetCounter] = useState(0)
+  const [bulkConfirmation, setBulkConfirmation] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    variant: 'default' | 'success' | 'warning' | 'danger'
+    action: () => Promise<void>
+  } | null>(null)
+
+  const clearBulkSelection = useCallback(() => {
+    setBulkSelectedIds(new Set())
+    setTableResetCounter((prev) => prev + 1)
+  }, [])
+
+  const handleRowSelectionChange = useCallback((selectedRows: typeof filteredUsers) => {
+    const ids = new Set(selectedRows.map((row) => row.id))
+    // Only update if selection actually changed
+    setBulkSelectedIds((prev) => {
+      const prevArray = Array.from(prev).sort()
+      const newArray = Array.from(ids).sort()
+      if (JSON.stringify(prevArray) === JSON.stringify(newArray)) {
+        return prev
+      }
+      return ids
+    })
+  }, [])
 
   // Filtres locaux (recherche + rôles)
   const [searchQuery, setSearchQuery] = useState('')
@@ -509,28 +542,44 @@ function UsersPageContent() {
     [currentUser?.id, isDeletedTab, roles, rolesLoading, optimisticRoleUpdates, updateUser]
   )
 
-  // Bulk actions
-  const bulkActions = useMemo(() => {
-    const actions = []
+  // Handler pour les actions groupées
+  const handleBulkDelete = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Désactiver les utilisateurs',
+      message: `Désactiver ${bulkSelectedIds.size} utilisateur(s) ?\n\nIls seront déplacés dans les éléments supprimés.`,
+      variant: 'warning',
+      action: async () => {
+        try {
+          await bulkDeleteUsers(Array.from(bulkSelectedIds)).unwrap()
+          toast.success(`${bulkSelectedIds.size} utilisateur(s) désactivé(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de la désactivation:', error)
+          toast.error('Erreur lors de la désactivation')
+        }
+      }
+    })
+  }
 
-    if (!isDeletedTab) {
-      // Désactiver (soft delete)
-      actions.push(
-        createBulkActions.delete(async (selectedIds) => {
-          try {
-            await bulkDeleteUsers(Array.from(selectedIds)).unwrap()
-            toast.success(`${selectedIds.size} utilisateur(s) désactivé(s)`)
-          } catch (error) {
-            console.error('Erreur lors de la désactivation:', error)
-            toast.error('Erreur lors de la désactivation')
-            throw error
-          }
-        })
-      )
-    }
-
-    return actions
-  }, [isDeletedTab, bulkDeleteUsers, toast])
+  const handleBulkRestore = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Réactiver les utilisateurs',
+      message: `Réactiver ${bulkSelectedIds.size} utilisateur(s) ?`,
+      variant: 'success',
+      action: async () => {
+        try {
+          await bulkRestoreUsers(Array.from(bulkSelectedIds)).unwrap()
+          toast.success(`${bulkSelectedIds.size} utilisateur(s) réactivé(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de la réactivation:', error)
+          toast.error('Erreur lors de la réactivation')
+        }
+      }
+    })
+  }
 
   return (
     <PageContainer maxWidth="7xl" padding="lg">
@@ -581,13 +630,42 @@ function UsersPageContent() {
       {/* Table des utilisateurs */}
       <PageSection spacing="lg">
         <Card variant="default" padding="none">
+          {/* Barre d'actions groupées personnalisée */}
+          {bulkSelectedIds.size > 0 && (
+            <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    {bulkSelectedIds.size} sélectionné{bulkSelectedIds.size > 1 ? 's' : ''}
+                  </span>
+                  <button
+                    onClick={clearBulkSelection}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
+                  >
+                    Tout désélectionner
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => setBulkActionsModalOpen(true)}
+                    leftIcon={<Users className="h-4 w-4" />}
+                  >
+                    Actions
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <DataTable
-            key={activeTab}
+            key={`${activeTab}-${tableResetCounter}`}
             columns={columns}
             data={filteredUsers}
             isLoading={isLoading}
             enableRowSelection
-            bulkActions={bulkActions}
+            bulkActions={[]}
             getItemId={(user) => user.id}
             itemType="utilisateurs"
             emptyMessage={
@@ -595,6 +673,7 @@ function UsersPageContent() {
                 ? 'Aucun utilisateur supprimé'
                 : 'Aucun utilisateur trouvé'
             }
+            onRowSelectionChange={handleRowSelectionChange}
             tabsElement={
               <Tabs
                 items={tabs}
@@ -618,6 +697,33 @@ function UsersPageContent() {
       </PageSection>
 
       {/* Modals */}
+      <BulkActionsModal
+        isOpen={bulkActionsModalOpen}
+        onClose={() => setBulkActionsModalOpen(false)}
+        selectedCount={bulkSelectedIds.size}
+        isDeletedTab={isDeletedTab}
+        onDelete={handleBulkDelete}
+        onRestore={handleBulkRestore}
+      />
+
+      {bulkConfirmation && (
+        <BulkConfirmationModal
+          isOpen={bulkConfirmation.isOpen}
+          onClose={() => setBulkConfirmation(null)}
+          onBack={() => {
+            setBulkConfirmation(null)
+            setBulkActionsModalOpen(true)
+          }}
+          title={bulkConfirmation.title}
+          message={bulkConfirmation.message}
+          variant={bulkConfirmation.variant}
+          onConfirm={async () => {
+            await bulkConfirmation.action()
+            setBulkConfirmation(null)
+          }}
+        />
+      )}
+
       <EditUserModal
         isOpen={!!editingUser}
         onClose={() => setEditingUser(null)}

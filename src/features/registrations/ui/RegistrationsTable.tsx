@@ -4,13 +4,13 @@ import { ColumnDef } from '@tanstack/react-table'
 import {
   Download,
   CheckCircle,
+  Trash2,
   XCircle,
   Clock,
   Ban,
   Mail,
   Phone,
   Building2,
-  RefreshCw,
   QrCode,
   Award,
   RotateCcw,
@@ -60,10 +60,12 @@ import { PermanentDeleteRegistrationModal } from './PermanentDeleteRegistrationM
 import { QrCodeModal } from './QrCodeModal'
 import { BadgePreviewModal } from './BadgePreviewModal'
 import { BulkStatusChangeModal } from './BulkStatusChangeModal'
+import { BulkStatusConfirmationModal } from './BulkStatusConfirmationModal'
 import { BulkAttendeeTypeChangeModal } from './BulkAttendeeTypeChangeModal'
+import { BulkActionsModal } from './BulkActionsModal'
+import { BulkConfirmationModal } from './BulkConfirmationModal'
 import { ApprovalConfirmationModal } from './ApprovalConfirmationModal'
 import { RejectionConfirmationModal } from './RejectionConfirmationModal'
-import { createBulkActions } from '@/shared/ui/BulkActions'
 import {
   getRegistrationFullName,
   getRegistrationEmail,
@@ -192,8 +194,23 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterValues, setFilterValues] = useState<FilterValues>({})
+  const [bulkActionsModalOpen, setBulkActionsModalOpen] = useState(false)
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set())
+  const [tableResetCounter, setTableResetCounter] = useState(0)
+  const tableRef = useRef<any>(null)
+  
+  // États pour les différentes confirmations bulk
+  const [bulkConfirmation, setBulkConfirmation] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    variant: 'default' | 'danger' | 'warning' | 'success'
+    action: () => Promise<void>
+  } | null>(null)
   const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false)
   const [bulkStatusSelectedIds, setBulkStatusSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkStatusConfirmationModalOpen, setBulkStatusConfirmationModalOpen] = useState(false)
+  const [bulkStatusToConfirm, setBulkStatusToConfirm] = useState<'approved' | 'refused' | null>(null)
   const [bulkTypeModalOpen, setBulkTypeModalOpen] = useState(false)
   const [bulkTypeSelectedIds, setBulkTypeSelectedIds] = useState<Set<string>>(new Set())
   const [editingRegistration, setEditingRegistration] =
@@ -805,18 +822,40 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     }
   }
 
-  const handleBulkStatusChange = async (status: string) => {
+  const handleBulkStatusSelect = (status: string) => {
+    // Si c'est approved ou refused, ouvrir le modal de confirmation
+    if (status === 'approved' || status === 'refused') {
+      setBulkStatusToConfirm(status)
+      setBulkStatusConfirmationModalOpen(true)
+      // Fermer le premier modal maintenant que le second s'ouvre
+      setBulkStatusModalOpen(false)
+    } else {
+      // Pour les autres statuts (awaiting, cancelled), appliquer directement sans email
+      handleBulkStatusChange(status, false)
+    }
+  }
+
+  const handleBulkStatusChange = async (status: string, sendEmail: boolean) => {
     try {
-      await bulkUpdateStatus({
+      const result = await bulkUpdateStatus({
         ids: Array.from(bulkStatusSelectedIds),
         status,
+        sendEmail,
       }).unwrap()
       
       const statusLabel = STATUS_OPTIONS.find(o => o.value === status)?.label || status
-      toast.success(`${bulkStatusSelectedIds.size} inscription(s) → ${statusLabel}`)
+      
+      let message = `${bulkStatusSelectedIds.size} inscription(s) → ${statusLabel}`
+      if (sendEmail && result.emailsSent !== undefined) {
+        message += ` (${result.emailsSent} email${result.emailsSent > 1 ? 's' : ''} envoyé${result.emailsSent > 1 ? 's' : ''})`
+      }
+      
+      toast.success(message)
       
       // Réinitialiser
       setBulkStatusModalOpen(false)
+      setBulkStatusConfirmationModalOpen(false)
+      setBulkStatusToConfirm(null)
       setBulkStatusSelectedIds(new Set())
     } catch (error: any) {
       console.error('Erreur lors du changement de statut:', error)
@@ -834,6 +873,194 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       toast.error(title, message)
       throw error
     }
+  }
+
+  // Fonction pour désélectionner tous les éléments
+  const clearBulkSelection = useCallback(() => {
+    setBulkSelectedIds(new Set())
+    setTableResetCounter(prev => prev + 1) // Forcer le re-render du DataTable
+  }, [])
+
+  // Handlers pour le modal d'actions groupées
+  const handleBulkExport = async () => {
+    try {
+      const response = await bulkExportRegistrations({
+        ids: Array.from(bulkSelectedIds),
+        format: 'excel',
+      }).unwrap()
+
+      const a = document.createElement('a')
+      a.style.display = 'none'
+      a.href = response.downloadUrl
+      a.download = response.filename || 'inscriptions.xlsx'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      
+      toast.success(`${bulkSelectedIds.size} inscription(s) exportée(s)`)
+    } catch (error) {
+      console.error("Erreur lors de l'export:", error)
+      toast.error("Erreur lors de l'export")
+    }
+  }
+
+  const handleBulkCheckIn = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Confirmer le check-in',
+      message: `Enregistrer le check-in pour ${bulkSelectedIds.size} inscription(s) ?`,
+      variant: 'success',
+      action: async () => {
+        try {
+          const result = await bulkCheckIn({
+            ids: Array.from(bulkSelectedIds),
+          }).unwrap()
+          toast.success(`Check-in effectué pour ${result.checkedInCount} inscription(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors du check-in:', error)
+          toast.error('Erreur lors du check-in')
+        }
+      }
+    })
+  }
+
+  const handleBulkUndoCheckIn = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Annuler les check-ins',
+      message: `Annuler le check-in pour ${bulkSelectedIds.size} inscription(s) ?`,
+      variant: 'warning',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              undoCheckIn({ id, eventId }).unwrap()
+            )
+          )
+          toast.success(`Check-in annulé pour ${bulkSelectedIds.size} inscription(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de l\'annulation du check-in:', error)
+          toast.error('Erreur lors de l\'annulation du check-in')
+        }
+      }
+    })
+  }
+
+  const handleBulkCheckOut = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Confirmer le check-out',
+      message: `Enregistrer le check-out pour ${bulkSelectedIds.size} inscription(s) ?`,
+      variant: 'success',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              checkOut({ id, eventId }).unwrap()
+            )
+          )
+          toast.success(`Check-out effectué pour ${bulkSelectedIds.size} inscription(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors du check-out:', error)
+          toast.error('Erreur lors du check-out')
+        }
+      }
+    })
+  }
+
+  const handleBulkUndoCheckOut = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Annuler les check-outs',
+      message: `Annuler le check-out pour ${bulkSelectedIds.size} inscription(s) ?`,
+      variant: 'warning',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              undoCheckOut({ id, eventId }).unwrap()
+            )
+          )
+          toast.success(`Check-out annulé pour ${bulkSelectedIds.size} inscription(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de l\'annulation du check-out:', error)
+          toast.error('Erreur lors de l\'annulation du check-out')
+        }
+      }
+    })
+  }
+
+  const handleBulkDelete = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Supprimer les inscriptions',
+      message: `Supprimer ${bulkSelectedIds.size} inscription(s) ?\n\nElles seront déplacées dans les éléments supprimés.`,
+      variant: 'warning',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              deleteRegistration({ id, eventId }).unwrap()
+            )
+          )
+          toast.success(`${bulkSelectedIds.size} inscription(s) supprimée(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de la suppression:', error)
+          toast.error('Erreur lors de la suppression')
+        }
+      }
+    })
+  }
+
+  const handleBulkRestore = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Restaurer les inscriptions',
+      message: `Restaurer ${bulkSelectedIds.size} inscription(s) ?`,
+      variant: 'success',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              restoreRegistration({ id, eventId }).unwrap()
+            )
+          )
+          toast.success(`${bulkSelectedIds.size} inscription(s) restaurée(s)`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de la restauration:', error)
+          toast.error('Erreur lors de la restauration')
+        }
+      }
+    })
+  }
+
+  const handleBulkPermanentDelete = async () => {
+    setBulkConfirmation({
+      isOpen: true,
+      title: 'Suppression définitive',
+      message: `⚠️ ATTENTION : Cette action est IRRÉVERSIBLE.\n\nSupprimer définitivement ${bulkSelectedIds.size} inscription(s) ?`,
+      variant: 'danger',
+      action: async () => {
+        try {
+          await Promise.all(
+            Array.from(bulkSelectedIds).map((id) =>
+              permanentDeleteRegistration({ id, eventId }).unwrap()
+            )
+          )
+          toast.success(`${bulkSelectedIds.size} inscription(s) supprimée(s) définitivement`)
+          clearBulkSelection()
+        } catch (error) {
+          console.error('Erreur lors de la suppression définitive:', error)
+          toast.error('Erreur lors de la suppression définitive')
+        }
+      }
+    })
   }
 
   const handleBulkAttendeeTypeChange = async (attendeeTypeId: string) => {
@@ -1380,7 +1607,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                 className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                 title="Supprimer définitivement"
               >
-                <XCircle className="h-4 w-4 shrink-0" />
+                <Trash2 className="h-4 w-4 shrink-0" />
               </Button>
             </ActionButtons>
           ) : (
@@ -1410,7 +1637,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                     className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                     title="Refuser"
                   >
-                    <XCircle className="h-4 w-4 shrink-0" />
+                    <Trash2 className="h-4 w-4 shrink-0" />
                   </Button>
                 </>
               )}
@@ -1425,251 +1652,6 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   },
     [isUpdating, isDeletedTab, optimisticStatusUpdates, updateStatus, quickDownloadingKeys, customColumns]
   )
-
-  // Bulk actions
-  const bulkActions = useMemo(() => {
-    const actions = []
-
-    // Export : toujours disponible
-    actions.push(
-      createBulkActions.export(async (selectedIds) => {
-        console.log('🔵 Export sélection multiple appelé', { count: selectedIds.size })
-        try {
-          const response = await bulkExportRegistrations({
-            ids: Array.from(selectedIds),
-            format: 'excel',
-          }).unwrap()
-
-          console.log('✅ Réponse export sélection:', response)
-
-          const a = document.createElement('a')
-          a.style.display = 'none'
-          a.href = response.downloadUrl
-          a.download = response.filename || 'inscriptions.xlsx'
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          
-          toast.success(`${selectedIds.size} inscription(s) exportée(s)`)
-        } catch (error) {
-          console.error("❌ Erreur lors de l'export sélection:", error)
-          toast.error("Erreur lors de l'export")
-          throw error
-        }
-      })
-    )
-
-    if (!isDeletedTab) {
-      // Actions pour les inscriptions actives
-      
-      // Changer le statut avec sélecteur
-      actions.push({
-        id: 'change-status',
-        label: 'Changer le statut',
-        icon: <RefreshCw className="h-4 w-4" />,
-        variant: 'outline' as const,
-        skipClearSelection: true, // Ne pas réinitialiser car on ouvre juste une modale
-        onClick: async (selectedIds: Set<string>) => {
-          // Ouvrir la modale de sélection de statut
-          setBulkStatusSelectedIds(selectedIds)
-          setBulkStatusModalOpen(true)
-          // Ne pas throw d'erreur ici car on ouvre juste la modale
-        }
-      })
-
-      // Changer le type avec sélecteur
-      actions.push({
-        id: 'change-type',
-        label: 'Changer le type',
-        icon: <Users className="h-4 w-4" />,
-        variant: 'outline' as const,
-        skipClearSelection: true,
-        onClick: async (selectedIds: Set<string>) => {
-          setBulkTypeSelectedIds(selectedIds)
-          setBulkTypeModalOpen(true)
-        }
-      })
-
-      // Check-in en masse
-      actions.push({
-        id: 'check-in',
-        label: 'Check-in',
-        icon: <UserCheck className="h-4 w-4" />,
-        variant: 'default' as const,
-        requiresConfirmation: true,
-        confirmationMessage: 'Enregistrer le check-in pour toutes les inscriptions sélectionnées ?',
-        actionType: 'edit' as const,
-        onClick: async (selectedIds: Set<string>) => {
-          try {
-            const result = await bulkCheckIn({
-              ids: Array.from(selectedIds),
-            }).unwrap()
-            
-            toast.success(`Check-in effectué pour ${result.checkedInCount} inscription(s)`)
-          } catch (error) {
-            console.error('Erreur lors du check-in:', error)
-            toast.error('Erreur lors du check-in')
-            throw error
-          }
-        }
-      })
-
-      // Undo Check-in en masse
-      actions.push({
-        id: 'undo-check-in',
-        label: 'Annuler Check-in',
-        icon: <Undo2 className="h-4 w-4" />,
-        variant: 'outline' as const,
-        requiresConfirmation: true,
-        confirmationMessage: 'Annuler le check-in pour toutes les inscriptions sélectionnées ?',
-        actionType: 'edit' as const,
-        onClick: async (selectedIds: Set<string>) => {
-          try {
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                undoCheckIn({ id, eventId }).unwrap()
-              )
-            )
-            toast.success(`Check-in annulé pour ${selectedIds.size} inscription(s)`)
-          } catch (error) {
-            console.error('Erreur lors de l\'annulation du check-in:', error)
-            toast.error('Erreur lors de l\'annulation du check-in')
-            throw error
-          }
-        }
-      })
-
-      // Check-out en masse
-      actions.push({
-        id: 'check-out',
-        label: 'Check-out',
-        icon: <LogOut className="h-4 w-4" />,
-        variant: 'default' as const,
-        requiresConfirmation: true,
-        confirmationMessage: 'Enregistrer le check-out pour toutes les inscriptions sélectionnées ?',
-        actionType: 'edit' as const,
-        onClick: async (selectedIds: Set<string>) => {
-          try {
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                checkOut({ id, eventId }).unwrap()
-              )
-            )
-            toast.success(`Check-out effectué pour ${selectedIds.size} inscription(s)`)
-          } catch (error) {
-            console.error('Erreur lors du check-out:', error)
-            toast.error('Erreur lors du check-out')
-            throw error
-          }
-        }
-      })
-
-      // Undo Check-out en masse
-      actions.push({
-        id: 'undo-check-out',
-        label: 'Annuler Check-out',
-        icon: <Undo2 className="h-4 w-4" />,
-        variant: 'outline' as const,
-        requiresConfirmation: true,
-        confirmationMessage: 'Annuler le check-out pour toutes les inscriptions sélectionnées ?',
-        actionType: 'edit' as const,
-        onClick: async (selectedIds: Set<string>) => {
-          try {
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                undoCheckOut({ id, eventId }).unwrap()
-              )
-            )
-            toast.success(`Check-out annulé pour ${selectedIds.size} inscription(s)`)
-          } catch (error) {
-            console.error('Erreur lors de l\'annulation du check-out:', error)
-            toast.error('Erreur lors de l\'annulation du check-out')
-            throw error
-          }
-        }
-      })
-
-      // Supprimer (soft delete)
-      actions.push({
-        id: 'delete',
-        label: 'Supprimer',
-        icon: <XCircle className="h-4 w-4" />,
-        variant: 'destructive' as const,
-        requiresConfirmation: true,
-        confirmationMessage: 'Supprimer toutes les inscriptions sélectionnées ? Elles seront déplacées dans les éléments supprimés.',
-        actionType: 'delete' as const,
-        onClick: async (selectedIds: Set<string>) => {
-          try {
-            // Utiliser deleteRegistration pour chaque ID (soft delete)
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                deleteRegistration({ id, eventId }).unwrap()
-              )
-            )
-            toast.success(`${selectedIds.size} inscription(s) supprimée(s)`)
-          } catch (error) {
-            console.error('Erreur lors de la suppression:', error)
-            toast.error('Erreur lors de la suppression')
-            throw error
-          }
-        }
-      })
-    } else {
-      // Actions pour les inscriptions supprimées
-      
-      // Restaurer en masse
-      actions.push({
-        id: 'restore',
-        label: 'Restaurer',
-        icon: <RotateCcw className="h-4 w-4" />,
-        variant: 'default' as const,
-        requiresConfirmation: true,
-        confirmationMessage: 'Restaurer toutes les inscriptions sélectionnées ?',
-        actionType: 'edit' as const,
-        onClick: async (selectedIds: Set<string>) => {
-          try {
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                restoreRegistration({ id, eventId }).unwrap()
-              )
-            )
-            toast.success(`${selectedIds.size} inscription(s) restaurée(s)`)
-          } catch (error) {
-            console.error('Erreur lors de la restauration:', error)
-            toast.error('Erreur lors de la restauration')
-            throw error
-          }
-        }
-      })
-
-      // Supprimer définitivement
-      actions.push({
-        id: 'permanent-delete',
-        label: 'Supprimer définitivement',
-        icon: <XCircle className="h-4 w-4" />,
-        variant: 'destructive' as const,
-        requiresConfirmation: true,
-        confirmationMessage: 'ATTENTION : Cette action est IRRÉVERSIBLE. Supprimer définitivement toutes les inscriptions sélectionnées ?',
-        actionType: 'delete' as const,
-        onClick: async (selectedIds: Set<string>) => {
-          try {
-            await Promise.all(
-              Array.from(selectedIds).map((id) =>
-                permanentDeleteRegistration({ id, eventId }).unwrap()
-              )
-            )
-            toast.success(`${selectedIds.size} inscription(s) supprimée(s) définitivement`)
-          } catch (error) {
-            console.error('Erreur lors de la suppression définitive:', error)
-            toast.error('Erreur lors de la suppression définitive')
-            throw error
-          }
-        }
-      })
-    }
-
-    return actions
-  }, [isDeletedTab, bulkExportRegistrations, bulkUpdateStatus, deleteRegistration, restoreRegistration, permanentDeleteRegistration, eventId, toast])
 
   return (
     <div className="space-y-4">
@@ -1748,18 +1730,48 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
       {/* DataTable */}
       <Card variant="default" padding="none" className="min-w-full">
+        {/* Barre d'actions groupées personnalisée */}
+        {bulkSelectedIds.size > 0 && (
+          <div className="px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  {bulkSelectedIds.size} sélectionnée{bulkSelectedIds.size > 1 ? 's' : ''}
+                </span>
+                <button
+                  onClick={clearBulkSelection}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
+                >
+                  Tout désélectionner
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setBulkActionsModalOpen(true)}
+                  leftIcon={<Users className="h-4 w-4" />}
+                >
+                  Actions
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <DataTable
-          key={isDeletedTab ? 'deleted' : 'active'}
+          key={`${isDeletedTab ? 'deleted' : 'active'}-${tableResetCounter}`}
           columns={columns}
           data={filteredRegistrations}
           isLoading={isLoading}
           enableRowSelection
-          bulkActions={bulkActions}
+          bulkActions={[]} // Désactiver les actions par défaut
           getItemId={(registration) => registration.id}
           itemType="inscriptions"
           tabsElement={tabsElement}
-          onRowSelectionChange={() => {
-            // TanStack Table handles selection
+          onRowSelectionChange={(selectedRows) => {
+            const ids = new Set(selectedRows.map((row) => row.id))
+            setBulkSelectedIds(ids)
           }}
           emptyMessage={
             isDeletedTab
@@ -1842,15 +1854,66 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         />
       )}
 
+      {/* Modal d'actions groupées */}
+      <BulkActionsModal
+        isOpen={bulkActionsModalOpen}
+        onClose={() => setBulkActionsModalOpen(false)}
+        selectedCount={bulkSelectedIds.size}
+        isDeletedTab={isDeletedTab}
+        onExport={handleBulkExport}
+        onChangeStatus={() => {
+          setBulkStatusSelectedIds(bulkSelectedIds)
+          setBulkStatusModalOpen(true)
+        }}
+        onChangeType={() => {
+          setBulkTypeSelectedIds(bulkSelectedIds)
+          setBulkTypeModalOpen(true)
+        }}
+        onCheckIn={handleBulkCheckIn}
+        onUndoCheckIn={handleBulkUndoCheckIn}
+        onCheckOut={handleBulkCheckOut}
+        onUndoCheckOut={handleBulkUndoCheckOut}
+        onDelete={handleBulkDelete}
+        onRestore={handleBulkRestore}
+        onPermanentDelete={handleBulkPermanentDelete}
+      />
+
       <BulkStatusChangeModal
         isOpen={bulkStatusModalOpen}
         onClose={() => {
           setBulkStatusModalOpen(false)
           setBulkStatusSelectedIds(new Set())
         }}
-        onConfirm={handleBulkStatusChange}
+        onBack={() => {
+          // Retourner au modal d'actions groupées
+          setBulkStatusModalOpen(false)
+          setBulkActionsModalOpen(true)
+        }}
+        onConfirm={handleBulkStatusSelect}
         selectedCount={bulkStatusSelectedIds.size}
       />
+
+      {bulkStatusToConfirm && (
+        <BulkStatusConfirmationModal
+          isOpen={bulkStatusConfirmationModalOpen}
+          onClose={() => {
+            setBulkStatusConfirmationModalOpen(false)
+            setBulkStatusToConfirm(null)
+            // Aussi fermer le premier modal
+            setBulkStatusModalOpen(false)
+            setBulkStatusSelectedIds(new Set())
+          }}
+          onBack={() => {
+            // Retourner au modal de sélection du statut
+            setBulkStatusConfirmationModalOpen(false)
+            setBulkStatusToConfirm(null)
+            setBulkStatusModalOpen(true)
+          }}
+          status={bulkStatusToConfirm}
+          selectedCount={bulkStatusSelectedIds.size}
+          onConfirm={(sendEmail) => handleBulkStatusChange(bulkStatusToConfirm, sendEmail)}
+        />
+      )}
 
       <BulkAttendeeTypeChangeModal
         isOpen={bulkTypeModalOpen}
@@ -1858,10 +1921,34 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           setBulkTypeModalOpen(false)
           setBulkTypeSelectedIds(new Set())
         }}
+        onBack={() => {
+          // Retourner au modal d'actions groupées
+          setBulkTypeModalOpen(false)
+          setBulkActionsModalOpen(true)
+        }}
         onConfirm={handleBulkAttendeeTypeChange}
         selectedCount={bulkTypeSelectedIds.size}
         attendeeTypes={eventAttendeeTypes || []}
       />
+
+      {/* Modal de confirmation générique pour les actions bulk */}
+      {bulkConfirmation && (
+        <BulkConfirmationModal
+          isOpen={bulkConfirmation.isOpen}
+          onClose={() => setBulkConfirmation(null)}
+          onBack={() => {
+            setBulkConfirmation(null)
+            setBulkActionsModalOpen(true)
+          }}
+          onConfirm={async () => {
+            await bulkConfirmation.action()
+            setBulkConfirmation(null)
+          }}
+          title={bulkConfirmation.title}
+          message={bulkConfirmation.message}
+          variant={bulkConfirmation.variant}
+        />
+      )}
     </div>
   )
 }

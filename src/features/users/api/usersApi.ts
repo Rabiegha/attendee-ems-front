@@ -158,8 +158,18 @@ export const usersApi = rootApi.injectEndpoints({
     bulkDeleteUsers: builder.mutation<void, string[]>({
       query: (userIds) => ({
         url: '/users/bulk-delete',
-        method: 'POST',
+        method: 'DELETE',
         body: { ids: userIds }, // Backend attend "ids" pas "userIds"
+      }),
+      invalidatesTags: ['Users'],
+    }),
+
+    // Restauration en masse
+    bulkRestoreUsers: builder.mutation<{ restoredCount: number }, string[]>({
+      query: (userIds) => ({
+        url: '/users/bulk-restore',
+        method: 'POST',
+        body: { ids: userIds },
       }),
       invalidatesTags: ['Users'],
     }),
@@ -255,6 +265,7 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useBulkDeleteUsersMutation, // 🆕 Hook pour suppression en masse
+  useBulkRestoreUsersMutation, // 🆕 Hook pour restauration en masse
   useGetRolesQuery,
   useGetOrganizationsQuery, // 🆕 Hook pour les organisations
   useGetOrganizationQuery, // 🆕 Hook pour une organisation spécifique

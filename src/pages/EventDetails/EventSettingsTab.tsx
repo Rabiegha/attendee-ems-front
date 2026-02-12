@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useBlocker } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import {
   useUpdateEventMutation,
   useDeleteEventMutation,
 } from '@/features/events/api/eventsApi'
 import { Button, Input, Select, SelectOption, FormField, Textarea, AddressAutocomplete } from '@/shared/ui'
+import { useToast } from '@/shared/hooks/useToast'
 import {
   Save,
   Trash2,
@@ -31,22 +33,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   event,
 }) => {
   const navigate = useNavigate()
+  const toast = useToast()
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation()
   const [deleteEvent, { isLoading: isDeleting }] = useDeleteEventMutation()
   const [updateEventTags] = useUpdateEventTagsMutation()
-
-  // Composant de bouton de sauvegarde réutilisable
-  const SaveButton: React.FC<{ className?: string }> = ({ className = '' }) => (
-    <div className={`flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700 mt-4 ${className}`}>
-      <Button
-        onClick={() => handleSaveChanges(true)}
-        disabled={isUpdating}
-        leftIcon={<Save className="h-4 w-4" />}
-      >
-        {isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications'}
-      </Button>
-    </div>
-  )
 
   // Si l'événement est supprimé, afficher un message
   if (event.isDeleted) {
@@ -86,6 +76,8 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
 
   // État du formulaire
   const [formData, setFormData] = useState(initialFormData)
+  const [isExiting, setIsExiting] = useState(false)
+  const [showSaveButton, setShowSaveButton] = useState(false)
 
   // Mettre à jour le formulaire quand les données initiales changent (après sauvegarde ou chargement)
   useEffect(() => {
@@ -96,6 +88,22 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   const isDirty = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify(initialFormData)
   }, [formData, initialFormData])
+
+  // Gérer l'animation d'entrée et de sortie
+  useEffect(() => {
+    if (isDirty) {
+      setIsExiting(false)
+      setShowSaveButton(true)
+    } else if (showSaveButton) {
+      // Déclencher l'animation de sortie
+      setIsExiting(true)
+      const timer = setTimeout(() => {
+        setShowSaveButton(false)
+        setIsExiting(false)
+      }, 400) // Durée de l'animation
+      return () => clearTimeout(timer)
+    }
+  }, [isDirty, showSaveButton])
 
   // Protection contre la navigation interne
   const blocker = useBlocker(
@@ -123,7 +131,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   }
 
   const handleSaveAndLeave = async () => {
-    const success = await handleSaveChanges(false)
+    const success = await handleSaveChanges()
     if (success) {
       if (blocker) blocker.proceed?.()
     } else {
@@ -147,7 +155,6 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   const [deleteStep, setDeleteStep] = useState<0 | 1 | 2>(0)
   const [deleteResult, setDeleteResult] = useState<any>(null)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [showUpdateSuccessModal, setShowUpdateSuccessModal] = useState(false)
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false)
 
   const handleInputChange = (
@@ -157,7 +164,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSaveChanges = async (showSuccessModal: boolean = true) => {
+  const handleSaveChanges = async () => {
     try {
       const maxAttendeesValue = formData.maxAttendees
         ? parseInt(formData.maxAttendees.toString())
@@ -169,8 +176,8 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         description: formData.description,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
-        // Si l'événement est en ligne, vider l'adresse
-        location: formData.locationType === 'online' ? '' : formData.location,
+        // Si l'événement est en ligne, vider l'adresse, sinon envoyer null si vide
+        location: formData.locationType === 'online' ? null : (formData.location || null),
         locationType: formData.locationType,
         maxAttendees: maxAttendeesValue,
         // Envoyer null si vide pour supprimer la valeur
@@ -198,11 +205,11 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         tags: formData.tags,
       }).unwrap()
 
-      if (showSuccessModal) setShowUpdateSuccessModal(true)
+      toast.success('Paramètres enregistrés avec succès')
       return true
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error)
-      alert('❌ Erreur lors de la sauvegarde')
+      toast.error('Erreur lors de la sauvegarde')
       return false
     }
   }
@@ -316,8 +323,6 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
               </p>
             </FormField>
           </div>
-
-          <SaveButton />
         </div>
 
         {/* STEP 2: Lieu et participants */}
@@ -434,8 +439,6 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
               </Button>
             </div>
           </div>
-
-          <SaveButton />
         </div>
 
         {/* STEP 3: Options et paramètres */}
@@ -650,8 +653,6 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
               </div>
             </div>
           </div>
-
-          <SaveButton />
         </div>
 
         {/* Zone de danger */}
@@ -737,6 +738,33 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         </div>
       </div>
 
+      {/* Bouton de sauvegarde flottant via Portal */}
+      {showSaveButton && createPortal(
+        <div 
+          className={`fixed bottom-6 right-6 z-50 ${isExiting ? 'animate-slide-down' : 'animate-slide-up'}`}
+          style={{
+            marginLeft: typeof window !== 'undefined' && localStorage.getItem('sidebarOpen') === 'false' ? '4rem' : '16rem'
+          }}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-amber-300 dark:border-amber-600 shadow-2xl p-4 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></div>
+              <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                Modifications non sauvegardées
+              </p>
+            </div>
+            <Button
+              onClick={() => handleSaveChanges()}
+              disabled={isUpdating}
+              leftIcon={<Save className="h-4 w-4" />}
+              className="whitespace-nowrap">
+              {isUpdating ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Modal de confirmation de navigation */}
       {showUnsavedChangesModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -777,50 +805,6 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                   </Button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal de succès de mise à jour */}
-      {showUpdateSuccessModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-8 transform transition-all">
-            <div className="text-center">
-              {/* Icône de succès animée */}
-              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
-                <svg
-                  className="h-10 w-10 text-green-600 dark:text-green-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-
-              {/* Titre */}
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Modifications enregistrées !
-              </h3>
-
-              {/* Message */}
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Les paramètres de l'événement ont été mis à jour avec succès.
-              </p>
-
-              {/* Bouton de fermeture */}
-              <Button
-                onClick={() => setShowUpdateSuccessModal(false)}
-                className="w-full"
-              >
-                Continuer
-              </Button>
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import { EventAttendeeType } from '@/features/events/api/eventsApi'
 interface BulkAttendeeTypeChangeModalProps {
   isOpen: boolean
   onClose: () => void
+  onBack?: () => void
   onConfirm: (attendeeTypeId: string) => Promise<void>
   selectedCount: number
   attendeeTypes: EventAttendeeType[]
@@ -15,6 +16,7 @@ interface BulkAttendeeTypeChangeModalProps {
 export const BulkAttendeeTypeChangeModal: React.FC<BulkAttendeeTypeChangeModalProps> = ({
   isOpen,
   onClose,
+  onBack,
   onConfirm,
   selectedCount,
   attendeeTypes,
@@ -60,8 +62,9 @@ export const BulkAttendeeTypeChangeModal: React.FC<BulkAttendeeTypeChangeModalPr
       onClose={onClose}
       title="Changer le type de participant"
       maxWidth="2xl"
+      contentPadding={false}
     >
-      <div className="space-y-6">
+      <div className="p-6 space-y-6">
         <p className="text-sm text-gray-600 dark:text-gray-400">
           Sélectionnez le nouveau type pour les{' '}
           <span className="font-semibold text-gray-900 dark:text-white">
@@ -69,7 +72,7 @@ export const BulkAttendeeTypeChangeModal: React.FC<BulkAttendeeTypeChangeModalPr
           </span>
           .
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto p-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {allOptions.map((option) => {
             const isSelected = selectedType === option.id
             const isDeactivated = !option.is_active
@@ -114,13 +117,13 @@ export const BulkAttendeeTypeChangeModal: React.FC<BulkAttendeeTypeChangeModalPr
           })}
         </div>
 
-        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="sticky bottom-0 bg-white dark:bg-gray-800 flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="outline"
-            onClick={onClose}
+            onClick={onBack || onClose}
             disabled={isSubmitting}
           >
-            Annuler
+            Retour
           </Button>
           <Button
             onClick={handleConfirm}

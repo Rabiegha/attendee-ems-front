@@ -137,7 +137,7 @@ export const mapUpdateEventDPOtoDTO = (dpo: UpdateEventDPO): UpdateEventDTO => {
   if (dpo.startDate) dto.start_at = dpo.startDate
   if (dpo.endDate) dto.end_at = dpo.endDate
   if (dpo.maxAttendees !== undefined) dto.capacity = dpo.maxAttendees
-  if (dpo.location) dto.address_formatted = dpo.location
+  if (dpo.location !== undefined) dto.address_formatted = dpo.location
   if (dpo.locationType) dto.location_type = dpo.locationType
   if (dpo.websiteUrl !== undefined) dto.website_url = dpo.websiteUrl
 

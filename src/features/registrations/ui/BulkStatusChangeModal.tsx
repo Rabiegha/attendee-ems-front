@@ -6,7 +6,8 @@ import { Button } from '@/shared/ui'
 interface BulkStatusChangeModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: (status: string) => Promise<void>
+  onBack?: () => void
+  onConfirm: (status: string) => void
   selectedCount: number
 }
 
@@ -52,32 +53,22 @@ const STATUS_OPTIONS = [
 export const BulkStatusChangeModal: React.FC<BulkStatusChangeModalProps> = ({
   isOpen,
   onClose,
+  onBack,
   onConfirm,
   selectedCount,
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<string>('')
-  const [isLoading, setIsLoading] = useState(false)
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     if (!selectedStatus) return
-
-    setIsLoading(true)
-    try {
-      await onConfirm(selectedStatus)
-      onClose()
-      setSelectedStatus('')
-    } catch (error) {
-      // L'erreur est gérée par le parent
-    } finally {
-      setIsLoading(false)
-    }
+    onConfirm(selectedStatus)
+    // Ne pas fermer ni réinitialiser ici - laissez le parent gérer
+    // Le parent fermera le modal après avoir ouvert le modal de confirmation
   }
 
   const handleClose = () => {
-    if (!isLoading) {
-      onClose()
-      setSelectedStatus('')
-    }
+    onClose()
+    setSelectedStatus('')
   }
 
   return (
@@ -99,12 +90,11 @@ export const BulkStatusChangeModal: React.FC<BulkStatusChangeModalProps> = ({
               <button
                 key={option.value}
                 onClick={() => setSelectedStatus(option.value)}
-                disabled={isLoading}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 transition-all ${
                   isSelected
                     ? `${option.borderColor} ${option.bgColor}`
                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
-                } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                } cursor-pointer`}
               >
                 <Icon className={`h-5 w-5 ${isSelected ? option.color : 'text-gray-400'}`} />
                 <div className="text-left flex-1">
@@ -126,24 +116,16 @@ export const BulkStatusChangeModal: React.FC<BulkStatusChangeModalProps> = ({
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="outline"
-            onClick={handleClose}
-            disabled={isLoading}
+            onClick={onBack || handleClose}
           >
-            Annuler
+            Retour
           </Button>
           <Button
             variant="default"
             onClick={handleConfirm}
-            disabled={!selectedStatus || isLoading}
+            disabled={!selectedStatus}
           >
-            {isLoading ? (
-              <>
-                <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                Modification...
-              </>
-            ) : (
-              'Confirmer'
-            )}
+            Continuer
           </Button>
         </div>
       </div>

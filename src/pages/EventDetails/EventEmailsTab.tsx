@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { useUpdateEventMutation } from '@/features/events/api/eventsApi'
 import { Button, FormField } from '@/shared/ui'
 import { Save, Mail, QrCode, AlertTriangle } from 'lucide-react'
@@ -36,6 +37,8 @@ export const EventEmailsTab: React.FC<EventEmailsTabProps> = ({ event }) => {
 
   // État du formulaire
   const [formData, setFormData] = useState(initialFormData)
+  const [isExiting, setIsExiting] = useState(false)
+  const [showSaveButton, setShowSaveButton] = useState(false)
 
   // Mettre à jour le formulaire quand les données initiales changent
   useEffect(() => {
@@ -46,6 +49,22 @@ export const EventEmailsTab: React.FC<EventEmailsTabProps> = ({ event }) => {
   const isDirty = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify(initialFormData)
   }, [formData, initialFormData])
+
+  // Gérer l'animation d'entrée et de sortie
+  useEffect(() => {
+    if (isDirty) {
+      setIsExiting(false)
+      setShowSaveButton(true)
+    } else if (showSaveButton) {
+      // Déclencher l'animation de sortie
+      setIsExiting(true)
+      const timer = setTimeout(() => {
+        setShowSaveButton(false)
+        setIsExiting(false)
+      }, 400) // Durée de l'animation
+      return () => clearTimeout(timer)
+    }
+  }, [isDirty, showSaveButton])
 
   // Fonction de sauvegarde
   const handleSave = async () => {
@@ -116,22 +135,31 @@ export const EventEmailsTab: React.FC<EventEmailsTabProps> = ({ event }) => {
         </p>
       </div>
 
-      {/* Bouton de sauvegarde */}
-      {isDirty && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-amber-600 dark:text-amber-400">
-              Des modifications non sauvegardées sont en attente
-            </p>
+      {/* Bouton de sauvegarde flottant via Portal */}
+      {showSaveButton && createPortal(
+        <div 
+          className={`fixed bottom-6 right-6 z-50 ${isExiting ? 'animate-slide-down' : 'animate-slide-up'}`}
+          style={{
+            marginLeft: typeof window !== 'undefined' && localStorage.getItem('sidebarOpen') === 'false' ? '4rem' : '16rem'
+          }}
+        >
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-amber-300 dark:border-amber-600 shadow-2xl p-4 flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></div>
+              <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                Modifications non sauvegardées
+              </p>
+            </div>
             <Button
               onClick={handleSave}
               disabled={isUpdating}
               leftIcon={<Save className="h-4 w-4" />}
-            >
-              {isUpdating ? 'Enregistrement...' : 'Enregistrer les modifications'}
+              className="whitespace-nowrap">
+              {isUpdating ? 'Enregistrement...' : 'Enregistrer'}
             </Button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

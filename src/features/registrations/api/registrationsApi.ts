@@ -333,13 +333,17 @@ export const registrationsApi = rootApi.injectEndpoints({
     }),
 
     bulkUpdateRegistrationStatus: builder.mutation<
-      { updatedCount: number },
-      { ids: string[]; status: string }
+      { updatedCount: number; emailsSent?: number },
+      { ids: string[]; status: string; sendEmail?: boolean }
     >({
-      query: ({ ids, status }) => ({
+      query: ({ ids, status, sendEmail }) => ({
         url: '/registrations/bulk-update-status',
         method: 'PATCH',
-        body: { ids, status },
+        body: { 
+          ids, 
+          status, 
+          ...(sendEmail !== undefined && { sendEmail }),
+        },
       }),
       invalidatesTags: (_result, _error, { ids }) => [
         ...ids.map(id => ({ type: 'Attendee' as const, id })),

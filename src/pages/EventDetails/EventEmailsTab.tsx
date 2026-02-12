@@ -55,6 +55,7 @@ export const EventEmailsTab: React.FC<EventEmailsTabProps> = ({ event }) => {
     if (isDirty) {
       setIsExiting(false)
       setShowSaveButton(true)
+      return undefined
     } else if (showSaveButton) {
       // Déclencher l'animation de sortie
       setIsExiting(true)
@@ -64,6 +65,7 @@ export const EventEmailsTab: React.FC<EventEmailsTabProps> = ({ event }) => {
       }, 400) // Durée de l'animation
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [isDirty, showSaveButton])
 
   // Fonction de sauvegarde

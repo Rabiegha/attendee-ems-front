@@ -94,6 +94,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
     if (isDirty) {
       setIsExiting(false)
       setShowSaveButton(true)
+      return undefined
     } else if (showSaveButton) {
       // Déclencher l'animation de sortie
       setIsExiting(true)
@@ -103,6 +104,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
       }, 400) // Durée de l'animation
       return () => clearTimeout(timer)
     }
+    return undefined
   }, [isDirty, showSaveButton])
 
   // Protection contre la navigation interne

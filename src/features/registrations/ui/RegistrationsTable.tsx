@@ -33,7 +33,7 @@ import { Card } from '@/shared/ui/Card'
 import { createSelectionColumn } from '@/shared/ui/DataTable/columns'
 import { formatDateTime } from '@/shared/lib/utils'
 import { useSelector } from 'react-redux'
-import { selectToken } from '@/features/auth/model/sessionSlice'
+import { selectToken, selectUserId } from '@/features/auth/model/sessionSlice'
 import {
   useUpdateRegistrationStatusMutation,
   useUpdateRegistrationMutation,
@@ -236,6 +236,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const toast = useToast()
   const navigate = useNavigate()
   const token = useSelector(selectToken)
+  const userId = useSelector(selectUserId)
 
   // Fonction pour traiter la queue de téléchargements
   const processDownloadQueue = async () => {
@@ -308,7 +309,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     processDownloadQueue()
   }
 
-  // Fonction d'impression de badge
+  // Fonction d'impression de badge (via Electron print queue)
   const handlePrintBadge = async (registration: RegistrationDPO) => {
     const printKey = registration.id
     setPrintingKeys(prev => new Set(prev).add(printKey))
@@ -321,40 +322,15 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         return
       }
 
-      // Récupérer le badge ID depuis l'URL du badge
-      const badgeUrl = registration.badgePdfUrl || registration.badgeImageUrl
-      if (!badgeUrl) {
+      if (!userId) {
+        toast.error('ID utilisateur introuvable')
+        return
+      }
+
+      // Récupérer l'URL du badge PDF
+      const badgePdfUrl = registration.badgePdfUrl || registration.badgeImageUrl
+      if (!badgePdfUrl) {
         toast.error('Ce participant n\'a pas encore de badge généré')
-        return
-      }
-
-      // Extraire le badge ID depuis l'URL (format: /api/badges/{badgeId}/pdf)
-      const badgeIdMatch = badgeUrl.match(/\/badges\/([a-f0-9-]+)\//i)
-      if (!badgeIdMatch) {
-        toast.error('Impossible d\'extraire l\'ID du badge')
-        return
-      }
-      const badgeId = badgeIdMatch[1]
-
-      const response = await fetch(
-        `${API_URL}/badge-generation/${badgeId}/pdf-base64`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error('Échec de la récupération du badge')
-      }
-
-      const pdfBase64 = await response.text()
-
-      // Ouvrir une fenêtre d'impression
-      const printWindow = window.open('', '_blank')
-      if (!printWindow) {
-        toast.error('Impossible d\'ouvrir la fenêtre d\'impression. Veuillez autoriser les popups.')
         return
       }
 
@@ -362,31 +338,33 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         ? `${registration.attendee.firstName} ${registration.attendee.lastName}`
         : 'Participant'
 
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Impression Badge - ${attendeeName}</title>
-            <style>
-              body { margin: 0; padding: 0; }
-              iframe { border: none; width: 100%; height: 100vh; }
-            </style>
-          </head>
-          <body>
-            <iframe src="data:application/pdf;base64,${pdfBase64}"></iframe>
-            <script>
-              window.onload = function() {
-                setTimeout(function() {
-                  window.print();
-                }, 500);
-              };
-            </script>
-          </body>
-        </html>
-      `)
-      printWindow.document.close()
+      // Créer un job d'impression dans la queue
+      const response = await fetch(
+        `${API_URL}/print-queue/add`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            registrationId: registration.id,
+            eventId,
+            userId,
+            badgePdfUrl,
+          }),
+        }
+      )
 
-      toast.success(`Badge de ${attendeeName} prêt à imprimer`)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.message || 'Échec de l\'ajout à la file d\'impression')
+      }
+
+      const printJob = await response.json()
+
+      toast.success(`Badge de ${attendeeName} ajouté à la file d'impression`)
+      console.log('Print job created:', printJob)
     } catch (error) {
       console.error('Error printing badge:', error)
       toast.error('Erreur lors de l\'impression du badge')

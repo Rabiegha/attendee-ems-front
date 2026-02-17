@@ -70,3 +70,6 @@ dump.*
 uploads/
 public/uploads/
 
+
+public/downloads/*.zip
+public/downloads/*.dmg

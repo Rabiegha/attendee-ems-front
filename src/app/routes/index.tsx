@@ -32,6 +32,7 @@ import { PrivacyPolicyPage } from '@/pages/PrivacyPolicy'
 import { BadgeDesigner } from '@/pages/BadgeDesigner'
 import { BadgeDesignerPage } from '@/pages/BadgeDesigner/BadgeDesignerPage'
 import { ApplicationDownloadPage } from '@/pages/ApplicationDownload'
+import { PrintClientDownloadPage } from '@/pages/PrintClientDownload'
 import { ReportsPage } from '@/pages/Reports'
 import { EmailManagementPage } from '@/pages/EmailManagement'
 
@@ -173,6 +174,10 @@ export const router = createBrowserRouter([
       {
         path: 'application',
         element: <ApplicationDownloadPage />,
+      },
+      {
+        path: 'print-client',
+        element: <PrintClientDownloadPage />,
       },
       {
         path: 'reports',

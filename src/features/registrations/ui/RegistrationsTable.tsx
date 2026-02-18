@@ -351,7 +351,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             registrationId: registration.id,
             eventId,
             userId,
-            badgePdfUrl,
+            badgeUrl: badgePdfUrl,
           }),
         }
       )

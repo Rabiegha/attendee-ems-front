@@ -6,6 +6,7 @@ import { RouterProvider } from './providers/router-provider'
 import { ToastProvider } from './providers/toast-provider'
 import { ThemeProvider } from './providers/theme-provider'
 import { AuthLifecycleProvider } from './providers/auth-lifecycle-provider'
+import { PrintJobSocketProvider } from './providers/print-socket-provider'
 import { DevTools } from './components/DevTools'
 
 export const App: React.FC = () => {
@@ -17,6 +18,7 @@ export const App: React.FC = () => {
             <AbilityProvider>
               <RouterProvider />
               <ToastProvider />
+              <PrintJobSocketProvider />
               {/* <DevTools /> */}
             </AbilityProvider>
           </I18nProvider>

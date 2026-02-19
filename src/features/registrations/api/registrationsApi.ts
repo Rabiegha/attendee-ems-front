@@ -387,7 +387,7 @@ export const registrationsApi = rootApi.injectEndpoints({
     }),
 
     generateBadge: builder.mutation<
-      { success: boolean; data: { id: string; badge_url: string; badge_image_url: string } },
+      { id: string; badge_pdf_url?: string; badge_image_url?: string },
       { registrationId: string; eventId: string }
     >({
       query: ({ registrationId, eventId }) => ({
@@ -509,19 +509,9 @@ export const registrationsApi = rootApi.injectEndpoints({
       ],
     }),
 
-    generateBadge: builder.mutation<
-      { success: boolean; message: string; generated: number },
-      { eventId: string; registrationId: string }
-    >({
-      query: ({ eventId, registrationId }) => ({
-        url: `/events/${eventId}/registrations/${registrationId}/generate-badge`,
-        method: 'POST',
-      }),
-      invalidatesTags: (_result, _error, { eventId, registrationId }) => [
-        { type: 'Attendee', id: registrationId },
-        { type: 'Attendee', id: `EVENT-${eventId}` },
-      ],
-    }),
+
+    // Removed duplicate generateBadge
+
 
     getRegistrationTemplate: builder.mutation<Blob, void>({
       query: () => ({

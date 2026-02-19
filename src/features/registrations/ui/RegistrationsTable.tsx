@@ -50,6 +50,7 @@ import {
   useUndoCheckOutMutation,
   useApproveWithEmailMutation,
   useRejectWithEmailMutation,
+  useGenerateBadgeMutation,
 } from '../api/registrationsApi'
 import { EventAttendeeType } from '@/features/events/api/eventsApi'
 import { useToast } from '@/shared/hooks/useToast'

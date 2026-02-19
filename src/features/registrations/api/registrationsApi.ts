@@ -386,6 +386,19 @@ export const registrationsApi = rootApi.injectEndpoints({
       ],
     }),
 
+    generateBadge: builder.mutation<
+      { success: boolean; data: { id: string; badge_url: string; badge_image_url: string } },
+      { registrationId: string; eventId: string }
+    >({
+      query: ({ registrationId, eventId }) => ({
+        url: `/events/${eventId}/registrations/${registrationId}/generate-badge`,
+        method: 'POST',
+      }),
+      invalidatesTags: (_result, _error, { registrationId }) => [
+        { type: 'Attendee', id: registrationId },
+      ],
+    }),
+
     undoCheckIn: builder.mutation<
       { success: boolean; message: string; registration: RegistrationDPO },
       { id: string; eventId: string }

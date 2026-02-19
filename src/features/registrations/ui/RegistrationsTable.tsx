@@ -312,6 +312,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   }
 
   // Fonction d'impression de badge (via Electron print queue)
+  const [generateBadge] = useGenerateBadgeMutation()
+  
   const handlePrintBadge = async (registration: RegistrationDPO) => {
     const printKey = registration.id
     setPrintingKeys(prev => new Set(prev).add(printKey))
@@ -322,11 +324,34 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         return
       }
 
-      // Récupérer l'URL du badge PDF
-      const badgePdfUrl = registration.badgePdfUrl || registration.badgeImageUrl
+      // Récupérer ou générer l'URL du badge
+      let badgePdfUrl = registration.badgePdfUrl || registration.badgeImageUrl
+      
       if (!badgePdfUrl) {
-        toast.error('Ce participant n\'a pas encore de badge généré')
-        return
+        try {
+          toast.info('Génération du badge en cours...')
+          const result = await generateBadge({
+            registrationId: registration.id,
+            eventId
+          }).unwrap()
+          
+          // Le endpoint generate-badge retourne l'objet Badge crée
+          // On construit l'URL manuellement car le refresh peut prendre du temps
+          if (result && result.id) {
+            badgePdfUrl = `/api/badges/${result.id}/pdf`
+          } else {
+             throw new Error("Badge ID manquant dans la réponse")
+          }
+        } catch (genError) {
+          console.error("Erreur génération badge:", genError)
+          toast.error("Impossible de générer le badge automatiquement")
+          return
+        }
+      }
+      
+      if (!badgePdfUrl) {
+         toast.error("Impossible d'obtenir l'URL du badge")
+         return
       }
 
       const attendeeName = registration.attendee 

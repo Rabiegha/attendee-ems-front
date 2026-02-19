@@ -53,6 +53,7 @@ import {
 } from '../api/registrationsApi'
 import { EventAttendeeType } from '@/features/events/api/eventsApi'
 import { useToast } from '@/shared/hooks/useToast'
+import { useAddPrintJobMutation } from '@/features/print-queue/api/printQueueApi'
 import { EditRegistrationModal } from './EditRegistrationModal'
 import { DeleteConfirmModal } from './DeleteConfirmModal'
 import { RestoreRegistrationModal } from './RestoreRegistrationModal'
@@ -237,6 +238,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const navigate = useNavigate()
   const token = useSelector(selectToken)
   const userId = useSelector(selectUserId)
+  const [addPrintJob] = useAddPrintJobMutation()
 
   // Fonction pour traiter la queue de téléchargements
   const processDownloadQueue = async () => {
@@ -315,15 +317,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     setPrintingKeys(prev => new Set(prev).add(printKey))
 
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
-      
-      if (!token) {
-        toast.error('Vous devez être connecté pour imprimer un badge')
-        return
-      }
-
       if (!userId) {
-        toast.error('ID utilisateur introuvable')
+        toast.error('Utilisateur non connecté')
         return
       }
 
@@ -338,33 +333,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         ? `${registration.attendee.firstName} ${registration.attendee.lastName}`
         : 'Participant'
 
-      // Créer un job d'impression dans la queue
-      const response = await fetch(
-        `${API_URL}/print-queue/add`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            registrationId: registration.id,
-            eventId,
-            userId,
-            badgeUrl: badgePdfUrl,
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.message || 'Échec de l\'ajout à la file d\'impression')
-      }
-
-      const printJob = await response.json()
+      await addPrintJob({
+        registrationId: registration.id,
+        eventId,
+        userId,
+        badgeUrl: badgePdfUrl,
+      }).unwrap()
 
       toast.success(`Badge de ${attendeeName} ajouté à la file d'impression`)
-      console.log('Print job created:', printJob)
     } catch (error) {
       console.error('Error printing badge:', error)
       toast.error('Erreur lors de l\'impression du badge')

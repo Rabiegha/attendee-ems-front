@@ -39,6 +39,7 @@ import {
   CreditCard,
   BarChart3,
   Mail,
+  Printer,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
@@ -46,6 +47,7 @@ import { EventAttendeeTypesTab } from './EventAttendeeTypesTab'
 import { EventBadgesTab } from './EventBadgesTab'
 import { EventStatsTab } from './EventStatsTab'
 import { EventEmailsTab } from './EventEmailsTab'
+import { EventPrintQueueTab } from './EventPrintQueueTab'
 import { AssignedTeam } from './components/AssignedTeam'
 import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTable'
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
@@ -61,7 +63,7 @@ import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 import { EventSessionsTab } from './EventSessionsTab'
 
-type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions' | 'stats' | 'emails'
+type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions' | 'stats' | 'emails' | 'print-queue'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -80,7 +82,7 @@ export const EventDetails: React.FC = () => {
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions', 'stats', 'emails'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions', 'stats', 'emails', 'print-queue'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -750,6 +752,13 @@ export const EventDetails: React.FC = () => {
       hasPermission: canUpdateEvent,
       disabledIfDeleted: true 
     },
+    {
+      id: 'print-queue' as TabType,
+      label: 'Impression',
+      icon: Printer,
+      hasPermission: canReadRegistrations,
+      disabledIfDeleted: true
+    },
     { 
       id: 'settings' as TabType, 
       label: 'Paramètres', 
@@ -1258,6 +1267,10 @@ export const EventDetails: React.FC = () => {
 
         {activeTab === 'emails' && (
           <EventEmailsTab event={event} />
+        )}
+
+        {activeTab === 'print-queue' && (
+          <EventPrintQueueTab event={event} />
         )}
       </div>
 

@@ -151,6 +151,7 @@ export const rootApi = createApi({
     'Sessions',
     'SessionHistory',
     'EmailTemplates',
+    'PrintJobs',
   ],
   // Pas d'endpoints ici, ils seront injectés par chaque feature
   endpoints: () => ({}),

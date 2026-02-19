@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/Button'
 
 export const PrintClientDownloadPage: React.FC = () => {
   // URLs de téléchargement (à adapter selon votre hébergement)
-  const windowsUrl = '/downloads/Attendee-Print-Client-1.0.0-win32-x64.zip'
+  const windowsUrl = '/downloads/Attendee-Print-Client-Setup.exe'
   const macUrl = '/downloads/Attendee-Print-Client-1.0.0.dmg'
   
   const features = [
@@ -78,13 +78,13 @@ export const PrintClientDownloadPage: React.FC = () => {
                 <div className="w-full space-y-3">
                   <a
                     href={windowsUrl}
-                    download="Attendee-Print-Client-1.0.0-win32-x64.zip"
+                    download="Attendee-Print-Client-Setup.exe"
                     className="block"
                     onClick={(e) => {
                       e.preventDefault()
                       const link = document.createElement('a')
                       link.href = windowsUrl
-                      link.download = 'Attendee-Print-Client-1.0.0-win32-x64.zip'
+                      link.download = 'Attendee-Print-Client-Setup.exe'
                       document.body.appendChild(link)
                       link.click()
                       document.body.removeChild(link)
@@ -95,11 +95,20 @@ export const PrintClientDownloadPage: React.FC = () => {
                       className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
                     >
                       <Download className="h-5 w-5 mr-2" />
-                      Télécharger (.zip)
+                      Télécharger
                     </Button>
                   </a>
+                  <p className="text-xs text-center mt-2">
+                    <a
+                      href="/downloads/Attendee-Print-Client-Portable.zip"
+                      download="Attendee-Print-Client-Portable.zip"
+                      className="text-blue-600 hover:underline hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      Version portable (.zip) - ~108 MB
+                    </a>
+                  </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Version 1.0.0 • ~190 MB
+                    Version 1.0.0 • ~123 MB
                   </p>
                 </div>
               </div>
@@ -120,28 +129,14 @@ export const PrintClientDownloadPage: React.FC = () => {
                   </p>
                 </div>
                 <div className="w-full space-y-3">
-                  <a
-                    href={macUrl}
-                    download="Attendee-Print-Client-1.0.0.dmg"
-                    className="block"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      const link = document.createElement('a')
-                      link.href = macUrl
-                      link.download = 'Attendee-Print-Client-1.0.0.dmg'
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                    }}
+                  <Button
+                    type="button"
+                    disabled
+                    className="w-full py-3 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 font-semibold rounded-xl cursor-not-allowed"
                   >
-                    <Button
-                      type="button"
-                      className="w-full py-3 bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
-                    >
-                      <Download className="h-5 w-5 mr-2" />
-                      Télécharger (.dmg)
-                    </Button>
-                  </a>
+                    <Download className="h-5 w-5 mr-2" />
+                    Bientôt disponible
+                  </Button>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     Version 1.0.0 • ~120 MB
                   </p>

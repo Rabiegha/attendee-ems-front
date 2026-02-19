@@ -13,6 +13,7 @@ import {
   Building2,
   CreditCard,
   Tag,
+  Printer,
   Smartphone,
 } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
@@ -105,6 +106,12 @@ const navigation = [
     name: 'navigation.application',
     href: '/application',
     icon: Smartphone,
+    // Pas de guard - accessible à tous
+  },
+  {
+    name: 'navigation.print_client',
+    href: '/print-client',
+    icon: Printer,
     // Pas de guard - accessible à tous
   },
   {

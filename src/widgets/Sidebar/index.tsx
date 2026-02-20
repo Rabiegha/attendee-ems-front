@@ -15,6 +15,7 @@ import {
   Tag,
   Printer,
   Smartphone,
+  MonitorCheck,
 } from 'lucide-react'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
@@ -109,9 +110,15 @@ const navigation = [
     // Pas de guard - accessible à tous
   },
   {
+    name: 'navigation.printing',
+    href: '/printing',
+    icon: Printer,
+    // Pas de guard - accessible à tous
+  },
+  {
     name: 'navigation.print_client',
     href: '/print-client',
-    icon: Printer,
+    icon: MonitorCheck,
     // Pas de guard - accessible à tous
   },
   {

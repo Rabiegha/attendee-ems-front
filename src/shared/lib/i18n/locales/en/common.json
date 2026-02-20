@@ -36,6 +36,8 @@
     "reports": "Reports",
     "settings": "Settings",
     "application": "Mobile App",
+    "print_client": "Print Client",
+    "printing": "Printers",
     "profile": "Profile",
     "logout": "Logout"
   },

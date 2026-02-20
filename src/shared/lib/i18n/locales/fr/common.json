@@ -35,7 +35,7 @@
     "email": "Emails",
     "organizations": "Organisations",
     "reports": "Rapports",
-    "settings": "Paramètres",    "print_client": "Client d'Impression",    "application": "Application Mobile",
+    "settings": "Paramètres",    "print_client": "Client d'Impression", "printing": "Imprimantes",    "application": "Application Mobile",
     "profile": "Profil",
     "logout": "Déconnexion"
   },

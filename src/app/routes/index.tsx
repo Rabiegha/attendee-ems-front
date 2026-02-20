@@ -35,6 +35,7 @@ import { ApplicationDownloadPage } from '@/pages/ApplicationDownload'
 import { PrintClientDownloadPage } from '@/pages/PrintClientDownload'
 import { ReportsPage } from '@/pages/Reports'
 import { EmailManagementPage } from '@/pages/EmailManagement'
+import { PrintingPage } from '@/pages/Printing'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -178,6 +179,10 @@ export const router = createBrowserRouter([
       {
         path: 'print-client',
         element: <PrintClientDownloadPage />,
+      },
+      {
+        path: 'printing',
+        element: <PrintingPage />,
       },
       {
         path: 'reports',

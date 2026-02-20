@@ -31,6 +31,7 @@ export interface ExposedPrinter {
   displayName: string
   status: number
   isDefault: boolean
+  deviceId?: string
 }
 
 export const printQueueApi = rootApi.injectEndpoints({

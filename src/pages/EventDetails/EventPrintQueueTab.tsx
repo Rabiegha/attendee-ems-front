@@ -381,15 +381,25 @@ export const EventPrintQueueTab: React.FC<EventPrintQueueTabProps> = ({ event })
               >
                 <span className="flex items-center gap-2 truncate">
                   <Printer className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                  {selectedPrinter
-                    ? exposedPrinters.find(p => p.name === selectedPrinter)?.displayName || selectedPrinter
-                    : 'Sélectionner...'}
+                  {(() => {
+                    // Parse selected printer to display correct name
+                    if (!selectedPrinter) return 'Sélectionner...';
+                    
+                    const [pName, dId] = selectedPrinter.includes('::') 
+                      ? selectedPrinter.split('::') 
+                      : [selectedPrinter, null];
+                      
+                    const found = exposedPrinters.find(p => p.name === pName && (!dId || p.deviceId === dId));
+                    return found 
+                      ? `${found.displayName} ${found.deviceId ? `(${found.deviceId})` : ''}`
+                      : selectedPrinter;
+                  })()}
                 </span>
                 <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
               </button>
 
               {showPrinterDropdown && (
-                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg">
+                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                   {exposedPrinters.length === 0 ? (
                     <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
                       Aucune imprimante exposée
@@ -397,17 +407,21 @@ export const EventPrintQueueTab: React.FC<EventPrintQueueTabProps> = ({ event })
                   ) : (
                     exposedPrinters.map((printer) => (
                       <button
-                        key={printer.name}
+                        key={`${printer.deviceId}-${printer.name}`}
                         onClick={() => {
-                          setSelectedPrinter(printer.name)
+                          const compositeName = printer.deviceId 
+                            ? `${printer.name}::${printer.deviceId}` 
+                            : printer.name;
+                          setSelectedPrinter(compositeName)
                           setShowPrinterDropdown(false)
                         }}
                         className="w-full flex items-center justify-between px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors first:rounded-t-lg last:rounded-b-lg"
                       >
                         <span className="text-gray-700 dark:text-gray-200">
-                          {printer.displayName}
+                          {printer.displayName} 
+                          {printer.deviceId && <span className="text-xs text-gray-500 ml-2">({printer.deviceId})</span>}
                         </span>
-                        {selectedPrinter === printer.name && (
+                        {selectedPrinter === (printer.deviceId ? `${printer.name}::${printer.deviceId}` : printer.name) && (
                           <Check className="w-4 h-4 text-blue-500" />
                         )}
                       </button>

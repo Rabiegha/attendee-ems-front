@@ -121,7 +121,12 @@ export const EventPrintQueueTab: React.FC<EventPrintQueueTabProps> = ({ event })
   useEffect(() => {
     if (!selectedPrinter && exposedPrinters.length > 0) {
       const defaultPrinter = exposedPrinters.find(p => p.isDefault) ?? exposedPrinters[0]
-      if (defaultPrinter) setSelectedPrinter(defaultPrinter.name)
+      if (defaultPrinter) {
+        const compositeName = defaultPrinter.deviceId 
+          ? `${defaultPrinter.name}::${defaultPrinter.deviceId}` 
+          : defaultPrinter.name;
+        setSelectedPrinter(compositeName)
+      }
     }
   }, [exposedPrinters, selectedPrinter])
 

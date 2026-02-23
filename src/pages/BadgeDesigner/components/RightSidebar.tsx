@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Trash2, RotateCcw, RotateCw, Shuffle, X,
   AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
@@ -55,6 +56,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   historyIndex = 0,
   historyLength = 0,
 }) => {
+  const { t } = useTranslation('badges')
   const selectedElement = selectedElements.length === 1 ? selectedElements[0] : null;
   const multipleSelected = selectedElements.length > 1;
   
@@ -97,7 +99,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             <button
               onClick={onUndo}
               disabled={!canUndo}
-              title="Annuler (Ctrl+Z)"
+              title={t('designer.undo')}
               className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
             >
               <Undo2 size={18} className="text-gray-700 dark:text-gray-300" />
@@ -112,7 +114,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             <button
               onClick={onRedo}
               disabled={!canRedo}
-              title="Rétablir (Ctrl+Y)"
+              title={t('designer.redo')}
               className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
             >
               <Redo2 size={18} className="text-gray-700 dark:text-gray-300" />
@@ -767,10 +769,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             variant="destructive"
             size="sm"
             className="flex items-center justify-center gap-1 text-xs px-2"
-            title={multipleSelected ? `Supprimer ${selectedElements.length} éléments` : 'Supprimer'}
+            title={multipleSelected ? t('designer.delete_elements', { count: selectedElements.length }) : t('designer.delete_element')}
           >
             <Trash2 size={16} className="flex-shrink-0" />
-            <span className="truncate">Supprimer {multipleSelected ? `(${selectedElements.length})` : ''}</span>
+            <span className="truncate">{t('designer.delete_element')} {multipleSelected ? `(${selectedElements.length})` : ''}</span>
           </Button>
         </div>
       </div>
@@ -801,10 +803,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 variant="outline"
                 size="sm"
                 className="w-full flex items-center justify-center gap-2"
-                title="Supprimer la symétrie centrale"
+                title={t('designer.break_symmetry')}
               >
                 <X size={14} />
-                Casser Symétrie
+                {t('designer.break_symmetry')}
               </Button>
             </div>
           )}
@@ -1289,7 +1291,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            title="Annuler (Ctrl+Z)"
+            title={t('designer.undo')}
             className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
           >
             <Undo2 size={18} className="text-gray-700 dark:text-gray-300" />
@@ -1304,7 +1306,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            title="Rétablir (Ctrl+Y)"
+            title={t('designer.redo')}
             className="p-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
           >
             <Redo2 size={18} className="text-gray-700 dark:text-gray-300" />

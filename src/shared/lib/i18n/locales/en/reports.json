@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Reports & Statistics",
+    "description": "Analysis of your platform data",
+    "loading": "Loading data...",
+    "loading_error": "Error loading reports"
+  },
+  "overview": {
+    "title": "Overview",
+    "total_events": "Total Events",
+    "total_attendees": "Total Attendees",
+    "total_registrations": "Total Registrations",
+    "total_users": "Total Users",
+    "check_in_rate": "Check-in Rate",
+    "conversion_rate": "Conversion Rate",
+    "avg_capacity": "Average Capacity",
+    "occupancy_rate": "Occupancy Rate",
+    "total_capacity": "Total Capacity",
+    "avg_check_in_rate": "Average Check-in Rate",
+    "no_type": "No type"
+  },
+  "charts": {
+    "registrations_over_time": "Registrations Over Time",
+    "attendees_by_status": "Attendees by Status",
+    "events_by_type": "Events by Type",
+    "top_events": "Most Popular Events",
+    "daily": "Daily",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "events": "Events",
+    "events_created": "Events Created",
+    "event_count": "Number of Events",
+    "check_in_rate": "Check-in Rate",
+    "attendee_type_distribution": "Attendee Type Distribution",
+    "events_by_month": "Events by Month",
+    "events_created_last_30_days": "Events Created (Last 30 Days)",
+    "events_by_capacity": "Events by Capacity Distribution",
+    "check_in_rate_by_event": "Check-in Rate by Event (Top 20)"
+  },
+  "filters": {
+    "date_range": "Date Range",
+    "event": "Event",
+    "all_events": "All Events",
+    "last_7_days": "Last 7 days",
+    "last_30_days": "Last 30 days",
+    "last_90_days": "Last 90 days",
+    "custom": "Custom",
+    "from": "From",
+    "to": "To"
+  },
+  "export": {
+    "title": "Export Report",
+    "csv": "Export as CSV",
+    "pdf": "Export as PDF",
+    "excel": "Export as Excel"
+  },
+  "empty": {
+    "title": "No data available",
+    "description": "Data will appear here once events have attendees"
+  },
+  "stats": {
+    "increase": "increase",
+    "decrease": "decrease",
+    "no_change": "stable",
+    "compared_to_previous": "compared to previous period"
+  },
+  "insights": {
+    "title": "Key Insights",
+    "most_common_type": "Most Common Type",
+    "upcoming_events": "Upcoming Events",
+    "avg_attendees_per_event": "Avg. Attendees/Event"
+  }
+}

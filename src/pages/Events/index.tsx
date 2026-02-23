@@ -155,54 +155,54 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   // Configuration des filtres pour le popup
   const filterConfig = {
     status: {
-      label: 'Statut',
+      label: t('events:filters.status'),
       type: 'radio' as const,
       options: [
-        { value: 'all', label: 'Tous' },
-        { value: 'draft', label: 'Brouillon' },
-        { value: 'published', label: 'Publié' },
-        { value: 'active', label: 'Actif' },
-        { value: 'completed', label: 'Terminé' },
-        { value: 'cancelled', label: 'Annulé' },
+        { value: 'all', label: t('events:filters.all') },
+        { value: 'draft', label: t('events:status.draft') },
+        { value: 'published', label: t('events:status.published') },
+        { value: 'active', label: t('events:status.active') },
+        { value: 'completed', label: t('events:status.completed') },
+        { value: 'cancelled', label: t('events:status.cancelled') },
       ],
     },
     locationType: {
-      label: 'Type de lieu',
+      label: t('events:filters.venue_type'),
       type: 'radio' as const,
       options: [
-        { value: 'all', label: 'Tous' },
-        { value: 'online', label: 'En ligne' },
-        { value: 'physical', label: 'Physique' },
-        { value: 'hybrid', label: 'Hybride' },
+        { value: 'all', label: t('events:filters.all') },
+        { value: 'online', label: t('events:filters.online') },
+        { value: 'physical', label: t('events:filters.physical') },
+        { value: 'hybrid', label: t('events:filters.hybrid') },
       ],
     },
     eventState: {
-      label: 'État de l\'événement',
+      label: t('events:filters.event_state'),
       type: 'radio' as const,
       options: [
-        { value: 'all', label: 'Tous' },
-        { value: 'upcoming', label: 'À venir' },
-        { value: 'ongoing', label: 'En cours' },
-        { value: 'completed', label: 'Terminé' },
+        { value: 'all', label: t('events:filters.all') },
+        { value: 'upcoming', label: t('events:filters.upcoming') },
+        { value: 'ongoing', label: t('events:filters.ongoing') },
+        { value: 'completed', label: t('events:filters.past') },
       ],
     },    assignedToMe: {
-      label: 'Attribution',
+      label: t('events:filters.assignment'),
       type: 'radio' as const,
       options: [
-        { value: 'all', label: 'Tous les événements' },
-        { value: 'yes', label: 'Attribués à moi' },
-        { value: 'no', label: 'Non attribués' },
+        { value: 'all', label: t('events:filters.all_events') },
+        { value: 'yes', label: t('events:filters.assigned_to_me') },
+        { value: 'no', label: t('events:filters.unassigned') },
       ],
     },  }
 
   // Options de tri
   const sortOptions: SortOption[] = [
-    { value: 'createdAt-desc', label: 'Créé (plus récent)' },
-    { value: 'createdAt-asc', label: 'Créé (plus ancien)' },
-    { value: 'startDate-asc', label: 'Date (plus proche)' },
-    { value: 'startDate-desc', label: 'Date (plus loin)' },
-    { value: 'name-asc', label: 'Nom (A-Z)' },
-    { value: 'name-desc', label: 'Nom (Z-A)' },
+    { value: 'createdAt-desc', label: t('events:filters.sort_created_newest') },
+    { value: 'createdAt-asc', label: t('events:filters.sort_created_oldest') },
+    { value: 'startDate-asc', label: t('events:filters.sort_date_closest') },
+    { value: 'startDate-desc', label: t('events:filters.sort_date_farthest') },
+    { value: 'name-asc', label: t('events:filters.sort_name_az') },
+    { value: 'name-desc', label: t('events:filters.sort_name_za') },
   ]
 
   const handleResetFilters = () => {
@@ -233,8 +233,8 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
     return (
       <PageContainer maxWidth="7xl" padding="lg">
         <PageHeader
-          title="Événements"
-          description="Gérez vos événements"
+          title={t('events:page.title')}
+          description={t('events:page.description')}
           icon={Calendar}
           actions={
             <Can do="create" on="Event">
@@ -252,12 +252,12 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
         <PageSection spacing="lg">
           <FilterBar
             resultCount={displayCount}
-            resultLabel="événement"
+            resultLabel={t('events:page.result_label')}
             onReset={handleResetFilters}
             showResetButton={searchQuery !== '' || tagFilters.length > 0 || Object.keys(filterValues).length > 0}
           >
             <SearchInput
-              placeholder="Rechercher des événements..."
+              placeholder={t('events:page.search_placeholder')}
               value={searchQuery}
               onChange={setSearchQuery}
               className="flex-1"
@@ -266,7 +266,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
             <FilterTagMulti
               value={tagFilters}
               onChange={setTagFilters}
-              placeholder="Filtrer par tags..."
+              placeholder={t('events:page.filter_by_tags')}
               className="w-64"
             />
 
@@ -307,7 +307,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 onClick={() => setTagFilters([])}
                 className="inline-flex items-center gap-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm font-medium transition-colors"
               >
-                Tout effacer
+                {t('common:app.clear_all')}
               </button>
             </div>
           )}
@@ -325,7 +325,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       <PageContainer maxWidth="7xl" padding="lg">
         <div className="text-center p-8 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
           <p className="text-red-600 dark:text-red-400">
-            Erreur lors du chargement des événements
+            {t('events:page.loading_error')}
           </p>
         </div>
       </PageContainer>
@@ -336,7 +336,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
         title={t('events:page.title')}
-        description={`${filteredEvents.length} événement${filteredEvents.length > 1 ? 's' : ''} trouvé${filteredEvents.length > 1 ? 's' : ''}`}
+        description={filteredEvents.length > 1 ? t('events:page.found_many', { count: filteredEvents.length }) : t('events:page.found_one', { count: filteredEvents.length })}
         icon={Calendar}
         actions={
           <Can do="create" on="Event">
@@ -354,14 +354,14 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       <PageSection spacing="lg">
         <FilterBar
           resultCount={displayCount}
-          resultLabel="événement"
+          resultLabel={t('events:page.result_label')}
           onReset={handleResetFilters}
           showResetButton={searchQuery !== '' || tagFilters.length > 0 || Object.keys(filterValues).length > 0}
           onRefresh={handleRefresh}
           showRefreshButton={true}
         >
           <SearchInput
-            placeholder="Rechercher des événements..."
+            placeholder={t('events:page.search_placeholder')}
             value={searchQuery}
             onChange={setSearchQuery}
           />
@@ -369,8 +369,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
           <FilterTagMulti
             value={tagFilters}
             onChange={setTagFilters}
-            placeholder="Filtrer par tags..."
-            className="w-64 flex-shrink-0"
+            placeholder={t('events:page.filter_by_tags')}
           />
 
           <FilterButton
@@ -410,7 +409,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
               onClick={() => setTagFilters([])}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 text-sm font-medium transition-colors"
             >
-              Tout effacer
+              {t('common:app.clear_all')}
             </button>
           </div>
         )}
@@ -420,18 +419,18 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
       <PageSection spacing="lg">{filteredEvents.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
             <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Aucun événement trouvé</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{t('events:page.no_events')}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
               {searchQuery || tagFilters.length > 0 || Object.keys(filterValues).length > 0
-                ? 'Aucun événement ne correspond à votre recherche.'
-                : 'Commencez par créer votre premier événement.'}
+                ? t('events:page.no_events_filtered')
+                : t('events:page.no_events_default')}
             </p>
             <Can do="create" on="Event">
               <Button
                 onClick={handleCreateEvent}
                 leftIcon={<Plus className="h-4 w-4" />}
               >
-                Créer un événement
+                {t('events:events.create')}
               </Button>
             </Can>
           </div>
@@ -499,7 +498,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                         ))}
                         {event.tags.length > 3 && (
                           <span className="text-xs text-gray-500 dark:text-gray-400">
-                            +{event.tags.length - 3} autres
+                            +{event.tags.length - 3} {t('common:table.others')}
                           </span>
                         )}
                       </div>
@@ -517,10 +516,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
             {/* Info pagination et sélecteur de taille */}
             <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
               <span>
-                Affichage de {(currentPage - 1) * itemsPerPage + 1} à {Math.min(currentPage * itemsPerPage, totalEvents)} sur {totalEvents} événement(s)
+                {t('common:pagination.showing', { from: (currentPage - 1) * itemsPerPage + 1, to: Math.min(currentPage * itemsPerPage, totalEvents), total: totalEvents })}
               </span>
               <div className="flex items-center gap-2">
-                <span className="whitespace-nowrap">Par page :</span>
+                <span className="whitespace-nowrap">{t('common:pagination.per_page')}</span>
                 <select
                   value={itemsPerPage}
                   onChange={(e) => {
@@ -547,7 +546,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
-                title="Première page"
+                title={t('common:pagination.first_page')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
@@ -626,7 +625,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
-                title="Dernière page"
+                title={t('common:pagination.last_page')}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />

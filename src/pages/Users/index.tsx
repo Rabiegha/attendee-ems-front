@@ -66,12 +66,14 @@ import {
   type UsersTab,
 } from '@/features/users/model/usersSlice'
 import { useToast } from '@/shared/hooks/useToast'
+import { useTranslation } from 'react-i18next'
 
 function UsersPageContent() {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const currentUser = useSelector(selectUser)
   const toast = useToast()
+  const { t } = useTranslation(['users', 'common'])
 
   // Redux state
   const filters = useSelector(selectUsersFilters)
@@ -184,17 +186,17 @@ function UsersPageContent() {
   // Configuration des filtres pour le popup
   const filterConfig = useMemo(() => ({
     roles: {
-      label: 'Rôles',
+      label: t('filters.roles_label'),
       type: 'radio' as const,
       options: [
-        { value: 'all', label: 'Tous les rôles' },
+        { value: 'all', label: t('filters.all_roles') },
         ...roles.map((role) => ({
           value: role.id,
           label: role.name || role.code,
         })),
       ],
     },
-  }), [roles])
+  }), [roles, t])
 
   const handleResetFilters = () => {
     setSearchQuery('')
@@ -264,12 +266,12 @@ function UsersPageContent() {
   const tabs = [
     {
       id: 'active',
-      label: 'Utilisateurs actifs',
+      label: t('tabs.active'),
       count: stats.active,
     },
     {
       id: 'deleted',
-      label: 'Utilisateurs supprimés',
+      label: t('tabs.deleted'),
       count: stats.inactive,
     },
   ]
@@ -281,7 +283,7 @@ function UsersPageContent() {
       // Colonne Utilisateur (avec avatar et email)
       {
         id: 'user',
-        header: 'Utilisateur',
+        header: t('table.user'),
         accessorFn: (row) => `${row.first_name || ''} ${row.last_name || ''} ${row.email}`,
         sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
@@ -310,7 +312,7 @@ function UsersPageContent() {
       // Colonne Rôle (avec TableSelector si permission)
       {
         id: 'role',
-        header: 'Rôle',
+        header: t('table.role'),
         accessorKey: 'role.name',
         sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
@@ -320,7 +322,7 @@ function UsersPageContent() {
           if (rolesLoading) {
             return (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                Chargement...
+                {t('common:app.loading')}
               </span>
             )
           }
@@ -329,7 +331,7 @@ function UsersPageContent() {
           if (roles.length === 0) {
             return (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200">
-                {user.role?.name || 'Non défini'}
+                {user.role?.name || t('status.undefined')}
               </span>
             )
           }
@@ -382,7 +384,7 @@ function UsersPageContent() {
               on="Role"
               fallback={
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200">
-                  {displayedRole?.name || user.role?.name || 'Non défini'}
+                  {displayedRole?.name || user.role?.name || t('status.undefined')}
                 </span>
               }
             >
@@ -391,7 +393,7 @@ function UsersPageContent() {
                 options={roleOptions}
                 onChange={async (newRoleId) => {
                   if (user.id === currentUser?.id) {
-                    throw new Error('Vous ne pouvez pas modifier votre propre rôle')
+                    throw new Error(t('messages.cannot_modify_own_role'))
                   }
                   // Optimistic update: afficher immédiatement le nouveau rôle
                   setOptimisticRoleUpdates(prev => new Map(prev).set(user.id, newRoleId))
@@ -405,8 +407,8 @@ function UsersPageContent() {
                     // Trouver le nom du nouveau rôle pour le toast
                     const newRole = roles?.find(r => r.id === newRoleId)
                     toast.success(
-                      'Rôle mis à jour',
-                      `Le rôle de ${user.first_name} ${user.last_name} a été changé en ${newRole?.name || 'nouveau rôle'}`
+                      t('messages.role_updated'),
+                      t('messages.role_updated_detail', { name: `${user.first_name} ${user.last_name}`, role: newRole?.name || t('table.role') })
                     )
                     // Le nettoyage se fera automatiquement quand le serveur renverra la bonne valeur
                   } catch (error) {
@@ -417,7 +419,7 @@ function UsersPageContent() {
                       next.delete(user.id)
                       return next
                     })
-                    toast.error('Erreur', 'Impossible de mettre à jour le rôle')
+                    toast.error(t('common:app.error'), t('messages.error_role_update'))
                     throw error
                   }
                 }}
@@ -432,7 +434,7 @@ function UsersPageContent() {
       // Colonne Statut (badges conditionnels)
       {
         id: 'status',
-        header: 'Statut',
+        header: t('table.status'),
         accessorFn: (row) => {
           if (row.must_change_password) return 'pending'
           if (row.is_active) return 'active'
@@ -445,7 +447,7 @@ function UsersPageContent() {
             return (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200">
                 <Mail className="h-3 w-3 mr-1" />
-                Doit changer mdp
+                {t('status.must_change_password')}
               </span>
             )
           }
@@ -454,7 +456,7 @@ function UsersPageContent() {
             return (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200">
                 <UserCheck className="h-3 w-3 mr-1" />
-                Actif
+                {t('status.active')}
               </span>
             )
           }
@@ -462,7 +464,7 @@ function UsersPageContent() {
           return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200">
               <UserX className="h-3 w-3 mr-1" />
-              Inactif
+              {t('status.inactive')}
             </span>
           )
         },
@@ -470,7 +472,7 @@ function UsersPageContent() {
       },
 
       // Colonne Date de création
-      createDateColumn<User>('created_at', 'Créé le'),
+      createDateColumn<User>('created_at', t('table.created_at')),
 
       // Colonne Actions (conditionnelle selon l'onglet)
       createActionsColumn<User>((user) => {
@@ -485,7 +487,7 @@ function UsersPageContent() {
                   e.stopPropagation()
                   handleRestoreUser(user)
                 }}
-                title="Restaurer"
+                title={t('actions.restore')}
                 className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 min-w-[32px] p-1.5"
               >
                 <RotateCcw className="h-4 w-4 shrink-0" />
@@ -497,7 +499,7 @@ function UsersPageContent() {
                   e.stopPropagation()
                   handlePermanentDelete(user)
                 }}
-                title="Supprimer définitivement"
+                title={t('actions.permanent_delete')}
                 className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
               >
                 <Trash2 className="h-4 w-4 shrink-0" />
@@ -516,7 +518,7 @@ function UsersPageContent() {
                 e.stopPropagation()
                 handleEditUser(user)
               }}
-              title="Modifier"
+              title={t('actions.edit')}
               className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0 min-w-[32px] p-1.5"
             >
               <Edit2 className="h-4 w-4 shrink-0" />
@@ -529,7 +531,7 @@ function UsersPageContent() {
                   e.stopPropagation()
                   handleDeleteUser(user)
                 }}
-                title="Désactiver"
+                title={t('actions.deactivate')}
                 className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
               >
                 <Trash2 className="h-4 w-4 shrink-0" />
@@ -539,24 +541,24 @@ function UsersPageContent() {
         )
       }),
     ],
-    [currentUser?.id, isDeletedTab, roles, rolesLoading, optimisticRoleUpdates, updateUser]
+    [currentUser?.id, isDeletedTab, roles, rolesLoading, optimisticRoleUpdates, updateUser, t]
   )
 
   // Handler pour les actions groupées
   const handleBulkDelete = async () => {
     setBulkConfirmation({
       isOpen: true,
-      title: 'Désactiver les utilisateurs',
-      message: `Désactiver ${bulkSelectedIds.size} utilisateur(s) ?\n\nIls seront déplacés dans les éléments supprimés.`,
+      title: t('bulk.deactivate_title'),
+      message: t('bulk.deactivate_message', { count: bulkSelectedIds.size }),
       variant: 'warning',
       action: async () => {
         try {
           await bulkDeleteUsers(Array.from(bulkSelectedIds)).unwrap()
-          toast.success(`${bulkSelectedIds.size} utilisateur(s) désactivé(s)`)
+          toast.success(t('bulk.deactivated_success', { count: bulkSelectedIds.size }))
           clearBulkSelection()
         } catch (error) {
           console.error('Erreur lors de la désactivation:', error)
-          toast.error('Erreur lors de la désactivation')
+          toast.error(t('bulk.deactivate_error'))
         }
       }
     })
@@ -565,17 +567,17 @@ function UsersPageContent() {
   const handleBulkRestore = async () => {
     setBulkConfirmation({
       isOpen: true,
-      title: 'Réactiver les utilisateurs',
-      message: `Réactiver ${bulkSelectedIds.size} utilisateur(s) ?`,
+      title: t('bulk.restore_title'),
+      message: t('bulk.restore_message', { count: bulkSelectedIds.size }),
       variant: 'success',
       action: async () => {
         try {
           await bulkRestoreUsers(Array.from(bulkSelectedIds)).unwrap()
-          toast.success(`${bulkSelectedIds.size} utilisateur(s) réactivé(s)`)
+          toast.success(t('bulk.restored_success', { count: bulkSelectedIds.size }))
           clearBulkSelection()
         } catch (error) {
           console.error('Erreur lors de la réactivation:', error)
-          toast.error('Erreur lors de la réactivation')
+          toast.error(t('bulk.restore_error'))
         }
       }
     })
@@ -585,8 +587,8 @@ function UsersPageContent() {
     <PageContainer maxWidth="7xl" padding="lg">
       {/* En-tête de page */}
       <PageHeader
-        title="Gestion des utilisateurs"
-        description="Créez et gérez les comptes utilisateur de votre organisation"
+        title={t('page.title')}
+        description={t('page.description')}
         icon={Users}
         actions={
           <ActionGroup align="right" spacing="md">
@@ -596,7 +598,7 @@ function UsersPageContent() {
                 onClick={handleInviteUser}
                 leftIcon={<Mail className="h-4 w-4" />}
               >
-                Inviter utilisateur
+                {t('actions.invite_short')}
               </Button>
             </Can>
           </ActionGroup>
@@ -607,14 +609,14 @@ function UsersPageContent() {
       <PageSection spacing="lg">
         <FilterBar
           resultCount={usersData?.total || 0}
-          resultLabel="utilisateur"
+          resultLabel={t('page.result_label')}
           onReset={handleResetFilters}
           showResetButton={searchQuery !== '' || (selectedRoleId !== undefined && selectedRoleId !== 'all')}
           onRefresh={handleRefresh}
           showRefreshButton={true}
         >
           <SearchInput
-            placeholder="Rechercher par nom ou email..."
+            placeholder={t('page.search_placeholder')}
             value={searchQuery}
             onChange={setSearchQuery}
           />
@@ -636,13 +638,15 @@ function UsersPageContent() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    {bulkSelectedIds.size} sélectionné{bulkSelectedIds.size > 1 ? 's' : ''}
+                    {bulkSelectedIds.size > 1
+                      ? t('common:bulk.selected_many', { count: bulkSelectedIds.size })
+                      : t('common:bulk.selected_one', { count: bulkSelectedIds.size })}
                   </span>
                   <button
                     onClick={clearBulkSelection}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
                   >
-                    Tout désélectionner
+                    {t('common:app.deselect_all')}
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
@@ -652,7 +656,7 @@ function UsersPageContent() {
                     onClick={() => setBulkActionsModalOpen(true)}
                     leftIcon={<Users className="h-4 w-4" />}
                   >
-                    Actions
+                    {t('table.actions')}
                   </Button>
                 </div>
               </div>
@@ -667,11 +671,11 @@ function UsersPageContent() {
             enableRowSelection
             bulkActions={[]}
             getItemId={(user) => user.id}
-            itemType="utilisateurs"
+            itemType={t('page.item_type')}
             emptyMessage={
               isDeletedTab
-                ? 'Aucun utilisateur supprimé'
-                : 'Aucun utilisateur trouvé'
+                ? t('empty.deleted')
+                : t('empty.title')
             }
             onRowSelectionChange={handleRowSelectionChange}
             tabsElement={
@@ -753,13 +757,16 @@ function UsersPageContent() {
   )
 }
 
-export const UsersPage = () => (
-  <ProtectedPage
-    action="read"
-    subject="User"
-    deniedTitle="Accès aux utilisateurs refusé"
-    deniedMessage="Vous n'avez pas les permissions nécessaires pour consulter les utilisateurs."
-  >
-    <UsersPageContent />
-  </ProtectedPage>
-)
+export const UsersPage = () => {
+  const { t } = useTranslation('users')
+  return (
+    <ProtectedPage
+      action="read"
+      subject="User"
+      deniedTitle={t('page.access_denied_title')}
+      deniedMessage={t('page.access_denied_message')}
+    >
+      <UsersPageContent />
+    </ProtectedPage>
+  )
+}

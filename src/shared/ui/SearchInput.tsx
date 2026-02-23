@@ -1,5 +1,6 @@
 import React from 'react'
 import { Search, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/shared/lib/utils'
 
 interface SearchInputProps {
@@ -13,10 +14,12 @@ interface SearchInputProps {
 export const SearchInput: React.FC<SearchInputProps> = ({
   value,
   onChange,
-  placeholder = 'Rechercher...',
+  placeholder,
   className,
   disabled = false,
 }) => {
+  const { t } = useTranslation('common')
+
   const handleClear = () => {
     onChange('')
   }
@@ -26,7 +29,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
       <input
         type="text"
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('search.placeholder')}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
@@ -45,7 +48,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
           type="button"
           onClick={handleClear}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600"
-          title="Effacer la recherche"
+          title={t('search.clear')}
         >
           <X className="w-4 h-4" />
         </button>

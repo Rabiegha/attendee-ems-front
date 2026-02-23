@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
@@ -18,6 +19,8 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
   isLoading = false,
   attendeeName,
 }) => {
+  const { t } = useTranslation(['events', 'common'])
+
   return (
     <Modal
       isOpen={isOpen}
@@ -31,26 +34,26 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
         </div>
 
         <h3 className="text-xl font-semibold text-white mb-2">
-          Supprimer l'inscription
+          {t('events:registrations.delete_registration_title')}
         </h3>
 
         <p className="text-gray-400 mb-6">
-          Êtes-vous sûr de vouloir supprimer l'inscription de{' '}
+          {t('events:registrations.delete_confirm_message')}{' '}
           <span className="font-medium text-white">{attendeeName}</span> ?
           <br />
-          <span className="text-sm">Cette action est irréversible.</span>
+          <span className="text-sm">{t('events:registrations.delete_irreversible')}</span>
         </p>
 
         <div className="flex justify-center space-x-3">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button
             variant="destructive"
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? 'Suppression...' : 'Supprimer'}
+            {isLoading ? t('common:app.deleting') : t('common:app.delete')}
           </Button>
         </div>
       </div>

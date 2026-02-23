@@ -461,12 +461,12 @@ export const registrationsApi = rootApi.injectEndpoints({
 
     bulkExportRegistrations: builder.mutation<
       { downloadUrl: string; filename: string },
-      { ids: string[]; format?: string }
+      { ids: string[]; format?: string; lang?: string }
     >({
-      query: ({ ids, format = 'csv' }) => ({
+      query: ({ ids, format = 'csv', lang }) => ({
         url: '/registrations/bulk-export',
         method: 'POST',
-        body: { ids, format },
+        body: { ids, format, lang },
         cache: 'no-cache',
         responseHandler: async (response) => {
           const blob = await response.blob()
@@ -513,9 +513,9 @@ export const registrationsApi = rootApi.injectEndpoints({
     // Removed duplicate generateBadge
 
 
-    getRegistrationTemplate: builder.mutation<Blob, void>({
-      query: () => ({
-        url: '/registrations/template',
+    getRegistrationTemplate: builder.mutation<Blob, { lang?: string } | void>({
+      query: (args) => ({
+        url: `/registrations/template${args && 'lang' in args && args.lang ? `?lang=${args.lang}` : ''}`,
         method: 'GET',
         responseHandler: async (response) => {
           if (!response.ok) {

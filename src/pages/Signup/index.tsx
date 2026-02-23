@@ -16,12 +16,14 @@ import { setSession } from '@/features/auth/model/sessionSlice'
 import { TokenInfo } from '@/features/auth/ui/TokenInfo'
 import { SignupForm } from '@/features/auth/ui/SignupForm'
 import { Button } from '@/shared/ui/Button'
+import { useTranslation } from 'react-i18next'
 import type { SignupFormData } from '@/features/auth/types/signup.types'
 
 export const SignupPage: React.FC = () => {
   const { token } = useParams<{ token: string }>()
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const { t } = useTranslation('signup')
 
   // Validation du token
   const {
@@ -78,8 +80,8 @@ export const SignupPage: React.FC = () => {
     return (
       <ErrorState
         type="INVALID_TOKEN"
-        title="Lien d'invitation invalide"
-        message="Le lien d'invitation est malformé ou incomplet."
+        title={t('signup.errors.invalidToken.title')}
+        message={t('signup.errors.invalidToken.message')}
         redirectTo="/login"
       />
     )
@@ -87,7 +89,7 @@ export const SignupPage: React.FC = () => {
 
   // Chargement de la validation
   if (isValidating) {
-    return <LoadingState message="Validation de votre invitation..." />
+    return <LoadingState message={t('signup.loading.validating')} />
   }
 
   // Erreur de validation
@@ -95,27 +97,24 @@ export const SignupPage: React.FC = () => {
     const errorType = validation?.error?.type || 'INVALID_TOKEN'
     const errorMessages = {
       INVALID_TOKEN: {
-        title: 'Invitation invalide',
-        message: "Ce lien d'invitation n'est pas valide ou a été corrompu.",
+        title: t('signup.errors.invalidToken.title'),
+        message: t('signup.errors.invalidToken.message'),
       },
       TOKEN_EXPIRED: {
-        title: 'Invitation expirée',
-        message:
-          'Cette invitation a expiré. Demandez une nouvelle invitation à votre administrateur.',
+        title: t('signup.errors.tokenExpired.title'),
+        message: t('signup.errors.tokenExpired.message'),
       },
       EMAIL_MISMATCH: {
-        title: 'Erreur de sécurité',
-        message:
-          'Une incohérence a été détectée. Veuillez contacter votre administrateur.',
+        title: t('signup.errors.emailMismatch.title'),
+        message: t('signup.errors.emailMismatch.message'),
       },
       USER_ALREADY_ACTIVE: {
-        title: 'Compte déjà activé',
-        message:
-          'Ce compte a déjà été créé. Vous pouvez vous connecter directement.',
+        title: t('signup.errors.userAlreadyActive.title'),
+        message: t('signup.errors.userAlreadyActive.message'),
       },
       INVITATION_USED: {
-        title: 'Invitation déjà utilisée',
-        message: 'Cette invitation a déjà été utilisée pour créer un compte.',
+        title: t('signup.errors.invitationUsed.title'),
+        message: t('signup.errors.invitationUsed.message'),
       },
     }
 
@@ -141,10 +140,10 @@ export const SignupPage: React.FC = () => {
           <CheckCircle className="h-12 w-12 text-green-600" />
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-          Finaliser votre inscription
+          {t('signup.title')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
-          Complétez votre profil pour activer votre compte
+          {t('signup.subtitle')}
         </p>
       </div>
 
@@ -194,6 +193,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({
   redirectTo,
 }) => {
   const navigate = useNavigate()
+  const { t } = useTranslation('signup')
 
   const getIcon = () => {
     switch (type) {
@@ -209,11 +209,11 @@ const ErrorState: React.FC<ErrorStateProps> = ({
   const getButtonText = () => {
     switch (type) {
       case 'USER_ALREADY_ACTIVE':
-        return 'Se connecter'
+        return t('signup.actions.login')
       case 'TOKEN_EXPIRED':
-        return 'Demander une nouvelle invitation'
+        return t('signup.actions.requestNewInvitation')
       default:
-        return "Retour à l'accueil"
+        return t('signup.actions.backToHome')
     }
   }
 
@@ -241,7 +241,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({
                 href="mailto:support@attendee-ems.com"
                 className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
               >
-                Contacter le support
+                {t('signup.actions.contactSupport')}
               </a>
             </div>
           )}

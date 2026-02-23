@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { AlertTriangle, CheckCircle, Trash2, Info } from 'lucide-react'
@@ -23,11 +24,15 @@ export const BulkConfirmationModal: React.FC<BulkConfirmationModalProps> = ({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Confirmer',
-  cancelLabel = 'Retour',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
   isLoading = false,
 }) => {
+  const { t } = useTranslation('common')
+  const resolvedConfirmLabel = confirmLabel ?? t('confirmation.confirm')
+  const resolvedCancelLabel = cancelLabel ?? t('confirmation.cancel')
+
   const getIcon = () => {
     switch (variant) {
       case 'danger':
@@ -76,7 +81,7 @@ export const BulkConfirmationModal: React.FC<BulkConfirmationModalProps> = ({
             onClick={onBack || onClose}
             disabled={isLoading}
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </Button>
           <button
             onClick={onConfirm}
@@ -89,10 +94,10 @@ export const BulkConfirmationModal: React.FC<BulkConfirmationModalProps> = ({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                {confirmLabel}
+                {resolvedConfirmLabel}
               </span>
             ) : (
-              confirmLabel
+              resolvedConfirmLabel
             )}
           </button>
         </div>

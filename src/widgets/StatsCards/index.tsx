@@ -1,6 +1,7 @@
 import React from 'react'
 import { Calendar, Users, UserPlus, Plus, ArrowRight, TrendingUp } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import type { EventDPO } from '@/features/events/dpo/event.dpo'
 import type { AttendeeDPO } from '@/features/attendees/dpo/attendee.dpo'
 import { DashboardStatsCardsSkeleton } from '@/shared/ui'
@@ -23,14 +24,15 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
   canInviteUser = false,
 }) => {
   const navigate = useNavigate()
+  const { t } = useTranslation(['events', 'common'])
 
   // Utiliser le total fourni ou la longueur du tableau
   const attendeesCount = totalAttendees ?? attendees.length
 
   const quickActions = [
     {
-      title: 'Événements',
-      description: 'Gérer les événements',
+      title: t('events:dashboard.stats.events'),
+      description: t('events:dashboard.stats.manage_events'),
       count: events.length,
       activeCount: events.filter((e) => e.isActive).length,
       icon: Calendar,
@@ -39,8 +41,8 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       onClick: () => navigate('/events'),
     },
     {
-      title: 'Participants',
-      description: 'Voir tous les participants',
+      title: t('events:dashboard.stats.participants'),
+      description: t('events:dashboard.stats.view_all_participants'),
       count: attendeesCount,
       activeCount: attendees.filter((a) => a.isActive).length,
       icon: Users,
@@ -49,8 +51,8 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       onClick: () => navigate('/attendees'),
     },
     ...(canCreateEvent ? [{
-      title: 'Créer un événement',
-      description: 'Nouvel événement',
+      title: t('events:dashboard.stats.create_event'),
+      description: t('events:dashboard.stats.new_event'),
       icon: Plus,
       color: 'from-purple-500 to-purple-600',
       bgGlow: 'bg-purple-500/10',
@@ -58,8 +60,8 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
       onClick: () => navigate('/events/create'),
     }] : []),
     ...(canInviteUser ? [{
-      title: 'Inviter utilisateur',
-      description: 'Ajouter un membre',
+      title: t('events:dashboard.stats.invite_user'),
+      description: t('events:dashboard.stats.add_member'),
       icon: UserPlus,
       color: 'from-orange-500 to-orange-600',
       bgGlow: 'bg-orange-500/10',
@@ -108,10 +110,10 @@ export const StatsCards: React.FC<StatsCardsProps> = ({
               <div className="flex gap-2 pt-2">
                 <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
                   <TrendingUp className="w-3 h-3 mr-1" />
-                  {action.activeCount} actifs
+                  {action.activeCount} {t('events:dashboard.stats.active')}
                 </span>
                 <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                  {action.count} total
+                  {action.count} {t('events:dashboard.stats.total')}
                 </span>
               </div>
             )}

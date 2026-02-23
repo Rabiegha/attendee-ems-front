@@ -11,23 +11,41 @@
   },
   "complete": {
     "title": "Complétez votre inscription",
-    "subtitle": "Bienvenue ! Veuillez remplir vos informations pour terminer votre inscription.",
+    "subtitle": "Créez votre mot de passe pour finaliser votre compte",
+    "verifying": "Vérification de votre invitation...",
     "form": {
+      "email_label": "Adresse email",
+      "email_hint": "Cette adresse email est associée à votre invitation",
       "first_name": "Prénom",
-      "first_name_placeholder": "Votre prénom",
+      "first_name_placeholder": "Entrez votre prénom",
       "last_name": "Nom",
-      "last_name_placeholder": "Votre nom",
+      "last_name_placeholder": "Entrez votre nom",
       "password": "Mot de passe",
-      "password_placeholder": "Choisissez un mot de passe sécurisé",
+      "password_placeholder": "Créez un mot de passe sécurisé",
+      "password_hint": "Au moins 8 caractères avec une majuscule, une minuscule et un chiffre",
       "confirm_password": "Confirmer le mot de passe",
       "confirm_password_placeholder": "Confirmez votre mot de passe"
     },
     "password_strength": {
+      "label": "Force du mot de passe",
       "weak": "Faible",
       "medium": "Moyen",
-      "strong": "Fort"
+      "strong": "Fort",
+      "very_strong": "Très fort"
     },
-    "complete_registration": "Terminer l'inscription"
+    "complete_registration": "Terminer l'inscription",
+    "creating": "Création en cours...",
+    "create_account": "Créer mon compte",
+    "terms_agreement": "En créant votre compte, vous acceptez nos",
+    "terms_link": "conditions d'utilisation",
+    "validation": {
+      "first_name_required": "Le prénom est requis",
+      "last_name_required": "Le nom est requis",
+      "password_required": "Le mot de passe est requis",
+      "password_min_length": "Le mot de passe doit contenir au moins 8 caractères",
+      "password_complexity": "Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre",
+      "password_mismatch": "Les mots de passe ne correspondent pas"
+    }
   },
   "messages": {
     "send_success": "Invitation envoyée avec succès !",

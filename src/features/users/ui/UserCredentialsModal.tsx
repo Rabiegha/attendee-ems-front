@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '../../../shared/ui/Modal'
 import { Button } from '../../../shared/ui/Button'
 import { CloseButton } from '../../../shared/ui/CloseButton'
@@ -25,6 +26,7 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
   organizationName,
   organizationSlug,
 }) => {
+  const { t } = useTranslation(['users', 'common'])
   const [copied, setCopied] = useState<'email' | 'password' | null>(null)
 
   const copyToClipboard = async (text: string, type: 'email' | 'password') => {
@@ -68,13 +70,13 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {organizationName
-              ? 'Organisation et utilisateur créés'
-              : 'Utilisateur créé'}
+              ? t('users:credentials.title_org_and_user')
+              : t('users:credentials.title_user')}
           </h2>
           <p className="text-gray-500 dark:text-gray-400">
             {organizationName
-              ? `L'organisation "${organizationName}" et l'utilisateur ${firstName} ${lastName} ont été créés avec succès`
-              : `L'utilisateur ${firstName} ${lastName} a été créé avec succès`}
+              ? t('users:credentials.subtitle_org_and_user', { orgName: organizationName, firstName, lastName })
+              : t('users:credentials.subtitle_user', { firstName, lastName })}
           </p>
         </div>
 
@@ -95,19 +97,18 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
                 </div>
                 <div className="text-sm text-gray-700 dark:text-gray-300">
                   <p className="font-medium mb-2 text-blue-600 dark:text-blue-400">
-                    Organisation créée :
+                    {t('users:credentials.org_created_label')}
                   </p>
                   <ul className="text-xs space-y-1 opacity-90">
                     <li>
-                      <strong>Nom :</strong> {organizationName}
+                      <strong>{t('users:credentials.org_name_label')}</strong> {organizationName}
                     </li>
                     <li>
-                      <strong>Slug :</strong>{' '}
+                      <strong>{t('users:credentials.org_slug_label')}</strong>{' '}
                       <span className="font-mono">{organizationSlug}</span>
                     </li>
                     <li className="text-gray-500 dark:text-gray-400 mt-2">
-                      L'utilisateur a été automatiquement assigné à cette
-                      organisation
+                      {t('users:credentials.org_auto_assigned')}
                     </li>
                   </ul>
                 </div>
@@ -119,7 +120,7 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
-                Email de connexion
+                {t('users:credentials.login_email')}
               </label>
               <div className="flex items-center space-x-3">
                 <div className="flex-1 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-xl font-mono text-sm text-gray-700 dark:text-gray-300">
@@ -134,13 +135,13 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
                 </Button>
               </div>
               {copied === 'email' && (
-                <p className="text-xs text-green-600 dark:text-green-400 mt-2">Email copié !</p>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-2">{t('users:credentials.email_copied')}</p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
-                Mot de passe temporaire
+                {t('users:credentials.temporary_password')}
               </label>
               <div className="flex items-center space-x-3">
                 <div className="flex-1 p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-xl font-mono text-sm text-gray-700 dark:text-gray-300">
@@ -156,7 +157,7 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
               </div>
               {copied === 'password' && (
                 <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                  Mot de passe copié !
+                  {t('users:credentials.password_copied')}
                 </p>
               )}
             </div>
@@ -176,17 +177,15 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
                 </svg>
               </div>
               <div className="text-sm text-gray-700 dark:text-gray-300">
-                <p className="font-medium mb-2 text-yellow-600 dark:text-yellow-400">Important :</p>
+                <p className="font-medium mb-2 text-yellow-600 dark:text-yellow-400">{t('users:credentials.important')}</p>
                 <ul className="text-xs space-y-1 list-disc list-inside opacity-90">
                   <li>
-                    L'utilisateur <strong>doit changer</strong> ce mot de passe
-                    à la première connexion
+                    {t('users:credentials.must_change_password')}
                   </li>
                   <li>
-                    Ces identifiants sont <strong>temporaires</strong> et
-                    sécurisés
+                    {t('users:credentials.temporary_credentials')}
                   </li>
-                  <li>Transmettez ces informations de manière sécurisée</li>
+                  <li>{t('users:credentials.transmit_securely')}</li>
                 </ul>
               </div>
             </div>
@@ -198,7 +197,7 @@ export const UserCredentialsModal: React.FC<UserCredentialsModalProps> = ({
               onClick={onClose}
               className="px-6 py-3 bg-white dark:bg-gray-800/50 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white transition-all duration-200 rounded-xl"
             >
-              Fermer
+              {t('common:app.close')}
             </Button>
           </div>
         </div>

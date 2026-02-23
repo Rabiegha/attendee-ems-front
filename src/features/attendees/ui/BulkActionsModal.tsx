@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { Download, Trash2, RotateCcw } from 'lucide-react'
 
@@ -39,6 +40,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
   onRestore,
   onPermanentDelete,
 }) => {
+  const { t } = useTranslation('attendees')
   const getVariantClasses = (variant: string = 'default') => {
     const base = "group relative flex items-start gap-4 p-4 rounded-lg border-2 transition-all cursor-pointer"
     
@@ -69,12 +71,12 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
     ? [
         {
           id: 'restore',
-          label: 'Gestion des suppressions',
+          label: t('bulk.manage_deletions'),
           actions: [
             {
               id: 'restore',
-              label: 'Restaurer',
-              description: 'Restaurer tous les participants sélectionnés',
+              label: t('bulk.restore_label'),
+              description: t('bulk.restore_description'),
               icon: <RotateCcw className={getIconClasses('success')} />,
               onClick: () => {
                 if (onRestore) onRestore()
@@ -84,8 +86,8 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
             },
             {
               id: 'permanent-delete',
-              label: 'Supprimer définitivement',
-              description: '⚠️ Action irréversible - Suppression permanente',
+              label: t('bulk.permanent_delete_label'),
+              description: t('bulk.permanent_delete_description'),
               icon: <Trash2 className={getIconClasses('danger')} />,
               onClick: () => {
                 if (onPermanentDelete) onPermanentDelete()
@@ -99,12 +101,12 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
     : [
         {
           id: 'export',
-          label: 'Export',
+          label: t('bulk.export_category'),
           actions: [
             {
               id: 'export',
-              label: 'Exporter',
-              description: 'Télécharger les participants au format Excel',
+              label: t('bulk.export_label'),
+              description: t('bulk.export_description'),
               icon: <Download className={getIconClasses()} />,
               onClick: () => {
                 onExport()
@@ -115,12 +117,12 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
         },
         {
           id: 'deletion',
-          label: 'Suppression',
+          label: t('bulk.deletion_category'),
           actions: [
             {
               id: 'delete',
-              label: 'Supprimer',
-              description: 'Déplacer vers les éléments supprimés',
+              label: t('bulk.delete_label'),
+              description: t('bulk.delete_description'),
               icon: <Trash2 className={getIconClasses('danger')} />,
               onClick: () => {
                 onDelete()
@@ -136,7 +138,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Actions groupées (${selectedCount})`}
+      title={t('bulk.actions_title', { count: selectedCount })}
       size="2xl"
       contentPadding={false}
     >
@@ -176,13 +178,13 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
       {/* Footer fixe non-scrollable */}
       <div className="sticky bottom-0 bg-white dark:bg-gray-800 px-6 pb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          {selectedCount} participant{selectedCount > 1 ? 's' : ''} sélectionné{selectedCount > 1 ? 's' : ''}
+          {t('bulk.selected_count', { count: selectedCount })}
         </p>
         <button
           onClick={onClose}
           className="w-full py-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
         >
-          Annuler
+          {t('bulk.cancel')}
         </button>
       </div>
     </Modal>

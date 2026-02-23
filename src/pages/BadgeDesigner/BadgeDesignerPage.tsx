@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useBlocker, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ReactZoomPanPinchRef } from 'react-zoom-pan-pinch';
 import { AlertTriangle } from 'lucide-react';
 import { BadgeElement, BadgeFormat, BADGE_FORMATS, HistoryState } from '../../shared/types/badge.types';
@@ -27,6 +28,7 @@ const BadgeDesignerPageContent: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const { t } = useTranslation('badges');
   
   // API hooks
   const { data: loadedTemplate } = useGetBadgeTemplateQuery(
@@ -1610,7 +1612,7 @@ const BadgeDesignerPageContent: React.FC = () => {
                     disabled={isCreating || isUpdating}
                     className="order-1 sm:order-3"
                   >
-                    {isCreating || isUpdating ? 'Enregistrement...' : 'Sauvegarder'}
+                    {isCreating || isUpdating ? t('designer.saving') : t('designer.save')}
                   </Button>
                 </div>
               </div>
@@ -1623,7 +1625,7 @@ const BadgeDesignerPageContent: React.FC = () => {
       <Modal
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
-        title="Supprimer le template"
+        title={t('designer.delete_template')}
         maxWidth="md"
       >
         <div className="space-y-4">
@@ -1642,7 +1644,7 @@ const BadgeDesignerPageContent: React.FC = () => {
               onClick={confirmDeleteTemplate}
               disabled={isDeleting}
             >
-              {isDeleting ? 'Suppression...' : 'Supprimer'}
+              {isDeleting ? t('designer.deleting') : t('designer.delete')}
             </Button>
           </div>
         </div>

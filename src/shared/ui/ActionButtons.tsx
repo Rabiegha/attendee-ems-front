@@ -6,6 +6,7 @@
  */
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Edit2, Trash2 } from 'lucide-react'
 import { Button } from './Button'
 import { Can } from '@/shared/acl/guards/Can'
@@ -58,14 +59,17 @@ export interface ActionButtonsProps {
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
   onEdit,
   onDelete,
-  editLabel = 'Modifier',
-  deleteLabel = 'Supprimer',
+  editLabel,
+  deleteLabel,
   canEdit,
   canDelete,
   size = 'sm',
   iconOnly = true,
   children,
 }) => {
+  const { t } = useTranslation('common')
+  const resolvedEditLabel = editLabel || t('app.edit')
+  const resolvedDeleteLabel = deleteLabel || t('app.delete')
   return (
     <div className="flex items-center justify-end gap-0">
       {/* Boutons personnalisés */}
@@ -82,8 +86,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
                 e.stopPropagation()
                 onEdit()
               }}
-              aria-label={editLabel}
-              title={editLabel}
+              aria-label={resolvedEditLabel}
+              title={resolvedEditLabel}
               className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px] p-1.5"
             >
               {iconOnly ? (
@@ -91,7 +95,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               ) : (
                 <>
                   <Edit2 className="h-4 w-4 shrink-0 mr-1.5" />
-                  {editLabel}
+                  {resolvedEditLabel}
                 </>
               )}
             </Button>
@@ -104,8 +108,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               e.stopPropagation()
               onEdit()
             }}
-            aria-label={editLabel}
-            title={editLabel}
+            aria-label={resolvedEditLabel}
+            title={resolvedEditLabel}
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 min-w-[32px] p-1.5"
           >
             {iconOnly ? (
@@ -113,7 +117,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             ) : (
               <>
                 <Edit2 className="h-4 w-4 shrink-0 mr-1.5" />
-                {editLabel}
+                {resolvedEditLabel}
               </>
             )}
           </Button>
@@ -131,8 +135,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
                 e.stopPropagation()
                 onDelete()
               }}
-              aria-label={deleteLabel}
-              title={deleteLabel}
+              aria-label={resolvedDeleteLabel}
+              title={resolvedDeleteLabel}
               className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
             >
               {iconOnly ? (
@@ -140,7 +144,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               ) : (
                 <>
                   <Trash2 className="h-4 w-4 shrink-0 mr-1.5" />
-                  {deleteLabel}
+                  {resolvedDeleteLabel}
                 </>
               )}
             </Button>
@@ -153,8 +157,8 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
               e.stopPropagation()
               onDelete()
             }}
-            aria-label={deleteLabel}
-            title={deleteLabel}
+            aria-label={resolvedDeleteLabel}
+            title={resolvedDeleteLabel}
             className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
           >
             {iconOnly ? (
@@ -162,7 +166,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
             ) : (
               <>
                 <Trash2 className="h-4 w-4 shrink-0 mr-1.5" />
-                {deleteLabel}
+                {resolvedDeleteLabel}
               </>
             )}
           </Button>

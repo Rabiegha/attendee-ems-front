@@ -9,6 +9,7 @@ import { FormField } from '@/shared/ui/FormField'
 import { Alert } from '@/shared/ui/Alert'
 import { AnimatedContainer } from '@/shared/ui/AnimatedContainer'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
+import { useTranslation } from 'react-i18next'
 
 const resetPasswordSchema = z
   .object({
@@ -65,11 +66,13 @@ export const ResetPasswordPage: React.FC = () => {
 
   const password = watch('newPassword')
 
+  const { t } = useTranslation('auth')
+
   // Valider le token au chargement
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
-        setError('Token de réinitialisation manquant')
+        setError(t('reset_password.missing_token'))
         setIsValidating(false)
         return
       }
@@ -84,7 +87,7 @@ export const ResetPasswordPage: React.FC = () => {
         setTokenValid(data.valid)
         setUserEmail(data.email || '')
       } catch (err: any) {
-        setError('Ce lien de réinitialisation est invalide ou a expiré')
+        setError(t('reset_password.token_invalid'))
         setTokenValid(false)
       } finally {
         setIsValidating(false)
@@ -109,12 +112,12 @@ export const ResetPasswordPage: React.FC = () => {
       })
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.detail || 'Erreur lors de la réinitialisation')
+        throw new Error(errorData.detail || t('reset_password.error_reset'))
       }
       setSuccess(true)
     } catch (err: any) {
       setError(
-        err.message || 'Une erreur est survenue lors de la réinitialisation'
+        err.message || t('reset_password.error_generic')
       )
     } finally {
       setIsSubmitting(false)
@@ -133,9 +136,9 @@ export const ResetPasswordPage: React.FC = () => {
     if (/[0-9]/.test(pwd)) score++
     if (/[^A-Za-z0-9]/.test(pwd)) score++
 
-    if (score <= 2) return { score, label: 'Faible', color: 'bg-red-500' }
-    if (score <= 4) return { score, label: 'Moyen', color: 'bg-yellow-500' }
-    return { score, label: 'Fort', color: 'bg-green-500' }
+    if (score <= 2) return { score, label: t('reset_password.strength_weak'), color: 'bg-red-500' }
+    if (score <= 4) return { score, label: t('reset_password.strength_medium'), color: 'bg-yellow-500' }
+    return { score, label: t('reset_password.strength_strong'), color: 'bg-green-500' }
   }
 
   const passwordStrength = getPasswordStrength(password)
@@ -159,10 +162,10 @@ export const ResetPasswordPage: React.FC = () => {
 
             <AnimatedContainer animation="slide-up" delay={300}>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Validation du lien
+                {t('reset_password.validating')}
               </h2>
               <p className="text-gray-600 dark:text-gray-300">
-                Veuillez patienter...
+                {t('reset_password.please_wait')}
               </p>
             </AnimatedContainer>
           </div>
@@ -202,10 +205,10 @@ export const ResetPasswordPage: React.FC = () => {
 
             <AnimatedContainer animation="slide-up" delay={300}>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Lien invalide ou expiré
+                {t('reset_password.invalid_link')}
               </h2>
               <p className="text-gray-600 dark:text-gray-300">
-                {error || 'Ce lien de réinitialisation n\'est plus valide'}
+                {error || t('reset_password.invalid_link_message')}
               </p>
             </AnimatedContainer>
           </div>
@@ -220,14 +223,14 @@ export const ResetPasswordPage: React.FC = () => {
                 onClick={() => navigate('/auth/request-password-reset')}
                 className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
               >
-                Demander un nouveau lien
+                {t('reset_password.request_new_link')}
               </Button>
               <button
                 type="button"
                 onClick={() => navigate('/auth/login')}
                 className="w-full text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors py-2"
               >
-                Retour à la connexion
+                {t('reset_password.back_to_login_short')}
               </button>
             </div>
           </div>
@@ -267,10 +270,10 @@ export const ResetPasswordPage: React.FC = () => {
 
             <AnimatedContainer animation="slide-up" delay={300}>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Mot de passe réinitialisé !
+                {t('reset_password.success_title')}
               </h2>
               <p className="text-gray-600 dark:text-gray-300">
-                Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.
+                {t('reset_password.success_message')}
               </p>
             </AnimatedContainer>
           </div>
@@ -284,7 +287,7 @@ export const ResetPasswordPage: React.FC = () => {
               onClick={() => navigate('/auth/login')}
               className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
             >
-              Se connecter
+              {t('login.submit')}
             </Button>
           </div>
         </AnimatedContainer>
@@ -322,11 +325,11 @@ export const ResetPasswordPage: React.FC = () => {
 
           <AnimatedContainer animation="slide-up" delay={300}>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Nouveau mot de passe
+              {t('reset_password.title')}
             </h2>
             {userEmail && (
               <p className="text-gray-600 dark:text-gray-300">
-                Pour <span className="font-medium text-gray-900 dark:text-white">{userEmail}</span>
+                {t('reset_password.for_email')} <span className="font-medium text-gray-900 dark:text-white">{userEmail}</span>
               </p>
             )}
           </AnimatedContainer>
@@ -345,7 +348,7 @@ export const ResetPasswordPage: React.FC = () => {
 
             <AnimatedContainer animation="slide-right" delay={500}>
               <FormField
-                label="Nouveau mot de passe"
+                label={t('reset_password.new_password')}
                 error={errors.newPassword?.message}
                 required
               >
@@ -361,7 +364,7 @@ export const ResetPasswordPage: React.FC = () => {
                   <div className="mt-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                        Force du mot de passe
+                        {t('reset_password.password_strength')}
                       </span>
                       <span className={`text-xs font-semibold ${
                         passwordStrength.score <= 2 ? 'text-red-600 dark:text-red-400' :
@@ -390,7 +393,7 @@ export const ResetPasswordPage: React.FC = () => {
 
             <AnimatedContainer animation="slide-right" delay={600}>
               <FormField
-                label="Confirmer le mot de passe"
+                label={t('reset_password.confirm_password')}
                 error={errors.confirmPassword?.message}
                 required
               >
@@ -408,10 +411,10 @@ export const ResetPasswordPage: React.FC = () => {
             <AnimatedContainer animation="slide-up" delay={700}>
               <div className="bg-blue-50 dark:bg-blue-900/20 border-l-3 border-blue-600 dark:border-blue-400 rounded-r p-4">
                 <p className="text-xs text-gray-700 dark:text-gray-300">
-                  <strong className="text-blue-900 dark:text-blue-100">Le mot de passe doit contenir :</strong>
-                  <br />• Au moins 8 caractères
-                  <br />• Une majuscule et une minuscule
-                  <br />• Au moins un chiffre
+                  <strong className="text-blue-900 dark:text-blue-100">{t('reset_password.requirements_title')}</strong>
+                  <br />• {t('reset_password.req_length')}
+                  <br />• {t('reset_password.req_uppercase')}
+                  <br />• {t('reset_password.req_number')}
                 </p>
               </div>
             </AnimatedContainer>
@@ -423,7 +426,7 @@ export const ResetPasswordPage: React.FC = () => {
                 disabled={!isValid || isSubmitting}
                 loading={isSubmitting}
               >
-                {isSubmitting ? 'Réinitialisation...' : 'Réinitialiser le mot de passe'}
+                {isSubmitting ? t('reset_password.submitting') : t('reset_password.submit')}
               </Button>
             </AnimatedContainer>
 
@@ -434,7 +437,7 @@ export const ResetPasswordPage: React.FC = () => {
                   onClick={() => navigate('/auth/login')}
                   className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                 >
-                  ← Retour à la connexion
+                  {t('reset_password.back_to_login')}
                 </button>
               </div>
             </AnimatedContainer>

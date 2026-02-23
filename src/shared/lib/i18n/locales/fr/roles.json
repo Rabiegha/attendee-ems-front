@@ -1,0 +1,120 @@
+{
+  "page": {
+    "title": "Gestion des Rôles et Permissions",
+    "description": "Configurez les permissions pour chaque rôle de votre organisation.",
+    "loading_error": "Erreur lors du chargement des données",
+    "access_denied": "Accès aux rôles et permissions refusé",
+    "access_denied_message": "Vous n'avez pas les permissions nécessaires pour gérer les rôles et permissions."
+  },
+  "roles": {
+    "title": "Rôles",
+    "create": "Nouveau rôle",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "name": "Nom du rôle",
+    "description": "Description",
+    "level": "Niveau",
+    "users_count": "Nombre d'utilisateurs",
+    "permissions": "Permissions",
+    "system_role": "Système",
+    "custom_role": "Rôle personnalisé",
+    "your_role": "Votre rôle",
+    "protected": "Protégé",
+    "permissions_info": "{{count}} permissions • Niveau {{level}}",
+    "no_description": "Aucune description"
+  },
+  "permissions": {
+    "title": "Permissions",
+    "manage": "Gérer les permissions",
+    "module": "Module",
+    "create": "Créer",
+    "read": "Lire",
+    "update": "Modifier",
+    "delete": "Supprimer",
+    "all": "Toutes",
+    "none": "Aucune",
+    "custom": "Personnalisé",
+    "select_all": "Tout sélectionner",
+    "deselect_all": "Tout désélectionner",
+    "categories": "Catégories :",
+    "search_placeholder": "Rechercher une permission...",
+    "no_results": "Aucune permission trouvée",
+    "no_results_hint": "Essayez d'ajuster vos filtres ou votre recherche"
+  },
+  "modules": {
+    "events": "Événements",
+    "attendees": "Participants",
+    "users": "Utilisateurs",
+    "organizations": "Organisations",
+    "reports": "Rapports",
+    "badges": "Badges",
+    "emails": "Emails",
+    "settings": "Paramètres",
+    "invitations": "Invitations",
+    "registrations": "Inscriptions",
+    "roles": "Rôles",
+    "analytics": "Analytics"
+  },
+  "actions": {
+    "save_permissions": "Enregistrer les permissions",
+    "reset_permissions": "Réinitialiser les permissions"
+  },
+  "messages": {
+    "role_created": "Rôle créé avec succès",
+    "role_updated": "Rôle mis à jour avec succès",
+    "role_deleted": "Rôle supprimé avec succès",
+    "permissions_updated": "Permissions mises à jour avec succès",
+    "error_create": "Erreur lors de la création du rôle",
+    "error_update": "Erreur lors de la mise à jour du rôle",
+    "error_delete": "Erreur lors de la suppression du rôle",
+    "error_permissions": "Erreur lors de la mise à jour des permissions",
+    "cannot_delete_system": "Impossible de supprimer un rôle système",
+    "cannot_edit_system": "Les rôles système ne peuvent pas être modifiés",
+    "hierarchy_updated": "Hiérarchie mise à jour avec succès",
+    "error_hierarchy": "Erreur lors de la mise à jour de la hiérarchie",
+    "cannot_modify_own_role": "Vous ne pouvez pas modifier les permissions de votre propre rôle",
+    "cannot_modify_system_role": "Les rôles système ne peuvent pas être modifiés",
+    "cannot_modify_higher_role": "Vous ne pouvez modifier que les rôles de niveau strictement supérieur au vôtre (niveau {{level}})",
+    "cannot_place_role": "Vous ne pouvez pas placer un rôle au niveau {{newLevel}} ou supérieur. Votre niveau est {{currentLevel}}.",
+    "error_update_permissions": "Une erreur est survenue lors de la mise à jour des permissions"
+  },
+  "empty": {
+    "title": "Aucun rôle trouvé",
+    "description": "Créez des rôles pour organiser les permissions",
+    "select_role": "Sélectionnez un rôle",
+    "select_role_description": "Choisissez un rôle dans la liste de gauche pour voir et modifier ses permissions."
+  },
+  "confirm": {
+    "delete_role": "Êtes-vous sûr de vouloir supprimer ce rôle ?",
+    "delete_warning": "Les utilisateurs ayant ce rôle perdront leurs permissions.",
+    "delete_role_title": "Confirmer la suppression",
+    "irreversible_action": "Action irréversible",
+    "delete_permanent": "Cette action ne peut pas être annulée. Le rôle sera définitivement supprimé.",
+    "delete_role_confirm": "Êtes-vous sûr de vouloir supprimer le rôle \"{{name}}\" ?",
+    "deleting": "Suppression...",
+    "delete_button": "Supprimer",
+    "cancel": "Annuler"
+  },
+  "warnings": {
+    "own_role_title": "Votre propre rôle",
+    "system_role_title": "Rôle système",
+    "protected_role_title": "Rôle protégé",
+    "own_role_reason": "Vous ne pouvez pas modifier les permissions de votre propre rôle pour des raisons de sécurité.",
+    "system_role_reason": "Ce rôle système ne peut pas être modifié.",
+    "hierarchy_role_reason": "Vous ne pouvez modifier que les rôles de niveau strictement supérieur au vôtre (niveau {{currentLevel}}). Ce rôle est de niveau {{roleLevel}}."
+  },
+  "form": {
+    "name_required": "Le nom est requis",
+    "name_placeholder": "Ex: Gestionnaire, Superviseur",
+    "description_placeholder": "Décrivez les responsabilités de ce rôle...",
+    "description_hint": "Optionnel : aide les autres admins à comprendre le rôle"
+  },
+  "create_title": "Créer un nouveau rôle",
+  "create_error": "Erreur lors de la création du rôle",
+  "creating": "Création...",
+  "create_button": "Créer le rôle",
+  "edit_title": "Modifier le rôle",
+  "edit_error": "Erreur lors de la modification du rôle",
+  "editing": "Modification...",
+  "edit_success": "Rôle modifié avec succès"
+}

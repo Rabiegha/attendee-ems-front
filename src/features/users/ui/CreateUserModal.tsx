@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, User, Mail, Shield } from 'lucide-react'
@@ -25,6 +26,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
   onClose,
 }) => {
   const { error: showError } = useToast()
+  const { t } = useTranslation(['users', 'common'])
   const [createUser, { isLoading: isCreating }] =
     useCreateUserWithGeneratedPasswordMutation()
   const { isLoading: isLoadingRoles } = useGetRolesQuery()
@@ -71,21 +73,19 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
       console.error("Erreur lors de la création de l'utilisateur:", error)
 
       // Gestion des erreurs spécifiques
-      let errorMessage =
-        "Une erreur est survenue lors de la création de l'utilisateur"
+      let errorMessage = t('users:modal.create_error_default')
 
       if (error?.data?.message?.includes('already exists')) {
-        errorMessage =
-          "Cet email est déjà utilisé par un autre utilisateur de l'organisation."
+        errorMessage = t('users:modal.create_error_email_exists')
       } else if (error?.data?.message?.includes('Invalid credentials')) {
-        errorMessage = 'Permissions insuffisantes pour créer un utilisateur.'
+        errorMessage = t('users:modal.create_error_insufficient_permissions')
       } else if (error?.data?.message) {
         errorMessage = error.data.message
       } else if (error?.message) {
         errorMessage = error.message
       }
 
-      showError('Erreur de création', errorMessage)
+      showError(t('users:modal.create_error_title'), errorMessage)
     }
   }
 
@@ -110,10 +110,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
           {/* Titre moderne */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">
-              Créer un utilisateur
+              {t('users:modal.create_title')}
             </h2>
             <p className="text-gray-400">
-              Ajoutez un nouvel utilisateur avec un mot de passe généré
+              {t('users:modal.create_subtitle')}
             </p>
           </div>
 
@@ -121,7 +121,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             {/* 👤 Informations personnelles */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                label="Prénom"
+                label={t('users:form.first_name')}
                 error={errors.firstName?.message}
                 required
               >
@@ -132,7 +132,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 />
               </FormField>
 
-              <FormField label="Nom" error={errors.lastName?.message} required>
+              <FormField label={t('users:form.last_name')} error={errors.lastName?.message} required>
                 <Input
                   {...register('lastName')}
                   placeholder="Dupont"
@@ -143,7 +143,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
             {/* 📧 Email */}
             <FormField
-              label="Adresse email"
+              label={t('users:form.email')}
               error={errors.email?.message}
               required
             >
@@ -158,7 +158,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
 
             {/* 📱 Téléphone (optionnel) */}
             <FormField
-              label="Téléphone (optionnel)"
+              label={t('users:form.phone')}
               error={errors.phone?.message}
             >
               <Input
@@ -171,7 +171,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             {/* 🏢 Entreprise et poste */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                label="Entreprise (optionnel)"
+                label={t('users:form.company')}
                 error={errors.company?.message}
               >
                 <Input
@@ -181,7 +181,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
               </FormField>
 
               <FormField
-                label="Poste (optionnel)"
+                label={t('users:form.job_title')}
                 error={errors.job_title?.message}
               >
                 <Input
@@ -192,14 +192,14 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </div>
 
             {/* 🌍 Pays */}
-            <FormField label="Pays (optionnel)" error={errors.country?.message}>
+            <FormField label={t('users:form.country')} error={errors.country?.message}>
               <Input {...register('country')} placeholder="France" />
             </FormField>
 
             {/* 🔐 Rôle - Temporairement fixé pour les tests */}
-            <FormField label="Rôle assigné">
+            <FormField label={t('users:form.role')}>
               <Input
-                value="Utilisateur Standard (par défaut)"
+                value={t('users:modal.default_role_label')}
                 leftIcon={<Shield className="h-5 w-5" />}
                 disabled
                 className="bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
@@ -212,11 +212,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 <Shield className="h-5 w-5 text-blue-500 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-blue-900 dark:text-blue-300">
-                    Utilisateur Standard
+                    {t('users:modal.default_role_name')}
                   </p>
                   <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                    Rôle par défaut pour les tests - Accès aux fonctionnalités
-                    de base
+                    {t('users:modal.default_role_description')}
                   </p>
                 </div>
               </div>
@@ -240,12 +239,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                    Création sécurisée
+                    {t('users:modal.secure_creation_title')}
                   </h4>
                   <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-                    Un mot de passe temporaire sera généré et envoyé par email.
-                    L'utilisateur devra le changer lors de sa première
-                    connexion.
+                    {t('users:modal.secure_creation_description')}
                   </p>
                 </div>
               </div>
@@ -259,7 +256,7 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 onClick={handleClose}
                 disabled={isCreating}
               >
-                Annuler
+                {t('common:app.cancel')}
               </Button>
               <Button
                 type="submit"
@@ -269,12 +266,12 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 {isCreating ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Création...
+                    {t('users:modal.creating')}
                   </>
                 ) : (
                   <>
                     <User className="w-4 h-4 mr-2" />
-                    Créer l'utilisateur
+                    {t('users:modal.create_button')}
                   </>
                 )}
               </Button>

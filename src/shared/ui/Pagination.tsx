@@ -1,5 +1,6 @@
 import React from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from './Button'
 
 export interface PaginationProps {
@@ -25,6 +26,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   showPageSizeSelector = true,
   pageSizeOptions = [20, 50, 100, 200],
 }) => {
+  const { t } = useTranslation('common')
   const startItem = (currentPage - 1) * pageSize + 1
   const endItem = Math.min(currentPage * pageSize, total)
 
@@ -79,9 +81,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       {/* Left: Items info */}
       <div className="flex flex-1 items-center justify-between sm:justify-start">
         <div className="text-sm text-gray-700 dark:text-gray-300">
-          Affichage de <span className="font-medium">{startItem}</span> à{' '}
-          <span className="font-medium">{endItem}</span> sur{' '}
-          <span className="font-medium">{total}</span> résultats
+          {t('pagination.showing', { from: startItem, to: endItem, total })}
         </div>
 
         {/* Page size selector */}
@@ -91,7 +91,7 @@ export const Pagination: React.FC<PaginationProps> = ({
               htmlFor="pageSize"
               className="text-sm text-gray-700 dark:text-gray-300"
             >
-              Par page :
+              {t('pagination.per_page')}
             </label>
             <select
               id="pageSize"
@@ -118,7 +118,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={handleFirstPage}
           disabled={currentPage === 1}
           className="hidden sm:flex"
-          title="Première page"
+          title={t('pagination.first_page')}
         >
           <ChevronsLeft className="h-4 w-4" />
         </Button>
@@ -129,7 +129,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           size="sm"
           onClick={handlePrevPage}
           disabled={currentPage === 1}
-          title="Page précédente"
+          title={t('pagination.previous_page')}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -172,7 +172,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           size="sm"
           onClick={handleNextPage}
           disabled={currentPage === totalPages}
-          title="Page suivante"
+          title={t('pagination.next_page')}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -184,7 +184,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           onClick={handleLastPage}
           disabled={currentPage === totalPages}
           className="hidden sm:flex"
-          title="Dernière page"
+          title={t('pagination.last_page')}
         >
           <ChevronsRight className="h-4 w-4" />
         </Button>

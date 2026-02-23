@@ -9,6 +9,7 @@ import { FormField } from '@/shared/ui/FormField'
 import { Alert } from '@/shared/ui/Alert'
 import { AnimatedContainer } from '@/shared/ui/AnimatedContainer'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
+import { useTranslation } from 'react-i18next'
 const requestPasswordResetSchema = z.object({
   email: z.string().email('Adresse email invalide'),
 })
@@ -36,6 +37,8 @@ export const RequestPasswordResetPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  const { t } = useTranslation('auth')
 
   const {
     register,
@@ -96,10 +99,10 @@ export const RequestPasswordResetPage: React.FC = () => {
 
             <AnimatedContainer animation="slide-up" delay={300}>
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Email envoyé !
+                {t('request_reset.success_title')}
               </h2>
               <p className="text-gray-600 dark:text-gray-300">
-                Si un compte existe avec cette adresse email, vous recevrez un lien de réinitialisation dans quelques instants.
+                {t('request_reset.success_message')}
               </p>
             </AnimatedContainer>
           </div>
@@ -110,9 +113,9 @@ export const RequestPasswordResetPage: React.FC = () => {
           <div className="bg-white dark:bg-gray-800 py-8 px-6 shadow-xl rounded-2xl border-0 transition-colors duration-300">
             <Alert variant="info" className="mb-6">
               <p className="text-sm">
-                <strong>Vérifiez votre boîte de réception</strong>
+                <strong>{t('request_reset.check_inbox')}</strong>
                 <br />
-                Le lien de réinitialisation est valable pendant <strong>1 heure</strong>.
+                {t('request_reset.link_valid')} <strong>{t('request_reset.link_duration')}</strong>.
               </p>
             </Alert>
 
@@ -122,14 +125,14 @@ export const RequestPasswordResetPage: React.FC = () => {
                 onClick={() => navigate('/auth/login')}
                 className="w-full"
               >
-                Retour à la connexion
+                {t('request_reset.back_to_login_short')}
               </Button>
               <button
                 type="button"
                 onClick={() => setSuccess(false)}
                 className="w-full text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
               >
-                Renvoyer un email
+                {t('request_reset.resend')}
               </button>
             </div>
           </div>
@@ -168,10 +171,10 @@ export const RequestPasswordResetPage: React.FC = () => {
 
           <AnimatedContainer animation="slide-up" delay={300}>
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Mot de passe oublié ?
+              {t('request_reset.title')}
             </h2>
             <p className="text-gray-600 dark:text-gray-300">
-              Entrez votre email pour recevoir un lien de réinitialisation
+              {t('request_reset.subtitle')}
             </p>
           </AnimatedContainer>
         </div>
@@ -189,7 +192,7 @@ export const RequestPasswordResetPage: React.FC = () => {
 
             <AnimatedContainer animation="slide-right" delay={500}>
               <FormField
-                label="Adresse email"
+                label={t('request_reset.email_label')}
                 error={errors.email?.message}
                 required
               >
@@ -211,7 +214,7 @@ export const RequestPasswordResetPage: React.FC = () => {
                 disabled={!isValid || isSubmitting}
                 loading={isSubmitting}
               >
-                {isSubmitting ? 'Envoi en cours...' : 'Envoyer le lien de réinitialisation'}
+                {isSubmitting ? t('request_reset.submitting') : t('request_reset.submit')}
               </Button>
             </AnimatedContainer>
 
@@ -222,7 +225,7 @@ export const RequestPasswordResetPage: React.FC = () => {
                   onClick={() => navigate('/auth/login')}
                   className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                 >
-                  ← Retour à la connexion
+                  {t('request_reset.back_to_login')}
                 </button>
               </div>
             </AnimatedContainer>

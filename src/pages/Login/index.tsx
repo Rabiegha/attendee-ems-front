@@ -231,10 +231,7 @@ export const LoginPage: React.FC = () => {
               {t('login.title')}
             </h2>
             <p className="text-gray-600 dark:text-gray-300">
-              {t(
-                'login.subtitle',
-                "Accédez à votre espace de gestion d'événements"
-              )}
+              {t('login.subtitle')}
             </p>
           </AnimatedContainer>
         </div>
@@ -250,11 +247,8 @@ export const LoginPage: React.FC = () => {
             <AnimatedContainer animation="scale-in" className="mb-6">
               <Alert
                 variant="success"
-                title={t('login.success_title', 'Connexion réussie')}
-                description={t(
-                  'login.success_message',
-                  'Redirection en cours...'
-                )}
+                title={t('login.success_title')}
+                description={t('login.success_message')}
               />
             </AnimatedContainer>
           )}
@@ -264,7 +258,7 @@ export const LoginPage: React.FC = () => {
             <AnimatedContainer animation="slide-up" className="mb-6">
               <Alert
                 variant="destructive"
-                title={t('login.error_title', 'Erreur de connexion')}
+                title={t('login.error_title')}
                 description={lastError}
                 onClose={() => setLastError(null)}
               />
@@ -328,7 +322,7 @@ export const LoginPage: React.FC = () => {
                 type="submit"
                 className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
                 loading={isLoading}
-                loadingText={t('login.logging_in', 'Connexion en cours...')}
+                loadingText={t('login.logging_in')}
                 disabled={!isValid || showSuccess}
               >
                 {showSuccess ? (
@@ -346,7 +340,7 @@ export const LoginPage: React.FC = () => {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    {t('login.success_short', 'Connecté !')}
+                    {t('login.success_short')}
                   </>
                 ) : (
                   t('login.submit')
@@ -362,7 +356,7 @@ export const LoginPage: React.FC = () => {
                   className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                   onClick={() => navigate('/auth/request-password-reset')}
                 >
-                  {t('login.forgot_password', 'Mot de passe oublié ?')}
+                  {t('login.forgot_password')}
                 </button>
               </div>
             </AnimatedContainer>

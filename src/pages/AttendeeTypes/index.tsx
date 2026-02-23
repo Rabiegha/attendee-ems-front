@@ -47,14 +47,17 @@ import {
   RestoreAttendeeTypeModal,
   DeleteAttendeeTypeModal,
 } from '@/features/attendee-types/ui'
+import { useTranslation } from 'react-i18next'
 
 // Composant pour le sélecteur de couleur avec sauvegarde au blur
 const ColorPicker = ({
   initialValue,
   onSave,
+  title,
 }: {
   initialValue: string
   onSave: (value: string) => Promise<void>
+  title?: string
 }) => {
   const [color, setColor] = useState(initialValue)
 
@@ -71,7 +74,7 @@ const ColorPicker = ({
       onChange={(e) => setColor(e.target.value)}
       onBlur={handleBlur}
       className="h-8 w-12 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-      title="Cliquer pour modifier"
+      title={title}
     />
   )
 }
@@ -80,6 +83,7 @@ export function AttendeeTypesPage() {
   const currentUser = useSelector(selectUser)
   const currentOrg = useSelector(selectOrganization)
   const toast = useToast()
+  const { t } = useTranslation(['attendees', 'common'])
 
   // États locaux
   const [searchQuery, setSearchQuery] = useState('')
@@ -165,12 +169,12 @@ export function AttendeeTypesPage() {
   const tabs = [
     {
       id: 'active',
-      label: 'Types actifs',
+      label: t('types.active_tab'),
       count: stats.active,
     },
     {
       id: 'deleted',
-      label: 'Types désactivés',
+      label: t('types.inactive_tab'),
       count: stats.deleted,
     },
   ]
@@ -184,9 +188,9 @@ export function AttendeeTypesPage() {
     if (!currentOrg?.id) return
     try {
       await createType({ orgId: currentOrg.id, data }).unwrap()
-      toast.success('Type de participant créé avec succès')
+      toast.success(t('types.created'))
     } catch (error) {
-      toast.error('Erreur lors de la création du type')
+      toast.error(t('types.error_create'))
       throw error
     }
   }
@@ -195,9 +199,9 @@ export function AttendeeTypesPage() {
     if (!currentOrg?.id) return
     try {
       await updateType({ orgId: currentOrg.id, id, data }).unwrap()
-      toast.success('Type de participant modifié avec succès')
+      toast.success(t('types.updated'))
     } catch (error) {
-      toast.error('Erreur lors de la modification du type')
+      toast.error(t('types.error_update'))
       throw error
     }
   }
@@ -206,9 +210,9 @@ export function AttendeeTypesPage() {
     if (!currentOrg?.id) return
     try {
       await deleteType({ orgId: currentOrg.id, id }).unwrap()
-      toast.success('Type de participant supprimé définitivement')
+      toast.success(t('types.deleted'))
     } catch (error) {
-      toast.error('Erreur lors de la suppression du type')
+      toast.error(t('types.error_delete'))
       throw error
     }
   }
@@ -219,7 +223,7 @@ export function AttendeeTypesPage() {
       createSelectionColumn<AttendeeType>(),
       {
         accessorKey: 'name',
-        header: 'Type',
+        header: t('types.name'),
         sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const type = row.original
@@ -238,13 +242,14 @@ export function AttendeeTypesPage() {
       },
       {
         accessorKey: 'color_hex',
-        header: 'Couleur de fond',
+        header: t('types.background_color'),
         cell: ({ row }) => {
           const type = row.original
           return (
             <div className="flex items-center gap-2">
               <ColorPicker
                 initialValue={type.color_hex || '#9ca3af'}
+                title={t('types.click_to_edit')}
                 onSave={async (color) => {
                   try {
                     await updateType({
@@ -252,9 +257,9 @@ export function AttendeeTypesPage() {
                       id: type.id,
                       data: { color_hex: color },
                     }).unwrap()
-                    toast.success('Couleur mise à jour')
+                    toast.success(t('types.color_updated'))
                   } catch (error) {
-                    toast.error('Erreur', 'Impossible de mettre à jour la couleur')
+                    toast.error(t('types.error_update_color'))
                   }
                 }}
               />
@@ -267,13 +272,14 @@ export function AttendeeTypesPage() {
       },
       {
         accessorKey: 'text_color_hex',
-        header: 'Couleur de texte',
+        header: t('types.text_color'),
         cell: ({ row }) => {
           const type = row.original
           return (
             <div className="flex items-center gap-2">
               <ColorPicker
                 initialValue={type.text_color_hex || '#ffffff'}
+                title={t('types.click_to_edit')}
                 onSave={async (color) => {
                   try {
                     await updateType({
@@ -281,9 +287,9 @@ export function AttendeeTypesPage() {
                       id: type.id,
                       data: { text_color_hex: color },
                     }).unwrap()
-                    toast.success('Couleur mise à jour')
+                    toast.success(t('types.color_updated'))
                   } catch (error) {
-                    toast.error('Erreur', 'Impossible de mettre à jour la couleur')
+                    toast.error(t('types.error_update_color'))
                   }
                 }}
               />
@@ -296,45 +302,45 @@ export function AttendeeTypesPage() {
       },
       {
         accessorKey: 'usage_count',
-        header: 'Utilisation',
+        header: t('types.usage'),
         cell: ({ row }) => {
           const count = row.original.usage_count || 0
           return (
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {count} événement{count > 1 ? 's' : ''}
+              {t('types.event_count', { count })}
             </span>
           )
         },
       },
       {
         accessorKey: 'registration_count',
-        header: 'Inscriptions',
+        header: t('types.registrations'),
         cell: ({ row }) => {
           const count = row.original.registration_count || 0
           return (
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {count} participant{count > 1 ? 's' : ''}
+              {t('types.participant_count', { count })}
             </span>
           )
         },
       },
       {
         accessorKey: 'is_active',
-        header: 'Statut',
+        header: t('types.status'),
         cell: ({ row }) => {
           const type = row.original
           
           if (type.is_active) {
             return (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200">
-                Actif
+                {t('common:status.active')}
               </span>
             )
           }
           
           return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200">
-              Inactif
+              {t('common:status.inactive')}
             </span>
           )
         },
@@ -348,7 +354,7 @@ export function AttendeeTypesPage() {
               e.stopPropagation()
               setEditingType(type)
             }}
-            title="Modifier"
+            title={t('types.edit')}
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0 min-w-[32px] p-1.5"
           >
             <Edit2 className="h-4 w-4 shrink-0" />
@@ -360,7 +366,7 @@ export function AttendeeTypesPage() {
               e.stopPropagation()
               setDeactivatingType(type)
             }}
-            title="Désactiver ce type"
+            title={t('types.deactivate')}
             className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
           >
             <Trash2 className="h-4 w-4 shrink-0" />
@@ -368,7 +374,7 @@ export function AttendeeTypesPage() {
         </>
       )),
     ],
-    []
+    [t]
   )
 
   // Colonnes du tableau pour les types désactivés
@@ -377,7 +383,7 @@ export function AttendeeTypesPage() {
       createSelectionColumn<AttendeeType>(),
       {
         accessorKey: 'name',
-        header: 'Type',
+        header: t('types.name'),
         sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const type = row.original
@@ -396,7 +402,7 @@ export function AttendeeTypesPage() {
       },
       {
         accessorKey: 'color_hex',
-        header: 'Couleur',
+        header: t('types.color'),
         cell: ({ row }) => {
           const type = row.original
           return (
@@ -414,36 +420,36 @@ export function AttendeeTypesPage() {
       },
       {
         accessorKey: 'usage_count',
-        header: 'Utilisation',
+        header: t('types.usage'),
         cell: ({ row }) => {
           const count = row.original.usage_count || 0
           return (
             <span className="text-sm text-gray-600 dark:text-gray-400 opacity-50">
-              {count} événement{count > 1 ? 's' : ''}
+              {t('types.event_count', { count })}
             </span>
           )
         },
       },
       {
         accessorKey: 'registration_count',
-        header: 'Inscriptions',
+        header: t('types.registrations'),
         cell: ({ row }) => {
           const count = row.original.registration_count || 0
           return (
             <span className="text-sm text-gray-600 dark:text-gray-400 opacity-50">
-              {count} participant{count > 1 ? 's' : ''}
+              {t('types.participant_count', { count })}
             </span>
           )
         },
       },
       {
         accessorKey: 'is_active',
-        header: 'Statut',
+        header: t('types.status'),
         cell: ({ row }) => {
           const type = row.original
           return (
             <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-              Inactif
+              {t('common:status.inactive')}
             </span>
           )
         },
@@ -457,7 +463,7 @@ export function AttendeeTypesPage() {
               e.stopPropagation()
               setRestoringType(type)
             }}
-            title="Restaurer"
+            title={t('types.restore')}
             className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 flex-shrink-0 min-w-[32px] p-1.5"
           >
             <RotateCcw className="h-4 w-4 shrink-0" />
@@ -469,7 +475,7 @@ export function AttendeeTypesPage() {
               e.stopPropagation()
               setDeletingType(type)
             }}
-            title="Supprimer définitivement"
+            title={t('types.delete_permanently')}
             className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
           >
             <Trash2 className="h-4 w-4 shrink-0" />
@@ -477,15 +483,15 @@ export function AttendeeTypesPage() {
         </>
       )),
     ],
-    []
+    [t]
   )
 
   // Handlers pour les actions groupées
   const handleBulkDeactivate = async () => {
     setBulkConfirmation({
       isOpen: true,
-      title: 'Désactiver les types',
-      message: `Désactiver ${bulkSelectedIds.size} type(s) ?\n\nIls seront déplacés dans les éléments supprimés.`,
+      title: t('types.bulk_deactivate'),
+      message: t('types.bulk_deactivate_message', { count: bulkSelectedIds.size }),
       variant: 'warning',
       action: async () => {
         try {
@@ -494,11 +500,11 @@ export function AttendeeTypesPage() {
               updateType({ orgId: currentOrg?.id!, id, data: { is_active: false } }).unwrap()
             )
           )
-          toast.success(`${bulkSelectedIds.size} type(s) désactivé(s)`)
+          toast.success(t('types.bulk_deactivated', { count: bulkSelectedIds.size }))
           clearBulkSelection()
         } catch (error) {
           console.error('Erreur lors de la désactivation:', error)
-          toast.error('Erreur lors de la désactivation')
+          toast.error(t('types.error_deactivate'))
         }
       }
     })
@@ -507,8 +513,8 @@ export function AttendeeTypesPage() {
   const handleBulkActivate = async () => {
     setBulkConfirmation({
       isOpen: true,
-      title: 'Activer les types',
-      message: `Activer ${bulkSelectedIds.size} type(s) ?`,
+      title: t('types.bulk_activate'),
+      message: t('types.bulk_activate_message', { count: bulkSelectedIds.size }),
       variant: 'success',
       action: async () => {
         try {
@@ -517,11 +523,11 @@ export function AttendeeTypesPage() {
               updateType({ orgId: currentOrg?.id!, id, data: { is_active: true } }).unwrap()
             )
           )
-          toast.success(`${bulkSelectedIds.size} type(s) activé(s)`)
+          toast.success(t('types.bulk_activated', { count: bulkSelectedIds.size }))
           clearBulkSelection()
         } catch (error) {
           console.error('Erreur lors de l\'activation:', error)
-          toast.error('Erreur lors de l\'activation')
+          toast.error(t('types.error_activate'))
         }
       }
     })
@@ -534,14 +540,14 @@ export function AttendeeTypesPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Types de participants"
-        description="Gérez les différents types de participants pour votre organisation"
+        title={t('types.title')}
+        description={t('types.description')}
         icon={Tag}
         actions={
           <Can do="update" on="Organization">
             <Button onClick={handleOpenCreateModal}>
               <Plus className="h-4 w-4 mr-2" />
-              Nouveau type
+              {t('types.new_type')}
             </Button>
           </Can>
         }
@@ -551,14 +557,14 @@ export function AttendeeTypesPage() {
       <PageSection spacing="lg">
         <FilterBar
           resultCount={typesByTab.length}
-          resultLabel="type"
+          resultLabel={t('types.result_label')}
           onReset={() => setSearchQuery('')}
           showResetButton={searchQuery !== ''}
           onRefresh={refetch}
           showRefreshButton={true}
         >
           <SearchInput
-            placeholder="Rechercher un type..."
+            placeholder={t('types.search_placeholder')}
             value={searchQuery}
             onChange={setSearchQuery}
           />
@@ -574,13 +580,13 @@ export function AttendeeTypesPage() {
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    {bulkSelectedIds.size} sélectionné{bulkSelectedIds.size > 1 ? 's' : ''}
+                    {t('types.selected_count', { count: bulkSelectedIds.size })}
                   </span>
                   <button
                     onClick={clearBulkSelection}
                     className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline"
                   >
-                    Tout désélectionner
+                    {t('common:app.deselect_all')}
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
@@ -590,7 +596,7 @@ export function AttendeeTypesPage() {
                     onClick={() => setBulkActionsModalOpen(true)}
                     leftIcon={<Tag className="h-4 w-4" />}
                   >
-                    Actions
+                    {t('common:app.actions')}
                   </Button>
                 </div>
               </div>
@@ -611,10 +617,10 @@ export function AttendeeTypesPage() {
             onRowSelectionChange={handleRowSelectionChange}
             emptyMessage={
               searchQuery
-                ? 'Aucun type ne correspond à votre recherche'
+                ? t('types.no_results')
                 : activeTab === 'active'
-                  ? 'Aucun type de participant actif'
-                  : 'Aucun type désactivé'
+                  ? t('types.no_active_types')
+                  : t('types.no_inactive_types')
             }
             tabsElement={
               <Tabs
@@ -692,15 +698,18 @@ export function AttendeeTypesPage() {
   )
 }
 
-const AttendeeTypesPageProtected = () => (
-  <ProtectedPage
-    action="read"
-    subject="AttendeeType"
-    deniedTitle="Accès aux types de participants refusé"
-    deniedMessage="Vous n'avez pas les permissions nécessaires pour consulter les types de participants."
-  >
-    <AttendeeTypesPage />
-  </ProtectedPage>
-)
+const AttendeeTypesPageProtected = () => {
+  const { t } = useTranslation(['attendees'])
+  return (
+    <ProtectedPage
+      action="read"
+      subject="AttendeeType"
+      deniedTitle={t('types.access_denied_title')}
+      deniedMessage={t('types.access_denied_message')}
+    >
+      <AttendeeTypesPage />
+    </ProtectedPage>
+  )
+}
 
 export default AttendeeTypesPageProtected

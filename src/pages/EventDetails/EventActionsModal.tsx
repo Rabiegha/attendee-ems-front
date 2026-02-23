@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   AlertCircle,
   CheckCircle,
@@ -49,6 +50,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
   currentEndDate,
   onStatusChange,
 }) => {
+  const { t } = useTranslation('events')
   const [selectedAction, setSelectedAction] = useState<ActionType>(null)
   const [notifyUsers, setNotifyUsers] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -152,66 +154,59 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
     switch (action) {
       case 'publish':
         return {
-          title: 'Publier l\'événement',
-          description:
-            'L\'événement sera visible par tous les utilisateurs et les inscriptions seront ouvertes.',
+          title: t('events:actions_modal.publish_title'),
+          description: t('events:actions_modal.publish_description'),
           icon: CheckCircle,
           color: 'blue',
           showNotify: false,
         }
       case 'unpublish':
         return {
-          title: 'Repasser en brouillon',
-          description:
-            'Le formulaire restera visible mais il faudra publier l\'événement pour que les inscriptions soient prises en compte. Les inscriptions existantes seront conservées.',
+          title: t('events:actions_modal.unpublish_title'),
+          description: t('events:actions_modal.unpublish_description'),
           icon: FileEdit,
           color: 'gray',
           showNotify: false,
         }
       case 'close_registration':
         return {
-          title: 'Clôturer les inscriptions',
-          description:
-            'L\'événement restera visible mais les nouvelles inscriptions seront impossibles. Les participants déjà inscrits conservent leur accès. Le formulaire d\'inscription affichera automatiquement que les inscriptions sont closes.',
+          title: t('events:actions_modal.close_registrations_title'),
+          description: t('events:actions_modal.close_registrations_description'),
           icon: LockKeyhole,
           color: 'orange',
           showNotify: false,
         }
       case 'reopen_registration':
         return {
-          title: 'Réouvrir les inscriptions',
-          description:
-            'Les inscriptions seront à nouveau ouvertes. Le formulaire d\'inscription redeviendra accessible au public.',
+          title: t('events:actions_modal.reopen_registrations_title'),
+          description: t('events:actions_modal.reopen_registrations_description'),
           icon: Unlock,
           color: 'green',
           showNotify: false,
         }
       case 'cancel':
         return {
-          title: 'Annuler l\'événement',
-          description:
-            'L\'événement sera marqué comme annulé. Cette action est définitive. Le formulaire d\'inscription affichera automatiquement l\'annulation.',
+          title: t('events:actions_modal.cancel_title'),
+          description: t('events:actions_modal.cancel_description'),
           icon: XCircle,
           color: 'red',
           showNotify: true,
-          notifyLabel: 'Envoyer un email d\'annulation à tous les inscrits',
+          notifyLabel: t('events:actions_modal.cancel_notify'),
         }
       case 'postpone':
         return {
-          title: 'Reporter l\'événement',
-          description:
-            'Sélectionnez les nouvelles dates. Les inscriptions existantes seront conservées. Le formulaire d\'inscription affichera automatiquement le report.',
+          title: t('events:actions_modal.postpone_title'),
+          description: t('events:actions_modal.postpone_description'),
           icon: Clock,
           color: 'yellow',
           showNotify: true,
-          notifyLabel: 'Informer les participants du report et de la nouvelle date',
+          notifyLabel: t('events:actions_modal.postpone_notify'),
           requiresDates: true,
         }
       case 'archive':
         return {
-          title: 'Archiver l\'événement',
-          description:
-            'L\'événement sera archivé et ne sera plus visible dans la liste principale. Les données seront conservées pour consultation.',
+          title: t('events:actions_modal.archive_title'),
+          description: t('events:actions_modal.archive_description'),
           icon: Archive,
           color: 'gray',
           showNotify: false,
@@ -226,7 +221,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
       ? [
           {
             id: 'publish' as ActionType,
-            label: 'Publier l\'événement',
+            label: t('events:actions_modal.publish_title'),
             icon: CheckCircle,
             color: 'text-blue-600 dark:text-blue-400',
           },
@@ -236,7 +231,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
       ? [
           {
             id: 'unpublish' as ActionType,
-            label: 'Repasser en brouillon',
+            label: t('events:actions_modal.unpublish_title'),
             icon: FileEdit,
             color: 'text-gray-600 dark:text-gray-400',
           },
@@ -246,7 +241,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
       ? [
           {
             id: 'close_registration' as ActionType,
-            label: 'Clôturer les inscriptions',
+            label: t('events:actions_modal.close_registrations_title'),
             icon: LockKeyhole,
             color: 'text-orange-600 dark:text-orange-400',
           },
@@ -256,7 +251,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
       ? [
           {
             id: 'reopen_registration' as ActionType,
-            label: 'Réouvrir les inscriptions',
+            label: t('events:actions_modal.reopen_registrations_title'),
             icon: Unlock,
             color: 'text-green-600 dark:text-green-400',
           },
@@ -266,7 +261,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
       ? [
           {
             id: 'cancel' as ActionType,
-            label: 'Annuler l\'événement',
+            label: t('events:actions_modal.cancel_title'),
             icon: XCircle,
             color: 'text-red-600 dark:text-red-400',
           },
@@ -276,7 +271,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
       ? [
           {
             id: 'postpone' as ActionType,
-            label: 'Reporter l\'événement',
+            label: t('events:actions_modal.postpone_title'),
             icon: Clock,
             color: 'text-yellow-600 dark:text-yellow-400',
           },
@@ -286,7 +281,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
       ? [
           {
             id: 'archive' as ActionType,
-            label: 'Archiver l\'événement',
+            label: t('events:actions_modal.archive_title'),
             icon: Archive,
             color: 'text-gray-600 dark:text-gray-400',
           },
@@ -300,7 +295,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={selectedAction ? (actionConfig?.title ?? 'Action') : 'Actions sur l\'événement'}
+      title={selectedAction ? (actionConfig?.title ?? t('events:actions_modal.title')) : t('events:actions_modal.modal_title')}
       maxWidth="md"
       contentPadding={false}
     >
@@ -311,7 +306,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
             <div className="space-y-2">
               {availableActions.length === 0 ? (
                 <p className="text-gray-500 dark:text-gray-400 text-center py-4">
-                  Aucune action disponible pour cet événement
+                  {t('events:actions_modal.no_actions')}
                 </p>
               ) : (
                 availableActions.map((action) => {
@@ -357,12 +352,12 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
                     <div className="bg-gray-50 dark:bg-gray-900/20 rounded-lg p-4 space-y-3">
                       <div className="flex items-center text-sm font-medium text-gray-900 dark:text-white mb-3">
                         <Calendar className="h-4 w-4 mr-2 text-blue-600 dark:text-blue-400" />
-                        <span>Nouvelles dates de l'événement</span>
+                        <span>{t('events:actions_modal.new_dates')}</span>
                       </div>
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Date de début
+                          {t('events:actions_modal.start_date')}
                         </label>
                         <input
                           type="date"
@@ -375,7 +370,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Date de fin
+                          {t('events:actions_modal.end_date')}
                         </label>
                         <input
                           type="date"
@@ -406,7 +401,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
                             </span>
                           </div>
                           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                            Un email sera envoyé automatiquement aux participants
+                            {t('events:actions_modal.notify_description')}
                           </p>
                         </div>
                       </label>
@@ -418,8 +413,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
                     <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 flex items-start">
                       <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mr-3 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-red-800 dark:text-red-200">
-                        <strong>Attention :</strong> Cette action est définitive et ne
-                        peut pas être annulée.
+                        <strong>{t('events:actions_modal.warning_title')}</strong> {t('events:actions_modal.warning_irreversible')}
                       </p>
                     </div>
                   )}
@@ -439,7 +433,7 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
               disabled={isSubmitting}
               variant="outline"
             >
-              Retour
+              {t('common:app.back')}
             </Button>
             <Button
               onClick={handleConfirm}
@@ -449,14 +443,14 @@ export const EventActionsModal: React.FC<EventActionsModalProps> = ({
                   (!newStartDate || !newEndDate))
               }
               loading={isSubmitting}
-              loadingText="Traitement..."
+              loadingText={t('events:actions_modal.processing')}
             >
-              Confirmer
+              {t('common:app.confirm')}
             </Button>
           </>
         ) : (
           <Button onClick={onClose} variant="outline">
-            Fermer
+            {t('common:app.close')}
           </Button>
         )}
       </div>

@@ -71,6 +71,7 @@ import {
   Settings2,
   RotateCcw,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../Button'
 import { Checkbox } from '../Checkbox'
 import { cn } from '@/shared/lib/utils'
@@ -137,6 +138,7 @@ function DraggableTableHeader({
   onSortClick?: ((event: unknown) => void) | undefined
   getPinningStyles: (column: any) => React.CSSProperties
 }) {
+  const { t } = useTranslation('common')
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: header.column.id,
   })
@@ -180,7 +182,7 @@ function DraggableTableHeader({
             isDragging && 'cursor-grabbing'
           )}
           onClick={(e) => e.stopPropagation()}
-          title="Glisser pour réorganiser"
+          title={t('table.drag_to_reorder')}
         >
           <GripVertical className="h-4 w-4" />
         </button>
@@ -197,7 +199,7 @@ export function DataTable<TData, TValue>({
   onRowSelectionChange,
   bulkActions,
   getItemId,
-  itemType = 'éléments',
+  itemType,
   pageSize = 10,
   enablePagination = true,
   enableColumnOrdering = true,
@@ -206,12 +208,14 @@ export function DataTable<TData, TValue>({
   tabsElement,
   className,
   isLoading = false,
-  emptyMessage = 'Aucune donnée disponible',
+  emptyMessage,
   onPageChange,
   onPageSizeChange,
   totalItems,
   currentPage,
 }: DataTableProps<TData, TValue>) {
+  const { t } = useTranslation('common')
+
   // Generate a stable key for localStorage based on column IDs
   const storageKey = React.useMemo(() => {
     const columnIds = columns
@@ -366,7 +370,7 @@ export function DataTable<TData, TValue>({
               <div 
                 className="flex items-center justify-center w-full cursor-pointer"
                 onClick={handleClick}
-                title="Maj+Clic pour sélectionner une plage"
+                title={t('table.shift_click_range')}
               >
                 <Checkbox
                   checked={row.getIsSelected()}
@@ -375,7 +379,7 @@ export function DataTable<TData, TValue>({
                   onChange={(e) => {
                     e.stopPropagation()
                   }}
-                  aria-label="Sélectionner la ligne"
+                  aria-label={t('table.select_row')}
                 />
               </div>
             )
@@ -613,9 +617,9 @@ export function DataTable<TData, TValue>({
                 size="sm"
                 onClick={handleResetTable}
                 leftIcon={<RotateCcw className="h-4 w-4" />}
-                title="Réinitialiser l'ordre et la visibilité des colonnes"
+                title={t('table.reset_columns')}
               >
-                Réinitialiser
+                {t('app.reset')}
               </Button>
             )}
 
@@ -628,7 +632,7 @@ export function DataTable<TData, TValue>({
                   onClick={() => setShowColumnSettings(!showColumnSettings)}
                   leftIcon={<Settings2 className="h-4 w-4" />}
                 >
-                  Colonnes ({visibleColumnsCount})
+                  {t('table.columns_count', { count: visibleColumnsCount })}
                 </Button>
 
               {showColumnSettings && (
@@ -644,7 +648,7 @@ export function DataTable<TData, TValue>({
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 whitespace-nowrap">
               <div className="flex items-center justify-between gap-4">
                 <span className="text-base font-semibold text-gray-900 dark:text-white">
-                  Affichage des colonnes
+                  {t('table.columns_display')}
                 </span>
                 <Button
                   variant="ghost"
@@ -653,8 +657,8 @@ export function DataTable<TData, TValue>({
                   className="text-sm h-9 px-4 whitespace-nowrap"
                 >
                   {visibleColumnsCount === table.getAllLeafColumns().length
-                    ? 'Tout masquer'
-                    : 'Tout afficher'}
+                    ? t('app.hide_all')
+                    : t('app.show_all')}
                 </Button>
               </div>
             </div>
@@ -712,7 +716,7 @@ export function DataTable<TData, TValue>({
           selectedItems={selectedItems}
           actions={bulkActions}
           onClearSelection={handleClearSelection}
-          itemType={itemType}
+          itemType={itemType || t('table.items')}
         />
       )}
 
@@ -898,7 +902,7 @@ export function DataTable<TData, TValue>({
                       colSpan={columns.length}
                       className="px-6 py-12 text-center text-gray-500 dark:text-gray-400"
                     >
-                      {emptyMessage}
+                      {emptyMessage || t('table.no_data')}
                     </td>
                   </tr>
                 ) : (
@@ -972,8 +976,7 @@ export function DataTable<TData, TValue>({
             {enableRowSelection && table.getFilteredSelectedRowModel().rows.length > 0 ? (
               <div className="flex items-center gap-3">
                 <span>
-                  {table.getFilteredSelectedRowModel().rows.length} sur{' '}
-                  {table.getFilteredRowModel().rows.length} ligne(s) sélectionnée(s)
+                  {t('table.selected_count', { selected: table.getFilteredSelectedRowModel().rows.length, total: table.getFilteredRowModel().rows.length })}
                 </span>
               </div>
             ) : (
@@ -981,14 +984,14 @@ export function DataTable<TData, TValue>({
                 <span>
                   {totalItems ? (
                     // Pagination côté serveur : utiliser totalItems
-                    `Affichage de ${pagination.pageIndex * pagination.pageSize + 1} à ${Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalItems)} sur ${totalItems} résultats`
+                    t('table.showing', { from: pagination.pageIndex * pagination.pageSize + 1, to: Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalItems!), total: totalItems })
                   ) : (
                     // Pagination locale : utiliser les données filtrées
-                    `Affichage de ${table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} à ${Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} sur ${table.getFilteredRowModel().rows.length} résultats`
+                    t('table.showing', { from: table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1, to: Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length), total: table.getFilteredRowModel().rows.length })
                   )}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="whitespace-nowrap">Par page :</span>
+                  <span className="whitespace-nowrap">{t('table.per_page')}</span>
                   <select
                     value={totalItems ? pageSize : table.getState().pagination.pageSize}
                     onChange={(e) => {

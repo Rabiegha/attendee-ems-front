@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/ui/Button'
 import { demoData } from '@/mocks/auth-demo'
 import { useLoginMutation } from '@/features/auth/api/authApi'
@@ -12,6 +13,7 @@ interface DemoLoginPanelProps {
 }
 
 export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }) => {
+  const { t } = useTranslation('common')
   const [login, { isLoading }] = useLoginMutation()
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -28,8 +30,8 @@ export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }
       
       dispatch(addToast({
         type: 'success',
-        title: 'Connexion réussie',
-        message: `Connecté en tant que : ${description}`,
+        title: t('demo.login_success'),
+        message: `${t('demo.login_as')} ${description}`,
         duration: 5000
       }))
       
@@ -38,8 +40,8 @@ export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }
     } catch (error) {
       dispatch(addToast({
         type: 'error',
-        title: 'Erreur de connexion',
-        message: 'Impossible de se connecter avec ce compte de démo',
+        title: t('demo.login_error'),
+        message: t('demo.login_error_message'),
         duration: 5000
       }))
     }
@@ -48,11 +50,11 @@ export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }
   return (
     <div className={`p-6 bg-gray-50 border border-gray-200 rounded-lg ${className}`}>
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        Comptes de Démo Multi-Organisations
+        {t('demo.title')}
       </h3>
       
       <p className="text-sm text-gray-600 mb-4">
-        Testez les différents rôles et organisations avec ces comptes pré-configurés :
+        {t('demo.description')}
       </p>
 
       <div className="space-y-3">
@@ -74,7 +76,7 @@ export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }
               disabled={isLoading}
               className="ml-3 flex-shrink-0"
             >
-              {isLoading ? 'Connexion...' : 'Se connecter'}
+              {isLoading ? t('app.connecting') : t('app.sign_in')}
             </Button>
           </div>
         ))}
@@ -84,7 +86,7 @@ export const DemoLoginPanel: React.FC<DemoLoginPanelProps> = ({ className = '' }
 
       <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
         <p className="text-xs text-yellow-700">
-          Tous les comptes utilisent le mot de passe <code className="font-mono bg-yellow-100 px-1 rounded">demo123</code>
+          {t('demo.password_notice')} <code className="font-mono bg-yellow-100 px-1 rounded">demo123</code>
         </p>
       </div>
     </div>

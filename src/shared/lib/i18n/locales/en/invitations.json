@@ -11,23 +11,41 @@
   },
   "complete": {
     "title": "Complete Your Registration",
-    "subtitle": "Welcome! Please fill in your information to complete your registration.",
+    "subtitle": "Create your password to finalize your account",
+    "verifying": "Verifying your invitation...",
     "form": {
+      "email_label": "Email address",
+      "email_hint": "This email address is linked to your invitation",
       "first_name": "First Name",
-      "first_name_placeholder": "Your first name",
+      "first_name_placeholder": "Enter your first name",
       "last_name": "Last Name",
-      "last_name_placeholder": "Your last name",
+      "last_name_placeholder": "Enter your last name",
       "password": "Password",
-      "password_placeholder": "Choose a secure password",
+      "password_placeholder": "Create a secure password",
+      "password_hint": "At least 8 characters with an uppercase, a lowercase and a number",
       "confirm_password": "Confirm Password",
       "confirm_password_placeholder": "Confirm your password"
     },
     "password_strength": {
+      "label": "Password strength",
       "weak": "Weak",
       "medium": "Medium",
-      "strong": "Strong"
+      "strong": "Strong",
+      "very_strong": "Very strong"
     },
-    "complete_registration": "Complete Registration"
+    "complete_registration": "Complete Registration",
+    "creating": "Creating...",
+    "create_account": "Create my account",
+    "terms_agreement": "By creating your account, you agree to our",
+    "terms_link": "terms of use",
+    "validation": {
+      "first_name_required": "First name is required",
+      "last_name_required": "Last name is required",
+      "password_required": "Password is required",
+      "password_min_length": "Password must be at least 8 characters",
+      "password_complexity": "Password must contain at least one lowercase, one uppercase and one number",
+      "password_mismatch": "Passwords do not match"
+    }
   },
   "messages": {
     "send_success": "Invitation sent successfully!",

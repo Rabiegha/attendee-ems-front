@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle } from 'lucide-react'
 import { Modal, Button } from '@/shared/ui'
 
@@ -15,6 +16,7 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
   user,
   onDelete,
 }) => {
+  const { t } = useTranslation(['users', 'common'])
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   const handleDelete = async () => {
@@ -39,7 +41,7 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
     : user.email
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Désactiver cet utilisateur">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('users:modal.deactivate_title')}>
       <div className="space-y-4">
         <div className="flex items-start gap-4">
           <div className="flex-shrink-0">
@@ -49,12 +51,12 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
           </div>
           <div className="flex-1">
             <p className="text-body text-gray-900 dark:text-white">
-              Êtes-vous sûr de vouloir désactiver l'utilisateur <strong>{userName}</strong> ?
+              {t('users:modal.deactivate_confirm', { name: userName })}
             </p>
             <ul className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-400">
-              <li>• L'utilisateur ne pourra plus se connecter</li>
-              <li>• Ses données seront conservées</li>
-              <li>• Vous pourrez le réactiver plus tard si nécessaire</li>
+              <li>• {t('users:modal.deactivate_warning_1')}</li>
+              <li>• {t('users:modal.deactivate_warning_2')}</li>
+              <li>• {t('users:modal.deactivate_warning_3')}</li>
             </ul>
           </div>
         </div>
@@ -65,14 +67,14 @@ export const DeleteUserModal: React.FC<DeleteUserModalProps> = ({
             onClick={onClose}
             disabled={isDeleting}
           >
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button
             variant="destructive"
             onClick={handleDelete}
             disabled={isDeleting}
           >
-            {isDeleting ? 'Désactivation...' : 'Désactiver'}
+            {isDeleting ? t('users:modal.deactivating') : t('users:modal.deactivate')}
           </Button>
         </div>
       </div>

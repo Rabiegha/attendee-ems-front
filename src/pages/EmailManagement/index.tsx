@@ -3,6 +3,7 @@
  */
 
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Mail, CheckCircle, XCircle, Info, Send, Eye, X, UserPlus, Key } from 'lucide-react'
 import {
   Button,
@@ -29,21 +30,8 @@ import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
 import { Can } from '@/shared/acl/guards/Can'
 import { useToast } from '@/shared/hooks/useToast'
 
-const EMAIL_TYPE_LABELS: Record<EmailTemplateType, string> = {
-  [EmailTemplateType.REGISTRATION_CONFIRMATION]: 'Confirmation d\'inscription',
-  [EmailTemplateType.REGISTRATION_APPROVED]: 'Approbation d\'inscription',
-  [EmailTemplateType.REGISTRATION_REJECTED]: 'Refus d\'inscription',
-  [EmailTemplateType.INVITATION]: 'Invitation utilisateur',
-}
-
-const EMAIL_TYPE_DESCRIPTIONS: Record<EmailTemplateType, string> = {
-  [EmailTemplateType.REGISTRATION_CONFIRMATION]: 'Envoyé automatiquement lors de l\'inscription à un événement',
-  [EmailTemplateType.REGISTRATION_APPROVED]: 'Envoyé lorsque l\'inscription d\'un participant est approuvée',
-  [EmailTemplateType.REGISTRATION_REJECTED]: 'Envoyé lorsque l\'inscription d\'un participant est refusée',
-  [EmailTemplateType.INVITATION]: 'Envoyé lors de l\'invitation d\'un nouvel utilisateur dans l\'organisation',
-}
-
 function EmailManagementPageContent() {
+  const { t } = useTranslation('emails')
   const toast = useToast()
   const { data: templates, isLoading: templatesLoading } = useGetEmailTemplatesQuery()
   const { data: status, isLoading: statusLoading } = useGetEmailStatusQuery()
@@ -61,13 +49,13 @@ function EmailManagementPageContent() {
       await getPreview(templateId).unwrap()
       setPreviewOpen(true)
     } catch (error) {
-      toast.error('Erreur', 'Impossible de charger l\'aperçu du template')
+      toast.error(t('messages.preview_error'))
     }
   }
 
   const handleSendTestEmail = async () => {
     if (!testEmail) {
-      toast.error('Erreur', 'Veuillez saisir une adresse email')
+      toast.error(t('messages.email_required'))
       return
     }
 
@@ -78,20 +66,20 @@ function EmailManagementPageContent() {
       }).unwrap()
 
       if (result.success) {
-        toast.success('Email de test envoyé', result.message)
+        toast.success(t('messages.test_sent'), result.message)
       } else {
-        toast.error('Erreur', result.message)
+        toast.error(t('messages.sent_error'), result.message)
       }
     } catch (error) {
-      toast.error('Erreur', 'Impossible d\'envoyer l\'email de test')
+      toast.error(t('messages.test_error'))
     }
   }
 
   return (
     <PageContainer>
       <PageHeader
-        title="Gestion des Emails"
-        description="Configurez les templates d'emails automatiques de l'application"
+        title={t('page.title')}
+        description={t('page.description')}
         icon={Mail}
       />
 
@@ -101,7 +89,7 @@ function EmailManagementPageContent() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 pb-5">
               <Mail className="h-5 w-5" />
-              Templates d'emails
+              {t('templates.title')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -159,21 +147,21 @@ function EmailManagementPageContent() {
                           className="flex items-center gap-2"
                         >
                           <Eye className="h-4 w-4" />
-                          Aperçu
+                          {t('templates.preview')}
                         </Button>
                       </div>
 
                       {/* Titre et description */}
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                        {EMAIL_TYPE_LABELS[template.type as EmailTemplateType]}
+                        {t(`templates.type.${template.type}`)}
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                        {EMAIL_TYPE_DESCRIPTIONS[template.type as EmailTemplateType]}
+                        {t(`templates.type_description.${template.type}`)}
                       </p>
 
                       {/* Objet de l'email */}
                       <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Objet :</p>
+                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t('templates.subject_label')}</p>
                         <p className="text-sm text-gray-900 dark:text-gray-100 truncate">{template.subject}</p>
                       </div>
                     </div>
@@ -183,7 +171,7 @@ function EmailManagementPageContent() {
             ) : (
               <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                 <Mail className="h-12 w-12 mx-auto mb-3 text-gray-400 dark:text-gray-500" />
-                <p>Aucun template d'email configuré</p>
+                <p>{t('templates.no_templates')}</p>
               </div>
             )}
           </CardContent>
@@ -195,10 +183,9 @@ function EmailManagementPageContent() {
             <div className="flex items-start gap-3">
               <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
               <div className="text-sm text-blue-900 dark:text-blue-100">
-                <p className="font-medium mb-1">À propos des templates d'emails</p>
+                <p className="font-medium mb-1">{t('templates.about_title')}</p>
                 <p className="text-blue-700 dark:text-blue-300">
-                  Les templates d'emails sont actuellement génériques et identiques pour tous les événements.
-                  La fonctionnalité de personnalisation des templates par événement sera ajoutée dans une prochaine version.
+                  {t('templates.about_description')}
                 </p>
               </div>
             </div>
@@ -211,14 +198,14 @@ function EmailManagementPageContent() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Send className="h-5 w-5" />
-                Tester l'envoi d'email
+                {t('send.test_title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Type de template
+                    {t('send.template_type')}
                   </label>
                   <select
                     value={testTemplateType}
@@ -226,23 +213,23 @@ function EmailManagementPageContent() {
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value={EmailTemplateType.REGISTRATION_CONFIRMATION}>
-                      {EMAIL_TYPE_LABELS[EmailTemplateType.REGISTRATION_CONFIRMATION]}
+                      {t(`templates.type.${EmailTemplateType.REGISTRATION_CONFIRMATION}`)}
                     </option>
                     <option value={EmailTemplateType.REGISTRATION_APPROVED}>
-                      {EMAIL_TYPE_LABELS[EmailTemplateType.REGISTRATION_APPROVED]}
+                      {t(`templates.type.${EmailTemplateType.REGISTRATION_APPROVED}`)}
                     </option>
                     <option value={EmailTemplateType.REGISTRATION_REJECTED}>
-                      {EMAIL_TYPE_LABELS[EmailTemplateType.REGISTRATION_REJECTED]}
+                      {t(`templates.type.${EmailTemplateType.REGISTRATION_REJECTED}`)}
                     </option>
                     <option value={EmailTemplateType.INVITATION}>
-                      {EMAIL_TYPE_LABELS[EmailTemplateType.INVITATION]}
+                      {t(`templates.type.${EmailTemplateType.INVITATION}`)}
                     </option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Adresse email de destination
+                    {t('send.destination_label')}
                   </label>
                   <div className="flex gap-2">
                     <Input
@@ -258,13 +245,13 @@ function EmailManagementPageContent() {
                       className="flex items-center gap-2"
                     >
                       <Send className="h-4 w-4" />
-                      {sendingTest ? 'Envoi...' : 'Envoyer'}
+                      {sendingTest ? t('send.sending') : t('send.send_button')}
                     </Button>
                   </div>
                 </div>
 
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Un email de test avec des données fictives sera envoyé à l'adresse indiquée.
+                  {t('send.test_description')}
                 </p>
               </div>
             </CardContent>
@@ -276,13 +263,13 @@ function EmailManagementPageContent() {
       <Modal
         isOpen={previewOpen}
         onClose={() => setPreviewOpen(false)}
-        title="Aperçu du template"
+        title={t('templates.preview_title')}
         size="xl"
       >
         <div className="overflow-auto border border-gray-200 dark:border-gray-700 rounded-lg bg-white" style={{ maxHeight: '70vh' }}>
           {previewLoading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="text-gray-500">Chargement de l'aperçu...</div>
+              <div className="text-gray-500">{t('templates.preview_loading')}</div>
             </div>
           ) : previewData ? (
             <iframe

@@ -1,0 +1,41 @@
+{
+  "page": {
+    "title": "Gestion des imprimantes",
+    "description": "Vue d'ensemble des clients d'impression connectés et de leurs imprimantes"
+  },
+  "status": {
+    "clients_connected": "{{count}} client(s) connecté(s)",
+    "no_client": "Aucun client connecté",
+    "ready": "Prête",
+    "error": "Erreur / Hors ligne",
+    "default": "Défaut"
+  },
+  "printers": {
+    "unknown_device": "Appareil inconnu",
+    "printers_available": "{{count}} imprimante(s) disponible(s)",
+    "no_printers": "Aucune imprimante détectée",
+    "no_printers_message": "Connectez le client d'impression EMS sur vos ordinateurs pour voir les imprimantes disponibles ici.",
+    "refresh": "Actualiser"
+  },
+  "download": {
+    "title": "Client d'Impression",
+    "description": "Téléchargez le client d'impression automatique pour vos badges d'événements.",
+    "windows": "Windows",
+    "windows_desc": "Windows 10 / 11 (64-bit)",
+    "macos": "macOS",
+    "macos_desc": "macOS 11 Big Sur ou supérieur",
+    "download_button": "Télécharger",
+    "version_windows": "Version 1.0.0 • ~123 MB",
+    "version_macos": "Version 1.0.0 • ~120 MB"
+  },
+  "queue": {
+    "title": "File d'impression",
+    "pending": "En attente",
+    "printing": "En cours",
+    "completed": "Terminé",
+    "failed": "Échec",
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "clear_completed": "Effacer les terminés"
+  }
+}

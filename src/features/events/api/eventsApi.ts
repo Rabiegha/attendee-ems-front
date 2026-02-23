@@ -210,12 +210,12 @@ export const eventsApi = rootApi.injectEndpoints({
 
     bulkExportEvents: builder.mutation<
       { downloadUrl: string; filename: string; expiresAt: string },
-      { ids: string[]; format?: 'csv' | 'xlsx' }
+      { ids: string[]; format?: 'csv' | 'xlsx'; lang?: string }
     >({
-      query: ({ ids, format = 'csv' }) => ({
+      query: ({ ids, format = 'csv', lang }) => ({
         url: `${API_ENDPOINTS.EVENTS.LIST}/bulk-export`,
         method: 'POST',
-        body: { ids, format },
+        body: { ids, format, lang },
       }),
     }),
 

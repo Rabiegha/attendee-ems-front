@@ -1,5 +1,6 @@
 import React from 'react'
 import { AlertTriangle, Download, Trash2 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 
@@ -13,39 +14,6 @@ interface BulkConfirmModalProps {
   itemType: string // 'attendees', 'events', 'registrations'
 }
 
-const actionConfig = {
-  delete: {
-    icon: Trash2,
-    title: 'Supprimer les éléments',
-    color: 'red',
-    buttonText: 'Supprimer',
-    loadingText: 'Suppression...',
-    getMessage: (count: number, itemType: string) =>
-      `Êtes-vous sûr de vouloir supprimer ${count} ${itemType} sélectionné${count > 1 ? 's' : ''} ?`,
-    warning: 'Cette action est irréversible.',
-  },
-  export: {
-    icon: Download,
-    title: 'Exporter les éléments',
-    color: 'blue',
-    buttonText: 'Exporter',
-    loadingText: 'Export en cours...',
-    getMessage: (count: number, itemType: string) =>
-      `Exporter ${count} ${itemType} sélectionné${count > 1 ? 's' : ''} au format CSV ?`,
-    warning: null,
-  },
-  edit: {
-    icon: AlertTriangle,
-    title: 'Modifier les éléments',
-    color: 'yellow',
-    buttonText: 'Modifier',
-    loadingText: 'Modification...',
-    getMessage: (count: number, itemType: string) =>
-      `Modifier ${count} ${itemType} sélectionné${count > 1 ? 's' : ''} ?`,
-    warning: 'Cette action affectera tous les éléments sélectionnés.',
-  },
-}
-
 export const BulkConfirmModal: React.FC<BulkConfirmModalProps> = ({
   isOpen,
   onClose,
@@ -55,6 +23,41 @@ export const BulkConfirmModal: React.FC<BulkConfirmModalProps> = ({
   selectedCount,
   itemType,
 }) => {
+  const { t } = useTranslation('common')
+
+  const actionConfig = {
+    delete: {
+      icon: Trash2,
+      title: t('bulk.delete_title'),
+      color: 'red',
+      buttonText: t('bulk.delete_button'),
+      loadingText: t('bulk.delete_loading'),
+      getMessage: (count: number, itemType: string) =>
+        t('bulk.delete_message', { count, itemType }),
+      warning: t('bulk.delete_warning'),
+    },
+    export: {
+      icon: Download,
+      title: t('bulk.export_title'),
+      color: 'blue',
+      buttonText: t('bulk.export_button'),
+      loadingText: t('bulk.export_loading'),
+      getMessage: (count: number, itemType: string) =>
+        t('bulk.export_message', { count, itemType }),
+      warning: null,
+    },
+    edit: {
+      icon: AlertTriangle,
+      title: t('bulk.edit_title'),
+      color: 'yellow',
+      buttonText: t('bulk.edit_button'),
+      loadingText: t('bulk.edit_loading'),
+      getMessage: (count: number, itemType: string) =>
+        t('bulk.edit_message', { count, itemType }),
+      warning: t('bulk.edit_warning'),
+    },
+  }
+
   const config = actionConfig[actionType]
   const Icon = config.icon
 
@@ -108,7 +111,7 @@ export const BulkConfirmModal: React.FC<BulkConfirmModalProps> = ({
 
         <div className="flex justify-center space-x-3 mt-6">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            Annuler
+            {t('app.cancel')}
           </Button>
           <Button
             variant={colors.button}

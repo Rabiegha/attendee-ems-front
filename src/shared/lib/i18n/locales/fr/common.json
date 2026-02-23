@@ -6,6 +6,7 @@
     "retry": "Réessayer",
     "cancel": "Annuler",
     "save": "Enregistrer",
+    "saving": "Enregistrement...",
     "delete": "Supprimer",
     "edit": "Modifier",
     "create": "Créer",
@@ -19,7 +20,28 @@
     "previous": "Précédent",
     "confirm": "Confirmer",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "ok": "OK",
+    "reset": "Réinitialiser",
+    "refresh": "Rafraîchir",
+    "refreshing": "Rafraîchissement...",
+    "view_more": "Voir plus",
+    "clear_all": "Tout effacer",
+    "select_all": "Tout sélectionner",
+    "deselect_all": "Tout désélectionner",
+    "show_all": "Tout afficher",
+    "hide_all": "Tout masquer",
+    "deleting": "Suppression...",
+    "exporting": "Export en cours...",
+    "modifying": "Modification...",
+    "connecting": "Connexion...",
+    "sign_in": "Se connecter",
+    "user": "Utilisateur",
+    "actions": "Actions",
+    "update": "Mettre à jour",
+    "restoring": "Restauration...",
+    "restore": "Restaurer",
+    "permanent_delete": "Supprimer définitivement"
   },
   "welcome": "Bienvenue",
   "navigation": {
@@ -35,7 +57,10 @@
     "email": "Emails",
     "organizations": "Organisations",
     "reports": "Rapports",
-    "settings": "Paramètres",    "print_client": "Client d'Impression", "printing": "Imprimantes",    "application": "Application Mobile",
+    "settings": "Paramètres",
+    "print_client": "Client d'Impression",
+    "printing": "Imprimantes",
+    "application": "Application Mobile",
     "profile": "Profil",
     "logout": "Déconnexion"
   },
@@ -46,7 +71,12 @@
     "completed": "Terminé",
     "cancelled": "Annulé",
     "draft": "Brouillon",
-    "published": "Publié"
+    "published": "Publié",
+    "approved": "Approuvé",
+    "rejected": "Refusé",
+    "online": "En ligne",
+    "physical": "Physique",
+    "hybrid": "Hybride"
   },
   "errors": {
     "required": "Ce champ est obligatoire",
@@ -57,7 +87,90 @@
     "unauthorized": "Non autorisé",
     "forbidden": "Accès interdit",
     "not_found": "Ressource non trouvée",
-    "server_error": "Erreur serveur"
+    "server_error": "Erreur serveur",
+    "load_error": "Erreur lors du chargement",
+    "password_min_length": "Le mot de passe doit comporter au moins 6 caractères"
+  },
+  "table": {
+    "drag_to_reorder": "Glisser pour réorganiser",
+    "items": "éléments",
+    "no_data": "Aucune donnée disponible",
+    "shift_click_range": "Maj+Clic pour sélectionner une plage",
+    "select_row": "Sélectionner la ligne",
+    "select_all": "Sélectionner tout",
+    "reset_columns": "Réinitialiser l'ordre et la visibilité des colonnes",
+    "columns_count": "Colonnes ({{count}})",
+    "columns_display": "Affichage des colonnes",
+    "selected_count": "{{selected}} sur {{total}} ligne(s) sélectionnée(s)",
+    "per_page": "Par page :",
+    "showing": "Affichage de {{from}} à {{to}} sur {{total}} résultats",
+    "result": "résultat",
+    "results": "résultats",
+    "found_one": "trouvé",
+    "found_many": "trouvés",
+    "refresh_list": "Rafraîchir la liste",
+    "reset_filters": "Réinitialiser les filtres",
+    "others": "autres"
+  },
+  "pagination": {
+    "first_page": "Première page",
+    "previous_page": "Page précédente",
+    "next_page": "Page suivante",
+    "last_page": "Dernière page",
+    "showing": "Affichage de {{from}} à {{to}} sur {{total}} résultats",
+    "per_page": "Par page :",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "page": "Page",
+    "of": "sur"
+  },
+  "search": {
+    "placeholder": "Rechercher...",
+    "clear": "Effacer la recherche"
+  },
+  "select": {
+    "placeholder": "Sélectionner des éléments...",
+    "search_placeholder": "Rechercher...",
+    "no_results": "Aucun élément trouvé",
+    "selected_count": "{{count}} / {{max}} sélectionné(s)"
+  },
+  "bulk": {
+    "selected_one": "{{count}} sélectionné",
+    "selected_many": "{{count}} sélectionnés",
+    "delete_title": "Supprimer les éléments",
+    "delete_confirm": "Êtes-vous sûr de vouloir supprimer les {{count}} éléments sélectionnés ? Cette action est irréversible.",
+    "delete_warning": "Cette action est irréversible.",
+    "export_title": "Exporter les éléments",
+    "export_confirm": "Exporter {{count}} élément(s) sélectionné(s) au format CSV ?",
+    "edit_title": "Modifier les éléments",
+    "edit_confirm": "Modifier {{count}} élément(s) sélectionné(s) ?",
+    "edit_warning": "Cette action affectera tous les éléments sélectionnés."
+  },
+  "modal": {
+    "close": "Fermer la modale",
+    "name_label": "Nom :",
+    "url_label": "URL :",
+    "email_label": "Email :",
+    "organization_label": "Organisation :"
+  },
+  "confirmation": {
+    "confirm": "Confirmer",
+    "cancel": "Retour"
+  },
+  "demo": {
+    "title": "Comptes de Démo Multi-Organisations",
+    "description": "Testez les différents rôles et organisations avec ces comptes pré-configurés :",
+    "login_success": "Connexion réussie",
+    "login_as": "Connecté en tant que :",
+    "login_error": "Erreur de connexion",
+    "login_error_message": "Impossible de se connecter avec ce compte de démo",
+    "password_notice": "Tous les comptes utilisent le mot de passe"
+  },
+  "not_found": {
+    "code": "404",
+    "title": "Page non trouvée",
+    "description": "La page que vous recherchez n'existe pas.",
+    "go_dashboard": "Tableau de bord"
   },
   "invitations": {
     "title": "Gestion des utilisateurs",
@@ -67,6 +180,7 @@
     "accepted": "Acceptée",
     "expired": "Expirée",
     "cancelled": "Annulée",
+    "page_description": "Envoyez une invitation par email pour ajouter un nouveau membre à votre équipe. L'utilisateur recevra un lien sécurisé pour créer son compte.",
     "stats": {
       "pending": "En attente",
       "thisWeek": "Cette semaine",
@@ -76,17 +190,33 @@
       "email": {
         "label": "Adresse email",
         "placeholder": "user@example.com",
-        "description": "L'utilisateur recevra un lien d'invitation par email"
+        "description": "L'utilisateur recevra un lien d'invitation par email",
+        "required": "L'email est requis"
       },
       "role": {
         "label": "Rôle",
         "placeholder": "Sélectionner un rôle",
-        "description": "Définit les permissions de l'utilisateur dans l'organisation"
+        "description": "Définit les permissions de l'utilisateur dans l'organisation",
+        "select_org_first": "Sélectionnez d'abord une organisation",
+        "load_error": "Erreur de chargement",
+        "no_roles": "Aucun rôle disponible pour cette organisation",
+        "default_roles": "Rôles par défaut (Admin, Manager, Partner, Viewer, Hôtesse) disponibles pour la nouvelle organisation"
       },
       "organization": {
         "label": "Organisation",
         "placeholder": "Sélectionner une organisation",
-        "description": "Organisation dans laquelle inviter l'utilisateur"
+        "description": "Organisation dans laquelle inviter l'utilisateur",
+        "hint": "Sélectionnez d'abord l'organisation pour voir les rôles disponibles",
+        "existing": "Assigner à une organisation existante",
+        "create_new": "Créer une nouvelle organisation",
+        "name_label": "Nom de l'organisation",
+        "name_placeholder": "Ex: ACME Corporation",
+        "slug_generated": "Slug généré :",
+        "auto_info_title": "Informations automatiques",
+        "auto_info_slug": "Le slug sera généré automatiquement (ex: acme-corporation)",
+        "auto_info_roles": "Les rôles par défaut seront créés automatiquement",
+        "auto_info_timezone": "Le fuseau horaire sera défini sur Europe/Paris",
+        "auto_info_assignment": "L'utilisateur sera automatiquement assigné à cette organisation"
       },
       "events": {
         "label": "Événements associés",
@@ -98,7 +228,12 @@
         "placeholder": "Ajoutez un message personnel à l'invitation...",
         "description": "Ce message sera inclus dans l'email d'invitation"
       },
-      "submit": "Envoyer l'invitation"
+      "submit": "Envoyer l'invitation",
+      "new_invitation": "Nouvelle invitation",
+      "fill_info": "Remplissez les informations ci-dessous",
+      "creating_org": "Création de l'organisation...",
+      "sending": "Envoi en cours...",
+      "submit_with_org": "Créer l'organisation et envoyer l'invitation"
     },
     "roles": {
       "ORG_ADMIN": {
@@ -132,7 +267,85 @@
       "emailExists": "Un utilisateur avec cette adresse email existe déjà",
       "limitReached": "Limite d'invitations atteinte ({{limit}} max)",
       "cancelled": "Invitation annulée",
-      "resent": "Invitation renvoyée"
-    }
+      "resent": "Invitation renvoyée",
+      "resent_detail": "Une nouvelle invitation a été envoyée à {{email}}."
+    },
+    "validation": {
+      "required_fields_title": "Champs requis",
+      "required_fields_message": "Veuillez remplir tous les champs requis avant d'envoyer l'invitation.",
+      "org_name_required_title": "Nom d'organisation requis",
+      "org_name_required_message": "Veuillez saisir le nom de la nouvelle organisation.",
+      "org_required_title": "Organisation requise",
+      "org_required_message": "Veuillez sélectionner une organisation ou créer une nouvelle."
+    },
+    "errors": {
+      "org_creation_error": "Erreur lors de la création de l'organisation",
+      "org_exists_title": "Organisation existante",
+      "org_exists_message": "Une organisation avec le nom \"{{name}}\" existe déjà. Veuillez choisir un nom différent ou sélectionner l'organisation existante.",
+      "org_creation_title": "Erreur de création d'organisation",
+      "resend_error": "Erreur de renvoi",
+      "resend_failed": "Impossible de renvoyer l'invitation",
+      "already_pending_title": "Invitation déjà en cours",
+      "already_pending_message": "Une invitation a déjà été envoyée à {{email}} le {{date}}.\n\nElle expire le {{expiresDate}}.\n\nVoulez-vous renvoyer une nouvelle invitation ?",
+      "already_pending_simple": "Une invitation a déjà été envoyée à {{email}}.\n\nVoulez-vous renvoyer une nouvelle invitation ?",
+      "already_member_title": "Utilisateur déjà membre",
+      "pending_title": "Invitation en attente",
+      "account_exists_title": "Compte existant détecté",
+      "account_exists_message": "Un compte avec l'email {{email}} existe déjà dans le système.\n\nPour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette personne doit accéder à plusieurs organisations, veuillez :\n\u2022 Demander à cette personne d'utiliser un autre email pour créer un second compte\n\u2022 Ou attendre la mise à jour prochaine qui permettra à un utilisateur de rejoindre plusieurs organisations",
+      "invalid_email_title": "Email invalide",
+      "invalid_email_message": "L'adresse email fournie n'est pas valide. Veuillez vérifier le format.",
+      "access_denied_title": "Accès refusé",
+      "access_denied_message": "Vous n'avez pas les permissions nécessaires pour envoyer cette invitation.",
+      "send_error": "Erreur lors de l'envoi",
+      "unexpected": "Une erreur inattendue s'est produite"
+    },
+    "how_it_works": {
+      "title": "Comment ça fonctionne",
+      "description": "Le processus d'invitation en 3 étapes simples",
+      "step1_title": "1. Email envoyé",
+      "step1_description": "Un email d'invitation est automatiquement envoyé à l'adresse indiquée",
+      "step2_title": "2. Lien sécurisé",
+      "step2_description": "L'utilisateur reçoit un lien sécurisé pour compléter son inscription",
+      "step3_title": "3. Compte créé",
+      "step3_description": "Il peut créer son mot de passe et accéder immédiatement à la plateforme"
+    },
+    "important": {
+      "title": "Points importants",
+      "check_email": "Vérifiez l'adresse email avant d'envoyer l'invitation",
+      "expires": "Le lien d'invitation expire automatiquement dans 48 heures",
+      "can_resend": "Vous pouvez renvoyer une invitation si nécessaire",
+      "permissions": "L'utilisateur recevra ses permissions selon le rôle assigné"
+    },
+    "access_denied_title": "Accès aux invitations refusé",
+    "access_denied_message": "Vous n'avez pas les permissions nécessaires pour gérer les invitations."
+  },
+  "filters": {
+    "all": "Tous",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "none": "Aucun"
+  },
+  "organizations": {
+    "title": "Organisations",
+    "description": "Gérez les organisations",
+    "title_super_admin": "Gestion des Organisations",
+    "title_admin": "Mon Organisation",
+    "description_super_admin": "Gérez toutes les organisations et leurs utilisateurs. Cliquez sur une organisation pour voir/masquer ses utilisateurs.",
+    "description_admin": "Informations sur votre organisation et votre équipe",
+    "team": "Équipe",
+    "users": "Utilisateurs",
+    "no_role": "Sans rôle",
+    "inactive": "Inactif",
+    "new_organization": "Nouvelle Organisation",
+    "none_found": "Aucune organisation trouvée",
+    "none_associated": "Aucune organisation associée",
+    "access_denied": "Accès aux organisations refusé",
+    "access_denied_message": "Vous n'avez pas les permissions nécessaires pour consulter les informations d'organisation.",
+    "loading_error": "Erreur lors du chargement des organisations",
+    "unknown_error": "Une erreur inconnue est survenue",
+    "create_error_title": "Erreur de création",
+    "create_error_default": "Une erreur est survenue lors de la création de l'organisation.",
+    "modal_title": "Nouvelle organisation",
+    "modal_description": "Créez une nouvelle organisation"
   }
 }

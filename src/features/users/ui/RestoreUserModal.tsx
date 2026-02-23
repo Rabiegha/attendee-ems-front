@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
@@ -10,6 +11,8 @@ interface RestoreUserModalProps {
 }
 
 export function RestoreUserModal({ user, onClose, onRestore }: RestoreUserModalProps) {
+  const { t } = useTranslation(['users', 'common'])
+
   if (!user) return null
 
   const handleConfirm = async () => {
@@ -22,19 +25,15 @@ export function RestoreUserModal({ user, onClose, onRestore }: RestoreUserModalP
   }
 
   return (
-    <Modal isOpen={!!user} onClose={onClose} title="Restaurer cet utilisateur">
+    <Modal isOpen={!!user} onClose={onClose} title={t('users:modal.restore_title')}>
       <div className="space-y-4">
         <p className="text-sm text-neutral-600 dark:text-neutral-300">
-          Êtes-vous sûr de vouloir restaurer{' '}
-          <span className="font-semibold">
-            {user.first_name} {user.last_name}
-          </span>{' '}
-          ? Cet utilisateur redeviendra actif et pourra accéder à la plateforme.
+          {t('users:modal.restore_confirm', { name: `${user.first_name} ${user.last_name}` })}
         </p>
 
         <div className="flex gap-3 justify-end pt-4">
           <Button variant="outline" onClick={onClose}>
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button
             variant="default"
@@ -42,7 +41,7 @@ export function RestoreUserModal({ user, onClose, onRestore }: RestoreUserModalP
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <RotateCcw className="w-4 h-4" />
-            Restaurer
+            {t('users:modal.restore_button')}
           </Button>
         </div>
       </div>

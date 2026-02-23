@@ -7,6 +7,7 @@ import { Button } from '@/shared/ui/Button'
 import { Input } from '@/shared/ui/Input'
 import { useChangePasswordMutation } from '@/features/users/api/usersApi'
 import { useToast } from '@/shared/ui/useToast'
+import { useTranslation } from 'react-i18next'
 
 // 📝 Schéma de validation
 const changePasswordSchema = z
@@ -48,6 +49,8 @@ export function ChangePasswordPage() {
 
   const newPassword = watch('newPassword')
 
+  const { t } = useTranslation('auth')
+
   // Validation de complexité en temps réel
   const passwordValidation = {
     length: newPassword?.length >= 8,
@@ -68,8 +71,8 @@ export function ChangePasswordPage() {
 
       setIsSuccess(true)
       success(
-        'Mot de passe mis à jour !',
-        'Vous allez être redirigé vers le tableau de bord.'
+        t('change_password.success_toast'),
+        t('change_password.success_toast_message')
       )
 
       // Redirection après 2 secondes
@@ -79,13 +82,13 @@ export function ChangePasswordPage() {
     } catch (error: any) {
       if (error?.status === 401) {
         showError(
-          'Mot de passe incorrect',
-          'Le mot de passe actuel que vous avez saisi est incorrect.'
+          t('change_password.error_incorrect'),
+          t('change_password.error_incorrect_message')
         )
       } else {
         showError(
-          'Erreur',
-          'Impossible de mettre à jour le mot de passe. Veuillez réessayer.'
+          t('change_password.error_generic'),
+          t('change_password.error_generic_message')
         )
       }
     }
@@ -98,13 +101,13 @@ export function ChangePasswordPage() {
           <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg text-center transition-colors duration-200">
             <CheckCircle className="mx-auto h-16 w-16 text-green-600 dark:text-green-400 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Mot de passe mis à jour !
+              {t('change_password.success_title')}
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Votre mot de passe a été mis à jour avec succès.
+              {t('change_password.success_message')}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Redirection en cours...
+              {t('change_password.success_redirect')}
             </p>
           </div>
         </div>
@@ -122,11 +125,10 @@ export function ChangePasswordPage() {
               <Lock className="h-6 w-6 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Changement de mot de passe requis
+              {t('change_password.title')}
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
-              Pour des raisons de sécurité, vous devez changer votre mot de
-              passe temporaire.
+              {t('change_password.subtitle')}
             </p>
           </div>
 
@@ -138,13 +140,13 @@ export function ChangePasswordPage() {
                 htmlFor="currentPassword"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
               >
-                Mot de passe actuel
+                {t('change_password.current_password')}
               </label>
               <div className="relative">
                 <Input
                   {...register('currentPassword')}
                   type={showCurrentPassword ? 'text' : 'password'}
-                  placeholder="Saisissez votre mot de passe temporaire"
+                  placeholder={t('change_password.current_placeholder')}
                   error={!!errors.currentPassword?.message}
                   leftIcon={<Lock className="h-5 w-5" />}
                   rightIcon={
@@ -172,13 +174,13 @@ export function ChangePasswordPage() {
                 htmlFor="newPassword"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
               >
-                Nouveau mot de passe
+                {t('change_password.new_password')}
               </label>
               <div className="relative">
                 <Input
                   {...register('newPassword')}
                   type={showNewPassword ? 'text' : 'password'}
-                  placeholder="Nouveau mot de passe sécurisé"
+                  placeholder={t('change_password.new_placeholder')}
                   error={!!errors.newPassword?.message}
                   leftIcon={<Lock className="h-5 w-5" />}
                   rightIcon={
@@ -201,15 +203,15 @@ export function ChangePasswordPage() {
               {newPassword && (
                 <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg transition-colors duration-200">
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
-                    Exigences du mot de passe :
+                    {t('change_password.requirements_title')}
                   </p>
                   <div className="space-y-1">
                     {Object.entries({
-                      'Au moins 8 caractères': passwordValidation.length,
-                      'Une majuscule': passwordValidation.uppercase,
-                      'Une minuscule': passwordValidation.lowercase,
-                      'Un chiffre': passwordValidation.number,
-                      'Un caractère spécial (@$!%*?&)':
+                      [t('change_password.req_length')]: passwordValidation.length,
+                      [t('change_password.req_uppercase')]: passwordValidation.uppercase,
+                      [t('change_password.req_lowercase')]: passwordValidation.lowercase,
+                      [t('change_password.req_number')]: passwordValidation.number,
+                      [t('change_password.req_special')]:
                         passwordValidation.special,
                     }).map(([rule, valid]) => (
                       <div key={rule} className="flex items-center gap-2">
@@ -240,13 +242,13 @@ export function ChangePasswordPage() {
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2"
               >
-                Confirmer le nouveau mot de passe
+                {t('change_password.confirm_password')}
               </label>
               <div className="relative">
                 <Input
                   {...register('confirmPassword')}
                   type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirmez votre nouveau mot de passe"
+                  placeholder={t('change_password.confirm_placeholder')}
                   error={!!errors.confirmPassword?.message}
                   leftIcon={<Lock className="h-5 w-5" />}
                   rightIcon={
@@ -276,16 +278,15 @@ export function ChangePasswordPage() {
               disabled={isLoading || !isPasswordValid}
             >
               {isLoading
-                ? 'Mise à jour en cours...'
-                : 'Mettre à jour le mot de passe'}
+                ? t('change_password.submitting')
+                : t('change_password.submit')}
             </Button>
           </form>
 
           {/* 💡 Info de sécurité */}
           <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg transition-colors duration-200">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              💡 Conseil : Utilisez un gestionnaire de mots de passe pour créer
-              et stocker un mot de passe fort et unique.
+              {t('change_password.security_tip')}
             </p>
           </div>
         </div>

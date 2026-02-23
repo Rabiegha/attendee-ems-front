@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal, Button, Input, FormField } from '@/shared/ui'
 
 interface EditUserModalProps {
@@ -14,6 +15,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   user,
   onSave,
 }) => {
+  const { t } = useTranslation(['users', 'common'])
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
     first_name: '',
@@ -54,30 +56,30 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   if (!user) return null
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Modifier l'utilisateur">
+    <Modal isOpen={isOpen} onClose={onClose} title={t('users:modal.edit_title')}>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <FormField label="Prénom">
+          <FormField label={t('users:detail.first_name')}>
             <Input
               value={formData.first_name}
               onChange={(e) =>
                 setFormData({ ...formData, first_name: e.target.value })
               }
-              placeholder="Prénom"
+              placeholder={t('users:detail.first_name')}
             />
           </FormField>
-          <FormField label="Nom">
+          <FormField label={t('users:detail.last_name')}>
             <Input
               value={formData.last_name}
               onChange={(e) =>
                 setFormData({ ...formData, last_name: e.target.value })
               }
-              placeholder="Nom"
+              placeholder={t('users:detail.last_name')}
             />
           </FormField>
         </div>
         
-        <FormField label="Email" required>
+        <FormField label={t('users:detail.email')} required>
           <Input
             type="email"
             value={formData.email}
@@ -88,7 +90,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
           />
         </FormField>
         
-        <FormField label="Téléphone">
+        <FormField label={t('users:detail.phone')}>
           <Input
             value={formData.phone}
             onChange={(e) =>
@@ -99,22 +101,22 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         </FormField>
         
         <div className="grid grid-cols-2 gap-4">
-          <FormField label="Entreprise">
+          <FormField label={t('users:modal.company')}>
             <Input
               value={formData.company}
               onChange={(e) =>
                 setFormData({ ...formData, company: e.target.value })
               }
-              placeholder="Nom de l'entreprise"
+              placeholder={t('users:modal.company_placeholder')}
             />
           </FormField>
-          <FormField label="Fonction">
+          <FormField label={t('users:modal.job_title')}>
             <Input
               value={formData.job_title}
               onChange={(e) =>
                 setFormData({ ...formData, job_title: e.target.value })
               }
-              placeholder="Fonction"
+              placeholder={t('users:modal.job_title')}
             />
           </FormField>
         </div>
@@ -125,14 +127,14 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
             onClick={onClose}
             disabled={isSaving}
           >
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button
             variant="default"
             onClick={handleSave}
             disabled={isSaving || !formData.email}
           >
-            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+            {isSaving ? t('common:app.saving') : t('common:app.save')}
           </Button>
         </div>
       </div>

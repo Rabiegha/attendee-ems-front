@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   useGetEventByIdQuery,
   useUpdateRegistrationFieldsMutation,
@@ -144,6 +145,8 @@ export const EventDetails: React.FC = () => {
   const [showTitle, setShowTitle] = useState<boolean>(true)
   const [showDescription, setShowDescription] = useState<boolean>(true)
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false)
+
+  const { t, i18n } = useTranslation(['events', 'common'])
 
   // Hooks de permissions - DOIVENT être appelés avant les conditions
   const canReadEvents = useCan('read', 'Event')
@@ -568,12 +571,12 @@ export const EventDetails: React.FC = () => {
   const registrationsTabs: TabItem[] = [
     {
       id: 'active',
-      label: 'Actives',
+      label: t('registrations.active_tab'),
       count: activeRegistrationsStats?.meta?.total || 0,
     },
     {
       id: 'deleted',
-      label: 'Supprimées',
+      label: t('registrations.deleted_tab'),
       count: deletedRegistrationsStats?.meta?.total || 0,
     },
   ]
@@ -600,7 +603,7 @@ export const EventDetails: React.FC = () => {
     
     if (!id || !allRegistrationsForExport?.data) {
       console.warn('⚠️ Pas de données à exporter', { id, data: allRegistrationsForExport?.data })
-      toast.error('Aucune inscription à exporter')
+      toast.error(t('registrations.no_data_to_export'))
       return
     }
 
@@ -610,15 +613,16 @@ export const EventDetails: React.FC = () => {
       console.log('📊 IDs à exporter:', allIds.length)
 
       if (allIds.length === 0) {
-        toast.info('Aucune inscription à exporter')
+        toast.info(t('registrations.no_data_to_export'))
         return
       }
 
-      toast.info(`Export de ${allIds.length} inscription(s) en cours...`)
+      toast.info(t('registrations.exporting_count', { count: allIds.length }))
 
       const response = await bulkExportRegistrations({
         ids: allIds,
         format: 'excel',
+        lang: i18n.language,
       }).unwrap()
 
       console.log('✅ Réponse export reçue:', response)
@@ -633,10 +637,10 @@ export const EventDetails: React.FC = () => {
       document.body.removeChild(a)
       URL.revokeObjectURL(response.downloadUrl)
 
-      toast.success(`${allIds.length} inscription(s) exportée(s) avec succès`)
+      toast.success(t('registrations.export_success_count', { count: allIds.length }))
     } catch (error) {
       console.error("❌ Erreur lors de l'export:", error)
-      toast.error("Erreur lors de l'export des inscriptions")
+      toast.error(t('registrations.export_error'))
     }
   }
 
@@ -662,18 +666,18 @@ export const EventDetails: React.FC = () => {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-          {isForbidden ? 'Accès refusé' : 'Événement non trouvé'}
+          {isForbidden ? t('details.access_denied') : t('details.not_found')}
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
           {isForbidden 
-            ? "Vous n'avez pas accès à cet événement. Veuillez demander à un administrateur de vous inviter à cet événement."
-            : "L'événement que vous recherchez n'existe pas ou a été supprimé."
+            ? t('details.access_denied_message')
+            : t('details.not_found_message')
           }
         </p>
         <Link to="/events">
           <Button variant="outline">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Retour aux événements
+            {t('details.back_to_events')}
           </Button>
         </Link>
       </div>
@@ -694,74 +698,74 @@ export const EventDetails: React.FC = () => {
   const allTabs = [
     { 
       id: 'details' as TabType, 
-      label: 'Détails', 
+      label: t('tabs.details'), 
       icon: FileText,
       hasPermission: canReadEvents
     },
     {
       id: 'registrations' as TabType,
-      label: `Inscriptions (${activeMeta.total})`,
+      label: `${t('tabs.registrations')} (${activeMeta.total})`,
       icon: Users,
       hasPermission: canReadRegistrations
     },
     { 
       id: 'stats' as TabType, 
-      label: 'Statistiques', 
+      label: t('tabs.stats'), 
       icon: BarChart3,
       hasPermission: canReadRegistrations
     },
     { 
       id: 'team' as TabType, 
-      label: 'Équipe', 
+      label: t('tabs.team'), 
       icon: Users,
       hasPermission: canAssignUsers,
       disabledIfDeleted: true 
     },
     { 
       id: 'attendee-types' as TabType, 
-      label: 'Types de participants', 
+      label: t('tabs.attendee_types'), 
       icon: Tag,
       hasPermission: canReadAttendeeTypes,
       disabledIfDeleted: true 
     },
     { 
       id: 'badges' as TabType, 
-      label: 'Badges', 
+      label: t('tabs.badges'), 
       icon: CreditCard,
       hasPermission: canReadBadges,
       disabledIfDeleted: true 
     },
     { 
       id: 'sessions' as TabType, 
-      label: 'Sessions', 
+      label: t('tabs.sessions'), 
       icon: Calendar,
       hasPermission: canReadEvents,
       disabledIfDeleted: true 
     },
     { 
       id: 'form' as TabType, 
-      label: 'Formulaire', 
+      label: t('tabs.form'), 
       icon: FormInput, 
       hasPermission: canUpdateEvent,
       disabledIfDeleted: true 
     },
     { 
       id: 'emails' as TabType, 
-      label: 'Emails', 
+      label: t('tabs.emails'), 
       icon: Mail, 
       hasPermission: canUpdateEvent,
       disabledIfDeleted: true 
     },
     {
       id: 'print-queue' as TabType,
-      label: 'Impression',
+      label: t('tabs.print_queue'),
       icon: Printer,
       hasPermission: canReadRegistrations,
       disabledIfDeleted: true
     },
     { 
       id: 'settings' as TabType, 
-      label: 'Paramètres', 
+      label: t('tabs.settings'), 
       icon: Settings, 
       hasPermission: canUpdateEvent,
       disabledIfDeleted: true 
@@ -788,11 +792,10 @@ export const EventDetails: React.FC = () => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-red-800 dark:text-red-300">
-                CET ÉVÉNEMENT A ÉTÉ SUPPRIMÉ
+                {t('details.event_deleted')}
               </p>
               <p className="text-xs text-red-700 dark:text-red-400 mt-1">
-                Cet événement est conservé dans l'historique des participants mais n'est plus accessible publiquement.
-                Les onglets Formulaire et Paramètres sont désactivés.
+                {t('details.event_deleted_message')}
               </p>
             </div>
           </div>
@@ -832,17 +835,17 @@ export const EventDetails: React.FC = () => {
               }`}
             >
               {event.status === 'registration_closed'
-                ? 'Inscriptions closes'
+                ? t('status.registration_closed')
                 : event.status === 'cancelled'
-                  ? 'Annulé'
+                  ? t('status.cancelled')
                   : event.status === 'postponed'
-                    ? 'Reporté'
+                    ? t('status.postponed')
                     : event.status === 'archived'
-                      ? 'Archivé'
+                      ? t('status.archived')
                       : event.status === 'published'
-                        ? 'Publié'
+                        ? t('status.published')
                         : event.status === 'draft'
-                          ? 'Brouillon'
+                          ? t('status.draft')
                           : event.status}
             </span>
           </div>
@@ -853,13 +856,13 @@ export const EventDetails: React.FC = () => {
             </div>
             <div className="flex items-center">
               <MapPin className="h-4 w-4 mr-2" />
-              {event.locationType === 'online' ? 'En ligne' : (event.location || 'Non renseigné')}
+              {event.locationType === 'online' ? t('details.online') : (event.location || t('details.not_specified'))}
             </div>
             <div className="flex items-center">
               <Users className="h-4 w-4 mr-2" />
               {event.maxAttendees && event.maxAttendees > 0 && event.maxAttendees < 999999
-                ? `${approvedCount}/${event.maxAttendees} participants`
-                : `${approvedCount} participants`}
+                ? t('details.participants_count', { current: approvedCount, max: event.maxAttendees })
+                : t('details.participants_count_unlimited', { count: approvedCount })}
             </div>
           </div>
         </div>
@@ -871,7 +874,7 @@ export const EventDetails: React.FC = () => {
             className="flex items-center space-x-2"
           >
             <Zap className="h-4 w-4" />
-            <span>Actions</span>
+            <span>{t('details.actions')}</span>
           </Button>
           <Can do="update" on="Event" data={event}>
             <Button
@@ -880,7 +883,7 @@ export const EventDetails: React.FC = () => {
               className="flex items-center space-x-2"
             >
               <Edit className="h-4 w-4" />
-              <span>Modifier</span>
+              <span>{t('details.edit')}</span>
             </Button>
           </Can>
           <Can do="export" on="Attendee" data={{ eventId: event.id }}>
@@ -893,7 +896,7 @@ export const EventDetails: React.FC = () => {
               }}
             >
               <Download className="h-4 w-4" />
-              <span>Exporter</span>
+              <span>{t('common:app.export')}</span>
             </Button>
           </Can>
         </div>
@@ -944,22 +947,22 @@ export const EventDetails: React.FC = () => {
             <div className="lg:col-span-2 space-y-6">
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Description
+                  {t('details.description')}
                 </h2>
                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {event.description || 'Aucune description disponible'}
+                  {event.description || t('details.no_description')}
                 </p>
               </div>
 
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Informations détaillées
+                  {t('details.detailed_info')}
                 </h2>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Date de début
+                        {t('events.start_date')}
                       </label>
                       <p className="mt-1 text-gray-900 dark:text-white flex items-center">
                         <Clock className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
@@ -968,7 +971,7 @@ export const EventDetails: React.FC = () => {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Date de fin
+                        {t('events.end_date')}
                       </label>
                       <p className="mt-1 text-gray-900 dark:text-white flex items-center">
                         <Clock className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
@@ -978,17 +981,17 @@ export const EventDetails: React.FC = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                      Lieu
+                      {t('details.location')}
                     </label>
                     <p className="mt-1 text-gray-900 dark:text-white flex items-center">
                       <MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
-                      {event.locationType === 'online' ? 'En ligne' : (event.location || <span className="text-gray-400 dark:text-gray-500 italic">Non renseigné</span>)}
+                      {event.locationType === 'online' ? t('details.online') : (event.location || <span className="text-gray-400 dark:text-gray-500 italic">{t('details.not_specified')}</span>)}
                     </p>
                   </div>
                   {event.websiteUrl && (
                     <div>
                       <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                        Site web
+                        {t('details.website')}
                       </label>
                       <p className="mt-1">
                         <a
@@ -1018,7 +1021,7 @@ export const EventDetails: React.FC = () => {
                   {event.tags.length > 0 && (
                     <div>
                       <label className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">
-                        Tags
+                        {t('details.tags')}
                       </label>
                       <div className="flex flex-wrap gap-2">
                         {event.tags.map((tag) => (
@@ -1040,12 +1043,12 @@ export const EventDetails: React.FC = () => {
             <div className="space-y-6">
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Statistiques
+                  {t('details.statistics')}
                 </h3>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-300">
-                      Inscriptions totales
+                      {t('registrations.total')}
                     </span>
                     <span className="text-2xl font-bold text-gray-900 dark:text-white">
                       {activeMeta.total}
@@ -1053,7 +1056,7 @@ export const EventDetails: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-300">
-                      Approuvées
+                      {t('registrations.approved')}
                     </span>
                     <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {approvedCount}
@@ -1061,7 +1064,7 @@ export const EventDetails: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-300">
-                      En attente
+                      {t('registrations.pending')}
                     </span>
                     <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                       {awaitingCount}
@@ -1069,7 +1072,7 @@ export const EventDetails: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-300">
-                      Refusées
+                      {t('registrations.refused')}
                     </span>
                     <span className="text-2xl font-bold text-red-600 dark:text-red-400">
                       {refusedCount}
@@ -1078,11 +1081,11 @@ export const EventDetails: React.FC = () => {
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-300">
-                        Places restantes
+                        {t('details.places_remaining')}
                       </span>
                       <span className="font-medium text-gray-900 dark:text-white">
                         {event.maxAttendees > 100000
-                          ? 'Illimité'
+                          ? t('details.unlimited')
                           : event.maxAttendees - approvedCount}
                       </span>
                     </div>
@@ -1092,12 +1095,12 @@ export const EventDetails: React.FC = () => {
 
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-200">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Informations
+                  {t('details.info')}
                 </h3>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-300">
-                      Durée
+                      {t('details.duration')}
                     </span>
                     <span className="text-gray-900 dark:text-white">
                       {event.duration}h
@@ -1105,17 +1108,17 @@ export const EventDetails: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-300">
-                      Jours restants
+                      {t('details.days_remaining')}
                     </span>
                     <span className="text-gray-900 dark:text-white">
                       {event.daysUntilStart > 0
-                        ? `${event.daysUntilStart} jours`
-                        : 'Commencé'}
+                        ? t('details.days_count', { count: event.daysUntilStart })
+                        : t('details.started')}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-300">
-                      Créé le
+                      {t('details.created_at')}
                     </span>
                     <span className="text-gray-900 dark:text-white">
                       {formatDate(event.createdAt)}
@@ -1135,7 +1138,7 @@ export const EventDetails: React.FC = () => {
                 className="flex items-center space-x-2"
               >
                 <UserPlus className="h-4 w-4" />
-                <span>Ajouter un participant</span>
+                <span>{t('registrations.add')}</span>
               </Button>
               <Button
                 variant="outline"
@@ -1143,7 +1146,7 @@ export const EventDetails: React.FC = () => {
                 className="flex items-center space-x-2"
               >
                 <Upload className="h-4 w-4" />
-                <span>Importer</span>
+                <span>{t('registrations.import')}</span>
               </Button>
               <Button
                 variant="outline"
@@ -1151,7 +1154,7 @@ export const EventDetails: React.FC = () => {
                 onClick={handleExportAll}
               >
                 <Download className="h-4 w-4" />
-                <span>Exporter</span>
+                <span>{t('registrations.export')}</span>
               </Button>
             </div>
 
@@ -1224,7 +1227,7 @@ export const EventDetails: React.FC = () => {
             <div className="hidden lg:block flex-1 lg:w-1/2 overflow-y-auto pl-2">
               <div className="sticky top-0 bg-white dark:bg-gray-900 pb-4 pt-2 z-10">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Aperçu en temps réel
+                  {t('form_builder.live_preview')}
                 </h3>
               </div>
               <FormPreview
@@ -1301,7 +1304,7 @@ export const EventDetails: React.FC = () => {
       <Modal
         isOpen={isAddParticipantModalOpen}
         onClose={() => setIsAddParticipantModalOpen(false)}
-        title="Ajouter un participant"
+        title={t('registrations.add')}
         maxWidth="4xl"
       >
         <AddParticipantForm
@@ -1309,7 +1312,7 @@ export const EventDetails: React.FC = () => {
           eventId={event.id}
           publicToken={event.publicToken}
           eventAttendeeTypes={eventAttendeeTypes || []}
-          submitButtonText="Ajouter"
+          submitButtonText={t('registrations.add_button')}
           submitButtonColor={submitButtonColor}
           onSuccess={() => {
             setIsAddParticipantModalOpen(false)

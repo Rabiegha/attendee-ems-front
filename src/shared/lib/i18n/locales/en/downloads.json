@@ -1,0 +1,29 @@
+{
+  "mobile": {
+    "title": "Mobile Application",
+    "description": "Download the Attendee Android app to manage your events on the go.",
+    "app_name": "Attendee Mobile",
+    "version": "Android Version - Production",
+    "scan_title": "Scan to download",
+    "scan_description": "Scan this QR code with your phone to download the app directly",
+    "apk_ready": "APK file ready for download",
+    "last_update": "Last updated:",
+    "download_apk": "Download APK",
+    "download_auto": "The download should start automatically. If not,",
+    "click_here": "click here",
+    "install_title": "Installation Instructions",
+    "step_1": "Download the APK file by clicking the button above",
+    "step_2": "Allow installation from unknown sources",
+    "step_2_detail": "Settings → Security → Unknown Sources",
+    "step_3": "Open the downloaded APK file and follow the instructions",
+    "step_4": "Launch the app and sign in with your credentials",
+    "features_title": "Key Features",
+    "feature_1": "View current, upcoming, and past events",
+    "feature_2": "Advanced search and filters",
+    "feature_3": "Registration management",
+    "feature_4": "Modern and intuitive interface",
+    "feature_5": "Offline mode (coming soon)",
+    "compatibility_title": "Compatibility",
+    "compatibility_desc": "This app requires Android 5.0 (Lollipop) or later. For questions or issues, contact the system administrator."
+  }
+}

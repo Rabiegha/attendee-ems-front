@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { AlertTriangle } from 'lucide-react'
@@ -15,6 +16,7 @@ interface PermanentDeleteRegistrationModalProps {
 export const PermanentDeleteRegistrationModal: React.FC<
   PermanentDeleteRegistrationModalProps
 > = ({ isOpen, onClose, registration, onPermanentDelete }) => {
+  const { t } = useTranslation(['events', 'common'])
   const [isDeleting, setIsDeleting] = React.useState(false)
 
   const handleDelete = async () => {
@@ -37,7 +39,7 @@ export const PermanentDeleteRegistrationModal: React.FC<
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Supprimer définitivement"
+      title={t('events:registrations.permanent_delete_title')}
       size="md"
     >
       <div className="space-y-4">
@@ -45,12 +47,11 @@ export const PermanentDeleteRegistrationModal: React.FC<
           <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
           <div className="space-y-2">
             <p className="text-gray-700 dark:text-gray-300">
-              Êtes-vous sûr de vouloir supprimer définitivement l'inscription de{' '}
+              {t('events:registrations.permanent_delete_confirm')}{' '}
               <span className="font-semibold">{fullName}</span> ?
             </p>
             <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-              ⚠️ Cette action est irréversible. Les données seront définitivement
-              perdues.
+              {t('events:registrations.permanent_delete_warning')}
             </p>
           </div>
         </div>
@@ -61,14 +62,14 @@ export const PermanentDeleteRegistrationModal: React.FC<
             onClick={onClose}
             disabled={isDeleting}
           >
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button
             variant="destructive"
             onClick={handleDelete}
             disabled={isDeleting}
           >
-            {isDeleting ? 'Suppression...' : 'Supprimer définitivement'}
+            {isDeleting ? t('common:app.deleting') : t('common:app.permanent_delete')}
           </Button>
         </div>
       </div>

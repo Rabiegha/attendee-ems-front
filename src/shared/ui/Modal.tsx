@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/lib/utils'
 
@@ -49,6 +50,7 @@ export const Modal: React.FC<ModalProps> = ({
   const [isVisible, setIsVisible] = useState(false)
   const [shouldRender, setShouldRender] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
+  const { t } = useTranslation('common')
   
   // Utiliser useRef pour éviter les re-renders en boucle
   const onCloseRef = useRef(onClose)
@@ -129,7 +131,7 @@ export const Modal: React.FC<ModalProps> = ({
               <button
                 onClick={handleClose}
                 className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200"
-                aria-label="Close modal"
+                aria-label={t('modal.close')}
               >
                 <X className="h-5 w-5" />
               </button>

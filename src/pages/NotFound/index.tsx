@@ -12,17 +12,17 @@ export const NotFoundPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <FileQuestion className="mx-auto h-12 w-12 text-gray-400" />
-        <h1 className="mt-4 text-3xl font-bold text-gray-900">404</h1>
+        <h1 className="mt-4 text-3xl font-bold text-gray-900">{t('not_found.code')}</h1>
         <p className="mt-2 text-lg text-gray-600">{t('errors.not_found')}</p>
         <p className="mt-1 text-sm text-gray-500">
-          La page que vous recherchez n'existe pas.
+          {t('not_found.description')}
         </p>
         <div className="mt-6 space-x-3">
           <Button onClick={() => navigate(-1)} variant="outline">
             {t('app.back')}
           </Button>
           <Button onClick={() => navigate('/dashboard')}>
-            Tableau de bord
+            {t('not_found.go_dashboard')}
           </Button>
         </div>
       </div>

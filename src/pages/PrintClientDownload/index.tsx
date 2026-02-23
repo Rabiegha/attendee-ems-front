@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Download, MonitorCheck } from 'lucide-react'
 import { PageContainer, PageHeader, PageSection } from '@/shared/ui'
 import { Card } from '@/shared/ui/Card'
@@ -29,6 +30,7 @@ const AppleIcon = ({ className }: { className?: string }) => (
 )
 
 export const PrintClientDownloadPage: React.FC = () => {
+  const { t } = useTranslation('printing')
   // URLs de téléchargement (à adapter selon votre hébergement)
   const windowsUrl = '/downloads/Attendee-Print-Client-Setup.exe'
   const macUrl = '/downloads/Attendee-Print-Client-1.0.0.dmg'
@@ -36,8 +38,8 @@ export const PrintClientDownloadPage: React.FC = () => {
   return (
     <PageContainer>
       <PageHeader
-        title="Client d'Impression"
-        description="Téléchargez le client d'impression automatique pour vos badges d'événements."
+        title={t('download.title')}
+        description={t('download.description')}
         icon={MonitorCheck}
       />
 
@@ -53,10 +55,10 @@ export const PrintClientDownloadPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                    Windows
+                    {t('download.windows')}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Windows 10 / 11 (64-bit)
+                    {t('download.windows_desc')}
                   </p>
                 </div>
                 <div className="w-full space-y-3">
@@ -79,11 +81,11 @@ export const PrintClientDownloadPage: React.FC = () => {
                       className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
                     >
                       <Download className="h-5 w-5 mr-2" />
-                      Télécharger
+                      {t('download.download_button')}
                     </Button>
                   </a>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Version 1.0.0 • ~123 MB
+                    {t('download.version_windows')}
                   </p>
                 </div>
               </div>
@@ -97,10 +99,10 @@ export const PrintClientDownloadPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
-                    macOS
+                    {t('download.macos')}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    macOS 11 Big Sur ou supérieur
+                    {t('download.macos_desc')}
                   </p>
                 </div>
                 <div className="w-full space-y-3">
@@ -123,11 +125,11 @@ export const PrintClientDownloadPage: React.FC = () => {
                       className="w-full py-3 bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
                     >
                       <Download className="h-5 w-5 mr-2" />
-                      Télécharger
+                      {t('download.download_button')}
                     </Button>
                   </a>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Version 1.0.0 • ~120 MB
+                    {t('download.version_macos')}
                   </p>
                 </div>
               </div>

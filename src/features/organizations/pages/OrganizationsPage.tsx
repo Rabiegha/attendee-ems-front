@@ -13,6 +13,7 @@ import {
 } from '@/shared/ui'
 import { useUniversalModal } from '@/shared/ui/useUniversalModal'
 import { AccessDenied } from '@/pages/AccessDenied'
+import { useTranslation } from 'react-i18next'
 
 import {
   useGetOrganizationsQuery,
@@ -38,6 +39,7 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
   onToggle,
   isSuperAdmin,
 }) => {
+  const { t } = useTranslation(['common'])
   const { data: usersData, isLoading: isLoadingUsers } =
     useGetOrganizationUsersQuery(organization.id, {
       skip: !isExpanded && isSuperAdmin, // Pour super admin: skip si pas expanded
@@ -126,8 +128,8 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
             <div>
               <h4 className="text-body font-semibold text-gray-900 dark:text-white mb-4">
                 {isSuperAdmin
-                  ? `Utilisateurs (${sortedUsers.length || 0})`
-                  : 'Équipe'}
+                  ? `${t('common:organizations.users')} (${sortedUsers.length || 0})`
+                  : t('common:organizations.team')}
               </h4>
               <div className="space-y-2">
                 {sortedUsers.map((user: any) => (
@@ -162,11 +164,11 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
                               : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
                         }`}
                       >
-                        {user.role?.name || 'Sans rôle'}
+                        {user.role?.name || t('common:organizations.no_role')}
                       </span>
                       {!user.is_active && (
                         <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded-full">
-                          Inactif
+                          {t('common:organizations.inactive')}
                         </span>
                       )}
                     </div>
@@ -182,6 +184,7 @@ const OrganizationCard: React.FC<OrganizationCardProps> = ({
 }
 
 export const OrganizationsPage: React.FC = () => {
+  const { t } = useTranslation(['common'])
   // Pour Super Admin : plusieurs dropdowns peuvent être ouverts
   const [expandedOrgs, setExpandedOrgs] = useState<Set<string>>(new Set())
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -259,8 +262,8 @@ export const OrganizationsPage: React.FC = () => {
     const errorMessage =
       error?.data?.message ||
       error?.message ||
-      "Une erreur est survenue lors de la création de l'organisation."
-    showError('Erreur de création', errorMessage)
+      t('common:organizations.create_error_default')
+    showError(t('common:organizations.create_error_title'), errorMessage)
   }
 
   if (isLoading) {
@@ -268,8 +271,8 @@ export const OrganizationsPage: React.FC = () => {
       <PageContainer maxWidth="7xl" padding="lg">
         <PageHeader
           icon={Building2}
-          title="Organisations"
-          description="Gérez les organisations"
+          title={t('common:organizations.title')}
+          description={t('common:organizations.description')}
         />
         <PageSection spacing="lg">
           <OrganizationsPageSkeleton />
@@ -287,8 +290,8 @@ export const OrganizationsPage: React.FC = () => {
     if (isPermissionError) {
       return (
         <AccessDenied
-          title="Accès aux organisations refusé"
-          message="Vous n'avez pas les permissions nécessaires pour consulter les informations d'organisation."
+          title={t('common:organizations.access_denied')}
+          message={t('common:organizations.access_denied_message')}
         />
       )
     }
@@ -303,12 +306,12 @@ export const OrganizationsPage: React.FC = () => {
           <CardContent>
             <div className="text-center">
               <p className="text-body font-semibold text-red-600 dark:text-red-400">
-                Erreur lors du chargement des organisations
+                {t('common:organizations.loading_error')}
               </p>
               <p className="text-body-sm text-gray-500 dark:text-gray-400 mt-2">
                 {(error as any)?.data?.message ||
                   (error as any)?.message ||
-                  'Une erreur inconnue est survenue'}
+                  t('common:organizations.unknown_error')}
               </p>
             </div>
           </CardContent>
@@ -320,11 +323,11 @@ export const OrganizationsPage: React.FC = () => {
   return (
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
-        title={isSuperAdmin ? 'Gestion des Organisations' : 'Mon Organisation'}
+        title={isSuperAdmin ? t('common:organizations.title_super_admin') : t('common:organizations.title_admin')}
         description={
           isSuperAdmin
-            ? 'Gérez toutes les organisations et leurs utilisateurs. Cliquez sur une organisation pour voir/masquer ses utilisateurs.'
-            : 'Informations sur votre organisation et votre équipe'
+            ? t('common:organizations.description_super_admin')
+            : t('common:organizations.description_admin')
         }
         icon={Building2}
         {...(isSuperAdmin && {
@@ -340,7 +343,7 @@ export const OrganizationsPage: React.FC = () => {
                 onClick={() => setIsCreateModalOpen(true)}
                 leftIcon={<Plus className="h-4 w-4" />}
               >
-                Nouvelle Organisation
+                {t('common:organizations.new_organization')}
               </Button>
             </Can>
           ) : undefined
@@ -355,8 +358,8 @@ export const OrganizationsPage: React.FC = () => {
                 <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-body text-gray-600 dark:text-gray-400">
                   {isSuperAdmin
-                    ? 'Aucune organisation trouvée'
-                    : 'Aucune organisation associée'}
+                    ? t('common:organizations.none_found')
+                    : t('common:organizations.none_associated')}
                 </p>
               </div>
             </CardContent>

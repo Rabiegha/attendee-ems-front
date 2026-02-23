@@ -66,6 +66,7 @@ export { ActionGroup } from './ActionGroup'
 export { Alert } from './Alert'
 export { AnimatedContainer } from './AnimatedContainer'
 export { ThemeToggle } from './ThemeToggle'
+export { LanguageSwitcher } from './LanguageSwitcher'
 export { LoadingSpinner, LoadingState, InlineLoading } from './LoadingSpinner'
 export {
   Skeleton,

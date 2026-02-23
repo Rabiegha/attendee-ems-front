@@ -5,6 +5,7 @@
  */
 
 import { ColumnDef } from '@tanstack/react-table'
+import i18next from 'i18next'
 import { Checkbox } from '../Checkbox'
 
 /**
@@ -25,7 +26,7 @@ export function createSelectionColumn<TData>(options?: {
           checked={table.getIsAllPageRowsSelected()}
           indeterminate={table.getIsSomePageRowsSelected()}
           onChange={table.getToggleAllPageRowsSelectedHandler()}
-          aria-label="Sélectionner tout"
+          aria-label={i18next.t('common:table.select_all')}
         />
       </div>
     ),
@@ -52,7 +53,7 @@ export function createSelectionColumn<TData>(options?: {
               // Le onChange du checkbox est déjà géré par le onClick du parent
               e.stopPropagation()
             }}
-            aria-label="Sélectionner la ligne"
+            aria-label={i18next.t('common:table.select_row')}
             title="Maj+Clic pour sélectionner une plage"
           />
         </div>

@@ -22,6 +22,7 @@ import type { EventDPO } from '@/features/events/dpo/event.dpo'
 import { TagInput } from '@/features/tags'
 import { useUpdateEventTagsMutation } from '@/services/tags'
 import { formatDateForInput } from '@/shared/lib/date-utils'
+import { useTranslation } from 'react-i18next'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''
 
@@ -37,6 +38,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
   const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation()
   const [deleteEvent, { isLoading: isDeleting }] = useDeleteEventMutation()
   const [updateEventTags] = useUpdateEventTagsMutation()
+  const { t } = useTranslation(['events', 'common'])
 
   // Si l'événement est supprimé, afficher un message
   if (event.isDeleted) {
@@ -44,11 +46,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
       <div className="bg-red-50 dark:bg-red-900/10 rounded-lg border-2 border-red-200 dark:border-red-800 p-8 text-center">
         <AlertTriangle className="h-12 w-12 mx-auto text-red-600 dark:text-red-400 mb-4" />
         <h2 className="text-xl font-semibold text-red-900 dark:text-red-300 mb-2">
-          Événement supprimé
+          {t('events:settings.event_deleted_title')}
         </h2>
         <p className="text-red-700 dark:text-red-400">
-          Cet événement a été supprimé et ne peut plus être modifié.
-          Les paramètres sont désactivés.
+          {t('events:settings.event_deleted_description')}
         </p>
       </div>
     )
@@ -207,11 +208,11 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         tags: formData.tags,
       }).unwrap()
 
-      toast.success('Paramètres enregistrés avec succès')
+      toast.success(t('events:settings.save_success'))
       return true
     } catch (error) {
       console.error('Erreur lors de la mise à jour:', error)
-      toast.error('Erreur lors de la sauvegarde')
+      toast.error(t('events:settings.save_error'))
       return false
     }
   }
@@ -231,7 +232,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
       }, 3000)
     } catch (error) {
       console.error('Erreur lors de la suppression:', error)
-      alert('❌ Erreur lors de la suppression')
+      alert(t('events:settings.delete_error'))
       setDeleteStep(0)
     }
   }
@@ -243,42 +244,42 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-              Informations de base
+              {t('events:settings.basic_info')}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Informations essentielles de votre événement
+              {t('events:settings.basic_info_description')}
             </p>
           </div>
 
           <div className="space-y-6">
             {/* Nom de l'événement */}
-            <FormField label="Nom de l'événement" required>
+            <FormField label={t('events:settings.event_name')} required>
               <Input
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="Ex: Conférence annuelle 2024"
+                placeholder={t('events:settings.name_placeholder')}
                 required
               />
             </FormField>
 
             {/* Description */}
             <FormField 
-              label="Description"
-              hint="Optionnel - Décrivez brièvement votre événement"
+              label={t('events:settings.description')}
+              hint={t('events:settings.description_hint')}
             >
               <Textarea
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                placeholder="Décrivez votre événement..."
+                placeholder={t('events:settings.description_placeholder')}
                 rows={4}
               />
             </FormField>
 
             {/* Dates */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField label="Date et heure de début" required>
+              <FormField label={t('events:settings.start_date')} required>
                 <Input
                   name="startDate"
                   type="datetime-local"
@@ -288,7 +289,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                 />
               </FormField>
 
-              <FormField label="Date et heure de fin" required>
+              <FormField label={t('events:settings.end_date')} required>
                 <Input
                   name="endDate"
                   type="datetime-local"
@@ -301,27 +302,27 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
 
             {/* URL du site / Page de présentation */}
             <FormField 
-              label="URL du site / Page de présentation"
-              hint="Optionnel - Lien vers la page de présentation de l'événement"
+              label={t('events:settings.website_url')}
+              hint={t('events:settings.website_hint')}
             >
               <Input
                 name="websiteUrl"
                 type="url"
                 value={formData.websiteUrl}
                 onChange={handleInputChange}
-                placeholder="https://example.com/mon-evenement"
+                placeholder={t('events:settings.website_placeholder')}
               />
             </FormField>
 
             {/* Tags */}
-            <FormField label="Tags">
+            <FormField label={t('events:settings.tags')}>
               <TagInput
                 value={formData.tags}
                 onChange={(tags) => setFormData((prev) => ({ ...prev, tags }))}
-                placeholder="Ex: Technologie, Networking, Innovation"
+                placeholder={t('events:settings.tags_placeholder')}
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Utilisez les tags pour catégoriser et filtrer vos événements
+                {t('events:settings.tags_hint')}
               </p>
             </FormField>
           </div>
@@ -331,16 +332,16 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-              Lieu et participants
+              {t('events:settings.location_and_participants')}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Définissez le lieu et les paramètres de participation
+              {t('events:settings.location_description')}
             </p>
           </div>
 
           <div className="space-y-6">
             {/* Type de lieu */}
-            <FormField label="Type de lieu">
+            <FormField label={t('events:settings.location_type')}>
               <Select
                 value={formData.locationType}
                 onChange={(e) => {
@@ -354,9 +355,9 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                   }))
                 }}
               >
-                <SelectOption value="physical">Physique</SelectOption>
-                <SelectOption value="online">En ligne</SelectOption>
-                <SelectOption value="hybrid">Hybride</SelectOption>
+                <SelectOption value="physical">{t('events:settings.physical')}</SelectOption>
+                <SelectOption value="online">{t('events:settings.online')}</SelectOption>
+                <SelectOption value="hybrid">{t('events:settings.hybrid')}</SelectOption>
               </Select>
             </FormField>
 
@@ -367,15 +368,15 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                   <MapPin className="h-5 w-5 text-blue-600 mt-0.5" />
                   <div>
                     <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                      Localisation de l'événement
+                      {t('events:settings.event_location')}
                     </h4>
                     <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                      Saisissez l'adresse complète de l'événement
+                      {t('events:settings.address_hint')}
                     </p>
                   </div>
                 </div>
 
-                <FormField label="Adresse complète">
+                <FormField label={t('events:settings.full_address')}>
                   <AddressAutocomplete
                     id="location"
                     name="location"
@@ -387,7 +388,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                         location: place.formatted_address,
                       }))
                     }}
-                    placeholder="Rechercher une adresse..."
+                    placeholder={t('events:settings.search_address')}
                     apiKey={GOOGLE_MAPS_API_KEY}
                   />
                 </FormField>
@@ -396,7 +397,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
 
             {/* Partenaires autorisés */}
             <div className="space-y-3">
-              <FormField label="Partenaires autorisés">
+              <FormField label={t('events:settings.authorized_partners')}>
                 {event.partnerIds && event.partnerIds.length > 0 ? (
                   <div className="space-y-2">
                     {event.partnerIds.map((partnerId) => (
@@ -407,7 +408,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                         <div className="flex items-center">
                           <Users className="h-4 w-4 mr-2 text-gray-400" />
                           <span className="text-sm text-gray-900 dark:text-white">
-                            Partenaire #{partnerId}
+                            {t('events:settings.partner_id', { id: partnerId })}
                           </span>
                         </div>
                         <Button
@@ -415,19 +416,19 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                           size="sm"
                           leftIcon={<UserMinus className="h-3 w-3" />}
                           onClick={() => {
-                            if (confirm('Retirer ce partenaire de l\'événement ?')) {
-                              alert('Fonctionnalité à implémenter')
+                            if (confirm(t('events:settings.remove_partner_confirm'))) {
+                              alert(t('events:settings.feature_todo'))
                             }
                           }}
                         >
-                          Retirer
+                          {t('events:settings.remove')}
                         </Button>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Aucun partenaire invité pour le moment
+                    {t('events:settings.no_partners')}
                   </p>
                 )}
               </FormField>
@@ -435,9 +436,9 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
               <Button
                 variant="outline"
                 leftIcon={<UserPlus className="h-4 w-4" />}
-                onClick={() => alert('Modal d\'ajout de partenaires à implémenter')}
+                onClick={() => alert(t('events:settings.add_partners_todo'))}
               >
-                Ajouter des partenaires
+                {t('events:settings.add_partners')}
               </Button>
             </div>
           </div>
@@ -447,10 +448,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-              Options et paramètres
+              {t('events:settings.options_title')}
             </h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Configurez les options d'inscription et de notification
+              {t('events:settings.options_description')}
             </p>
           </div>
 
@@ -463,7 +464,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                 </div>
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                    Gestion des participants
+                    {t('events:settings.attendee_management')}
                   </h4>
                   
                   <div className="space-y-3">
@@ -485,16 +486,16 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          Limiter le nombre de participants
+                          {t('events:settings.limit_attendees')}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Définir une capacité maximale pour cet événement
+                          {t('events:settings.limit_attendees_hint')}
                         </p>
                       </div>
                     </label>
 
                     {formData.capacity !== undefined && (
-                      <FormField label="Capacité maximale">
+                      <FormField label={t('events:settings.max_capacity')}>
                         <Input
                           name="capacity"
                           type="number"
@@ -504,7 +505,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                             const value = e.target.value ? parseInt(e.target.value) : undefined
                             setFormData((prev) => ({ ...prev, capacity: value }))
                           }}
-                          placeholder="Ex: 100"
+                          placeholder={t('events:settings.capacity_placeholder')}
                         />
                       </FormField>
                     )}
@@ -521,7 +522,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                 </div>
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                    Gestion des inscriptions
+                    {t('events:settings.registration_management')}
                   </h4>
                   
                   <div className="space-y-3">
@@ -539,10 +540,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          Approuver automatiquement tous les inscrits
+                          {t('events:settings.auto_approve')}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Les participants sont immédiatement approuvés sans validation manuelle
+                          {t('events:settings.auto_approve_hint')}
                         </p>
                       </div>
                     </label>
@@ -561,10 +562,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          Vérifier l'email pour être pris en compte
+                          {t('events:settings.require_email_verification')}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          L'inscription est validée uniquement après vérification de l'adresse email
+                          {t('events:settings.email_verification_hint')}
                         </p>
                       </div>
                     </label>
@@ -581,7 +582,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                 </div>
                 <div className="flex-1">
                   <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                    Notifications par email
+                    {t('events:settings.email_notifications')}
                   </h4>
                   
                   <div className="space-y-3">
@@ -599,10 +600,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          Envoyer un email de confirmation lors de l'inscription
+                          {t('events:settings.confirmation_email')}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Le participant reçoit un email confirmant son inscription
+                          {t('events:settings.confirmation_email_hint')}
                         </p>
                       </div>
                     </label>
@@ -621,10 +622,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          Envoyer un email lorsque l'inscription est approuvée
+                          {t('events:settings.approval_email')}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Le participant reçoit un email quand son inscription est validée
+                          {t('events:settings.approval_email_hint')}
                         </p>
                       </div>
                     </label>
@@ -643,10 +644,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                       />
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          Envoyer des rappels avant l'événement
+                          {t('events:settings.reminder_email')}
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                          Les participants reçoivent des rappels quelques jours avant l'événement
+                          {t('events:settings.reminder_email_hint')}
                         </p>
                       </div>
                     </label>
@@ -661,12 +662,12 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
         <div className="bg-red-50 dark:bg-red-900/10 rounded-lg border-2 border-red-200 dark:border-red-800 p-6">
           <h2 className="text-lg font-semibold text-red-900 dark:text-red-400 mb-4 flex items-center">
             <AlertTriangle className="h-5 w-5 mr-2" />
-            Zone de danger
+            {t('events:settings.danger_zone')}
           </h2>
 
           <div className="space-y-4">
             <p className="text-sm text-red-800 dark:text-red-300">
-              La suppression d'un événement est une action définitive et irréversible.
+              {t('events:settings.delete_warning')}
             </p>
 
             {deleteStep === 0 && (
@@ -676,14 +677,14 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                 leftIcon={<Trash2 className="h-4 w-4" />}
                 className="border-red-300 dark:border-red-700 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/20"
               >
-                Supprimer l'événement
+                {t('events:settings.delete_event')}
               </Button>
             )}
 
             {deleteStep === 1 && (
               <div className="space-y-3 p-4 bg-red-100 dark:bg-red-900/20 rounded-lg">
                 <p className="font-medium text-red-900 dark:text-red-300">
-                  Êtes-vous sûr de vouloir supprimer l'événement "{event.name}" ?
+                  {t('events:settings.delete_confirm_message', { name: event.name })}
                 </p>
                 <div className="flex gap-3">
                   <Button
@@ -691,14 +692,14 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                     onClick={() => setDeleteStep(0)}
                     size="sm"
                   >
-                    Annuler
+                    {t('common:app.cancel')}
                   </Button>
                   <Button
                     onClick={() => setDeleteStep(2)}
                     size="sm"
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
-                    Oui, continuer
+                    {t('events:settings.yes_continue')}
                   </Button>
                 </div>
               </div>
@@ -707,14 +708,13 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
             {deleteStep === 2 && (
               <div className="space-y-3 p-4 bg-red-200 dark:bg-red-900/30 rounded-lg border-2 border-red-400 dark:border-red-700">
                 <p className="font-bold text-red-900 dark:text-red-300">
-                  DERNIÈRE CONFIRMATION
+                  {t('events:settings.last_confirmation')}
                 </p>
                 <p className="text-sm text-red-800 dark:text-red-300">
-                  Cette action est <strong>irréversible</strong>. L'événement sera
-                  définitivement supprimé de la base de données.
+                  {t('events:settings.delete_irreversible')}
                 </p>
                 <p className="text-sm font-medium text-red-900 dark:text-red-200">
-                  Confirmez-vous la suppression de "{event.name}" ?
+                  {t('events:settings.confirm_delete_message', { name: event.name })}
                 </p>
                 <div className="flex gap-3">
                   <Button
@@ -722,7 +722,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                     onClick={() => setDeleteStep(0)}
                     size="sm"
                   >
-                    Annuler
+                    {t('common:app.cancel')}
                   </Button>
                   <Button
                     onClick={handleDeleteEvent}
@@ -731,7 +731,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                     className="bg-red-700 hover:bg-red-800 text-white"
                     leftIcon={<Trash2 className="h-4 w-4" />}
                   >
-                    {isDeleting ? 'Suppression...' : 'Confirmer la suppression'}
+                    {isDeleting ? t('common:app.deleting') : t('events:settings.confirm_delete')}
                   </Button>
                 </div>
               </div>
@@ -752,7 +752,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse"></div>
               <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                Modifications non sauvegardées
+                {t('events:settings.unsaved_changes')}
               </p>
             </div>
             <Button
@@ -760,7 +760,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
               disabled={isUpdating}
               leftIcon={<Save className="h-4 w-4" />}
               className="whitespace-nowrap">
-              {isUpdating ? 'Enregistrement...' : 'Enregistrer'}
+              {isUpdating ? t('common:app.saving') : t('common:app.save')}
             </Button>
           </div>
         </div>,
@@ -777,10 +777,10 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Modifications non enregistrées
+                  {t('events:settings.unsaved_title')}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Vous avez des modifications en attente. Si vous quittez cette page sans enregistrer, elles seront perdues.
+                  {t('events:settings.unsaved_description')}
                 </p>
                 
                 <div className="flex flex-col sm:flex-row gap-3 justify-end">
@@ -789,21 +789,21 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                     onClick={handleStay}
                     className="order-3 sm:order-1"
                   >
-                    Retour
+                    {t('common:app.back')}
                   </Button>
                   <Button
                     variant="ghost"
                     onClick={handleLeave}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 order-2 sm:order-2"
                   >
-                    Quitter
+                    {t('events:settings.leave')}
                   </Button>
                   <Button
                     onClick={handleSaveAndLeave}
                     disabled={isUpdating}
                     className="order-1 sm:order-3"
                   >
-                    {isUpdating ? 'Enregistrement...' : 'Sauvegarder'}
+                    {isUpdating ? t('common:app.saving') : t('common:app.save')}
                   </Button>
                 </div>
               </div>
@@ -836,7 +836,7 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
 
               {/* Titre */}
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                Événement supprimé !
+                {t('events:settings.event_deleted_success')}
               </h3>
 
               {/* Message détaillé */}
@@ -848,19 +848,19 @@ export const EventSettingsTab: React.FC<EventSettingsTabProps> = ({
                 {deleteResult.type === 'hard' ? (
                   <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Suppression définitive
+                    {t('events:settings.hard_delete')}
                   </div>
                 ) : (
                   <div className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
                     <AlertTriangle className="h-4 w-4 mr-2" />
-                    Archivé (conservé dans l'historique)
+                    {t('events:settings.soft_delete')}
                   </div>
                 )}
               </div>
 
               {/* Message de redirection */}
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Redirection vers la liste des événements...
+                {t('events:settings.redirecting')}
               </p>
 
               {/* Barre de progression */}

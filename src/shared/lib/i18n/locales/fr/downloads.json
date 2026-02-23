@@ -1,0 +1,29 @@
+{
+  "mobile": {
+    "title": "Application Mobile",
+    "description": "Téléchargez l'application Android Attendee pour gérer vos événements en mobilité.",
+    "app_name": "Attendee Mobile",
+    "version": "Version Android - Production",
+    "scan_title": "Scanner pour télécharger",
+    "scan_description": "Scannez ce QR code avec votre téléphone pour télécharger directement l'application",
+    "apk_ready": "Fichier APK prêt au téléchargement",
+    "last_update": "Dernière mise à jour :",
+    "download_apk": "Télécharger l'APK",
+    "download_auto": "Le téléchargement devrait commencer automatiquement. Si ce n'est pas le cas,",
+    "click_here": "cliquez ici",
+    "install_title": "Instructions d'installation",
+    "step_1": "Téléchargez le fichier APK en cliquant sur le bouton ci-dessus",
+    "step_2": "Autorisez l'installation d'applications provenant de sources inconnues",
+    "step_2_detail": "Paramètres → Sécurité → Sources inconnues",
+    "step_3": "Ouvrez le fichier APK téléchargé et suivez les instructions",
+    "step_4": "Lancez l'application et connectez-vous avec vos identifiants",
+    "features_title": "Fonctionnalités principales",
+    "feature_1": "Consultation des événements en cours, à venir et passés",
+    "feature_2": "Recherche et filtres avancés",
+    "feature_3": "Gestion des inscriptions",
+    "feature_4": "Interface moderne et intuitive",
+    "feature_5": "Mode hors ligne (bientôt disponible)",
+    "compatibility_title": "Compatibilité",
+    "compatibility_desc": "Cette application requiert Android 5.0 (Lollipop) ou une version ultérieure. Pour toute question ou problème, contactez l'administrateur système."
+  }
+}

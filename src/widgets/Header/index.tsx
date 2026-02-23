@@ -12,6 +12,7 @@ import { useMeQuery } from '@/features/auth/api/authApi'
 import { performLogout } from '@/features/auth/authLifecycle'
 import { Button } from '@/shared/ui/Button'
 import { ThemeToggle } from '@/shared/ui/ThemeToggle'
+import { LanguageSwitcher } from '@/shared/ui/LanguageSwitcher'
 
 export const Header: React.FC = () => {
   const { t } = useTranslation('common')
@@ -80,15 +81,17 @@ export const Header: React.FC = () => {
                     if (firstName && lastName) {
                       return `${firstName} ${lastName}`
                     }
-                    return user.email || 'Utilisateur'
+                    return user.email || t('app.user')
                   })()}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  {userProfile?.role?.name || 'Utilisateur'}
+                  {userProfile?.role?.name || t('app.user')}
                 </div>
               </div>
             </div>
           )}
+
+          <LanguageSwitcher />
 
           <ThemeToggle size="sm" />
 

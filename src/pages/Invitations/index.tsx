@@ -18,6 +18,7 @@ import { useCreateOrganizationMutation } from '@/features/organizations/api/orga
 import { useSelector } from 'react-redux'
 import type { RootState } from '@/app/store'
 import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
+import { useTranslation } from 'react-i18next'
 
 interface InvitationFormData {
   email: string
@@ -30,6 +31,7 @@ interface InvitationFormData {
 const InvitationsPageContent: React.FC = () => {
   const currentUser = useSelector((state: RootState) => state.session.user)
   const toast = useToast()
+  const { t } = useTranslation('common')
 
   // Vérifier si l'utilisateur est SUPER_ADMIN
   const hasRoleSuperAdmin = currentUser?.roles?.includes('SUPER_ADMIN')
@@ -139,8 +141,8 @@ const InvitationsPageContent: React.FC = () => {
     // Validation des champs
     if (!formData.email || !formData.roleId) {
       showWarning(
-        'Champs requis',
-        "Veuillez remplir tous les champs requis avant d'envoyer l'invitation."
+        t('invitations.validation.required_fields_title'),
+        t('invitations.validation.required_fields_message')
       )
       return
     }
@@ -149,14 +151,14 @@ const InvitationsPageContent: React.FC = () => {
     if (isSuperAdmin) {
       if (formData.createNewOrg && !formData.newOrgName) {
         showWarning(
-          "Nom d'organisation requis",
-          'Veuillez saisir le nom de la nouvelle organisation.'
+          t('invitations.validation.org_name_required_title'),
+          t('invitations.validation.org_name_required_message')
         )
         return
       } else if (!formData.createNewOrg && !formData.orgId) {
         showWarning(
-          'Organisation requise',
-          'Veuillez sélectionner une organisation ou créer une nouvelle.'
+          t('invitations.validation.org_required_title'),
+          t('invitations.validation.org_required_message')
         )
         return
       }
@@ -203,7 +205,7 @@ const InvitationsPageContent: React.FC = () => {
           const orgErrorMessage =
             orgError?.data?.message ||
             orgError?.message ||
-            "Erreur lors de la création de l'organisation"
+            t('invitations.errors.org_creation_error')
 
           if (
             orgErrorMessage.includes('existe déjà') ||
@@ -211,11 +213,11 @@ const InvitationsPageContent: React.FC = () => {
             orgErrorMessage.includes('unique constraint')
           ) {
             showWarning(
-              'Organisation existante',
-              `Une organisation avec le nom "${formData.newOrgName}" existe déjà. Veuillez choisir un nom différent ou sélectionner l'organisation existante.`
+              t('invitations.errors.org_exists_title'),
+              t('invitations.errors.org_exists_message', { name: formData.newOrgName })
             )
           } else {
-            showError("Erreur de création d'organisation", orgErrorMessage)
+            showError(t('invitations.errors.org_creation_title'), orgErrorMessage)
           }
           return // Arrêter ici si la création d'organisation échoue
         }
@@ -262,8 +264,8 @@ const InvitationsPageContent: React.FC = () => {
           const expiresDate = new Date(existingInv.expiresAt).toLocaleDateString('fr-FR')
 
           showConfirmation(
-            'Invitation déjà en cours',
-            `Une invitation a déjà été envoyée à ${existingInv.email} le ${createdDate}.\n\nElle expire le ${expiresDate}.\n\nVoulez-vous renvoyer une nouvelle invitation ?`,
+            t('invitations.errors.already_pending_title'),
+            t('invitations.errors.already_pending_message', { email: existingInv.email, date: createdDate, expiresDate }),
             async () => {
               // OUI - Renvoyer l'invitation
               hideModal()
@@ -271,8 +273,8 @@ const InvitationsPageContent: React.FC = () => {
                 await resendInvitation(existingInv.id).unwrap()
                 
                 toast.success(
-                  'Invitation renvoyée',
-                  `Une nouvelle invitation a été envoyée à ${existingInv.email}.`
+                  t('invitations.messages.resent'),
+                  t('invitations.messages.resent_detail', { email: existingInv.email })
                 )
                 
                 // Reset form
@@ -284,7 +286,7 @@ const InvitationsPageContent: React.FC = () => {
                   newOrgName: '',
                 })
               } catch (resendError: any) {
-                toast.error('Erreur de renvoi', resendError?.message || 'Impossible de renvoyer l\'invitation')
+                toast.error(t('invitations.errors.resend_error'), resendError?.message || t('invitations.errors.resend_failed'))
               }
             },
             () => {
@@ -295,8 +297,8 @@ const InvitationsPageContent: React.FC = () => {
         } else {
           // Fallback: backend n'a pas retourné les données complètes
           showConfirmation(
-            'Invitation déjà en cours',
-            `Une invitation a déjà été envoyée à ${formData.email}.\n\nVoulez-vous renvoyer une nouvelle invitation ?`,
+            t('invitations.errors.already_pending_title'),
+            t('invitations.errors.already_pending_simple', { email: formData.email }),
             () => {
               // OUI - Recharger la page
               window.location.reload()
@@ -317,7 +319,7 @@ const InvitationsPageContent: React.FC = () => {
         error?.data?.message ||
         error?.data?.error ||          // Titre générique ("Bad Request")
         error?.message ||
-        "Une erreur inattendue s'est produite"
+        t('invitations.errors.unexpected')
 
       // Vérifier si l'utilisateur est déjà membre
       if (
@@ -326,7 +328,7 @@ const InvitationsPageContent: React.FC = () => {
         errorMessage.includes('déjà un compte et est membre')
       ) {
         showError(
-          'Utilisateur déjà membre',
+          t('invitations.errors.already_member_title'),
           errorMessage
         )
         return
@@ -338,7 +340,7 @@ const InvitationsPageContent: React.FC = () => {
         errorMessage.includes('invitation already pending')
       ) {
         showError(
-          'Invitation en attente',
+          t('invitations.errors.pending_title'),
           errorMessage
         )
         return
@@ -353,33 +355,28 @@ const InvitationsPageContent: React.FC = () => {
         errorMessage.includes('account already exists')
       ) {
         showError(
-          'Compte existant détecté',
-          `Un compte avec l'email ${formData.email} existe déjà dans le système. 
-          
-Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette personne doit accéder à plusieurs organisations, veuillez :
-• Demander à cette personne d'utiliser un autre email pour créer un second compte
-• Ou attendre la mise à jour prochaine qui permettra à un utilisateur de rejoindre plusieurs organisations
-`
+          t('invitations.errors.account_exists_title'),
+          t('invitations.errors.account_exists_message', { email: formData.email })
         )
       } else if (
         errorMessage.includes('invalid email') ||
         errorMessage.includes('email invalide')
       ) {
         showError(
-          'Email invalide',
-          "L'adresse email fournie n'est pas valide. Veuillez vérifier le format."
+          t('invitations.errors.invalid_email_title'),
+          t('invitations.errors.invalid_email_message')
         )
       } else if (
         errorMessage.includes('unauthorized') ||
         errorMessage.includes('non autorisé')
       ) {
         showError(
-          'Accès refusé',
-          "Vous n'avez pas les permissions nécessaires pour envoyer cette invitation."
+          t('invitations.errors.access_denied_title'),
+          t('invitations.errors.access_denied_message')
         )
       } else {
         showError(
-          "Erreur lors de l'envoi",
+          t('invitations.errors.send_error'),
           errorMessage
         )
       }
@@ -424,8 +421,8 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
   return (
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
-        title="Inviter un utilisateur"
-        description="Envoyez une invitation par email pour ajouter un nouveau membre à votre équipe. L'utilisateur recevra un lien sécurisé pour créer son compte."
+        title={t('invitations.inviteUser')}
+        description={t('invitations.page_description')}
         icon={Mail}
       />
 
@@ -437,9 +434,9 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                 <Send className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="section-title mb-0">Nouvelle invitation</h2>
+                <h2 className="section-title mb-0">{t('invitations.form.new_invitation')}</h2>
                 <p className="text-body-sm text-gray-500 dark:text-gray-400">
-                  Remplissez les informations ci-dessous
+                  {t('invitations.form.fill_info')}
                 </p>
               </div>
             </div>
@@ -447,11 +444,11 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
             <form onSubmit={handleSubmit} className="space-form">{/* space-y-8 */}
               {/* Email */}
               <FormField
-                label="Adresse email"
+                label={t('invitations.form.email.label')}
                 required
                 error={
                   !formData.email && formData.email !== ''
-                    ? "L'email est requis"
+                    ? t('invitations.form.email.required')
                     : undefined
                 }
               >
@@ -462,7 +459,7 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="utilisateur@exemple.com"
+                    placeholder={t('invitations.form.email.placeholder')}
                     required
                   />
                 </div>
@@ -471,9 +468,9 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
               {/* Organisation EN PREMIER (pour Super Admin seulement) */}
               {isSuperAdmin && (
                 <FormField
-                  label="Organisation"
+                  label={t('invitations.form.organization.label')}
                   required
-                  hint="Sélectionnez d'abord l'organisation pour voir les rôles disponibles"
+                  hint={t('invitations.form.organization.hint')}
                 >
                   <div className="space-y-4">
                     {/* Option: Organisation existante */}
@@ -492,7 +489,7 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                         htmlFor="existing-org"
                         className="text-sm font-medium text-gray-700 dark:text-gray-300"
                       >
-                        Assigner à une organisation existante
+                        {t('invitations.form.organization.existing')}
                       </label>
                     </div>
 
@@ -510,8 +507,8 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                         >
                           <option value="">
                             {isLoadingOrganizations
-                              ? 'Chargement...'
-                              : 'Sélectionner une organisation'}
+                              ? t('app.loading')
+                              : t('invitations.form.organization.placeholder')}
                           </option>
                           {organizations?.map((org) => (
                             <option key={org.id} value={org.id}>
@@ -537,24 +534,24 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                         className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center"
                       >
                         <Plus className="h-4 w-4 mr-1" />
-                        Créer une nouvelle organisation
+                        {t('invitations.form.organization.create_new')}
                       </label>
                     </div>
 
                     {formData.createNewOrg && (
                       <div className="space-y-4 pl-6 border-l-2 border-blue-200 dark:border-blue-700">
-                        <FormField label="Nom de l'organisation" required>
+                        <FormField label={t('invitations.form.organization.name_label')} required>
                           <Input
                             value={formData.newOrgName}
                             onChange={(e) =>
                               handleInputChange('newOrgName', e.target.value)
                             }
-                            placeholder="Ex: ACME Corporation"
+                            placeholder={t('invitations.form.organization.name_placeholder')}
                             className="w-full"
                           />
                           {formData.newOrgName && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Slug généré :{' '}
+                              {t('invitations.form.organization.slug_generated')}{' '}
                               <span className="font-mono text-blue-600 dark:text-blue-400">
                                 {generateSlug(formData.newOrgName)}
                               </span>
@@ -564,23 +561,20 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
 
                         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
                           <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                            Informations automatiques
+                            {t('invitations.form.organization.auto_info_title')}
                           </h4>
                           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                             <li>
-                              • Le slug sera généré automatiquement (ex:
-                              acme-corporation)
+                              • {t('invitations.form.organization.auto_info_slug')}
                             </li>
                             <li>
-                              • Les rôles par défaut seront créés
-                              automatiquement
+                              • {t('invitations.form.organization.auto_info_roles')}
                             </li>
                             <li>
-                              • Le fuseau horaire sera défini sur Europe/Paris
+                              • {t('invitations.form.organization.auto_info_timezone')}
                             </li>
                             <li>
-                              • L'utilisateur sera automatiquement assigné à
-                              cette organisation
+                              • {t('invitations.form.organization.auto_info_assignment')}
                             </li>
                           </ul>
                         </div>
@@ -592,12 +586,12 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
 
               {/* Rôle (APRÈS l'organisation pour SUPER_ADMIN) */}
               <FormField
-                label="Rôle"
+                label={t('invitations.form.role.label')}
                 required
                 hint={
                   isSuperAdmin && !formData.createNewOrg && !selectedOrgId
-                    ? "Sélectionnez d'abord une organisation"
-                    : "Définit les permissions de l'utilisateur"
+                    ? t('invitations.form.role.select_org_first')
+                    : t('invitations.form.role.description')
                 }
               >
                 <div className="relative">
@@ -616,14 +610,14 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                   >
                     <option value="">
                       {isLoadingRoles
-                        ? 'Chargement...'
+                        ? t('app.loading')
                         : isSuperAdmin &&
                             !formData.createNewOrg &&
                             !selectedOrgId
-                          ? "Sélectionnez d'abord une organisation"
+                          ? t('invitations.form.role.select_org_first')
                           : rolesError
-                            ? 'Erreur de chargement'
-                            : 'Sélectionner un rôle'}
+                            ? t('invitations.form.role.load_error')
+                            : t('invitations.form.role.placeholder')}
                     </option>
                     {roles?.map((role) => (
                       <option key={role.id} value={role.id}>
@@ -636,15 +630,14 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                       !rolesError &&
                       selectedOrgId && (
                         <option value="" disabled>
-                          Aucun rôle disponible pour cette organisation
+                          {t('invitations.form.role.no_roles')}
                         </option>
                       )}
                   </Select>
                 </div>
                 {formData.createNewOrg && (
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    Rôles par défaut (Admin, Manager, Partner, Viewer, Hôtesse)
-                    disponibles pour la nouvelle organisation
+                    {t('invitations.form.role.default_roles')}
                   </p>
                 )}
               </FormField>
@@ -659,15 +652,15 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                     <>
                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
                       {isCreatingOrg
-                        ? "Création de l'organisation..."
-                        : 'Envoi en cours...'}
+                        ? t('invitations.form.creating_org')
+                        : t('invitations.form.sending')}
                     </>
                   ) : (
                     <>
                       <Send className="w-5 h-5 mr-3" />
                       {isSuperAdmin && formData.createNewOrg
-                        ? "Créer l'organisation et envoyer l'invitation"
-                        : "Envoyer l'invitation"}
+                        ? t('invitations.form.submit_with_org')
+                        : t('invitations.form.submit')}
                     </>
                   )}
                 </Button>
@@ -678,9 +671,9 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
           {/* Section informative */}
           <PageSection spacing="xl">
             <div className="text-center mb-8">
-              <h2 className="section-title mb-6">Comment ça fonctionne</h2>
+              <h2 className="section-title mb-6">{t('invitations.how_it_works.title')}</h2>
               <p className="text-body text-gray-600 dark:text-gray-400">
-                Le processus d'invitation en 3 étapes simples
+                {t('invitations.how_it_works.description')}
               </p>
             </div>
 
@@ -689,10 +682,9 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-4">
                   <Mail className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-heading-sm mb-3">1. Email envoyé</h3>
+                <h3 className="text-heading-sm mb-3">{t('invitations.how_it_works.step1_title')}</h3>
                 <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                  Un email d'invitation est automatiquement envoyé à l'adresse
-                  indiquée
+                  {t('invitations.how_it_works.step1_description')}
                 </p>
               </div>
 
@@ -700,10 +692,9 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl mb-4">
                   <CheckCircle className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-heading-sm mb-3">2. Lien sécurisé</h3>
+                <h3 className="text-heading-sm mb-3">{t('invitations.how_it_works.step2_title')}</h3>
                 <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                  L'utilisateur reçoit un lien sécurisé pour compléter son
-                  inscription
+                  {t('invitations.how_it_works.step2_description')}
                 </p>
               </div>
 
@@ -711,10 +702,9 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl mb-4">
                   <Users className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-heading-sm mb-3">3. Compte créé</h3>
+                <h3 className="text-heading-sm mb-3">{t('invitations.how_it_works.step3_title')}</h3>
                 <p className="text-body-sm text-gray-600 dark:text-gray-400">
-                  Il peut créer son mot de passe et accéder immédiatement à la
-                  plateforme
+                  {t('invitations.how_it_works.step3_description')}
                 </p>
               </div>
             </div>
@@ -729,20 +719,18 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
                 </div>
                 <div>
                   <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                    Points importants
+                    {t('invitations.important.title')}
                   </h4>
                   <ul className="space-y-1 text-sm text-blue-800 dark:text-blue-200">
                     <li>
-                      • Vérifiez l'adresse email avant d'envoyer l'invitation
+                      • {t('invitations.important.check_email')}
                     </li>
                     <li>
-                      • Le lien d'invitation expire automatiquement dans 48
-                      heures
+                      • {t('invitations.important.expires')}
                     </li>
-                    <li>• Vous pouvez renvoyer une invitation si nécessaire</li>
+                    <li>• {t('invitations.important.can_resend')}</li>
                     <li>
-                      • L'utilisateur recevra ses permissions selon le rôle
-                      assigné
+                      • {t('invitations.important.permissions')}
                     </li>
                   </ul>
                 </div>
@@ -764,15 +752,18 @@ Pour le moment, chaque utilisateur ne peut avoir qu'un seul compte. Si cette per
   )
 }
 
-export const InvitationsPage = () => (
-  <ProtectedPage
-    action="create"
-    subject="Invitation"
-    deniedTitle="Accès aux invitations refusé"
-    deniedMessage="Vous n'avez pas les permissions nécessaires pour gérer les invitations."
-  >
-    <InvitationsPageContent />
-  </ProtectedPage>
-)
+export const InvitationsPage = () => {
+  const { t } = useTranslation('common')
+  return (
+    <ProtectedPage
+      action="create"
+      subject="Invitation"
+      deniedTitle={t('invitations.access_denied_title')}
+      deniedMessage={t('invitations.access_denied_message')}
+    >
+      <InvitationsPageContent />
+    </ProtectedPage>
+  )
+}
 
 export default InvitationsPage

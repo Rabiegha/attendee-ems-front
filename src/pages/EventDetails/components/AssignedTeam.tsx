@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useGetEventAssignedUsersQuery,
   useAssignUsersToEventMutation,
@@ -20,6 +21,7 @@ interface AssignedTeamProps {
 }
 
 export function AssignedTeam({ eventId }: AssignedTeamProps) {
+  const { t } = useTranslation('events')
   const [showAddModal, setShowAddModal] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const toast = useToast()
@@ -187,7 +189,7 @@ export function AssignedTeam({ eventId }: AssignedTeamProps) {
                   <div className="text-center py-8">
                     <Users className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {searchTerm ? 'Aucun utilisateur trouvé' : 'Tous les utilisateurs sont déjà assignés'}
+                      {searchTerm ? t('team.no_user_found') : t('team.all_assigned')}
                     </p>
                   </div>
                 ) : (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import { selectToken } from '@/features/auth/model/sessionSlice'
 import { Modal } from '@/shared/ui/Modal'
@@ -13,6 +14,7 @@ interface QrCodeModalProps {
 }
 
 export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps) {
+  const { t } = useTranslation(['events', 'common'])
   const [isDownloading, setIsDownloading] = useState(false)
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
@@ -51,7 +53,7 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
         setQrCodeDataUrl(dataUrl)
       } catch (err) {
         console.error('[QR Code] Failed to load:', err)
-        setError('Erreur de chargement du QR Code')
+        setError(t('events:registrations.qrcode_loading_error'))
       } finally {
         setIsLoading(false)
       }
@@ -96,13 +98,13 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
 
   const attendeeName = registration.attendee
     ? `${registration.attendee.firstName} ${registration.attendee.lastName}`
-    : 'Participant'
+    : t('events:registrations.participant_fallback')
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="QR Code Check-in"
+      title={t('events:registrations.qrcode_title')}
       maxWidth="md"
     >
       <div className="flex flex-col items-center space-y-6">
@@ -129,13 +131,14 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
             <>
               <CheckCircleIcon className="w-5 h-5 text-green-500" />
               <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                Checked-in le{' '}
-                {new Date(registration.checkedInAt).toLocaleDateString('fr-FR', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
+                {t('events:registrations.qrcode_checked_in_date', {
+                  date: new Date(registration.checkedInAt).toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })
                 })}
               </span>
             </>
@@ -143,7 +146,7 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
             <>
               <XCircleIcon className="w-5 h-5 text-gray-400 dark:text-gray-600" />
               <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                Pas encore enregistré
+                {t('events:registrations.qrcode_not_checked')}
               </span>
             </>
           )}
@@ -156,7 +159,7 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
               <div className="w-64 h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Chargement...</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t('common:app.loading')}</p>
                 </div>
               </div>
             ) : error ? (
@@ -182,8 +185,7 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
         {/* Instructions */}
         <div className="text-center max-w-sm">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Scannez ce QR Code avec l'application mobile pour enregistrer l'arrivée du participant à
-            l'événement.
+            {t('events:registrations.qrcode_scan_instruction')}
           </p>
         </div>
 
@@ -195,13 +197,13 @@ export function QrCodeModal({ isOpen, onClose, registration }: QrCodeModalProps)
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors duration-200"
           >
             <DownloadIcon className="w-4 h-4" />
-            {isDownloading ? 'Téléchargement...' : 'Télécharger PNG'}
+            {isDownloading ? t('events:registrations.qrcode_downloading') : t('events:registrations.qrcode_download_png')}
           </button>
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors duration-200"
           >
-            Fermer
+            {t('common:app.close')}
           </button>
         </div>
 

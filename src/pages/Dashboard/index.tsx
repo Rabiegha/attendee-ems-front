@@ -143,7 +143,7 @@ export const Dashboard: React.FC = () => {
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
         title={t('navigation.dashboard')}
-        description={`Bienvenue ${currentUser?.firstName || currentUser?.first_name || ''} ! Vous êtes connecté en tant que ${userProfile?.role?.name || 'Utilisateur'}${organization?.name ? ` dans l'organisation ${organization.name}` : ''}.`}
+        description={t('events:dashboard.welcome_message', { name: currentUser?.firstName || currentUser?.first_name || '', role: userProfile?.role?.name || t('common:app.user'), org: organization?.name || '' })}
         icon={LayoutDashboard}
       />
 
@@ -165,7 +165,7 @@ export const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {canReadEvent && (
               <div className="space-y-4">
-                <h2 className="section-title">Événements récents</h2>
+                <h2 className="section-title">{t('events:dashboard.recent_events')}</h2>
                 <EventList events={events} isLoading={eventsLoading} />
                 {events.length < totalEvents && (
                   <button
@@ -173,7 +173,7 @@ export const Dashboard: React.FC = () => {
                     className="w-full py-2 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-200 flex items-center justify-center gap-2"
                   >
                     <ChevronDown className="h-4 w-4" />
-                    Voir plus
+                    {t('common:app.view_more')}
                   </button>
                 )}
               </div>
@@ -181,13 +181,13 @@ export const Dashboard: React.FC = () => {
 
             {canReadAttendee && (
               <div className="space-y-4">
-                <h2 className="section-title">Inscriptions récentes</h2>
+                <h2 className="section-title">{t('events:dashboard.recent_registrations')}</h2>
                 {registrationsLoading ? (
                   <DashboardAttendeeListSkeleton />
                 ) : !recentRegistrations || recentRegistrations.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                     <User className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-                    <p>Aucune inscription récente</p>
+                    <p>{t('events:dashboard.no_recent_registrations')}</p>
                   </div>
                 ) : (
                   <>
@@ -239,10 +239,10 @@ export const Dashboard: React.FC = () => {
                                 }`}
                               >
                                 {registration.status === 'approved'
-                                  ? 'Approuvé'
+                                  ? t('common:status.approved')
                                   : registration.status === 'awaiting'
-                                    ? 'En attente'
-                                    : 'Refusé'}
+                                    ? t('common:status.pending')
+                                    : t('common:status.rejected')}
                               </span>
                             </div>
                           </div>
@@ -255,7 +255,7 @@ export const Dashboard: React.FC = () => {
                         className="w-full py-2 px-4 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-200 flex items-center justify-center gap-2"
                       >
                         <ChevronDown className="h-4 w-4" />
-                        Voir plus
+                        {t('common:app.view_more')}
                       </button>
                     )}
                   </>
@@ -278,15 +278,14 @@ export const Dashboard: React.FC = () => {
               <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div>
                 <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                  Besoin d'aide ou de permissions supplémentaires ?
+                  {t('events:dashboard.help_title')}
                 </h3>
                 <p className="text-body-sm text-blue-700 dark:text-blue-300 mt-1">
-                  Contactez votre administrateur pour obtenir l'accès aux
-                  fonctionnalités dont vous avez besoin.
+                  {t('events:dashboard.help_description')}
                 </p>
                 {organization && (
                   <p className="text-body-sm text-blue-600 dark:text-blue-400 mt-2">
-                    <strong>Organisation :</strong> {organization.name}
+                    <strong>{t('events:dashboard.help_org')}</strong> {organization.name}
                   </p>
                 )}
               </div>

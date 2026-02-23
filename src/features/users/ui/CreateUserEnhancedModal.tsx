@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSelector } from 'react-redux'
@@ -41,6 +42,7 @@ interface CreateUserEnhancedModalProps {
 export const CreateUserEnhancedModal: React.FC<
   CreateUserEnhancedModalProps
 > = ({ isOpen, onClose }) => {
+  const { t } = useTranslation(['users', 'common'])
   const currentUser = useSelector(selectUser)
   const { success } = useToast()
   const [createUser, { isLoading: isCreating }] =
@@ -180,11 +182,11 @@ export const CreateUserEnhancedModal: React.FC<
             orgErrorMessage.includes('unique constraint')
           ) {
             showError(
-              '🏢 Organisation existante',
-              `Une organisation avec le nom "${newOrgData.name}" existe déjà. Veuillez choisir un nom différent ou sélectionner l'organisation existante.`
+              t('users:modal.org_existing_title'),
+              t('users:modal.org_existing_message', { name: newOrgData.name })
             )
           } else {
-            showError("🏢 Erreur de création d'organisation", orgErrorMessage)
+            showError(t('users:modal.org_creation_error_title'), orgErrorMessage)
           }
           return // Arrêter ici si la création d'organisation échoue
         }
@@ -210,24 +212,23 @@ export const CreateUserEnhancedModal: React.FC<
       // Toast simple pour confirmer
       success(
         createdOrgName
-          ? 'Organisation et utilisateur créés'
-          : 'Utilisateur créé',
+          ? t('users:modal.toast_org_and_user_created')
+          : t('users:modal.toast_user_created'),
         createdOrgName
-          ? `L'organisation "${createdOrgName}" et l'utilisateur ont été créés avec succès.`
-          : `L'utilisateur ${data.firstName} ${data.lastName} a été créé avec succès.`
+          ? t('users:modal.toast_org_and_user_created_detail', { orgName: createdOrgName })
+          : t('users:modal.toast_user_created_detail', { firstName: data.firstName, lastName: data.lastName })
       )
     } catch (error: any) {
       console.error("Erreur lors de la création de l'utilisateur:", error)
 
-      let errorMessage =
-        "Une erreur est survenue lors de la création de l'utilisateur"
-      let errorTitle = 'Erreur de création'
+      let errorMessage = t('users:modal.create_error_default')
+      let errorTitle = t('users:modal.create_error_title')
 
       // Gestion des erreurs d'utilisateur (les erreurs d'organisation sont gérées séparément)
       if (error?.data?.message?.includes('already exists')) {
-        errorMessage = 'Cet email est déjà utilisé par un autre utilisateur.'
+        errorMessage = t('users:modal.create_error_email_exists_short')
       } else if (error?.data?.message?.includes('Invalid credentials')) {
-        errorMessage = 'Permissions insuffisantes pour créer un utilisateur.'
+        errorMessage = t('users:modal.create_error_insufficient_permissions')
       } else if (error?.data?.message) {
         errorMessage = error.data.message
       }
@@ -257,10 +258,10 @@ export const CreateUserEnhancedModal: React.FC<
           {/* Titre moderne */}
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">
-              Créer un utilisateur
+              {t('users:modal.create_title')}
             </h2>
             <p className="text-gray-400">
-              Ajoutez un nouvel utilisateur à la plateforme
+              {t('users:modal.create_enhanced_subtitle')}
             </p>
           </div>
 
@@ -268,7 +269,7 @@ export const CreateUserEnhancedModal: React.FC<
             {/* 👤 Informations personnelles */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
-                label="Prénom"
+                label={t('users:form.first_name')}
                 error={errors.firstName?.message}
                 required
               >
@@ -279,7 +280,7 @@ export const CreateUserEnhancedModal: React.FC<
                 />
               </FormField>
 
-              <FormField label="Nom" error={errors.lastName?.message} required>
+              <FormField label={t('users:form.last_name')} error={errors.lastName?.message} required>
                 <Input
                   {...register('lastName')}
                   placeholder="Dupont"
@@ -290,7 +291,7 @@ export const CreateUserEnhancedModal: React.FC<
 
             {/* 📧 Email */}
             <FormField
-              label="Adresse email"
+              label={t('users:form.email')}
               error={errors.email?.message}
               required
             >
@@ -305,7 +306,7 @@ export const CreateUserEnhancedModal: React.FC<
 
             {/* 📱 Téléphone (optionnel) */}
             <FormField
-              label="Téléphone (optionnel)"
+              label={t('users:form.phone')}
               error={errors.phone?.message}
             >
               <Input
@@ -319,7 +320,7 @@ export const CreateUserEnhancedModal: React.FC<
             {isSuperAdmin && (
               <div className="space-y-4">
                 <FormField
-                  label="Organisation"
+                  label={t('users:form.org_label')}
                   error={errors.orgId?.message}
                   required
                 >
@@ -343,7 +344,7 @@ export const CreateUserEnhancedModal: React.FC<
                         htmlFor="existing-org"
                         className="text-sm font-medium"
                       >
-                        Assigner à une organisation existante
+                        {t('users:modal.assign_existing_org')}
                       </label>
                     </div>
 
@@ -354,8 +355,8 @@ export const CreateUserEnhancedModal: React.FC<
                         disabled={isLoadingOrgs}
                         placeholder={
                           isLoadingOrgs
-                            ? 'Chargement...'
-                            : 'Sélectionnez une organisation'
+                            ? t('users:modal.loading')
+                            : t('users:modal.select_org')
                         }
                       >
                         {organizationsData?.map((org: Organization) => (
@@ -386,14 +387,14 @@ export const CreateUserEnhancedModal: React.FC<
                         className="text-sm font-medium flex items-center"
                       >
                         <Plus className="h-4 w-4 mr-1" />
-                        Créer une nouvelle organisation
+                        {t('users:modal.create_new_org')}
                       </label>
                     </div>
 
                     {createNewOrg && (
                       <div className="space-y-4 pl-6 border-l-2 border-blue-200">
                         <FormField
-                          label="Nom de l'organisation"
+                          label={t('users:form.org_name_label')}
                           error={errors.newOrgName?.message}
                           required
                         >
@@ -403,7 +404,7 @@ export const CreateUserEnhancedModal: React.FC<
                           />
                           {newOrgName && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              Slug généré :{' '}
+                              {t('users:modal.slug_generated')}{' '}
                               <span className="font-mono text-blue-600 dark:text-blue-400">
                                 {generateSlug(newOrgName)}
                               </span>
@@ -413,19 +414,17 @@ export const CreateUserEnhancedModal: React.FC<
 
                         <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
                           <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                            Informations automatiques
+                            {t('users:modal.auto_info_title')}
                           </h4>
                           <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                             <li>
-                              • Le slug sera généré automatiquement (ex:
-                              acme-corporation)
+                              • {t('users:modal.auto_info_slug')}
                             </li>
                             <li>
-                              • Le fuseau horaire sera défini sur Europe/Paris
+                              • {t('users:modal.auto_info_timezone')}
                             </li>
                             <li>
-                              • L'utilisateur sera automatiquement assigné à
-                              cette organisation
+                              • {t('users:modal.auto_info_assignment')}
                             </li>
                           </ul>
                         </div>
@@ -440,22 +439,21 @@ export const CreateUserEnhancedModal: React.FC<
             {!isSuperAdmin && currentUser?.orgId && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
                 <p className="text-sm text-blue-700 dark:text-blue-400">
-                  📍 L'utilisateur sera automatiquement créé dans votre
-                  organisation
+                  📍 {t('users:modal.auto_created_in_org')}
                 </p>
               </div>
             )}
 
             {/* 🔐 Rôle */}
-            <FormField label="Rôle" error={errors.roleId?.message} required>
+            <FormField label={t('users:form.role_label')} error={errors.roleId?.message} required>
               <Select
                 {...register('roleId')}
                 leftIcon={<Shield className="h-5 w-5" />}
                 disabled={isLoadingRoles}
                 placeholder={
                   isLoadingRoles
-                    ? 'Chargement des rôles...'
-                    : 'Sélectionnez un rôle'
+                    ? t('users:modal.loading_roles')
+                    : t('users:modal.select_role')
                 }
               >
                 {rolesData?.map((role: Role) => (
@@ -491,7 +489,7 @@ export const CreateUserEnhancedModal: React.FC<
                 onClick={handleClose}
                 disabled={isCreating}
               >
-                Annuler
+                {t('common:app.cancel')}
               </Button>
 
               <Button
@@ -503,13 +501,13 @@ export const CreateUserEnhancedModal: React.FC<
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {isCreatingOrg
-                      ? "Création de l'organisation..."
-                      : "Création de l'utilisateur..."}
+                      ? t('users:modal.creating_org')
+                      : t('users:modal.creating_user')}
                   </>
                 ) : createNewOrg ? (
-                  "Créer l'organisation et l'utilisateur"
+                  t('users:modal.create_org_and_user')
                 ) : (
-                  "Créer l'utilisateur"
+                  t('users:modal.create_button')
                 )}
               </Button>
             </div>

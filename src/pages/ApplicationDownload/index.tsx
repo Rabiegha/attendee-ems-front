@@ -4,24 +4,26 @@ import QRCode from 'react-qr-code'
 import { PageContainer, PageHeader, PageSection } from '@/shared/ui'
 import { Card } from '@/shared/ui/Card'
 import { Button } from '@/shared/ui/Button'
+import { useTranslation } from 'react-i18next'
 
 export const ApplicationDownloadPage: React.FC = () => {
+  const { t, i18n } = useTranslation('downloads')
   const apkUrl = '/downloads/AttendeeV2.apk'
   const fullApkUrl = `${window.location.origin}${apkUrl}`
   
   const features = [
-    'Consultation des événements en cours, à venir et passés',
-    'Recherche et filtres avancés',
-    'Gestion des inscriptions',
-    'Interface moderne et intuitive',
-    'Mode hors ligne (bientôt disponible)',
+    t('mobile.feature_1'),
+    t('mobile.feature_2'),
+    t('mobile.feature_3'),
+    t('mobile.feature_4'),
+    t('mobile.feature_5'),
   ]
 
   return (
     <PageContainer>
       <PageHeader
-        title="Application Mobile"
-        description="Téléchargez l'application Android Attendee pour gérer vos événements en mobilité."
+        title={t('mobile.title')}
+        description={t('mobile.description')}
         icon={Smartphone}
       />
 
@@ -33,9 +35,9 @@ export const ApplicationDownloadPage: React.FC = () => {
                 <Smartphone className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h2 className="section-title mb-0">Attendee Mobile</h2>
+                <h2 className="section-title mb-0">{t('mobile.app_name')}</h2>
                 <p className="text-body-sm text-gray-500 dark:text-gray-400">
-                  Version Android - Production
+                  {t('mobile.version')}
                 </p>
               </div>
             </div>
@@ -46,7 +48,7 @@ export const ApplicationDownloadPage: React.FC = () => {
                 <div className="flex items-center gap-2 mb-4">
                   <QrCode className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Scanner pour télécharger
+                    {t('mobile.scan_title')}
                   </h3>
                 </div>
                 <div className="bg-white p-4 rounded-xl shadow-inner border-4 border-gray-100">
@@ -58,7 +60,7 @@ export const ApplicationDownloadPage: React.FC = () => {
                   />
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-4 text-center">
-                  Scannez ce QR code avec votre téléphone pour télécharger directement l'application
+                  {t('mobile.scan_description')}
                 </p>
               </div>
 
@@ -70,10 +72,10 @@ export const ApplicationDownloadPage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-                      Fichier APK prêt au téléchargement
+                      {t('mobile.apk_ready')}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Dernière mise à jour : {new Date().toLocaleDateString('fr-FR')}
+                      {t('mobile.last_update')} {new Date().toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US')}
                     </p>
                   </div>
                   <a
@@ -96,13 +98,13 @@ export const ApplicationDownloadPage: React.FC = () => {
                       className="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200"
                     >
                       <Download className="h-5 w-5 mr-2" />
-                      Télécharger l'APK
+                      {t('mobile.download_apk')}
                     </Button>
                   </a>
                   <p className="text-xs text-center text-gray-500 dark:text-gray-400 max-w-xs">
-                    Le téléchargement devrait commencer automatiquement. Si ce n'est pas le cas,{' '}
+                    {t('mobile.download_auto')}{' '}
                     <a href={apkUrl} className="text-blue-600 dark:text-blue-400 hover:underline">
-                      cliquez ici
+                      {t('mobile.click_here')}
                     </a>
                   </p>
                 </div>
@@ -111,7 +113,7 @@ export const ApplicationDownloadPage: React.FC = () => {
               {/* Instructions d'installation */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Instructions d'installation
+                  {t('mobile.install_title')}
                 </h3>
                 <ol className="space-y-3">
                   <li className="flex gap-3">
@@ -119,7 +121,7 @@ export const ApplicationDownloadPage: React.FC = () => {
                       1
                     </span>
                     <span className="text-gray-700 dark:text-gray-300 pt-0.5">
-                      Téléchargez le fichier APK en cliquant sur le bouton ci-dessus
+                      {t('mobile.step_1')}
                     </span>
                   </li>
                   <li className="flex gap-3">
@@ -127,9 +129,9 @@ export const ApplicationDownloadPage: React.FC = () => {
                       2
                     </span>
                     <div className="text-gray-700 dark:text-gray-300 pt-0.5">
-                      <p>Autorisez l'installation d'applications provenant de sources inconnues</p>
+                      <p>{t('mobile.step_2')}</p>
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Paramètres → Sécurité → Sources inconnues
+                        {t('mobile.step_2_detail')}
                       </p>
                     </div>
                   </li>
@@ -138,7 +140,7 @@ export const ApplicationDownloadPage: React.FC = () => {
                       3
                     </span>
                     <span className="text-gray-700 dark:text-gray-300 pt-0.5">
-                      Ouvrez le fichier APK téléchargé et suivez les instructions
+                      {t('mobile.step_3')}
                     </span>
                   </li>
                   <li className="flex gap-3">
@@ -146,7 +148,7 @@ export const ApplicationDownloadPage: React.FC = () => {
                       4
                     </span>
                     <span className="text-gray-700 dark:text-gray-300 pt-0.5">
-                      Lancez l'application et connectez-vous avec vos identifiants
+                      {t('mobile.step_4')}
                     </span>
                   </li>
                 </ol>
@@ -155,7 +157,7 @@ export const ApplicationDownloadPage: React.FC = () => {
               {/* Fonctionnalités */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Fonctionnalités principales
+                  {t('mobile.features_title')}
                 </h3>
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-5 border border-gray-200 dark:border-gray-700">
                   <ul className="space-y-3">
@@ -173,11 +175,10 @@ export const ApplicationDownloadPage: React.FC = () => {
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
                 <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-2">
                   <Smartphone className="h-5 w-5" />
-                  Compatibilité
+                  {t('mobile.compatibility_title')}
                 </h4>
                 <p className="text-sm text-blue-800 dark:text-blue-200">
-                  Cette application requiert Android 5.0 (Lollipop) ou une version ultérieure.
-                  Pour toute question ou problème, contactez l'administrateur système.
+                  {t('mobile.compatibility_desc')}
                 </p>
               </div>
             </div>

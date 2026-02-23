@@ -15,8 +15,10 @@ import {
   FileText,
   Activity,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export const ReportsPage: React.FC = () => {
+  const { t } = useTranslation(['reports', 'common'])
   const token = useSelector(selectToken)
   
   const [checkInData, setCheckInData] = useState<{
@@ -141,7 +143,7 @@ export const ReportsPage: React.FC = () => {
     // Count attendees by type
     const typeCount: Record<string, number> = {}
     attendees.forEach((attendee: any) => {
-      const typeName = attendee.type?.name || attendee.attendeeType?.name || 'Sans type'
+      const typeName = attendee.type?.name || attendee.attendeeType?.name || t('overview.no_type')
       typeCount[typeName] = (typeCount[typeName] || 0) + 1
     })
 
@@ -220,7 +222,7 @@ export const ReportsPage: React.FC = () => {
       totalCapacity,
       occupancyRate,
     }
-  }, [attendees, events, totalAttendees])
+  }, [attendees, events, totalAttendees, t])
 
   // Préparer les données pour ECharts
   const pieChartOption = useMemo((): EChartsOption => {
@@ -309,7 +311,7 @@ export const ReportsPage: React.FC = () => {
       },
       series: [
         {
-          name: 'Événements',
+          name: t('charts.events'),
           type: 'bar',
           data: values,
           itemStyle: {
@@ -324,7 +326,7 @@ export const ReportsPage: React.FC = () => {
         },
       ],
     }
-  }, [stats.eventsByMonth])
+  }, [stats.eventsByMonth, t])
 
   const lineChartOption = useMemo((): EChartsOption => {
     const categories = Object.keys(stats.last30Days)
@@ -372,7 +374,7 @@ export const ReportsPage: React.FC = () => {
       ],
       series: [
         {
-          name: 'Événements créés',
+          name: t('charts.events_created'),
           type: 'line',
           data: values,
           smooth: false,
@@ -408,7 +410,7 @@ export const ReportsPage: React.FC = () => {
         },
       ],
     }
-  }, [stats.last30Days])
+  }, [stats.last30Days, t])
 
   const capacityChartOption = useMemo((): EChartsOption => {
     const categories = Object.keys(stats.capacityRanges)
@@ -444,7 +446,7 @@ export const ReportsPage: React.FC = () => {
       },
       series: [
         {
-          name: "Nombre d'événements",
+          name: t('charts.event_count'),
           type: 'bar',
           data: values,
           itemStyle: {
@@ -459,7 +461,7 @@ export const ReportsPage: React.FC = () => {
         },
       ],
     }
-  }, [stats.capacityRanges])
+  }, [stats.capacityRanges, t])
 
   const checkInRateChartOption = useMemo((): EChartsOption => {
     const categories = checkInData.eventNames
@@ -517,7 +519,7 @@ export const ReportsPage: React.FC = () => {
       ],
       series: [
         {
-          name: 'Taux de présence',
+          name: t('charts.check_in_rate'),
           type: 'bar',
           data: values,
           itemStyle: {
@@ -538,19 +540,19 @@ export const ReportsPage: React.FC = () => {
         },
       ],
     }
-  }, [checkInData])
+  }, [checkInData, t])
 
   if (eventsLoading || attendeesLoading) {
     return (
       <PageContainer maxWidth="7xl" padding="lg">
         <PageHeader
-          title="Rapports et Statistiques"
-          description="Analyse des données de votre plateforme"
+          title={t('page.title')}
+          description={t('page.description')}
           icon={TrendingUp}
         />
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Chargement des données...</p>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('page.loading')}</p>
         </div>
       </PageContainer>
     )
@@ -559,8 +561,8 @@ export const ReportsPage: React.FC = () => {
   return (
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
-        title="Rapports et Statistiques"
-        description="Analyse des données de votre plateforme"
+        title={t('page.title')}
+        description={t('page.description')}
         icon={TrendingUp}
       />
 
@@ -570,7 +572,7 @@ export const ReportsPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-100 text-sm font-medium">Total Participants</p>
+                <p className="text-blue-100 text-sm font-medium">{t('overview.total_attendees')}</p>
                 <h3 className="text-3xl font-bold mt-2">{stats.totalAttendees}</h3>
               </div>
               <Users className="h-12 w-12 text-blue-100 opacity-80" />
@@ -582,7 +584,7 @@ export const ReportsPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-100 text-sm font-medium">Total Événements</p>
+                <p className="text-green-100 text-sm font-medium">{t('overview.total_events')}</p>
                 <h3 className="text-3xl font-bold mt-2">{stats.totalEvents}</h3>
               </div>
               <Calendar className="h-12 w-12 text-green-100 opacity-80" />
@@ -594,7 +596,7 @@ export const ReportsPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-amber-100 text-sm font-medium">Capacité moyenne</p>
+                <p className="text-amber-100 text-sm font-medium">{t('overview.avg_capacity')}</p>
                 <h3 className="text-3xl font-bold mt-2">{stats.avgCapacity}</h3>
               </div>
               <FileText className="h-12 w-12 text-amber-100 opacity-80" />
@@ -606,7 +608,7 @@ export const ReportsPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-100 text-sm font-medium">Taux de remplissage</p>
+                <p className="text-purple-100 text-sm font-medium">{t('overview.occupancy_rate')}</p>
                 <h3 className="text-3xl font-bold mt-2">{stats.occupancyRate}%</h3>
               </div>
               <Activity className="h-12 w-12 text-purple-100 opacity-80" />
@@ -618,7 +620,7 @@ export const ReportsPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-rose-100 text-sm font-medium">Capacité totale</p>
+                <p className="text-rose-100 text-sm font-medium">{t('overview.total_capacity')}</p>
                 <h3 className="text-3xl font-bold mt-2">{stats.totalCapacity}</h3>
               </div>
               <TrendingUp className="h-12 w-12 text-rose-100 opacity-80" />
@@ -630,7 +632,7 @@ export const ReportsPage: React.FC = () => {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-emerald-100 text-sm font-medium">Taux de présence moyen</p>
+                <p className="text-emerald-100 text-sm font-medium">{t('overview.avg_check_in_rate')}</p>
                 <h3 className="text-3xl font-bold mt-2">{checkInData.avgCheckInRate}%</h3>
               </div>
               <Users className="h-12 w-12 text-emerald-100 opacity-80" />
@@ -646,7 +648,7 @@ export const ReportsPage: React.FC = () => {
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                Distribution par type de participant
+                {t('charts.attendee_type_distribution')}
               </h3>
               <div style={{ height: '300px' }}>
                 <EChartsWrapper option={pieChartOption} />
@@ -660,7 +662,7 @@ export const ReportsPage: React.FC = () => {
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                Événements par mois
+                {t('charts.events_by_month')}
               </h3>
               <div style={{ height: '300px' }}>
                 <EChartsWrapper option={barChartMonthOption} />
@@ -674,7 +676,7 @@ export const ReportsPage: React.FC = () => {
       <Card className="mb-8">
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-            Événements créés (30 derniers jours)
+            {t('charts.events_created_last_30_days')}
           </h3>
           <div style={{ height: '300px' }}>
             <EChartsWrapper option={lineChartOption} />
@@ -687,7 +689,7 @@ export const ReportsPage: React.FC = () => {
         <Card className="mb-8">
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-              Distribution des événements par capacité
+              {t('charts.events_by_capacity')}
             </h3>
             <div style={{ height: '300px' }}>
               <EChartsWrapper option={capacityChartOption} />
@@ -701,7 +703,7 @@ export const ReportsPage: React.FC = () => {
         <Card className="mb-8">
           <CardContent className="p-6">
             <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-              Taux de présence par événement (Top 20)
+              {t('charts.check_in_rate_by_event')}
             </h3>
             <div style={{ height: '400px' }}>
               <EChartsWrapper option={checkInRateChartOption} />
@@ -714,12 +716,12 @@ export const ReportsPage: React.FC = () => {
       <Card>
         <CardContent className="p-6">
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-            Informations clés
+            {t('insights.title')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                Type le plus fréquent
+                {t('insights.most_common_type')}
               </p>
               <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mt-2">
                 {Object.keys(stats.typeCount).length > 0
@@ -731,7 +733,7 @@ export const ReportsPage: React.FC = () => {
             </div>
             <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <p className="text-sm text-green-600 dark:text-green-400 font-medium">
-                Événements à venir
+                {t('insights.upcoming_events')}
               </p>
               <p className="text-2xl font-bold text-green-900 dark:text-green-100 mt-2">
                 {events.filter((e: any) => {
@@ -743,7 +745,7 @@ export const ReportsPage: React.FC = () => {
             </div>
             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
               <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                Moyenne participants/événement
+                {t('insights.avg_attendees_per_event')}
               </p>
               <p className="text-2xl font-bold text-amber-900 dark:text-amber-100 mt-2">
                 {stats.totalEvents > 0 ? Math.round(stats.totalAttendees / stats.totalEvents) : 0}

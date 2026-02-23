@@ -31,7 +31,7 @@ import {
 import { Plus, Download, Users } from 'lucide-react'
 
 const AttendeesPage: React.FC = () => {
-  const { t } = useTranslation(['attendees', 'common'])
+  const { t, i18n } = useTranslation(['attendees', 'common'])
   const dispatch = useDispatch()
   const toast = useToast()
   const filters = useSelector(selectAttendeesFilters)
@@ -84,12 +84,12 @@ const AttendeesPage: React.FC = () => {
   const tabs: TabItem[] = [
     {
       id: 'active',
-      label: 'Participants actifs',
+      label: t('attendees:page.active_tab'),
       count: stats.active,
     },
     {
       id: 'deleted',
-      label: 'Participants supprimés',
+      label: t('attendees:page.deleted_tab'),
       count: stats.deleted,
     },
   ]
@@ -114,7 +114,7 @@ const AttendeesPage: React.FC = () => {
 
     if (!allAttendeesForExport?.data) {
       console.warn('⚠️ Pas de données à exporter')
-      toast.error('Aucun participant à exporter')
+      toast.error(t('attendees:page.no_export_data'))
       return
     }
 
@@ -123,15 +123,16 @@ const AttendeesPage: React.FC = () => {
       console.log('📊 IDs à exporter:', allIds.length)
 
       if (allIds.length === 0) {
-        toast.info('Aucun participant à exporter')
+        toast.info(t('attendees:page.no_export_data'))
         return
       }
 
-      toast.info(`Export de ${allIds.length} participant(s) en cours...`)
+      toast.info(t('attendees:page.export_progress', { count: allIds.length }))
 
       const response = await bulkExportAttendees({
         ids: allIds,
         format: 'xlsx',
+        lang: i18n.language,
       }).unwrap()
 
       console.log('✅ Réponse export reçue:', response)
@@ -146,7 +147,7 @@ const AttendeesPage: React.FC = () => {
       document.body.removeChild(a)
       URL.revokeObjectURL(response.downloadUrl)
 
-      toast.success(`${allIds.length} participant(s) exporté(s) avec succès`)
+      toast.success(t('attendees:page.export_success', { count: allIds.length }))
     } catch (error: any) {
       console.error('❌ Erreur lors de l\'export:', error)
       console.error('❌ Détails erreur:', {
@@ -155,7 +156,7 @@ const AttendeesPage: React.FC = () => {
         message: error?.data?.message,
       })
       toast.error(
-        error?.data?.message || 'Erreur lors de l\'export des participants'
+        error?.data?.message || t('attendees:page.export_error')
       )
     }
   }
@@ -164,7 +165,7 @@ const AttendeesPage: React.FC = () => {
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
         title={t('attendees.title')}
-        description="Gérez les participants inscrits à vos événements"
+        description={t('attendees:page.description')}
         icon={Users}
         actions={
           <ActionGroup align="right" spacing="md">
@@ -193,7 +194,7 @@ const AttendeesPage: React.FC = () => {
           {error ? (
             <div className="p-6 text-center">
               <p className="text-red-600 dark:text-red-400">
-                Erreur lors du chargement des participants
+                {t('attendees:page.loading_error')}
               </p>
             </div>
           ) : (
@@ -223,13 +224,16 @@ const AttendeesPage: React.FC = () => {
   )
 }
 
-export const Attendees: React.FC = () => (
-  <ProtectedPage
-    action="read"
-    subject="Attendee"
-    deniedTitle="Accès aux participants refusé"
-    deniedMessage="Vous n'avez pas les permissions nécessaires pour consulter les participants."
-  >
-    <AttendeesPage />
-  </ProtectedPage>
-)
+export const Attendees: React.FC = () => {
+  const { t } = useTranslation(['attendees', 'common'])
+  return (
+    <ProtectedPage
+      action="read"
+      subject="Attendee"
+      deniedTitle={t('attendees:page.access_denied_title')}
+      deniedMessage={t('attendees:page.access_denied_message')}
+    >
+      <AttendeesPage />
+    </ProtectedPage>
+  )
+}

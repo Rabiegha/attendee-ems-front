@@ -31,7 +31,7 @@ export const AttendeeFilters: React.FC<AttendeeFiltersProps> = ({ resultCount })
   return (
     <FilterBar
       resultCount={resultCount}
-      resultLabel="participant"
+      resultLabel={t('filters.result_label')}
       onReset={handleResetFilters}
       showResetButton={searchQuery !== ''}
       onRefresh={handleRefresh}

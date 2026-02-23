@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import type { AttendeeDPO } from '../dpo/attendee.dpo'
@@ -18,6 +19,7 @@ export const EditAttendeeModal: React.FC<EditAttendeeModalProps> = ({
   onSave,
   isLoading = false,
 }) => {
+  const { t } = useTranslation('attendees')
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -62,7 +64,7 @@ export const EditAttendeeModal: React.FC<EditAttendeeModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Modifier le participant"
+      title={t('modal.edit_title')}
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -178,7 +180,7 @@ export const EditAttendeeModal: React.FC<EditAttendeeModalProps> = ({
             Annuler
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Enregistrement...' : 'Enregistrer'}
+            {isLoading ? t('modal.saving') : t('modal.save')}
           </Button>
         </div>
       </form>

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { CreditCard, Plus } from 'lucide-react';
 import { 
   PageHeader,
@@ -20,6 +21,7 @@ import { useGetBadgeTemplatesQuery } from '@/services/api/badge-templates.api';
 
 export const BadgeDesigner: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation('badges');
   
   // États de recherche et filtrage
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,32 +60,32 @@ export const BadgeDesigner: React.FC = () => {
   const filterConfig: Record<string, any> = {
     status: {
       key: 'status',
-      label: 'Statut',
+      label: t('filters.status_label'),
       type: 'select' as const,
       options: [
-        { value: 'active', label: 'Actif' },
-        { value: 'inactive', label: 'Inactif' },
+        { value: 'active', label: t('filters.active') },
+        { value: 'inactive', label: t('filters.inactive') },
       ],
     },
     isDefault: {
       key: 'isDefault',
-      label: 'Type',
+      label: t('filters.type_label'),
       type: 'select' as const,
       options: [
-        { value: 'default', label: 'Par défaut' },
-        { value: 'custom', label: 'Personnalisé' },
+        { value: 'default', label: t('filters.default') },
+        { value: 'custom', label: t('filters.custom') },
       ],
     },
   };
 
   // Configuration des options de tri
   const sortOptions: SortOption[] = [
-    { value: 'createdAt-desc', label: 'Plus récent' },
-    { value: 'createdAt-asc', label: 'Plus ancien' },
-    { value: 'name-asc', label: 'Nom (A-Z)' },
-    { value: 'name-desc', label: 'Nom (Z-A)' },
-    { value: 'usageCount-desc', label: 'Plus utilisé' },
-    { value: 'usageCount-asc', label: 'Moins utilisé' },
+    { value: 'createdAt-desc', label: t('filters.sort_newest') },
+    { value: 'createdAt-asc', label: t('filters.sort_oldest') },
+    { value: 'name-asc', label: t('filters.sort_name_az') },
+    { value: 'name-desc', label: t('filters.sort_name_za') },
+    { value: 'usageCount-desc', label: t('filters.sort_most_used') },
+    { value: 'usageCount-asc', label: t('filters.sort_least_used') },
   ];
 
   // Fonction pour réinitialiser les filtres
@@ -98,15 +100,15 @@ export const BadgeDesigner: React.FC = () => {
     <PageContainer maxWidth="7xl" padding="lg">
       <div className="space-y-6">
       <PageHeader 
-        title="Templates de badges"
-        description="Créez et gérez vos templates de badges d'événements"
+        title={t('page.title')}
+        description={t('page.description')}
         icon={CreditCard}
         actions={
           <Button 
             leftIcon={<Plus className="h-4 w-4" />}
             onClick={() => navigate('/badges/designer/new')}
           >
-            Nouveau template
+            {t('actions.new_template')}
           </Button>
         }
       />
@@ -114,14 +116,14 @@ export const BadgeDesigner: React.FC = () => {
       {/* Barre de recherche et filtres */}
       <FilterBar
         resultCount={totalTemplates}
-        resultLabel="template"
+        resultLabel={t('page.result_label')}
         onReset={handleResetFilters}
         showResetButton={searchQuery !== '' || Object.keys(filterValues).length > 0}
         onRefresh={refetch}
         showRefreshButton={true}
       >
         <SearchInput
-          placeholder="Rechercher un template..."
+          placeholder={t('actions.search_placeholder')}
           value={searchQuery}
           onChange={setSearchQuery}
           className="flex-1"
@@ -150,7 +152,7 @@ export const BadgeDesigner: React.FC = () => {
         {error && (
           <div className="p-8 text-center">
             <p className="text-red-500">
-              Erreur lors du chargement des templates
+              {t('page.loading_error')}
             </p>
           </div>
         )}
@@ -173,7 +175,7 @@ export const BadgeDesigner: React.FC = () => {
                     <div className="flex space-x-1">
                       {template.is_default && (
                         <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                          Par défaut
+                          {t('template.default_badge')}
                         </span>
                       )}
                       <span className={`px-2 py-1 text-xs rounded-full ${
@@ -181,7 +183,7 @@ export const BadgeDesigner: React.FC = () => {
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {template.is_active ? 'Actif' : 'Inactif'}
+                        {template.is_active ? t('template.active') : t('template.inactive')}
                       </span>
                     </div>
                   </div>
@@ -215,7 +217,7 @@ export const BadgeDesigner: React.FC = () => {
                   )}
                   
                   <div className="flex justify-between items-center text-xs text-gray-500">
-                    <span>Utilisé {template.usage_count} fois</span>
+                    <span>{t('template.used_count', { count: template.usage_count })}</span>
                     <span>{new Date(template.created_at).toLocaleDateString('fr-FR')}</span>
                   </div>
                   
@@ -225,7 +227,7 @@ export const BadgeDesigner: React.FC = () => {
                       size="sm"
                       onClick={() => navigate(`/badges/designer/${template.id}`)}
                     >
-                      Modifier
+                      {t('actions.edit')}
                     </Button>
                   </div>
                 </div>
@@ -252,18 +254,18 @@ export const BadgeDesigner: React.FC = () => {
           <div className="p-8 text-center">
             <CreditCard className="h-16 w-16 mx-auto mb-4 text-blue-600 dark:text-blue-400" />
             <h3 className="text-lg font-medium text-gray-600 dark:text-gray-300 mb-2">
-              Aucun template trouvé
+              {t('empty.title')}
             </h3>
             <p className="text-gray-500 mb-6">
               {searchQuery || Object.keys(filterValues).length > 0
-                ? 'Aucun template ne correspond à vos critères de recherche'
-                : 'Vous n\'avez pas encore créé de template de badge'}
+                ? t('empty.no_results')
+                : t('empty.no_templates')}
             </p>
             <Button 
               leftIcon={<Plus className="h-4 w-4" />}
               onClick={() => navigate('/badges/designer/new')}
             >
-              Créer votre premier template
+              {t('actions.create_first')}
             </Button>
           </div>
         )}

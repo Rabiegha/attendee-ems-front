@@ -47,8 +47,10 @@ import type { EventStatus } from '@/features/events/types'
 import { useMultiSelect } from '@/shared/hooks/useMultiSelect'
 import { BulkActions, createBulkActions } from '@/shared/ui/BulkActions'
 import { ProtectedPage } from '@/shared/acl/guards/ProtectedPage'
+import { useTranslation } from 'react-i18next'
 
 const EventsList = () => {
+  const { t, i18n } = useTranslation(['events', 'common'])
   const toast = useToast()
   const dispatch = useDispatch()
 
@@ -97,25 +99,25 @@ const EventsList = () => {
   // Configuration des filtres pour le popup
   const filterConfig = {
     status: {
-      label: 'Statut',
+      label: t('events:events.status'),
       type: 'radio' as const,
       options: [
-        { value: 'all', label: 'Tous' },
-        { value: 'draft', label: 'Brouillon' },
-        { value: 'published', label: 'Publié' },
-        { value: 'registration_closed', label: 'Inscriptions closes' },
-        { value: 'cancelled', label: 'Annulé' },
-        { value: 'postponed', label: 'Reporté' },
-        { value: 'archived', label: 'Archivé' },
+        { value: 'all', label: t('common:filters.all') },
+        { value: 'draft', label: t('events:status.draft') },
+        { value: 'published', label: t('events:status.published') },
+        { value: 'registration_closed', label: t('events:status.registration_closed') },
+        { value: 'cancelled', label: t('events:status.cancelled') },
+        { value: 'postponed', label: t('events:status.postponed') },
+        { value: 'archived', label: t('events:status.archived') },
       ],
     },
     hasCheckin: {
       label: 'Check-in',
       type: 'radio' as const,
       options: [
-        { value: 'all', label: 'Tous' },
-        { value: 'yes', label: 'Avec check-in' },
-        { value: 'no', label: 'Sans check-in' },
+        { value: 'all', label: t('common:filters.all') },
+        { value: 'yes', label: t('events:filters.with_checkin') },
+        { value: 'no', label: t('events:filters.without_checkin') },
       ],
     },
   }
@@ -159,6 +161,7 @@ const EventsList = () => {
           const response = await bulkExportEvents({
             ids: Array.from(selectedIds),
             format: 'csv',
+            lang: i18n.language,
           }).unwrap()
 
           // Download the file using the URL provided by the API
@@ -175,7 +178,7 @@ const EventsList = () => {
           console.error("Erreur lors de l'export:", error)
           throw error
         }
-      })
+      }, t)
     )
 
     // Default delete action using API mutation
@@ -184,31 +187,31 @@ const EventsList = () => {
         try {
           await bulkDeleteEvents(Array.from(selectedIds)).unwrap()
           toast.success(
-            'Événements supprimés',
-            `${selectedIds.size} événement(s) supprimé(s) avec succès`
+            t('events:page.events_deleted'),
+            t('events:page.events_deleted_count', { count: selectedIds.size })
           )
           unselectAll()
         } catch (error) {
           console.error('Erreur lors de la suppression:', error)
-          toast.error('Erreur', 'Impossible de supprimer les événements')
+          toast.error(t('common:app.error'), t('events:page.delete_events_error'))
           throw error
         }
-      })
+      }, t)
     )
 
     return actions
-  }, [bulkDeleteEvents, bulkExportEvents, unselectAll, toast])
+  }, [bulkDeleteEvents, bulkExportEvents, unselectAll, toast, t])
 
   // Handlers
   const handleDelete = async (eventId: string) => {
     try {
       await deleteEvent(eventId).unwrap()
       toast.success(
-        'Événement supprimé',
-        "L'événement a été supprimé avec succès"
+        t('events:page.event_deleted'),
+        t('events:page.event_deleted_success')
       )
     } catch (err) {
-      toast.error('Erreur', "Impossible de supprimer l'événement")
+      toast.error(t('common:app.error'), t('events:page.delete_event_error'))
     }
   }
 
@@ -241,12 +244,12 @@ const EventsList = () => {
     }
 
     const labels = {
-      draft: 'Brouillon',
-      published: 'Publié',
-      registration_closed: 'Inscriptions closes',
-      cancelled: 'Annulé',
-      postponed: 'Reporté',
-      archived: 'Archivé',
+      draft: t('events:status.draft'),
+      published: t('events:status.published'),
+      registration_closed: t('events:status.registration_closed'),
+      cancelled: t('events:status.cancelled'),
+      postponed: t('events:status.postponed'),
+      archived: t('events:status.archived'),
     }
 
     return (
@@ -266,10 +269,10 @@ const EventsList = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Événements
+                {t('events:page.title')}
               </h1>
               <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                Gérez tous vos événements en un seul endroit
+                {t('events:page.description')}
               </p>
             </div>
             <Link
@@ -277,7 +280,7 @@ const EventsList = () => {
               className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
             >
               <Plus className="w-5 h-5 mr-2" />
-              Créer un événement
+              {t('events:actions.create')}
             </Link>
           </div>
         </div>
@@ -287,14 +290,14 @@ const EventsList = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <FilterBar
           resultCount={totalEvents}
-          resultLabel="événement"
+          resultLabel={t('events:page.result_label')}
           onReset={handleResetFilters}
           showResetButton={search !== '' || Object.keys(filterValues).length > 0}
           onRefresh={handleRefresh}
           showRefreshButton={true}
         >
           <SearchInput
-            placeholder="Rechercher un événement..."
+            placeholder={t('events:page.search_placeholder')}
             value={search}
             onChange={setSearch}
           />
@@ -315,14 +318,14 @@ const EventsList = () => {
             selectedItems={selectedItems}
             actions={bulkActions}
             onClearSelection={unselectAll}
-            itemType="événements"
+            itemType={t('events:page.title')}
           />
           {/* Loading State */}
           {isLoading && (
             <div className="flex justify-center items-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               <span className="ml-3 text-gray-600 dark:text-gray-300">
-                Chargement des événements...
+                {t('common:app.loading')}
               </span>
             </div>
           )}
@@ -332,10 +335,10 @@ const EventsList = () => {
             <div className="flex justify-center items-center py-12">
               <div className="text-center">
                 <div className="text-red-600 dark:text-red-400 mb-2">
-                  Erreur lors du chargement
+                  {t('events:page.loading_error')}
                 </div>
                 <div className="text-sm text-gray-600 dark:text-gray-300">
-                  Impossible de charger les événements. Veuillez réessayer.
+                  {t('events:page.loading_error')}
                 </div>
               </div>
             </div>
@@ -361,22 +364,22 @@ const EventsList = () => {
                       </label>
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Événement
+                      {t('events:events.name')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Dates
+                      {t('events:events.start_date')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Lieu
+                      {t('events:events.location')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Inscrits
+                      {t('events:registrations.title')}
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                      Statut
+                      {t('events:events.status')}
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-40 min-w-[10rem]">
-                      Actions
+                      {t('common:app.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -387,11 +390,10 @@ const EventsList = () => {
                         <div className="flex flex-col items-center">
                           <Calendar className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" />
                           <p className="text-gray-600 dark:text-gray-300 font-medium">
-                            Aucun événement trouvé
+                            {t('events:page.no_events')}
                           </p>
                           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                            Essayez de modifier vos filtres ou créez un nouvel
-                            événement
+                            {t('events:page.no_events_filtered')}
                           </p>
                         </div>
                       </td>
@@ -434,7 +436,7 @@ const EventsList = () => {
                           <div className="text-sm">
                             <div className="text-gray-900 dark:text-white">
                               {new Date(event.startDate).toLocaleDateString(
-                                'fr-FR',
+                                i18n.language === 'fr' ? 'fr-FR' : 'en-US',
                                 {
                                   day: 'numeric',
                                   month: 'short',
@@ -444,7 +446,7 @@ const EventsList = () => {
                             </div>
                             <div className="text-gray-500 dark:text-gray-400">
                               {new Date(event.startDate).toLocaleTimeString(
-                                'fr-FR',
+                                i18n.language === 'fr' ? 'fr-FR' : 'en-US',
                                 {
                                   hour: '2-digit',
                                   minute: '2-digit',
@@ -456,7 +458,7 @@ const EventsList = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
                             <MapPin className="w-4 h-4 mr-1 text-gray-400" />
-                            {event.locationType === 'online' ? 'En ligne' : (event.location || 'En ligne')}
+                            {event.locationType === 'online' ? t('events:details.online') : (event.location || t('events:details.online'))}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -480,21 +482,21 @@ const EventsList = () => {
                             <Link
                               to={`/events/${event.id}`}
                               className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150 flex-shrink-0"
-                              title="Voir les détails"
+                              title={t('events:actions.view')}
                             >
                               <Eye className="w-4 h-4" />
                             </Link>
                             <Link
                               to={`/events/${event.id}/edit`}
                               className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150 flex-shrink-0"
-                              title="Modifier"
+                              title={t('events:actions.edit')}
                             >
                               <Edit className="w-4 h-4" />
                             </Link>
                             <button
                               onClick={() => handleDelete(event.id)}
                               className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors duration-150 flex-shrink-0"
-                              title="Supprimer"
+                              title={t('events:actions.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -513,7 +515,7 @@ const EventsList = () => {
             <div className="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-t border-gray-200 dark:border-gray-600">
               <div className="flex items-center justify-between">
                 <div className="text-sm text-gray-600 dark:text-gray-300">
-                  Page <span className="font-medium">{currentPage}</span> sur{' '}
+                  {t('common:pagination.page')} <span className="font-medium">{currentPage}</span> {t('common:pagination.of')}{' '}
                   <span className="font-medium">{totalPages}</span>
                 </div>
                 <div className="flex gap-2">
@@ -522,7 +524,7 @@ const EventsList = () => {
                     disabled={currentPage === 1}
                     className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                   >
-                    Précédent
+                    {t('common:pagination.previous')}
                   </button>
                   <button
                     onClick={() =>
@@ -531,7 +533,7 @@ const EventsList = () => {
                     disabled={currentPage === totalPages}
                     className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                   >
-                    Suivant
+                    {t('common:pagination.next')}
                   </button>
                 </div>
               </div>
@@ -543,15 +545,18 @@ const EventsList = () => {
   )
 }
 
-const EventsListProtected = () => (
-  <ProtectedPage
-    action="read"
-    subject="Event"
-    deniedTitle="Accès aux événements refusé"
-    deniedMessage="Vous n'avez pas les permissions nécessaires pour consulter les événements."
-  >
-    <EventsList />
-  </ProtectedPage>
-)
+const EventsListProtected = () => {
+  const { t } = useTranslation('events')
+  return (
+    <ProtectedPage
+      action="read"
+      subject="Event"
+      deniedTitle={t('events:page.access_denied')}
+      deniedMessage={t('events:page.access_denied_message')}
+    >
+      <EventsList />
+    </ProtectedPage>
+  )
+}
 
 export default EventsListProtected

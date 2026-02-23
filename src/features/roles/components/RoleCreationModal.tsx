@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Shield, Info } from 'lucide-react'
 import { Button, Modal } from '@/shared/ui'
 import { useToast } from '@/shared/hooks/useToast'
@@ -24,13 +25,14 @@ export const RoleCreationModal: React.FC<RoleCreationModalProps> = ({
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const { t } = useTranslation(['roles', 'common'])
   const toast = useToast()
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
 
     if (!name.trim()) {
-      newErrors.name = 'Le nom est requis'
+      newErrors.name = t('roles:form.name_required')
     }
 
     setErrors(newErrors)
@@ -66,7 +68,7 @@ export const RoleCreationModal: React.FC<RoleCreationModalProps> = ({
       toast.success('Rôle créé avec succès')
       onClose()
     } catch (error: any) {
-      const errorMessage = error?.data?.message || error?.message || 'Erreur lors de la création du rôle'
+      const errorMessage = error?.data?.message || error?.message || t('roles:create_error')
       toast.error(errorMessage)
     }
   }
@@ -84,7 +86,7 @@ export const RoleCreationModal: React.FC<RoleCreationModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Créer un nouveau rôle"
+      title={t('roles:create_title')}
       maxWidth="md"
       showCloseButton={true}
       closeOnBackdropClick={!isLoading}
@@ -94,7 +96,7 @@ export const RoleCreationModal: React.FC<RoleCreationModalProps> = ({
         {/* Nom du rôle */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Nom du rôle <span className="text-red-500">*</span>
+            {t('roles:roles.name')} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -103,7 +105,7 @@ export const RoleCreationModal: React.FC<RoleCreationModalProps> = ({
               setName(e.target.value)
               setErrors({ ...errors, name: '' })
             }}
-            placeholder="Ex: Gestionnaire, Superviseur"
+            placeholder={t('roles:form.name_placeholder')}
             disabled={isLoading}
             className={`w-full px-4 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed ${
               errors.name
@@ -119,18 +121,18 @@ export const RoleCreationModal: React.FC<RoleCreationModalProps> = ({
         {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Description
+            {t('roles:roles.description')}
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Décrivez les responsabilités de ce rôle..."
+            placeholder={t('roles:form.description_placeholder')}
             rows={3}
             disabled={isLoading}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed resize-none"
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            Optionnel : aide les autres admins à comprendre le rôle
+            {t('roles:form.description_hint')}
           </p>
         </div>
 
@@ -142,7 +144,7 @@ export const RoleCreationModal: React.FC<RoleCreationModalProps> = ({
             onClick={handleClose}
             disabled={isLoading}
           >
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button
             type="submit"
@@ -150,7 +152,7 @@ export const RoleCreationModal: React.FC<RoleCreationModalProps> = ({
             disabled={isLoading}
             leftIcon={<Shield className="h-4 w-4" />}
           >
-            {isLoading ? 'Création...' : 'Créer le rôle'}
+            {isLoading ? t('roles:creating') : t('roles:create_button')}
           </Button>
         </div>
       </form>

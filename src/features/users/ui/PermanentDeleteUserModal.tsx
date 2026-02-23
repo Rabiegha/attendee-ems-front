@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Trash2, AlertTriangle } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
@@ -14,6 +15,8 @@ export function PermanentDeleteUserModal({
   onClose,
   onDelete,
 }: PermanentDeleteUserModalProps) {
+  const { t } = useTranslation(['users', 'common'])
+
   if (!user) return null
 
   const handleConfirm = async () => {
@@ -26,37 +29,32 @@ export function PermanentDeleteUserModal({
   }
 
   return (
-    <Modal isOpen={!!user} onClose={onClose} title="Supprimer définitivement">
+    <Modal isOpen={!!user} onClose={onClose} title={t('users:modal.permanent_delete_title')}>
       <div className="space-y-4">
         <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg dark:bg-red-900/20 dark:border-red-900/50">
           <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5 dark:text-red-400" />
           <div className="text-sm text-red-800 dark:text-red-200">
-            <p className="font-semibold mb-1">Action irréversible</p>
+            <p className="font-semibold mb-1">{t('users:modal.irreversible_action')}</p>
             <p>
-              Cette action supprimera définitivement toutes les données de cet utilisateur.
-              Cette opération ne peut pas être annulée.
+              {t('users:modal.permanent_delete_warning')}
             </p>
           </div>
         </div>
 
         <p className="text-sm text-neutral-600 dark:text-neutral-300">
-          Êtes-vous sûr de vouloir supprimer définitivement{' '}
-          <span className="font-semibold">
-            {user.first_name} {user.last_name}
-          </span>{' '}
-          ?
+          {t('users:modal.permanent_delete_confirm', { name: `${user.first_name} ${user.last_name}` })}
         </p>
 
         <div className="flex gap-3 justify-end pt-4">
           <Button variant="outline" onClick={onClose}>
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button
             variant="destructive"
             onClick={handleConfirm}
           >
             <Trash2 className="w-4 h-4" />
-            Supprimer définitivement
+            {t('users:modal.permanent_delete_button')}
           </Button>
         </div>
       </div>

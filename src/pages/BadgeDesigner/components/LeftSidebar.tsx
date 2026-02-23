@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, ImageIcon, Save, ArrowLeft, Trash2 } from 'lucide-react';
 import { BadgeFormat, BADGE_FORMATS } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
@@ -44,6 +45,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onZoomIn,
   onZoomOut
 }) => {
+  const { t } = useTranslation('badges')
   return (
     <div className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col border-r border-gray-200 dark:border-gray-700 relative">
       {/* Titre */}
@@ -102,7 +104,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             size="sm"
           >
             <Save size={16} />
-            {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+            {isSaving ? t('designer.saving_template') : t('designer.save')}
           </Button>
 
           {onSaveAndExit && (
@@ -127,7 +129,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
               size="sm"
             >
               <Trash2 size={16} />
-              {isDeleting ? 'Suppression...' : 'Supprimer'}
+              {isDeleting ? t('designer.deleting') : t('designer.delete')}
             </Button>
           )}
         </div>

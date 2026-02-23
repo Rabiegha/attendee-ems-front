@@ -19,6 +19,7 @@ import { SearchInput, Button, Modal } from '@/shared/ui'
 import { FilterBar, FilterButton } from '@/shared/ui/FilterBar'
 import type { FilterValues } from '@/shared/ui/FilterBar/types'
 import { CreateAttendeeTypeModal } from '@/features/attendee-types/ui/CreateAttendeeTypeModal'
+import { useTranslation } from 'react-i18next'
 
 interface ColorEditorModalProps {
   isOpen: boolean
@@ -37,6 +38,7 @@ const ColorEditorModal = ({
   textColor, 
   onSave 
 }: ColorEditorModalProps) => {
+  const { t } = useTranslation(['events', 'common'])
   const [bgColor, setBgColor] = useState(backgroundColor)
   const [txtColor, setTxtColor] = useState(textColor)
 
@@ -74,7 +76,7 @@ const ColorEditorModal = ({
         {/* Background Color */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Couleur de fond
+            {t('events:attendee_types_tab.background_color')}
           </label>
           <div className="flex items-center space-x-3">
             <input
@@ -96,7 +98,7 @@ const ColorEditorModal = ({
         {/* Text Color */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Couleur du texte
+            {t('events:attendee_types_tab.text_color')}
           </label>
           <div className="flex items-center space-x-3">
             <input
@@ -118,10 +120,10 @@ const ColorEditorModal = ({
         {/* Actions */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button variant="ghost" onClick={onClose}>
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button onClick={handleSave}>
-            Enregistrer
+            {t('common:app.save')}
           </Button>
         </div>
       </div>
@@ -144,6 +146,7 @@ const AttendeeTypeItem = ({
   onToggle,
   onEditColors,
 }: AttendeeTypeItemProps) => {
+  const { t } = useTranslation(['events'])
   const backgroundColor = eventType?.color_hex || type.color_hex || '#9ca3af'
   const textColor = eventType?.text_color_hex || type.text_color_hex || '#ffffff'
 
@@ -175,7 +178,7 @@ const AttendeeTypeItem = ({
               onEditColors()
             }}
             className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-            title="Modifier les couleurs"
+            title={t('events:attendee_types_tab.edit_colors')}
           >
             <Pen className="h-4 w-4 text-gray-500 dark:text-gray-400" />
           </button>
@@ -201,6 +204,7 @@ interface EventAttendeeTypesTabProps {
 }
 
 export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => {
+  const { t } = useTranslation(['events', 'common'])
   const toast = useToast()
   const orgId = event.orgId
   const [searchQuery, setSearchQuery] = useState('')
@@ -247,12 +251,12 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
 
   const filterConfig = {
     status: {
-      label: 'Statut',
+      label: t('events:attendee_types_tab.status'),
       type: 'radio' as const,
       options: [
-        { value: 'all', label: 'Tous' },
-        { value: 'selected', label: 'Sélectionnés' },
-        { value: 'not_selected', label: 'Non sélectionnés' },
+        { value: 'all', label: t('events:attendee_types_tab.all') },
+        { value: 'selected', label: t('events:attendee_types_tab.selected') },
+        { value: 'not_selected', label: t('events:attendee_types_tab.not_selected') },
       ],
     },
   }
@@ -290,11 +294,11 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
   const handleCreateType = async (data: CreateAttendeeTypeDto) => {
     try {
       await createAttendeeType({ orgId, data }).unwrap()
-      toast.success('Type de participant créé')
+      toast.success(t('events:attendee_types_tab.type_created'))
       setIsCreateModalOpen(false)
     } catch (error) {
       console.error('Error creating type:', error)
-      toast.error("Erreur lors de la création du type")
+      toast.error(t('events:attendee_types_tab.create_error'))
     }
   }
 
@@ -314,26 +318,26 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
       if (eventTypeId && eventType?.is_active) {
         // Check if used
         if (eventType._count?.registrations && eventType._count.registrations > 0) {
-          toast.error("Impossible de désactiver ce type car il est utilisé par des participants.")
+          toast.error(t('events:attendee_types_tab.cannot_deactivate'))
           return
         }
 
         await removeType({ eventId: event.id, eventAttendeeTypeId: eventTypeId }).unwrap()
-        toast.success('Type de participant retiré')
+        toast.success(t('events:attendee_types_tab.type_removed'))
       } 
       // Si le type existe mais est inactif, on le réactive
       else if (eventTypeId && !eventType?.is_active) {
         await addType({ eventId: event.id, attendeeTypeId: typeId }).unwrap()
-        toast.success('Type de participant réactivé')
+        toast.success(t('events:attendee_types_tab.type_reactivated'))
       }
       // Si le type n'existe pas, on l'ajoute
       else {
         await addType({ eventId: event.id, attendeeTypeId: typeId }).unwrap()
-        toast.success('Type de participant ajouté')
+        toast.success(t('events:attendee_types_tab.type_added'))
       }
     } catch (error: any) {
       // Extraire le message d'erreur du backend
-      const errorMessage = error?.data?.message || error?.message || "Une erreur est survenue"
+      const errorMessage = error?.data?.message || error?.message || t('events:attendee_types_tab.default_error')
       toast.error(errorMessage)
     }
   }
@@ -348,9 +352,9 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
           text_color_hex: txtColor
         }
       }).unwrap()
-      toast.success('Couleurs mises à jour')
+      toast.success(t('events:attendee_types_tab.colors_updated'))
     } catch (error) {
-      toast.error('Erreur lors de la mise à jour des couleurs')
+      toast.error(t('events:attendee_types_tab.colors_update_error'))
     }
   }
 
@@ -376,7 +380,7 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
       <div className="flex items-center justify-end space-x-3">
         <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center space-x-2">
           <Plus className="h-4 w-4" />
-          <span>Ajouter un type</span>
+          <span>{t('events:attendee_types_tab.add_type')}</span>
         </Button>
       </div>
 
@@ -384,7 +388,7 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
         {/* Search & Filters */}
         <FilterBar
           resultCount={filteredTypes.length}
-          resultLabel="type"
+          resultLabel={t('events:attendee_types_tab.result_label')}
           onReset={() => {
             setSearchQuery('')
             setFilterValues({})
@@ -396,7 +400,7 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
           <SearchInput
             value={searchQuery}
             onChange={setSearchQuery}
-            placeholder="Rechercher un type..."
+            placeholder={t('events:attendee_types_tab.search_placeholder')}
           />
           <FilterButton
             filters={filterConfig}
@@ -409,10 +413,10 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
-              Types de participants
+              {t('events:attendee_types_tab.title')}
             </h2>
             <p className="text-gray-500 dark:text-gray-400">
-              Sélectionnez les types de participants disponibles pour cet événement.
+              {t('events:attendee_types_tab.description')}
             </p>
           </div>
 
@@ -435,7 +439,7 @@ export const EventAttendeeTypesTab = ({ event }: EventAttendeeTypesTabProps) => 
             
             {filteredTypes.length === 0 && (
               <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
-                Aucun type de participant trouvé
+                {t('events:attendee_types_tab.no_types_found')}
               </div>
             )}
           </div>

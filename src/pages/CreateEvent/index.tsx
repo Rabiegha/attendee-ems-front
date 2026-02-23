@@ -6,8 +6,9 @@
  * Étape 3: Options (approbation auto, emails, etc.)
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { 
   PageContainer, 
   PageHeader, 
@@ -62,15 +63,16 @@ export interface CreateEventFormData {
   reminder_email_enabled: boolean
 }
 
-const STEPS = [
-  { id: 1, name: 'Informations', icon: Calendar },
-  { id: 2, name: 'Lieu & Participants', icon: MapPin },
-  { id: 3, name: 'Options', icon: Settings },
-]
-
 export function CreateEventPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation(['events', 'common'])
   const toast = useToast()
+
+  const STEPS = useMemo(() => [
+    { id: 1, name: t('events:create.step_info'), icon: Calendar },
+    { id: 2, name: t('events:create.step_venue'), icon: MapPin },
+    { id: 3, name: t('events:create.step_options'), icon: Settings },
+  ], [t])
   const [createEvent, { isLoading }] = useCreateEventMutation()
   
   const [currentStep, setCurrentStep] = useState(1)
@@ -134,11 +136,11 @@ export function CreateEventPage() {
       }
 
       const result = await createEvent(eventData).unwrap()
-      toast.success('Événement créé avec succès !', 'L\'événement a été créé et est maintenant disponible')
+      toast.success(t('events:create.success'), t('events:create.success_description'))
       navigate(`/events/${result.id}`)
     } catch (error: any) {
       console.error('Erreur création événement:', error)
-      toast.error('Erreur', error?.data?.message || 'Erreur lors de la création de l\'événement')
+      toast.error(t('events:create.error'), error?.data?.message || t('events:create.error_message'))
     }
   }
 
@@ -159,8 +161,8 @@ export function CreateEventPage() {
   return (
     <PageContainer maxWidth="5xl" padding="lg">
       <PageHeader
-        title="Créer un événement"
-        description="Créez un nouvel événement en quelques étapes"
+        title={t('events:create.title')}
+        description={t('events:create.subtitle')}
         icon={Calendar}
         actions={
           <Button
@@ -168,7 +170,7 @@ export function CreateEventPage() {
             onClick={() => navigate('/events')}
             leftIcon={<ArrowLeft className="h-4 w-4" />}
           >
-            Annuler
+            {t('common:app.cancel')}
           </Button>
         }
       />
@@ -261,7 +263,7 @@ export function CreateEventPage() {
               onClick={handlePrevious}
               leftIcon={<ArrowLeft className="h-4 w-4" />}
             >
-              Précédent
+              {t('common:app.previous')}
             </Button>
           ) : (
             <div />
@@ -275,7 +277,7 @@ export function CreateEventPage() {
                 disabled={!canGoNext()}
                 rightIcon={<ArrowRight className="h-4 w-4" />}
               >
-                Suivant
+                {t('common:app.next')}
               </Button>
             ) : (
               <Button
@@ -284,7 +286,7 @@ export function CreateEventPage() {
                 loading={isLoading}
                 rightIcon={<Check className="h-4 w-4" />}
               >
-                Créer l'événement
+                {t('events:create.submit')}
               </Button>
             )}
           </div>

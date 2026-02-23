@@ -61,6 +61,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useTranslation } from 'react-i18next'
 
 // Composant pour un item de rôle draggable
 interface SortableRoleItemProps {
@@ -71,6 +72,7 @@ interface SortableRoleItemProps {
   permissionsCount: number
   onClick: () => void
   onDelete: () => void
+  t: (key: string, options?: any) => string
 }
 
 const SortableRoleItem: React.FC<SortableRoleItemProps> = ({
@@ -81,6 +83,7 @@ const SortableRoleItem: React.FC<SortableRoleItemProps> = ({
   permissionsCount,
   onClick,
   onDelete,
+  t,
 }) => {
   const {
     attributes,
@@ -128,24 +131,24 @@ const SortableRoleItem: React.FC<SortableRoleItemProps> = ({
           </p>
           {role.is_system_role && (
             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200">
-              Système
+              {t('roles.system_role')}
             </span>
           )}
           {isOwnRole && (
             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
               <Lock className="h-3 w-3 mr-1" />
-              Votre rôle
+              {t('roles.your_role')}
             </span>
           )}
           {!canModify && !isOwnRole && (
             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200">
               <Lock className="h-3 w-3 mr-1" />
-              Protégé
+              {t('roles.protected')}
             </span>
           )}
         </div>
         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-          {permissionsCount} permissions • Niveau {role.level}
+          {permissionsCount} permissions • {t('roles.level')} {role.level}
         </p>
       </div>
 
@@ -157,7 +160,7 @@ const SortableRoleItem: React.FC<SortableRoleItemProps> = ({
             onDelete()
           }}
           className="p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-          title="Supprimer ce rôle"
+          title={t('roles.delete')}
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -201,6 +204,7 @@ const RolePermissionsAdminContent: React.FC = () => {
   const [sortedRoles, setSortedRoles] = useState<Role[]>([])
   
   const toast = useToast()
+  const { t } = useTranslation(['roles', 'common'])
 
   // Configurer les sensors pour le drag & drop
   const sensors = useSensors(
@@ -255,7 +259,7 @@ const RolePermissionsAdminContent: React.FC = () => {
     // Vérifier qu'on ne place pas un rôle au-dessus ou au même niveau que le sien
     // newIndex est la position dans le tableau, qui correspond au level
     if (newIndex <= currentUserLevel) {
-      toast.error(`Vous ne pouvez pas placer un rôle au niveau ${newIndex} ou supérieur. Votre niveau est ${currentUserLevel}.`)
+      toast.error(t('messages.cannot_place_role', { newLevel: newIndex, currentLevel: currentUserLevel }))
       return
     }
 
@@ -271,13 +275,13 @@ const RolePermissionsAdminContent: React.FC = () => {
 
     try {
       await updateRolesHierarchy(updates).unwrap()
-      toast.success('Hiérarchie mise à jour avec succès')
+      toast.success(t('messages.hierarchy_updated'))
       refetchRoles()
     } catch (error: any) {
       // Revert en cas d'erreur
       const sorted = [...roles].sort((a, b) => a.level - b.level)
       setSortedRoles(sorted)
-      toast.error(error?.data?.message || 'Erreur lors de la mise à jour de la hiérarchie')
+      toast.error(error?.data?.message || t('messages.error_hierarchy'))
     }
   }
 
@@ -315,7 +319,7 @@ const RolePermissionsAdminContent: React.FC = () => {
 
     try {
       await deleteRole(roleToDelete.id).unwrap()
-      toast.success('Rôle supprimé avec succès')
+      toast.success(t('messages.role_deleted'))
       
       // Désélectionner si c'était le rôle sélectionné
       if (selectedRoleId === roleToDelete.id) {
@@ -326,7 +330,7 @@ const RolePermissionsAdminContent: React.FC = () => {
       setRoleToDelete(null)
       refetchRoles()
     } catch (error: any) {
-      toast.error(error?.data?.message || 'Erreur lors de la suppression du rôle')
+      toast.error(error?.data?.message || t('messages.error_delete'))
     }
   }
 
@@ -356,10 +360,10 @@ const RolePermissionsAdminContent: React.FC = () => {
 
     if (isOwnRole || selectedRole.is_system_role || !canModifyHierarchy) {
       const reason = isOwnRole 
-        ? 'Vous ne pouvez pas modifier les permissions de votre propre rôle'
+        ? t('messages.cannot_modify_own_role')
         : selectedRole.is_system_role
-        ? 'Les rôles système ne peuvent pas être modifiés'
-        : `Vous ne pouvez modifier que les rôles de niveau strictement supérieur au vôtre (niveau ${currentUserLevel})`
+        ? t('messages.cannot_modify_system_role')
+        : t('messages.cannot_modify_higher_role', { level: currentUserLevel })
       console.error(reason)
       alert(reason)
       return
@@ -378,12 +382,12 @@ const RolePermissionsAdminContent: React.FC = () => {
       }).unwrap()
 
       refetchRoles()
-      toast.success('Permissions mises à jour avec succès')
+      toast.success(t('messages.permissions_updated'))
     } catch (err: any) {
       console.error('Erreur lors de la mise à jour des permissions:', err)
       const errorMessage =
         err?.data?.message ||
-        'Une erreur est survenue lors de la mise à jour des permissions'
+        t('messages.error_update_permissions')
       alert(errorMessage)
     }
   }
@@ -406,14 +410,14 @@ const RolePermissionsAdminContent: React.FC = () => {
   )
 
   const categoryLabels: Record<string, string> = {
-    organizations: 'Organisations',
-    users: 'Utilisateurs',
-    events: 'Événements',
-    attendees: 'Participants',
-    roles: 'Rôles',
-    invitations: 'Invitations',
-    analytics: 'Analytics',
-    reports: 'Rapports',
+    organizations: t('modules.organizations'),
+    users: t('modules.users'),
+    events: t('modules.events'),
+    attendees: t('modules.attendees'),
+    roles: t('modules.roles'),
+    invitations: t('modules.invitations'),
+    analytics: t('modules.analytics'),
+    reports: t('modules.reports'),
   }
 
   // Filtrer les permissions selon la recherche et la catégorie sélectionnée
@@ -450,8 +454,8 @@ const RolePermissionsAdminContent: React.FC = () => {
     <Can do="manage" on="Role" fallback={<Navigate to="/403" replace />}>
       <PageContainer maxWidth="7xl" padding="lg">
         <PageHeader
-          title="Gestion des Rôles et Permissions"
-          description="Configurez les permissions pour chaque rôle de votre organisation."
+          title={t('page.title')}
+          description={t('page.description')}
           icon={Shield}
           actions={
             <div className="flex gap-2">
@@ -460,7 +464,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                 onClick={() => setIsCreationModalOpen(true)}
                 leftIcon={<Plus className="h-4 w-4" />}
               >
-                Nouveau rôle
+                {t('roles.create')}
               </Button>
             </div>
           }
@@ -494,7 +498,7 @@ const RolePermissionsAdminContent: React.FC = () => {
             setIsDeleteModalOpen(false)
             setRoleToDelete(null)
           }}
-          title="Confirmer la suppression"
+          title={t('confirm.delete_role_title')}
           maxWidth="md"
           showCloseButton={true}
           closeOnBackdropClick={!isDeleting}
@@ -506,10 +510,10 @@ const RolePermissionsAdminContent: React.FC = () => {
                 <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-sm font-medium text-red-900 dark:text-red-200 mb-1">
-                    Action irréversible
+                    {t('confirm.irreversible_action')}
                   </h4>
                   <p className="text-sm text-red-800 dark:text-red-300">
-                    Cette action ne peut pas être annulée. Le rôle sera définitivement supprimé.
+                    {t('confirm.delete_permanent')}
                   </p>
                 </div>
               </div>
@@ -518,8 +522,7 @@ const RolePermissionsAdminContent: React.FC = () => {
             {/* Message de confirmation */}
             <div>
               <p className="text-gray-900 dark:text-white">
-                Êtes-vous sûr de vouloir supprimer le rôle{' '}
-                <span className="font-semibold">"{roleToDelete?.name}"</span> ?
+                {t('confirm.delete_role_confirm', { name: roleToDelete?.name })}
               </p>
             </div>
 
@@ -534,7 +537,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                 }}
                 disabled={isDeleting}
               >
-                Annuler
+                {t('confirm.cancel')}
               </Button>
               <Button
                 type="button"
@@ -543,7 +546,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                 disabled={isDeleting}
                 leftIcon={<Trash2 className="h-4 w-4" />}
               >
-                {isDeleting ? 'Suppression...' : 'Supprimer'}
+                {isDeleting ? t('confirm.deleting') : t('confirm.delete_button')}
               </Button>
             </div>
           </div>
@@ -561,7 +564,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
                   <p className="text-red-700 dark:text-red-300">
-                    Erreur lors du chargement des données
+                    {t('page.loading_error')}
                   </p>
                 </div>
               </CardContent>
@@ -580,14 +583,14 @@ const RolePermissionsAdminContent: React.FC = () => {
             <div className="lg:col-span-1">
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Rôles
+                  {t('roles.title')}
                 </h3>
 
                 {sortedRoles.length === 0 ? (
                   <div className="text-center py-8">
                     <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 dark:text-gray-300">
-                      Aucun rôle trouvé
+                      {t('empty.title')}
                     </p>
                   </div>
                 ) : (
@@ -619,6 +622,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                               permissionsCount={role.permissions?.length || 0}
                               onClick={() => setSelectedRoleId(role.id)}
                               onDelete={() => handleDeleteRole(role.id, role.name)}
+                              t={t}
                             />
                           )
                         })}
@@ -643,11 +647,11 @@ const RolePermissionsAdminContent: React.FC = () => {
                     if (!canModify) {
                       let reason = ''
                       if (isOwnRole) {
-                        reason = 'Vous ne pouvez pas modifier les permissions de votre propre rôle pour des raisons de sécurité.'
+                        reason = t('warnings.own_role_reason')
                       } else if (isSystemRole) {
-                        reason = 'Ce rôle système ne peut pas être modifié.'
+                        reason = t('warnings.system_role_reason')
                       } else if (!canModifyHierarchy) {
-                        reason = `Vous ne pouvez modifier que les rôles de niveau strictement supérieur au vôtre (niveau ${currentUserLevel}). Ce rôle est de niveau ${selectedRole.level}.`
+                        reason = t('warnings.hierarchy_role_reason', { currentLevel: currentUserLevel, roleLevel: selectedRole.level })
                       }
 
                       return (
@@ -657,10 +661,10 @@ const RolePermissionsAdminContent: React.FC = () => {
                             <div>
                               <h4 className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">
                                 {isOwnRole
-                                  ? 'Votre propre rôle'
+                                  ? t('warnings.own_role_title')
                                   : isSystemRole
-                                    ? 'Rôle système'
-                                    : 'Rôle protégé'}
+                                    ? t('warnings.system_role_title')
+                                    : t('warnings.protected_role_title')}
                               </h4>
                               <p className="text-sm text-amber-800 dark:text-amber-300">
                                 {reason}
@@ -693,7 +697,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                               onClick={() => setIsEditModalOpen(true)}
                               leftIcon={<Edit className="h-4 w-4" />}
                             >
-                              Modifier
+                              {t('roles.edit')}
                             </Button>
                           )
                         }
@@ -701,7 +705,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                       })()}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {selectedRole.description || 'Aucune description'}
+                      {selectedRole.description || t('roles.no_description')}
                     </p>
                   </div>
 
@@ -712,7 +716,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <input
                         type="text"
-                        placeholder="Rechercher une permission..."
+                        placeholder={t('permissions.search_placeholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -729,7 +733,7 @@ const RolePermissionsAdminContent: React.FC = () => {
 
                     {/* Filtres par catégorie */}
                     <div className="flex flex-wrap gap-2 items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Catégories :</span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{t('permissions.categories')}</span>
                       <button
                         onClick={() => setSelectedCategory(null)}
                         className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -738,7 +742,7 @@ const RolePermissionsAdminContent: React.FC = () => {
                             : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                         }`}
                       >
-                        Toutes
+                        {t('permissions.all')}
                       </button>
                       {Object.keys(groupedPermissions).map((category) => (
                         <button
@@ -762,10 +766,10 @@ const RolePermissionsAdminContent: React.FC = () => {
                       <div className="text-center py-12">
                         <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-600 dark:text-gray-300">
-                          Aucune permission trouvée
+                          {t('permissions.no_results')}
                         </p>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                          Essayez d'ajuster vos filtres ou votre recherche
+                          {t('permissions.no_results_hint')}
                         </p>
                       </div>
                     ) : (
@@ -864,11 +868,10 @@ const RolePermissionsAdminContent: React.FC = () => {
                   <CardContent>
                     <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-heading-sm mb-3">
-                      Sélectionnez un rôle
+                      {t('empty.select_role')}
                     </h3>
                     <p className="text-body text-gray-600 dark:text-gray-300">
-                      Choisissez un rôle dans la liste de gauche pour voir et
-                      modifier ses permissions.
+                      {t('empty.select_role_description')}
                     </p>
                   </CardContent>
                 </Card>
@@ -881,13 +884,16 @@ const RolePermissionsAdminContent: React.FC = () => {
   )
 }
 
-export const RolePermissionsAdmin = () => (
-  <ProtectedPage
-    action="manage"
-    subject="Role"
-    deniedTitle="Accès aux rôles et permissions refusé"
-    deniedMessage="Vous n'avez pas les permissions nécessaires pour gérer les rôles et permissions."
-  >
-    <RolePermissionsAdminContent />
-  </ProtectedPage>
-)
+export const RolePermissionsAdmin = () => {
+  const { t } = useTranslation(['roles'])
+  return (
+    <ProtectedPage
+      action="manage"
+      subject="Role"
+      deniedTitle={t('page.access_denied')}
+      deniedMessage={t('page.access_denied_message')}
+    >
+      <RolePermissionsAdminContent />
+    </ProtectedPage>
+  )
+}

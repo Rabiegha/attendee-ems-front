@@ -1,11 +1,14 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { AccessDenied } from '@/pages/AccessDenied'
 
 export const ForbiddenPage: React.FC = () => {
+  const { t } = useTranslation('auth')
+
   return (
     <AccessDenied
-      title="403 - Accès interdit"
-      message="Vous n'avez pas les permissions nécessaires pour accéder à cette page."
+      title={t('access_denied.forbidden_title')}
+      message={t('access_denied.forbidden_message')}
     />
   )
 }

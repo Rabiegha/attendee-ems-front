@@ -1,5 +1,6 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   useGetAttendeeByIdQuery,
   useGetAttendeeHistoryQuery,
@@ -34,6 +35,7 @@ export const AttendeeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const user = useSelector(selectUser)
+  const { t } = useTranslation(['attendees', 'common'])
 
   // État de pagination pour l'historique
   const [historyPage, setHistoryPage] = React.useState(1)
@@ -144,17 +146,17 @@ export const AttendeeDetail: React.FC = () => {
         <div className="flex justify-center items-center py-12">
           <div className="text-center">
             <div className="text-red-600 dark:text-red-400 mb-2">
-              Erreur lors du chargement
+              {t('detail.error')}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-              Impossible de charger les détails du participant.
+              {t('detail.error_description')}
             </div>
             <Button
               variant="outline"
               onClick={() => navigate('/attendees')}
               leftIcon={<ArrowLeft className="h-4 w-4" />}
             >
-              Retour aux participants
+              {t('detail.back_to_attendees')}
             </Button>
           </div>
         </div>
@@ -180,7 +182,7 @@ export const AttendeeDetail: React.FC = () => {
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
         title={`${attendee.displayName}`}
-        description={`Profil détaillé et historique de participation`}
+        description={t('detail.profile_description')}
         icon={User}
         actions={
           <ActionGroup align="right" spacing="md">
@@ -189,7 +191,7 @@ export const AttendeeDetail: React.FC = () => {
               leftIcon={<ArrowLeft className="h-4 w-4" />}
               onClick={() => navigate('/attendees')}
             >
-              Retour
+              {t('detail.back')}
             </Button>
           </ActionGroup>
         }
@@ -207,7 +209,7 @@ export const AttendeeDetail: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">
-                    Email
+                    {t('detail.email')}
                   </h3>
                   <p className="text-body-sm text-gray-600 dark:text-gray-300 break-all">
                     {attendee.email}
@@ -226,10 +228,10 @@ export const AttendeeDetail: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">
-                    Entreprise
+                    {t('detail.company')}
                   </h3>
                   <p className="text-body-sm text-gray-600 dark:text-gray-300">
-                    {attendee.company || 'Non renseigné'}
+                    {attendee.company || t('detail.not_specified')}
                   </p>
                 </div>
               </div>
@@ -245,10 +247,10 @@ export const AttendeeDetail: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">
-                    Téléphone
+                    {t('detail.phone')}
                   </h3>
                   <p className="text-body-sm text-gray-600 dark:text-gray-300">
-                    {attendee.phone || 'Non renseigné'}
+                    {attendee.phone || t('detail.not_specified')}
                   </p>
                 </div>
               </div>
@@ -264,7 +266,7 @@ export const AttendeeDetail: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-white">
-                    Inscription
+                    {t('detail.registration')}
                   </h3>
                   <p className="text-body-sm text-gray-600 dark:text-gray-300">
                     {formatDate(attendee.registrationDate)}
@@ -277,14 +279,14 @@ export const AttendeeDetail: React.FC = () => {
       </PageSection>
 
       {/* Statistiques */}
-      <PageSection title="Statistiques" spacing="lg">
+      <PageSection title={t('detail.statistics')} spacing="lg">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card variant="default" padding="lg">
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-caption text-gray-500 dark:text-gray-400">
-                    Total événements
+                    {t('detail.total_events')}
                   </p>
                   <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">
                     {stats.totalEvents}
@@ -300,7 +302,7 @@ export const AttendeeDetail: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-caption text-gray-500 dark:text-gray-400">
-                    Événements terminés
+                    {t('detail.completed_events')}
                   </p>
                   <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
                     {stats.completedEvents}
@@ -316,7 +318,7 @@ export const AttendeeDetail: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-caption text-gray-500 dark:text-gray-400">
-                    Événements à venir
+                    {t('detail.upcoming_events')}
                   </p>
                   <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">
                     {stats.upcomingEvents}
@@ -332,12 +334,12 @@ export const AttendeeDetail: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-caption text-gray-500 dark:text-gray-400">
-                    Dernière participation
+                    {t('detail.last_participation')}
                   </p>
                   <p className="text-sm font-medium text-gray-900 dark:text-white mt-2">
                     {stats.lastParticipation
                       ? formatDate(stats.lastParticipation)
-                      : 'Aucune'}
+                      : t('detail.none')}
                   </p>
                 </div>
                 <Clock className="h-8 w-8 text-orange-600 dark:text-orange-400" />
@@ -348,23 +350,23 @@ export const AttendeeDetail: React.FC = () => {
       </PageSection>
 
       {/* Historique des participations */}
-      <PageSection title="Historique des participations" spacing="lg">
+      <PageSection title={t('detail.participation_history')} spacing="lg">
         <Card variant="default" padding="none">
           <CardContent>
             {historyError ? (
               <div className="p-6 text-center">
                 <p className="text-red-600 dark:text-red-400">
-                  Erreur lors du chargement de l'historique
+                  {t('detail.history_error')}
                 </p>
               </div>
             ) : history.length === 0 && !historyLoading ? (
               <div className="p-6 text-center">
                 <Users className="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3 mx-auto" />
                 <p className="text-gray-600 dark:text-gray-300 font-medium">
-                  Aucune participation trouvée
+                  {t('detail.no_participation')}
                 </p>
                 <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                  Ce participant n'a pas encore participé à d'événements
+                  {t('detail.no_participation_description')}
                 </p>
               </div>
             ) : (
@@ -387,7 +389,7 @@ export const AttendeeDetail: React.FC = () => {
 
       {/* Données personnalisées du formulaire */}
       {attendee.metadata && Object.keys(attendee.metadata).length > 0 && (
-        <PageSection title="Données du formulaire" spacing="lg">
+        <PageSection title={t('detail.form_data')} spacing="lg">
           <Card variant="default" padding="lg">
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

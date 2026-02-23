@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Badge Templates",
+    "description": "Create and manage your event badge templates",
+    "loading_error": "Error loading templates",
+    "result_label": "template"
+  },
+  "actions": {
+    "new_template": "New Template",
+    "create_first": "Create your first template",
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "preview": "Preview",
+    "search_placeholder": "Search for a template..."
+  },
+  "filters": {
+    "status_label": "Status",
+    "type_label": "Type",
+    "active": "Active",
+    "inactive": "Inactive",
+    "default": "Default",
+    "custom": "Custom",
+    "sort_newest": "Newest",
+    "sort_oldest": "Oldest",
+    "sort_name_az": "Name (A-Z)",
+    "sort_name_za": "Name (Z-A)",
+    "sort_most_used": "Most used",
+    "sort_least_used": "Least used"
+  },
+  "template": {
+    "default_badge": "Default",
+    "active": "Active",
+    "inactive": "Inactive",
+    "used_count": "Used {{count}} times",
+    "variables": "Variables"
+  },
+  "empty": {
+    "title": "No templates found",
+    "no_results": "No templates match your search criteria",
+    "no_templates": "You haven't created any badge templates yet"
+  },
+  "messages": {
+    "created": "Template created successfully",
+    "updated": "Template updated successfully",
+    "deleted": "Template deleted successfully",
+    "error_create": "Error creating template",
+    "error_update": "Error updating template",
+    "error_delete": "Error deleting template"
+  },
+  "designer": {
+    "saving": "Saving...",
+    "save": "Save",
+    "saving_template": "Saving...",
+    "save_and_exit": "Save and exit",
+    "delete_template": "Delete template",
+    "deleting": "Deleting...",
+    "delete": "Delete",
+    "delete_confirm": "Are you sure you want to delete this template? This action cannot be undone.",
+    "unsaved_changes": "You have unsaved changes. If you leave this page without saving, they will be lost.",
+    "go_back": "Back",
+    "leave": "Leave",
+    "undo": "Undo (Ctrl+Z)",
+    "redo": "Redo (Ctrl+Y)",
+    "duplicate": "Duplicate",
+    "delete_element": "Delete",
+    "delete_elements": "Delete ({{count}})",
+    "symmetry_title": "Central Symmetry",
+    "create_symmetry": "Create Symmetry",
+    "break_symmetry": "Break Symmetry",
+    "cancel": "Cancel"
+  }
+}

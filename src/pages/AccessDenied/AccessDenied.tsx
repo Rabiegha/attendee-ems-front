@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ShieldAlert, Home, Mail } from 'lucide-react'
 import { Button } from '@/shared/ui'
 import { ROUTES } from '@/app/config/constants'
@@ -11,11 +12,14 @@ interface AccessDeniedProps {
 }
 
 export const AccessDenied: React.FC<AccessDeniedProps> = ({
-  title = 'Accès refusé',
-  message = "Vous n'avez pas les permissions nécessaires pour accéder à cette page.",
+  title,
+  message,
   showContactAdmin = true,
 }) => {
+  const { t } = useTranslation('auth')
   const navigate = useNavigate()
+  const displayTitle = title || t('access_denied.title')
+  const displayMessage = message || t('access_denied.message')
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
@@ -33,12 +37,12 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
 
           {/* Titre */}
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-            {title}
+            {displayTitle}
           </h1>
 
           {/* Message */}
           <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-            {message}
+            {displayMessage}
           </p>
 
           {/* Informations supplémentaires */}
@@ -48,11 +52,10 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
                 <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                 <div className="text-left">
                   <p className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-1">
-                    Besoin d'accès ?
+                    {t('access_denied.need_access')}
                   </p>
                   <p className="text-sm text-blue-700 dark:text-blue-300">
-                    Contactez votre administrateur pour demander les permissions
-                    nécessaires.
+                    {t('access_denied.contact_admin')}
                   </p>
                 </div>
               </div>
@@ -67,7 +70,7 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
               className="w-full"
             >
               <Home className="h-4 w-4 mr-2" />
-              Retour à l'accueil
+              {t('access_denied.go_home')}
             </Button>
 
             <Button
@@ -75,15 +78,14 @@ export const AccessDenied: React.FC<AccessDeniedProps> = ({
               variant="secondary"
               className="w-full"
             >
-              Page précédente
+              {t('access_denied.go_back')}
             </Button>
           </div>
         </div>
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le
-          support.
+          {t('access_denied.error_note')}
         </p>
       </div>
     </div>

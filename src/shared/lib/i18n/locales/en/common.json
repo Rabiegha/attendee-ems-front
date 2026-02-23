@@ -6,6 +6,7 @@
     "retry": "Retry",
     "cancel": "Cancel",
     "save": "Save",
+    "saving": "Saving...",
     "delete": "Delete",
     "edit": "Edit",
     "create": "Create",
@@ -19,8 +20,30 @@
     "previous": "Previous",
     "confirm": "Confirm",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "ok": "OK",
+    "reset": "Reset",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "view_more": "View more",
+    "clear_all": "Clear all",
+    "select_all": "Select all",
+    "deselect_all": "Deselect all",
+    "show_all": "Show all",
+    "hide_all": "Hide all",
+    "deleting": "Deleting...",
+    "exporting": "Exporting...",
+    "modifying": "Modifying...",
+    "connecting": "Connecting...",
+    "sign_in": "Sign in",
+    "user": "User",
+    "actions": "Actions",
+    "update": "Update",
+    "restoring": "Restoring...",
+    "restore": "Restore",
+    "permanent_delete": "Permanently delete"
   },
+  "welcome": "Welcome",
   "navigation": {
     "dashboard": "Dashboard",
     "events": "Events",
@@ -48,7 +71,12 @@
     "completed": "Completed",
     "cancelled": "Cancelled",
     "draft": "Draft",
-    "published": "Published"
+    "published": "Published",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "online": "Online",
+    "physical": "In-person",
+    "hybrid": "Hybrid"
   },
   "errors": {
     "required": "This field is required",
@@ -59,6 +87,265 @@
     "unauthorized": "Unauthorized",
     "forbidden": "Access forbidden",
     "not_found": "Resource not found",
-    "server_error": "Server error"
+    "server_error": "Server error",
+    "load_error": "Error loading data",
+    "password_min_length": "Password must be at least 6 characters"
+  },
+  "table": {
+    "drag_to_reorder": "Drag to reorder",
+    "items": "items",
+    "no_data": "No data available",
+    "shift_click_range": "Shift+Click to select a range",
+    "select_row": "Select row",
+    "select_all": "Select all",
+    "reset_columns": "Reset column order and visibility",
+    "columns_count": "Columns ({{count}})",
+    "columns_display": "Column display",
+    "selected_count": "{{selected}} of {{total}} row(s) selected",
+    "per_page": "Per page:",
+    "showing": "Showing {{from}} to {{to}} of {{total}} results",
+    "result": "result",
+    "results": "results",
+    "found_one": "found",
+    "found_many": "found",
+    "refresh_list": "Refresh list",
+    "reset_filters": "Reset filters",
+    "others": "others"
+  },
+  "pagination": {
+    "first_page": "First page",
+    "previous_page": "Previous page",
+    "next_page": "Next page",
+    "last_page": "Last page",
+    "showing": "Showing {{from}} to {{to}} of {{total}} results",
+    "per_page": "Per page:",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "clear": "Clear search"
+  },
+  "select": {
+    "placeholder": "Select items...",
+    "search_placeholder": "Search...",
+    "no_results": "No results found",
+    "selected_count": "{{count}} / {{max}} selected"
+  },
+  "bulk": {
+    "selected_one": "{{count}} selected",
+    "selected_many": "{{count}} selected",
+    "delete_title": "Delete items",
+    "delete_confirm": "Are you sure you want to delete the {{count}} selected items? This action cannot be undone.",
+    "delete_warning": "This action cannot be undone.",
+    "export_title": "Export items",
+    "export_confirm": "Export {{count}} selected item(s) as CSV?",
+    "edit_title": "Edit items",
+    "edit_confirm": "Edit {{count}} selected item(s)?",
+    "edit_warning": "This action will affect all selected items."
+  },
+  "modal": {
+    "close": "Close modal",
+    "name_label": "Name:",
+    "url_label": "URL:",
+    "email_label": "Email:",
+    "organization_label": "Organization:"
+  },
+  "confirmation": {
+    "confirm": "Confirm",
+    "cancel": "Back"
+  },
+  "demo": {
+    "title": "Multi-Organization Demo Accounts",
+    "description": "Test different roles and organizations with these pre-configured accounts:",
+    "login_success": "Login successful",
+    "login_as": "Logged in as:",
+    "login_error": "Login error",
+    "login_error_message": "Unable to connect with this demo account",
+    "password_notice": "All accounts use the password"
+  },
+  "not_found": {
+    "code": "404",
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist.",
+    "go_dashboard": "Dashboard"
+  },
+  "invitations": {
+    "title": "User Management",
+    "invite": "Invite User",
+    "inviteUser": "Invite User",
+    "pending": "Pending",
+    "accepted": "Accepted",
+    "expired": "Expired",
+    "cancelled": "Cancelled",
+    "page_description": "Send an email invitation to add a new member to your team. The user will receive a secure link to create their account.",
+    "stats": {
+      "pending": "Pending",
+      "thisWeek": "This week",
+      "total": "Total sent"
+    },
+    "form": {
+      "email": {
+        "label": "Email address",
+        "placeholder": "user@example.com",
+        "description": "The user will receive an invitation link by email",
+        "required": "Email is required"
+      },
+      "role": {
+        "label": "Role",
+        "placeholder": "Select a role",
+        "description": "Defines the user's permissions in the organization",
+        "select_org_first": "Select an organization first",
+        "load_error": "Loading error",
+        "no_roles": "No roles available for this organization",
+        "default_roles": "Default roles (Admin, Manager, Partner, Viewer, Hostess) available for the new organization"
+      },
+      "organization": {
+        "label": "Organization",
+        "placeholder": "Select an organization",
+        "description": "Organization to invite the user to",
+        "hint": "Select an organization first to see available roles",
+        "existing": "Assign to an existing organization",
+        "create_new": "Create a new organization",
+        "name_label": "Organization name",
+        "name_placeholder": "E.g.: ACME Corporation",
+        "slug_generated": "Generated slug:",
+        "auto_info_title": "Automatic information",
+        "auto_info_slug": "The slug will be generated automatically (e.g.: acme-corporation)",
+        "auto_info_roles": "Default roles will be created automatically",
+        "auto_info_timezone": "The timezone will be set to Europe/Paris",
+        "auto_info_assignment": "The user will be automatically assigned to this organization"
+      },
+      "events": {
+        "label": "Associated events",
+        "placeholder": "Select events",
+        "description": "Events for which this role applies"
+      },
+      "message": {
+        "label": "Custom message (optional)",
+        "placeholder": "Add a personal message to the invitation...",
+        "description": "This message will be included in the invitation email"
+      },
+      "submit": "Send invitation",
+      "new_invitation": "New invitation",
+      "fill_info": "Fill in the information below",
+      "creating_org": "Creating organization...",
+      "sending": "Sending...",
+      "submit_with_org": "Create organization and send invitation"
+    },
+    "roles": {
+      "ORG_ADMIN": {
+        "name": "Organization Administrator",
+        "description": "Full access to the organization, user and event management"
+      },
+      "ORG_MANAGER": {
+        "name": "Organization Manager",
+        "description": "Management of organization events and attendees"
+      },
+      "EVENT_MANAGER": {
+        "name": "Event Manager",
+        "description": "Full management of specific assigned events"
+      },
+      "CHECKIN_STAFF": {
+        "name": "Check-in Staff",
+        "description": "Attendee check-in and attendance management"
+      },
+      "PARTNER": {
+        "name": "Partner",
+        "description": "Limited access to partner events"
+      },
+      "READONLY": {
+        "name": "Read Only",
+        "description": "View data without modification"
+      }
+    },
+    "messages": {
+      "success": "Invitation sent successfully",
+      "error": "Error sending invitation",
+      "emailExists": "A user with this email already exists",
+      "limitReached": "Invitation limit reached ({{limit}} max)",
+      "cancelled": "Invitation cancelled",
+      "resent": "Invitation resent",
+      "resent_detail": "A new invitation has been sent to {{email}}."
+    },
+    "validation": {
+      "required_fields_title": "Required fields",
+      "required_fields_message": "Please fill in all required fields before sending the invitation.",
+      "org_name_required_title": "Organization name required",
+      "org_name_required_message": "Please enter the name of the new organization.",
+      "org_required_title": "Organization required",
+      "org_required_message": "Please select an organization or create a new one."
+    },
+    "errors": {
+      "org_creation_error": "Error creating organization",
+      "org_exists_title": "Organization already exists",
+      "org_exists_message": "An organization with the name \"{{name}}\" already exists. Please choose a different name or select the existing organization.",
+      "org_creation_title": "Organization creation error",
+      "resend_error": "Resend error",
+      "resend_failed": "Unable to resend invitation",
+      "already_pending_title": "Invitation already pending",
+      "already_pending_message": "An invitation has already been sent to {{email}} on {{date}}.\n\nIt expires on {{expiresDate}}.\n\nWould you like to resend a new invitation?",
+      "already_pending_simple": "An invitation has already been sent to {{email}}.\n\nWould you like to resend a new invitation?",
+      "already_member_title": "User already a member",
+      "pending_title": "Invitation pending",
+      "account_exists_title": "Existing account detected",
+      "account_exists_message": "An account with the email {{email}} already exists in the system.\n\nCurrently, each user can only have one account. If this person needs access to multiple organizations, please:\n\u2022 Ask them to use a different email to create a second account\n\u2022 Or wait for the upcoming update that will allow a user to join multiple organizations",
+      "invalid_email_title": "Invalid email",
+      "invalid_email_message": "The email address provided is not valid. Please check the format.",
+      "access_denied_title": "Access denied",
+      "access_denied_message": "You do not have the necessary permissions to send this invitation.",
+      "send_error": "Error sending",
+      "unexpected": "An unexpected error occurred"
+    },
+    "how_it_works": {
+      "title": "How it works",
+      "description": "The invitation process in 3 simple steps",
+      "step1_title": "1. Email sent",
+      "step1_description": "An invitation email is automatically sent to the specified address",
+      "step2_title": "2. Secure link",
+      "step2_description": "The user receives a secure link to complete their registration",
+      "step3_title": "3. Account created",
+      "step3_description": "They can create their password and immediately access the platform"
+    },
+    "important": {
+      "title": "Important points",
+      "check_email": "Verify the email address before sending the invitation",
+      "expires": "The invitation link automatically expires after 48 hours",
+      "can_resend": "You can resend an invitation if needed",
+      "permissions": "The user will receive permissions based on the assigned role"
+    },
+    "access_denied_title": "Invitation access denied",
+    "access_denied_message": "You do not have the necessary permissions to manage invitations."
+  },
+  "filters": {
+    "all": "All",
+    "active": "Active",
+    "inactive": "Inactive",
+    "none": "None"
+  },
+  "organizations": {
+    "title": "Organizations",
+    "description": "Manage organizations",
+    "title_super_admin": "Organization Management",
+    "title_admin": "My Organization",
+    "description_super_admin": "Manage all organizations and their users. Click on an organization to show/hide its users.",
+    "description_admin": "Information about your organization and your team",
+    "team": "Team",
+    "users": "Users",
+    "no_role": "No role",
+    "inactive": "Inactive",
+    "new_organization": "New Organization",
+    "none_found": "No organizations found",
+    "none_associated": "No associated organization",
+    "access_denied": "Organizations access denied",
+    "access_denied_message": "You do not have the necessary permissions to view organization information.",
+    "loading_error": "Error loading organizations",
+    "unknown_error": "An unknown error occurred",
+    "create_error_title": "Creation error",
+    "create_error_default": "An error occurred while creating the organization.",
+    "modal_title": "New organization",
+    "modal_description": "Create a new organization"
   }
 }

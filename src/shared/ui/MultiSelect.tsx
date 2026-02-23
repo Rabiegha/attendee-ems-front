@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { X, Search, Users, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export interface MultiSelectOption {
   id: string
@@ -23,13 +24,18 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   options = [],
   value = [],
   onChange,
-  placeholder = 'Sélectionner des éléments...',
+  placeholder,
   disabled = false,
   maxSelections,
-  searchPlaceholder = 'Rechercher...',
-  emptyMessage = 'Aucun élément trouvé',
+  searchPlaceholder,
+  emptyMessage,
   className = '',
 }) => {
+  const { t } = useTranslation('common')
+  const resolvedPlaceholder = placeholder ?? t('select.placeholder')
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t('select.search_placeholder')
+  const resolvedEmptyMessage = emptyMessage ?? t('select.no_results')
+
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -125,7 +131,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           {/* Placeholder ou compteur */}
           {selectedOptions.length === 0 && (
             <span className="text-gray-500 dark:text-gray-400 text-sm py-1">
-              {placeholder}
+              {resolvedPlaceholder}
             </span>
           )}
         </div>
@@ -151,7 +157,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
                 className="w-full pl-9 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm 
                   bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400
                   focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors duration-200"
-                placeholder={searchPlaceholder}
+                placeholder={resolvedSearchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -162,7 +168,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           <div className="max-h-40 overflow-y-auto">
             {filteredOptions.length === 0 ? (
               <div className="p-3 text-center text-gray-500 dark:text-gray-400 text-sm">
-                {emptyMessage}
+                {resolvedEmptyMessage}
               </div>
             ) : (
               filteredOptions.map((option) => {
@@ -203,8 +209,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
           {/* Info limite */}
           {maxSelections && (
             <div className="p-2 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400 text-center">
-              {value.length} / {maxSelections} sélectionné
-              {value.length > 1 ? 's' : ''}
+              {t('select.selected_count', { count: value.length, max: maxSelections })}
             </div>
           )}
         </div>

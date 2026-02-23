@@ -1,0 +1,82 @@
+{
+  "page": {
+    "title": "Email Management",
+    "description": "Configure and send emails to attendees",
+    "loading_error": "Error loading emails"
+  },
+  "templates": {
+    "title": "Email Templates",
+    "create": "Create Template",
+    "edit": "Edit Template",
+    "delete": "Delete Template",
+    "name": "Template Name",
+    "subject": "Subject",
+    "subject_label": "Subject:",
+    "body": "Message Body",
+    "preview": "Preview",
+    "preview_title": "Template Preview",
+    "preview_loading": "Loading preview...",
+    "default": "Default",
+    "custom": "Custom",
+    "no_templates": "No email template configured",
+    "about_title": "About email templates",
+    "about_description": "Email templates are currently generic and identical for all events. Template customization per event will be added in a future version.",
+    "type": {
+      "registration_confirmation": "Registration Confirmation",
+      "registration_approved": "Registration Approved",
+      "registration_rejected": "Registration Rejected",
+      "invitation": "User Invitation"
+    },
+    "type_description": {
+      "registration_confirmation": "Sent automatically upon event registration",
+      "registration_approved": "Sent when a participant's registration is approved",
+      "registration_rejected": "Sent when a participant's registration is rejected",
+      "invitation": "Sent when inviting a new user to the organization"
+    }
+  },
+  "send": {
+    "title": "Send Email",
+    "recipients": "Recipients",
+    "all_attendees": "All Attendees",
+    "selected_attendees": "Selected Attendees",
+    "by_status": "By Status",
+    "subject": "Email Subject",
+    "template": "Template",
+    "send_button": "Send",
+    "sending": "Sending...",
+    "test_send": "Send Test",
+    "test_title": "Test Email Sending",
+    "template_type": "Template Type",
+    "destination_label": "Destination email address",
+    "test_description": "A test email with dummy data will be sent to the specified address."
+  },
+  "history": {
+    "title": "Send History",
+    "date": "Date",
+    "subject": "Subject",
+    "recipients_count": "Recipients",
+    "status": "Status",
+    "sent": "Sent",
+    "failed": "Failed",
+    "pending": "Pending"
+  },
+  "messages": {
+    "sent_success": "Email sent successfully",
+    "sent_error": "Error sending email",
+    "template_created": "Template created successfully",
+    "template_updated": "Template updated successfully",
+    "template_deleted": "Template deleted successfully",
+    "preview_error": "Unable to load template preview",
+    "email_required": "Please enter an email address",
+    "test_sent": "Test email sent",
+    "test_error": "Unable to send test email"
+  },
+  "config": {
+    "title": "Email Configuration",
+    "smtp_server": "SMTP Server",
+    "smtp_port": "SMTP Port",
+    "sender_name": "Sender Name",
+    "sender_email": "Sender Email",
+    "test_connection": "Test Connection"
+  }
+}

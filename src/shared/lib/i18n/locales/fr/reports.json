@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Rapports et Statistiques",
+    "description": "Analyse des données de votre plateforme",
+    "loading": "Chargement des données...",
+    "loading_error": "Erreur lors du chargement des rapports"
+  },
+  "overview": {
+    "title": "Vue d'ensemble",
+    "total_events": "Total Événements",
+    "total_attendees": "Total Participants",
+    "total_registrations": "Total inscriptions",
+    "total_users": "Total utilisateurs",
+    "check_in_rate": "Taux d'enregistrement",
+    "conversion_rate": "Taux de conversion",
+    "avg_capacity": "Capacité moyenne",
+    "occupancy_rate": "Taux de remplissage",
+    "total_capacity": "Capacité totale",
+    "avg_check_in_rate": "Taux de présence moyen",
+    "no_type": "Sans type"
+  },
+  "charts": {
+    "registrations_over_time": "Inscriptions dans le temps",
+    "attendees_by_status": "Participants par statut",
+    "events_by_type": "Événements par type",
+    "top_events": "Événements les plus populaires",
+    "daily": "Quotidien",
+    "weekly": "Hebdomadaire",
+    "monthly": "Mensuel",
+    "events": "Événements",
+    "events_created": "Événements créés",
+    "event_count": "Nombre d'événements",
+    "check_in_rate": "Taux de présence",
+    "attendee_type_distribution": "Distribution par type de participant",
+    "events_by_month": "Événements par mois",
+    "events_created_last_30_days": "Événements créés (30 derniers jours)",
+    "events_by_capacity": "Distribution des événements par capacité",
+    "check_in_rate_by_event": "Taux de présence par événement (Top 20)"
+  },
+  "filters": {
+    "date_range": "Période",
+    "event": "Événement",
+    "all_events": "Tous les événements",
+    "last_7_days": "7 derniers jours",
+    "last_30_days": "30 derniers jours",
+    "last_90_days": "90 derniers jours",
+    "custom": "Personnalisé",
+    "from": "Du",
+    "to": "Au"
+  },
+  "export": {
+    "title": "Exporter le rapport",
+    "csv": "Exporter en CSV",
+    "pdf": "Exporter en PDF",
+    "excel": "Exporter en Excel"
+  },
+  "empty": {
+    "title": "Aucune donnée disponible",
+    "description": "Les données apparaîtront ici une fois que des événements auront des participants"
+  },
+  "stats": {
+    "increase": "augmentation",
+    "decrease": "diminution",
+    "no_change": "stable",
+    "compared_to_previous": "par rapport à la période précédente"
+  },
+  "insights": {
+    "title": "Informations clés",
+    "most_common_type": "Type le plus fréquent",
+    "upcoming_events": "Événements à venir",
+    "avg_attendees_per_event": "Moyenne participants/événement"
+  }
+}

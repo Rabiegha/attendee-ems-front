@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Printer, RefreshCw, Wifi, WifiOff, Monitor } from 'lucide-react'
 import {
   useGetExposedPrintersQuery,
@@ -29,6 +30,7 @@ interface PrinterGroup {
 }
 
 export const PrintingPage: React.FC = () => {
+  const { t } = useTranslation('printing')
   const { 
     data: printers = [], 
     isLoading, 
@@ -47,7 +49,7 @@ export const PrintingPage: React.FC = () => {
     const groups: Record<string, PrinterGroup> = {}
     
     printers.forEach(printer => {
-      const deviceId = printer.deviceId || 'Appareil inconnu'
+      const deviceId = printer.deviceId || t('printers.unknown_device')
       
       if (!groups[deviceId]) {
         groups[deviceId] = {
@@ -60,14 +62,14 @@ export const PrintingPage: React.FC = () => {
     })
     
     return Object.values(groups).sort((a, b) => a.deviceId.localeCompare(b.deviceId))
-  }, [printers])
+}, [printers, t])
 
   return (
     <PageContainer>
       <PageHeader
-        title="Gestion des imprimantes"
+        title={t('page.title')}
         icon={Printer}
-        description="Vue d'ensemble des clients d'impression connectés et de leurs imprimantes"
+        description={t('page.description')}
         actions={
           <div className="flex items-center gap-3">
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
@@ -78,8 +80,8 @@ export const PrintingPage: React.FC = () => {
               {isClientOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
               <span>
                 {isClientOnline 
-                  ? `${clientStatus?.clientCount || 0} client(s) connecté(s)` 
-                  : 'Aucun client connecté'}
+                  ? t('status.clients_connected', { count: clientStatus?.clientCount || 0 }) 
+                  : t('status.no_client')}
               </span>
             </div>
             
@@ -90,7 +92,7 @@ export const PrintingPage: React.FC = () => {
               disabled={isLoading || isFetching}
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              Actualiser
+              {t('printers.refresh')}
             </Button>
           </div>
         }
@@ -108,10 +110,10 @@ export const PrintingPage: React.FC = () => {
                 <Printer className="w-8 h-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
-                Aucune imprimante détectée
+                {t('printers.no_printers')}
               </h3>
               <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                Connectez le client d'impression EMS sur vos ordinateurs pour voir les imprimantes disponibles ici.
+                {t('printers.no_printers_message')}
               </p>
             </CardContent>
           </Card>
@@ -129,7 +131,7 @@ export const PrintingPage: React.FC = () => {
                         {group.deviceId}
                       </CardTitle>
                       <CardDescription>
-                        {group.printers.length} imprimante(s) disponible(s)
+                        {t('printers.printers_available', { count: group.printers.length })}
                       </CardDescription>
                     </div>
                   </div>
@@ -156,7 +158,7 @@ export const PrintingPage: React.FC = () => {
                           )}
                           {printer.isDefault && (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 mt-1.5 border border-blue-100 dark:border-blue-800">
-                              Défaut
+                              {t('status.default')}
                             </span>
                           )}
                         </div>
@@ -166,7 +168,7 @@ export const PrintingPage: React.FC = () => {
                         printer.status === 0 
                           ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' 
                           : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'
-                      }`} title={printer.status === 0 ? 'Prête' : 'Erreur / Hors ligne'} />
+                      }`} title={printer.status === 0 ? t('status.ready') : t('status.error')} />
                     </div>
                   ))}
                 </CardContent>

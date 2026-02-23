@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { RotateCcw, Trash2, Users } from 'lucide-react'
 import { ColumnDef } from '@tanstack/react-table'
 import type { AttendeeDPO } from '../dpo/attendee.dpo'
@@ -63,6 +64,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
 }) => {
   const navigate = useNavigate()
   const toast = useToast()
+  const { t } = useTranslation('attendees')
 
   // Bulk mutations
   const [bulkDeleteAttendees] = useBulkDeleteAttendeesMutation()
@@ -216,7 +218,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
       },
       {
         id: 'checkins',
-        header: 'Check-ins',
+        header: t('table.checkins'),
         accessorKey: 'checkedInCount',
         cell: ({ row }) => (
           <div 
@@ -264,7 +266,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
                   size="sm"
                   variant="ghost"
                   onClick={() => handleRestoreAttendee(row.original)}
-                  title="Restaurer"
+                  title={t('table.restore')}
                   className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 min-w-[32px] p-1.5"
                 >
                   <RotateCcw className="h-4 w-4 shrink-0" />
@@ -273,7 +275,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
                   size="sm"
                   variant="ghost"
                   onClick={() => handlePermanentDeleteAttendee(row.original)}
-                  title="Supprimer définitivement"
+                  title={t('table.permanent_delete')}
                   className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                 >
                   <Trash2 className="h-4 w-4 shrink-0" />
@@ -293,7 +295,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         enableHiding: false,
       },
     ],
-    [isDeletedTab]
+    [isDeletedTab, t]
   )
 
   // Handlers pour les actions groupées
@@ -322,8 +324,8 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   const handleBulkDelete = async () => {
     setBulkConfirmation({
       isOpen: true,
-      title: 'Supprimer les participants',
-      message: `Supprimer ${bulkSelectedIds.size} participant(s) ?\n\nIls seront déplacés dans les éléments supprimés.`,
+      title: t('bulk.delete_title'),
+      message: t('bulk.delete_message', { count: bulkSelectedIds.size }),
       variant: 'warning',
       action: async () => {
         try {
@@ -341,8 +343,8 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   const handleBulkRestore = async () => {
     setBulkConfirmation({
       isOpen: true,
-      title: 'Restaurer les participants',
-      message: `Restaurer ${bulkSelectedIds.size} participant(s) ?`,
+      title: t('bulk.restore_title'),
+      message: t('bulk.restore_message', { count: bulkSelectedIds.size }),
       variant: 'success',
       action: async () => {
         try {
@@ -364,8 +366,8 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
   const handleBulkPermanentDelete = async () => {
     setBulkConfirmation({
       isOpen: true,
-      title: 'Suppression définitive',
-      message: `⚠️ ATTENTION : Cette action est IRRÉVERSIBLE.\n\nSupprimer définitivement ${bulkSelectedIds.size} participant(s) ?`,
+      title: t('bulk.permanent_delete_title'),
+      message: t('bulk.permanent_delete_message', { count: bulkSelectedIds.size }),
       variant: 'danger',
       action: async () => {
         try {

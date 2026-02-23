@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import { AlertTriangle, CheckCircle, Trash2, Info } from 'lucide-react'
@@ -23,11 +24,15 @@ export const BulkConfirmationModal: React.FC<BulkConfirmationModalProps> = ({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Confirmer',
-  cancelLabel = 'Retour',
+  confirmLabel: confirmLabelProp,
+  cancelLabel: cancelLabelProp,
   variant = 'default',
   isLoading = false,
 }) => {
+  const { t } = useTranslation(['events', 'common'])
+  const confirmLabel = confirmLabelProp ?? t('common:app.confirm')
+  const cancelLabel = cancelLabelProp ?? t('common:confirmation.cancel')
+
   const getIcon = () => {
     switch (variant) {
       case 'danger':

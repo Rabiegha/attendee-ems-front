@@ -1,0 +1,120 @@
+{
+  "page": {
+    "title": "Roles & Permissions Management",
+    "description": "Configure permissions for each role in your organization.",
+    "loading_error": "Error loading data",
+    "access_denied": "Access to roles and permissions denied",
+    "access_denied_message": "You do not have the necessary permissions to manage roles and permissions."
+  },
+  "roles": {
+    "title": "Roles",
+    "create": "New Role",
+    "edit": "Edit",
+    "delete": "Delete",
+    "name": "Role Name",
+    "description": "Description",
+    "level": "Level",
+    "users_count": "User Count",
+    "permissions": "Permissions",
+    "system_role": "System",
+    "custom_role": "Custom Role",
+    "your_role": "Your Role",
+    "protected": "Protected",
+    "permissions_info": "{{count}} permissions • Level {{level}}",
+    "no_description": "No description"
+  },
+  "permissions": {
+    "title": "Permissions",
+    "manage": "Manage Permissions",
+    "module": "Module",
+    "create": "Create",
+    "read": "Read",
+    "update": "Update",
+    "delete": "Delete",
+    "all": "All",
+    "none": "None",
+    "custom": "Custom",
+    "select_all": "Select All",
+    "deselect_all": "Deselect All",
+    "categories": "Categories:",
+    "search_placeholder": "Search permissions...",
+    "no_results": "No permissions found",
+    "no_results_hint": "Try adjusting your filters or search query"
+  },
+  "modules": {
+    "events": "Events",
+    "attendees": "Attendees",
+    "users": "Users",
+    "organizations": "Organizations",
+    "reports": "Reports",
+    "badges": "Badges",
+    "emails": "Emails",
+    "settings": "Settings",
+    "invitations": "Invitations",
+    "registrations": "Registrations",
+    "roles": "Roles",
+    "analytics": "Analytics"
+  },
+  "actions": {
+    "save_permissions": "Save Permissions",
+    "reset_permissions": "Reset Permissions"
+  },
+  "messages": {
+    "role_created": "Role created successfully",
+    "role_updated": "Role updated successfully",
+    "role_deleted": "Role deleted successfully",
+    "permissions_updated": "Permissions updated successfully",
+    "error_create": "Error creating role",
+    "error_update": "Error updating role",
+    "error_delete": "Error deleting role",
+    "error_permissions": "Error updating permissions",
+    "cannot_delete_system": "Cannot delete a system role",
+    "cannot_edit_system": "System roles cannot be edited",
+    "hierarchy_updated": "Hierarchy updated successfully",
+    "error_hierarchy": "Error updating hierarchy",
+    "cannot_modify_own_role": "You cannot modify your own role's permissions",
+    "cannot_modify_system_role": "System roles cannot be modified",
+    "cannot_modify_higher_role": "You can only modify roles with a level strictly higher than yours (level {{level}})",
+    "cannot_place_role": "You cannot place a role at level {{newLevel}} or higher. Your level is {{currentLevel}}.",
+    "error_update_permissions": "An error occurred while updating permissions"
+  },
+  "empty": {
+    "title": "No roles found",
+    "description": "Create roles to organize permissions",
+    "select_role": "Select a Role",
+    "select_role_description": "Choose a role from the list on the left to view and edit its permissions."
+  },
+  "confirm": {
+    "delete_role": "Are you sure you want to delete this role?",
+    "delete_warning": "Users with this role will lose their permissions.",
+    "delete_role_title": "Confirm Deletion",
+    "irreversible_action": "Irreversible Action",
+    "delete_permanent": "This action cannot be undone. The role will be permanently deleted.",
+    "delete_role_confirm": "Are you sure you want to delete the role \"{{name}}\"?",
+    "deleting": "Deleting...",
+    "delete_button": "Delete",
+    "cancel": "Cancel"
+  },
+  "warnings": {
+    "own_role_title": "Your Own Role",
+    "system_role_title": "System Role",
+    "protected_role_title": "Protected Role",
+    "own_role_reason": "You cannot modify your own role's permissions for security reasons.",
+    "system_role_reason": "This system role cannot be modified.",
+    "hierarchy_role_reason": "You can only modify roles with a level strictly higher than yours (level {{currentLevel}}). This role is level {{roleLevel}}."
+  },
+  "form": {
+    "name_required": "Name is required",
+    "name_placeholder": "E.g., Manager, Supervisor",
+    "description_placeholder": "Describe the responsibilities of this role...",
+    "description_hint": "Optional: helps other admins understand the role"
+  },
+  "create_title": "Create a New Role",
+  "create_error": "Error creating role",
+  "creating": "Creating...",
+  "create_button": "Create Role",
+  "edit_title": "Edit Role",
+  "edit_error": "Error editing role",
+  "editing": "Editing...",
+  "edit_success": "Role edited successfully"
+}

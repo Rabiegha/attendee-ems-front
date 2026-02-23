@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
@@ -28,6 +29,8 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
   isLoading = false,
   formFields = [],
 }) => {
+  const { t } = useTranslation(['events', 'common'])
+
   const [formData, setFormData] = useState({
     firstName: getRegistrationFirstName(registration),
     lastName: getRegistrationLastName(registration),
@@ -72,7 +75,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Modifier l'inscription"
+      title={t('events:registrations.edit_title')}
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -80,7 +83,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
           {isFieldVisible('first_name') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Prénom
+                {t('events:registrations.first_name')}
               </label>
               <input
                 type="text"
@@ -95,7 +98,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
           {isFieldVisible('last_name') && (
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Nom
+                {t('events:registrations.last_name')}
               </label>
               <input
                 type="text"
@@ -112,7 +115,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
         {isFieldVisible('email') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Email <span className="text-red-500 dark:text-red-400">*</span>
+              {t('events:registrations.email_field')} <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <input
               type="email"
@@ -129,7 +132,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
         {isFieldVisible('phone') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Téléphone
+              {t('events:registrations.phone_field')}
             </label>
             <input
               type="tel"
@@ -145,7 +148,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
         {isFieldVisible('company') && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Entreprise
+              {t('events:registrations.company_field')}
             </label>
             <input
               type="text"
@@ -165,10 +168,10 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
             onClick={onClose}
             disabled={isLoading}
           >
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Enregistrement...' : 'Enregistrer'}
+            {isLoading ? t('common:app.saving') : t('common:app.save')}
           </Button>
         </div>
       </form>

@@ -249,12 +249,12 @@ export const attendeesApi = rootApi.injectEndpoints({
 
     bulkExportAttendees: builder.mutation<
       { downloadUrl: string; filename: string },
-      { ids: string[]; format?: 'csv' | 'xlsx' }
+      { ids: string[]; format?: 'csv' | 'xlsx'; lang?: string }
     >({
-      query: ({ ids, format = 'csv' }) => ({
+      query: ({ ids, format = 'csv', lang }) => ({
         url: `${API_ENDPOINTS.ATTENDEES.LIST}/bulk-export`,
         method: 'POST',
-        body: { ids, format },
+        body: { ids, format, lang },
         cache: 'no-cache',
         responseHandler: async (response) => {
           const blob = await response.blob()

@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle, XCircle, Clock, Ban } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui'
@@ -57,6 +58,7 @@ export const BulkStatusChangeModal: React.FC<BulkStatusChangeModalProps> = ({
   onConfirm,
   selectedCount,
 }) => {
+  const { t } = useTranslation(['events', 'common'])
   const [selectedStatus, setSelectedStatus] = useState<string>('')
 
   const handleConfirm = () => {
@@ -72,12 +74,12 @@ export const BulkStatusChangeModal: React.FC<BulkStatusChangeModalProps> = ({
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Changer le statut">
+    <Modal isOpen={isOpen} onClose={handleClose} title={t('events:registrations.change_status_title')}>
       <div className="space-y-4">
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Sélectionnez le nouveau statut pour{' '}
+          {t('events:registrations.select_new_status')}{' '}
           <span className="font-semibold text-gray-900 dark:text-white">
-            {selectedCount} inscription{selectedCount > 1 ? 's' : ''}
+            {t('events:registrations.select_new_status_count', { count: selectedCount })}
           </span>
         </p>
 
@@ -99,10 +101,10 @@ export const BulkStatusChangeModal: React.FC<BulkStatusChangeModalProps> = ({
                 <Icon className={`h-5 w-5 ${isSelected ? option.color : 'text-gray-400'}`} />
                 <div className="text-left flex-1">
                   <div className={`font-medium ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                    {option.label}
+                    {t(`events:registrations.status_${option.value}`)}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {option.description}
+                    {t(`events:registrations.status_${option.value}_desc`)}
                   </div>
                 </div>
                 {isSelected && (
@@ -118,14 +120,14 @@ export const BulkStatusChangeModal: React.FC<BulkStatusChangeModalProps> = ({
             variant="outline"
             onClick={onBack || handleClose}
           >
-            Retour
+            {t('common:app.back')}
           </Button>
           <Button
             variant="default"
             onClick={handleConfirm}
             disabled={!selectedStatus}
           >
-            Continuer
+            {t('events:registrations.continue_btn')}
           </Button>
         </div>
       </div>

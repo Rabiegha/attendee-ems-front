@@ -1,0 +1,82 @@
+{
+  "page": {
+    "title": "Gestion des emails",
+    "description": "Configurez et envoyez des emails aux participants",
+    "loading_error": "Erreur lors du chargement des emails"
+  },
+  "templates": {
+    "title": "Templates d'emails",
+    "create": "Créer un modèle",
+    "edit": "Modifier le modèle",
+    "delete": "Supprimer le modèle",
+    "name": "Nom du modèle",
+    "subject": "Objet",
+    "subject_label": "Objet :",
+    "body": "Corps du message",
+    "preview": "Aperçu",
+    "preview_title": "Aperçu du template",
+    "preview_loading": "Chargement de l'aperçu...",
+    "default": "Par défaut",
+    "custom": "Personnalisé",
+    "no_templates": "Aucun template d'email configuré",
+    "about_title": "À propos des templates d'emails",
+    "about_description": "Les templates d'emails sont actuellement génériques et identiques pour tous les événements. La fonctionnalité de personnalisation des templates par événement sera ajoutée dans une prochaine version.",
+    "type": {
+      "registration_confirmation": "Confirmation d'inscription",
+      "registration_approved": "Approbation d'inscription",
+      "registration_rejected": "Refus d'inscription",
+      "invitation": "Invitation utilisateur"
+    },
+    "type_description": {
+      "registration_confirmation": "Envoyé automatiquement lors de l'inscription à un événement",
+      "registration_approved": "Envoyé lorsque l'inscription d'un participant est approuvée",
+      "registration_rejected": "Envoyé lorsque l'inscription d'un participant est refusée",
+      "invitation": "Envoyé lors de l'invitation d'un nouvel utilisateur dans l'organisation"
+    }
+  },
+  "send": {
+    "title": "Envoyer un email",
+    "recipients": "Destinataires",
+    "all_attendees": "Tous les participants",
+    "selected_attendees": "Participants sélectionnés",
+    "by_status": "Par statut",
+    "subject": "Objet de l'email",
+    "template": "Modèle",
+    "send_button": "Envoyer",
+    "sending": "Envoi...",
+    "test_send": "Envoyer un test",
+    "test_title": "Tester l'envoi d'email",
+    "template_type": "Type de template",
+    "destination_label": "Adresse email de destination",
+    "test_description": "Un email de test avec des données fictives sera envoyé à l'adresse indiquée."
+  },
+  "history": {
+    "title": "Historique des envois",
+    "date": "Date",
+    "subject": "Objet",
+    "recipients_count": "Destinataires",
+    "status": "Statut",
+    "sent": "Envoyé",
+    "failed": "Échec",
+    "pending": "En attente"
+  },
+  "messages": {
+    "sent_success": "Email envoyé avec succès",
+    "sent_error": "Erreur lors de l'envoi de l'email",
+    "template_created": "Modèle créé avec succès",
+    "template_updated": "Modèle mis à jour avec succès",
+    "template_deleted": "Modèle supprimé avec succès",
+    "preview_error": "Impossible de charger l'aperçu du template",
+    "email_required": "Veuillez saisir une adresse email",
+    "test_sent": "Email de test envoyé",
+    "test_error": "Impossible d'envoyer l'email de test"
+  },
+  "config": {
+    "title": "Configuration email",
+    "smtp_server": "Serveur SMTP",
+    "smtp_port": "Port SMTP",
+    "sender_name": "Nom de l'expéditeur",
+    "sender_email": "Email de l'expéditeur",
+    "test_connection": "Tester la connexion"
+  }
+}

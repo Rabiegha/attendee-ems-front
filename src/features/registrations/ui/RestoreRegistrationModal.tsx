@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { Button } from '@/shared/ui/Button'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
@@ -17,6 +18,7 @@ export const RestoreRegistrationModal: React.FC<RestoreRegistrationModalProps> =
   registration,
   onRestore,
 }) => {
+  const { t } = useTranslation(['events', 'common'])
   const [isRestoring, setIsRestoring] = React.useState(false)
 
   const handleRestore = async () => {
@@ -39,17 +41,16 @@ export const RestoreRegistrationModal: React.FC<RestoreRegistrationModalProps> =
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Restaurer l'inscription"
+      title={t('events:registrations.restore_title')}
       size="md"
     >
       <div className="space-y-4">
         <p className="text-gray-700 dark:text-gray-300">
-          Voulez-vous vraiment restaurer l'inscription de{' '}
+          {t('events:registrations.restore_confirm_message')}{' '}
           <span className="font-semibold">{fullName}</span> ?
         </p>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Cette action réactivera l'inscription et elle redeviendra visible dans la liste
-          principale.
+          {t('events:registrations.restore_description')}
         </p>
 
         <div className="flex justify-end gap-3 pt-4">
@@ -58,14 +59,14 @@ export const RestoreRegistrationModal: React.FC<RestoreRegistrationModalProps> =
             onClick={onClose}
             disabled={isRestoring}
           >
-            Annuler
+            {t('common:app.cancel')}
           </Button>
           <Button
             variant="default"
             onClick={handleRestore}
             disabled={isRestoring}
           >
-            {isRestoring ? 'Restauration...' : 'Restaurer'}
+            {isRestoring ? t('common:app.restoring') : t('common:app.restore')}
           </Button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React from 'react'
 import { Trash2, Download, Edit, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/shared/ui/Button'
 import { BulkConfirmModal } from '@/shared/ui/BulkConfirmModal'
 
@@ -35,8 +36,10 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
   actions,
   onClearSelection,
   isLoading = false,
-  itemType = 'éléments',
+  itemType,
 }) => {
+  const { t } = useTranslation('common')
+  const resolvedItemType = itemType ?? t('table.items')
   const [loadingAction, setLoadingAction] = React.useState<string | null>(null)
   const [confirmModal, setConfirmModal] = React.useState<{
     isOpen: boolean
@@ -99,7 +102,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <div className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 text-sm font-medium px-2.5 py-0.5 rounded-full">
-                {selectedCount} sélectionné{selectedCount > 1 ? 's' : ''}
+                {selectedCount} {selectedCount > 1 ? t('bulk.selected_many') : t('bulk.selected_one')}
               </div>
               <Button
                 variant="ghost"
@@ -108,7 +111,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
                 className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
               >
                 <X className="h-4 w-4" />
-                Tout désélectionner
+                {t('app.deselect_all')}
               </Button>
             </div>
           </div>
@@ -140,7 +143,7 @@ export const BulkActions: React.FC<BulkActionsProps> = ({
         onClose={handleCloseModal}
         onConfirm={handleConfirmAction}
         actionType={confirmModal.action?.actionType || 'delete'}
-        itemType={itemType}
+        itemType={resolvedItemType}
         selectedCount={selectedCount}
         isLoading={loadingAction !== null}
       />
@@ -154,15 +157,16 @@ export const createBulkActions = {
     onDelete: (
       selectedIds: Set<string>,
       selectedItems: any[]
-    ) => void | Promise<void>
+    ) => void | Promise<void>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    t: (key: string, options?: any) => string
   ): BulkAction => ({
     id: 'delete',
-    label: 'Supprimer',
+    label: t('app.delete'),
     icon: <Trash2 className="h-4 w-4" />,
     variant: 'destructive' as const,
     requiresConfirmation: true,
-    confirmationMessage:
-      'Êtes-vous sûr de vouloir supprimer les éléments sélectionnés ? Cette action est irréversible.',
+    confirmationMessage: t('bulk.delete_confirm'),
     onClick: onDelete,
   }),
 
@@ -170,10 +174,12 @@ export const createBulkActions = {
     onExport: (
       selectedIds: Set<string>,
       selectedItems: any[]
-    ) => void | Promise<void>
+    ) => void | Promise<void>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    t: (key: string, options?: any) => string
   ): BulkAction => ({
     id: 'export',
-    label: 'Exporter',
+    label: t('app.export'),
     icon: <Download className="h-4 w-4" />,
     variant: 'outline' as const,
     onClick: onExport,
@@ -183,10 +189,12 @@ export const createBulkActions = {
     onEdit: (
       selectedIds: Set<string>,
       selectedItems: any[]
-    ) => void | Promise<void>
+    ) => void | Promise<void>,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    t: (key: string, options?: any) => string
   ): BulkAction => ({
     id: 'edit',
-    label: 'Modifier',
+    label: t('app.edit'),
     icon: <Edit className="h-4 w-4" />,
     variant: 'outline' as const,
     onClick: onEdit,

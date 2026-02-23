@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { RotateCcw, RefreshCw } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { Button } from '../Button'
@@ -17,13 +18,14 @@ import type { FilterBarProps } from './types'
 export const FilterBar: React.FC<FilterBarProps> = ({
   children,
   resultCount,
-  resultLabel = 'résultat',
+  resultLabel,
   className,
   onReset,
   showResetButton = true,
   onRefresh,
   showRefreshButton = false,
 }) => {
+  const { t } = useTranslation('common')
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleRefreshClick = async () => {
@@ -57,7 +59,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onClick={handleRefreshClick}
               disabled={isRefreshing}
               className="h-10 flex-shrink-0"
-              title="Rafraîchir la liste"
+              title={t('table.refresh_list')}
               leftIcon={
                 <RefreshCw 
                   className={cn(
@@ -68,7 +70,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               }
             >
               <span className="hidden sm:inline">
-                {isRefreshing ? 'Rafraîchissement...' : 'Rafraîchir'}
+                {isRefreshing ? t('app.refreshing') : t('app.refresh')}
               </span>
             </Button>
           )}
@@ -81,7 +83,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           <div className="flex items-center">
             <span className="font-medium">{resultCount}</span>
             <span className="ml-1">
-              {resultLabel}{resultCount > 1 ? 's' : ''} trouvé{resultCount > 1 ? 's' : ''}
+              {resultLabel || t('table.result')}{resultCount > 1 ? 's' : ''} {resultCount > 1 ? t('table.found_many') : t('table.found_one')}
             </span>
           </div>
           
@@ -90,10 +92,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <button
               onClick={onReset}
               className="inline-flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors underline-offset-2 hover:underline"
-              title="Réinitialiser les filtres"
+              title={t('table.reset_filters')}
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>Réinitialiser</span>
+              <span>{t('app.reset')}</span>
             </button>
           )}
         </div>

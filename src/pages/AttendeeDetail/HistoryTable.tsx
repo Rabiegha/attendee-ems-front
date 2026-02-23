@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ColumnDef } from '@tanstack/react-table'
 import { Building2 } from 'lucide-react'
 import { DataTable } from '@/shared/ui/DataTable/DataTable'
@@ -54,6 +55,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   onPageSizeChange,
 }) => {
   const navigate = useNavigate()
+  const { t } = useTranslation('attendees')
 
   const handleEventClick = (eventId: string) => {
     navigate(`/events/${eventId}`)
@@ -119,7 +121,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       baseColumns.push(
         {
           id: 'eventStatus',
-          header: 'Statut événement',
+          header: t('detail.event_status_header'),
           accessorKey: 'event.status',
           cell: ({ row }) => (
             <div className="cursor-pointer" onClick={() => handleEventClick(row.original.event.id)}>
@@ -141,7 +143,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         },
         {
           id: 'participationStatus',
-          header: 'Statut participation',
+          header: t('detail.participation_status_header'),
           accessorKey: 'status',
           cell: ({ row }) => (
             <div className="cursor-pointer" onClick={() => handleEventClick(row.original.event.id)}>
@@ -163,7 +165,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         },
         {
           id: 'checkin',
-          header: 'Check-in',
+          header: t('detail.checkin_header'),
           accessorKey: 'checkedInAt',
           cell: ({ row }) => (
             <div className="cursor-pointer" onClick={() => handleEventClick(row.original.event.id)}>
@@ -212,7 +214,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
       return baseColumns
     },
-    [isSuperAdmin, currentDisplayName]
+    [isSuperAdmin, currentDisplayName, t]
   )
 
   return (

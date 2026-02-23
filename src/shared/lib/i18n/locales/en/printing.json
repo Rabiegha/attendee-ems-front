@@ -1,0 +1,41 @@
+{
+  "page": {
+    "title": "Printer Management",
+    "description": "Overview of connected print clients and their printers"
+  },
+  "status": {
+    "clients_connected": "{{count}} client(s) connected",
+    "no_client": "No client connected",
+    "ready": "Ready",
+    "error": "Error / Offline",
+    "default": "Default"
+  },
+  "printers": {
+    "unknown_device": "Unknown device",
+    "printers_available": "{{count}} printer(s) available",
+    "no_printers": "No printers detected",
+    "no_printers_message": "Connect the EMS print client on your computers to see available printers here.",
+    "refresh": "Refresh"
+  },
+  "download": {
+    "title": "Print Client",
+    "description": "Download the automatic print client for your event badges.",
+    "windows": "Windows",
+    "windows_desc": "Windows 10 / 11 (64-bit)",
+    "macos": "macOS",
+    "macos_desc": "macOS 11 Big Sur or later",
+    "download_button": "Download",
+    "version_windows": "Version 1.0.0 • ~123 MB",
+    "version_macos": "Version 1.0.0 • ~120 MB"
+  },
+  "queue": {
+    "title": "Print Queue",
+    "pending": "Pending",
+    "printing": "Printing",
+    "completed": "Completed",
+    "failed": "Failed",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "clear_completed": "Clear completed"
+  }
+}

@@ -3,6 +3,7 @@ import { Modal } from '@/shared/ui/Modal'
 import { CloseButton } from '@/shared/ui/CloseButton'
 import { useCreateOrganizationMutation } from '../api/organizationsApi'
 import { OrganizationForm } from '../components/OrganizationForm'
+import { useTranslation } from 'react-i18next'
 import type { CreateOrganizationRequest } from '../types'
 
 interface CreateOrganizationModalProps {
@@ -15,6 +16,7 @@ interface CreateOrganizationModalProps {
 export const CreateOrganizationModal: React.FC<
   CreateOrganizationModalProps
 > = ({ isOpen, onClose, onSuccess, onError }) => {
+  const { t } = useTranslation('common')
   const [createOrganization, { isLoading }] = useCreateOrganizationMutation()
 
   const handleSubmit = async (data: CreateOrganizationRequest) => {
@@ -54,9 +56,9 @@ export const CreateOrganizationModal: React.FC<
         {/* Titre simple */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-white mb-2">
-            Nouvelle organisation
+            {t('organizations.modal_title')}
           </h2>
-          <p className="text-gray-400">Créez une nouvelle organisation</p>
+          <p className="text-gray-400">{t('organizations.modal_description')}</p>
         </div>
 
         {/* Formulaire */}

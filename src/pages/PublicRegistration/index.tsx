@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Calendar, MapPin, Users, CheckCircle, AlertCircle } from 'lucide-react'
 import { useToast } from '@/shared/hooks/useToast'
 import { formatDate } from '@/shared/lib/utils'
@@ -34,6 +35,7 @@ interface AttendeeType {
 const PublicRegistration: React.FC = () => {
   const { token } = useParams<{ token: string }>()
   const toast = useToast()
+  const { t } = useTranslation(['events', 'common'])
 
   const [event, setEvent] = useState<EventSettings | null>(null)
   const [attendeeTypes, setAttendeeTypes] = useState<AttendeeType[]>([])
@@ -59,9 +61,9 @@ const PublicRegistration: React.FC = () => {
           const contentType = response.headers.get('content-type')
           if (contentType && contentType.includes('application/json')) {
             const errorData = await response.json()
-            throw new Error(errorData.message || 'Événement non trouvé')
+            throw new Error(errorData.message || t('public_registration.event_not_found'))
           } else {
-            throw new Error(`Erreur ${response.status}: ${response.statusText}`)
+            throw new Error(t('public_registration.http_error', { status: response.status, statusText: response.statusText }))
           }
         }
 
@@ -89,7 +91,7 @@ const PublicRegistration: React.FC = () => {
 
       } catch (err) {
         console.error('Erreur de chargement:', err)
-        setError(err instanceof Error ? err.message : 'Erreur de chargement')
+        setError(err instanceof Error ? err.message : t('public_registration.loading_error'))
       } finally {
         setLoading(false)
       }
@@ -175,7 +177,7 @@ const PublicRegistration: React.FC = () => {
 
       // Email est requis
       if (!attendee.email) {
-        toast.error('Email requis', "L'adresse email est obligatoire")
+        toast.error(t('public_registration.email_required'), t('public_registration.email_required_message'))
         setIsSubmitting(false)
         return
       }
@@ -203,14 +205,14 @@ const PublicRegistration: React.FC = () => {
       if (!response.ok) {
         const errorData = await response
           .json()
-          .catch(() => ({ message: 'Erreur inconnue' }))
+          .catch(() => ({ message: t('public_registration.unknown_error') }))
         console.error('❌ Erreur backend:', errorData)
 
         // Messages d'erreur personnalisés
         let userMessage =
           errorData.detail ||
           errorData.message ||
-          "Erreur lors de l'inscription"
+          t('public_registration.registration_error')
 
         if (
           errorData.status === 403 ||
@@ -218,22 +220,22 @@ const PublicRegistration: React.FC = () => {
         ) {
           setSubmissionResult({
             type: 'error',
-            title: 'Inscriptions fermées',
-            message: 'Les inscriptions pour cet événement ne sont pas encore ouvertes ou sont clôturées.'
+            title: t('public_registration.registration_closed_title'),
+            message: t('public_registration.registration_closed_message')
           })
           return
         } else if (userMessage.includes('already registered')) {
           setSubmissionResult({
             type: 'already_registered',
-            title: 'Déjà inscrit',
-            message: 'Vous êtes déjà inscrit à cet événement avec cette adresse email.'
+            title: t('public_registration.already_registered_title'),
+            message: t('public_registration.already_registered_message')
           })
           return
         } else if (errorData.status === 409 || userMessage.includes('full')) {
           setSubmissionResult({
             type: 'full',
-            title: 'Événement complet',
-            message: "L'événement est complet. Aucune nouvelle inscription n'est possible."
+            title: t('public_registration.event_full_title'),
+            message: t('public_registration.event_full_message')
           })
           return
         }
@@ -243,16 +245,16 @@ const PublicRegistration: React.FC = () => {
 
       setSubmissionResult({
         type: 'success',
-        title: 'Inscription confirmée !',
-        message: 'Votre inscription a été enregistrée avec succès'
+        title: t('public_registration.success_title'),
+        message: t('public_registration.success_message')
       })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Impossible de soumettre le formulaire'
+      const message = err instanceof Error ? err.message : t('public_registration.submit_error')
       
       // Si on n'a pas déjà défini un résultat spécifique (comme pour already_registered)
       setSubmissionResult({
         type: 'error',
-        title: "Erreur d'inscription",
+        title: t('public_registration.error_title'),
         message: message
       })
     } finally {
@@ -298,7 +300,7 @@ const PublicRegistration: React.FC = () => {
             disabled={disabled}
             className={baseClasses}
           >
-            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez une option</option>
+            <option value="" className="dark:bg-gray-700 dark:text-white">{t('public_registration.select_option')}</option>
             {field.options?.map(
               (option: { value: string; label: string }, idx: number) => (
                 <option key={idx} value={option.value} className="dark:bg-gray-700 dark:text-white">
@@ -317,7 +319,7 @@ const PublicRegistration: React.FC = () => {
             disabled={disabled}
             className={baseClasses}
           >
-            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
+            <option value="" className="dark:bg-gray-700 dark:text-white">{t('public_registration.select_type')}</option>
             {attendeeTypes.map((type) => (
               <option key={type.id} value={type.id} className="dark:bg-gray-700 dark:text-white">
                 {type.attendeeType.name}
@@ -419,11 +421,11 @@ const PublicRegistration: React.FC = () => {
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Événement non trouvé
+            {t('public_registration.event_not_found')}
           </h2>
           <p className="text-gray-600">
             {error ||
-              "L'événement que vous recherchez n'existe pas ou n'est plus disponible."}
+              t('public_registration.event_not_available')}
           </p>
         </div>
       </div>
@@ -432,7 +434,7 @@ const PublicRegistration: React.FC = () => {
 
   const showTitle = event.show_title !== false
   const showDescription = event.show_description !== false
-  const submitButtonText = event.submit_button_text || "S'inscrire"
+  const submitButtonText = event.submit_button_text || t('public_registration.default_submit')
   const submitButtonColor = event.submit_button_color || '#4F46E5'
   const isDarkMode = event.is_dark_mode === true
 
@@ -459,7 +461,7 @@ const PublicRegistration: React.FC = () => {
                 {event.capacity && event.capacity < 100000 && (
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-2" />
-                    {event.capacity} places
+                    {event.capacity} {t('public_registration.places')}
                   </div>
                 )}
               </div>
@@ -505,14 +507,14 @@ const PublicRegistration: React.FC = () => {
                     onClick={resetForm}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                   >
-                    {submissionResult.type === 'error' ? 'Réessayer' : 'Nouvelle inscription'}
+                    {submissionResult.type === 'error' ? t('public_registration.retry') : t('public_registration.new_registration')}
                   </button>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Inscription à l'événement
+                      {t('public_registration.form_title')}
                     </h3>
                   </div>
 
@@ -569,14 +571,14 @@ const PublicRegistration: React.FC = () => {
                         className="mt-1 w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500"
                       />
                       <span className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                        J'accepte la{' '}
+                        {t('public_registration.gdpr_accept')}{' '}
                         <a
                           href="/privacy-policy"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 font-medium"
                         >
-                          Politique de Confidentialité
+                          {t('public_registration.privacy_policy')}
                         </a>
                         <span className="text-red-500 ml-1">*</span>
                       </span>
@@ -597,7 +599,7 @@ const PublicRegistration: React.FC = () => {
                       style={{ backgroundColor: submitButtonColor }}
                     >
                       {isSubmitting
-                        ? 'Inscription en cours...'
+                        ? t('public_registration.submitting')
                         : submitButtonText}
                     </button>
                   </div>
@@ -636,12 +638,12 @@ const PublicRegistration: React.FC = () => {
                       }`}
                     >
                       {event.status === 'cancelled'
-                        ? 'Événement annulé'
+                        ? t('public_registration.event_cancelled_title')
                         : event.status === 'registration_closed'
-                          ? 'Inscriptions clôturées'
+                          ? t('public_registration.registration_closed_overlay_title')
                           : event.status === 'postponed'
-                            ? 'Événement reporté'
-                            : 'Événement en cours de préparation'}
+                            ? t('public_registration.event_postponed_title')
+                            : t('public_registration.event_preparing_title')}
                     </h3>
                     <p
                       className={`text-sm ${
@@ -655,12 +657,12 @@ const PublicRegistration: React.FC = () => {
                       }`}
                     >
                       {event.status === 'cancelled'
-                        ? 'Cet événement a été annulé. Les inscriptions ne sont plus acceptées.'
+                        ? t('public_registration.event_cancelled_message')
                         : event.status === 'registration_closed'
-                          ? 'Les inscriptions pour cet événement sont fermées.'
+                          ? t('public_registration.registration_closed_overlay_message')
                           : event.status === 'postponed'
-                            ? 'Cet événement a été reporté. Veuillez consulter les nouvelles dates ci-dessus.'
-                            : 'Cet événement est en cours de préparation. Les inscriptions ne sont pas encore ouvertes.'}
+                            ? t('public_registration.event_postponed_message')
+                            : t('public_registration.event_preparing_message')}
                     </p>
                   </div>
                 </div>

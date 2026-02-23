@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Upload,
   FileSpreadsheet,
@@ -89,6 +90,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
   eventId,
   onImportSuccess,
 }) => {
+  const { t, i18n } = useTranslation(['events', 'common'])
   const [preview, setPreview] = useState<ParsedRow[]>([])
   const [allData, setAllData] = useState<ParsedRow[]>([]) // Toutes les données du fichier
   const [headers, setHeaders] = useState<string[]>([])
@@ -206,7 +208,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     if (file && (file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
       parseExcelFile(file)
     } else if (file) {
-      toast.error('Format de fichier non supporté. Veuillez utiliser un fichier Excel (.xlsx ou .xls)')
+      toast.error(t('events:registrations.import_unsupported_format'))
     }
   }
 
@@ -223,12 +225,12 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       const workbook = XLSX.read(data, { type: 'array' })
       const sheetName = workbook.SheetNames[0]
       if (!sheetName) {
-        toast.error('Erreur', 'Le fichier Excel ne contient aucune feuille')
+        toast.error(t('events:registrations.error_title'), t('events:registrations.import_no_sheet'))
         return
       }
       const firstSheet = workbook.Sheets[sheetName]
       if (!firstSheet) {
-        toast.error('Erreur', 'Impossible de lire la feuille Excel')
+        toast.error(t('events:registrations.error_title'), t('events:registrations.import_cannot_read_sheet'))
         return
       }
       const jsonData = XLSX.utils.sheet_to_json(firstSheet, {
@@ -236,7 +238,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       }) as any[][]
 
       if (jsonData.length === 0) {
-        toast.error('Erreur', 'Le fichier Excel est vide')
+        toast.error(t('events:registrations.error_title'), t('events:registrations.import_empty_file'))
         return
       }
 
@@ -271,13 +273,13 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       setStep('preview')
     } catch (error) {
       console.error('Error parsing Excel:', error)
-      toast.error('Erreur', 'Impossible de lire le fichier Excel')
+      toast.error(t('events:registrations.error_title'), t('events:registrations.import_cannot_read_file'))
     }
   }
 
   const handleImport = async () => {
     if (allData.length === 0) {
-      toast.error('Erreur', 'Aucune donnée à importer')
+      toast.error(t('events:registrations.error_title'), t('events:registrations.import_no_data'))
       return
     }
 
@@ -299,7 +301,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       const rowsToImport = [...normalRows, ...duplicateRows, ...deletedRows, ...capacityRows]
 
       if (rowsToImport.length === 0) {
-        toast.error('Erreur', 'Aucune ligne sélectionnée pour l\'import')
+        toast.error(t('events:registrations.error_title'), t('events:registrations.import_no_rows_selected'))
         setIsProcessing(false)
         return
       }
@@ -345,13 +347,13 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
       if (errors && errors.length > 0) {
         toast.warning(
-          'Import terminé avec des avertissements',
-          `${created} créées, ${updated} màj, ${restored} restaurées, ${skipped} ignorées${conflictsIgnored > 0 ? `, ${conflictsIgnored} conflits non résolus` : ''}`
+          t('events:registrations.import_with_warnings'),
+          t('events:registrations.import_success_detail', { created, updated, restored, skipped }) + (conflictsIgnored > 0 ? `, ${t('events:registrations.import_conflicts_unresolved', { count: conflictsIgnored })}` : '')
         )
       } else {
         toast.success(
-          'Import réussi !',
-          `${created} créées, ${updated} màj, ${restored} restaurées${conflictsIgnored > 0 ? `, ${conflictsIgnored} conflits ignorés` : ''}`
+          t('events:registrations.import_success_title_short'),
+          t('events:registrations.import_success_short', { created, updated, restored }) + (conflictsIgnored > 0 ? `, ${t('events:registrations.import_conflicts_ignored', { count: conflictsIgnored })}` : '')
         )
       }
     } catch (error: any) {
@@ -359,15 +361,15 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
       if (error?.status === 404) {
         toast.error(
-          'Fonctionnalité en cours de développement',
-          "L'endpoint d'import Excel backend n'est pas encore activé."
+          t('events:registrations.import_feature_in_progress'),
+          t('events:registrations.import_endpoint_not_ready')
         )
       } else {
         const errorMessage =
           error?.data?.message ||
           error?.message ||
-          "Échec de l'import des inscriptions"
-        toast.error('Erreur', errorMessage)
+          t('events:registrations.import_failed')
+        toast.error(t('events:registrations.error_title'), errorMessage)
       }
     } finally {
       setIsProcessing(false)
@@ -525,7 +527,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
   const downloadTemplate = async () => {
     try {
-      const blob = await getRegistrationTemplate().unwrap()
+      const blob = await getRegistrationTemplate({ lang: i18n.language }).unwrap()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -536,7 +538,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
       document.body.removeChild(a)
     } catch (error) {
       console.error('Failed to download template:', error)
-      toast.error('Erreur lors du téléchargement du modèle')
+      toast.error(t('events:registrations.import_template_error'))
     }
   }
 
@@ -544,7 +546,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="Importer des inscriptions (Excel)"
+      title={t('events:registrations.import_title_excel')}
       maxWidth="4xl"
     >
       <ModalSteps currentStep={getStepNumber(step)}>
@@ -556,11 +558,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 <FileSpreadsheet className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                Sélectionnez un fichier Excel
+                {t('events:registrations.import_select_file')}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                Format accepté : .xlsx, .xls. La première ligne doit contenir
-                les noms des colonnes.
+                {t('events:registrations.import_format_info')}
               </p>
 
               <Button
@@ -569,7 +570,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 className="mb-4"
               >
                 <Download className="h-4 w-4 mr-2" />
-                Télécharger un modèle
+                {t('events:registrations.import_download_template')}
               </Button>
             </div>
 
@@ -593,56 +594,55 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
               />
               <Upload className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
               <p className="text-sm text-gray-600 dark:text-gray-300">
-                Cliquez ou glissez-déposez votre fichier Excel ici
+                {t('events:registrations.import_drag_drop')}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Maximum 10 000 lignes
+                {t('events:registrations.import_max_rows')}
               </p>
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
               <h4 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
-                Colonnes reconnues automatiquement :
+                {t('events:registrations.import_recognized_columns')}
               </h4>
               <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
                 <li>
-                  • <strong>Nom</strong> : nom, last_name, lastname
+                  • <strong>{t('events:registrations.import_col_lastname')}</strong> : nom, last_name, lastname
                 </li>
                 <li>
-                  • <strong>Prénom</strong> : prénom, prenom, first_name,
+                  • <strong>{t('events:registrations.import_col_firstname')}</strong> : prénom, prenom, first_name,
                   firstname
                 </li>
                 <li>
-                  • <strong>Email</strong> : email, e-mail, mail
+                  • <strong>{t('events:registrations.import_col_email')}</strong> : email, e-mail, mail
                 </li>
                 <li>
-                  • <strong>Téléphone</strong> : téléphone, phone, tel, mobile
+                  • <strong>{t('events:registrations.import_col_phone')}</strong> : téléphone, phone, tel, mobile
                 </li>
                 <li>
-                  • <strong>Entreprise</strong> : entreprise, company, société
+                  • <strong>{t('events:registrations.import_col_company')}</strong> : entreprise, company, société
                 </li>
                 <li>
-                  • <strong>Poste</strong> : poste, job_title, fonction
+                  • <strong>{t('events:registrations.import_col_jobtitle')}</strong> : poste, job_title, fonction
                 </li>
                 <li>
-                  • <strong>Pays</strong> : pays, country
+                  • <strong>{t('events:registrations.import_col_country')}</strong> : pays, country
                 </li>
                 <li>
-                  • <strong>Mode</strong> : mode, attendance_type (onsite/online)
+                  • <strong>{t('events:registrations.import_col_mode')}</strong> : mode, attendance_type (onsite/online)
                 </li>
                 <li>
-                  • <strong>Statut</strong> : statut, status
+                  • <strong>{t('events:registrations.import_col_status')}</strong> : statut, status
                 </li>
                 <li>
-                  • <strong>Date d'inscription</strong> : date d'inscription, created_at
+                  • <strong>{t('events:registrations.import_col_registration_date')}</strong> : date d'inscription, created_at
                 </li>
                 <li>
-                  • <strong>Check-in</strong> : check-in, présence, checked_in_at
+                  • <strong>{t('events:registrations.import_col_checkin')}</strong> : check-in, présence, checked_in_at
                 </li>
               </ul>
               <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
-                Les colonnes non reconnues seront sauvegardées comme données
-                supplémentaires
+                {t('events:registrations.import_unrecognized_info')}
               </p>
             </div>
           </>
@@ -656,11 +656,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mt-0.5 mr-3" />
                 <div className="flex-1">
                   <h4 className="text-sm font-medium text-green-900 dark:text-green-200">
-                    Fichier analysé avec succès
+                    {t('events:registrations.import_file_analyzed')}
                   </h4>
                   <p className="text-sm text-green-800 dark:text-green-300 mt-1">
-                    {allData.length} inscriptions détectées •{' '}
-                    {Object.keys(columnMapping).length} colonnes reconnues
+                    {t('events:registrations.import_detected_count', { rows: allData.length, columns: Object.keys(columnMapping).length })}
                   </p>
                 </div>
               </div>
@@ -688,42 +687,41 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                       <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-3 flex-shrink-0" />
                       <div className="flex-1">
                         <h4 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
-                          Sélectionnez les inscriptions à importer
+                          {t('events:registrations.import_select_to_import')}
                         </h4>
                         <p className="text-xs text-blue-800 dark:text-blue-300 mb-3">
-                          Places disponibles : {remainingSpots >= 0 ? remainingSpots : 0} / {availableSpots} • 
-                          Capacité événement : {capacity} • Actuellement inscrits : {currentApprovedCount}
+                          {t('events:registrations.import_available_spots', { remaining: remainingSpots >= 0 ? remainingSpots : 0, available: availableSpots, capacity, current: currentApprovedCount })}
                         </p>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                           <div className="flex items-center gap-2">
                             <div className="w-4 h-4 bg-green-50 dark:bg-green-700 border border-green-300 dark:border-green-500 rounded"></div>
-                            <span className="text-blue-800 dark:text-blue-200">Sélectionnées ({selectedCount})</span>
+                            <span className="text-blue-800 dark:text-blue-200">{t('events:registrations.import_selected_count', { count: selectedCount })}</span>
                           </div>
                           {capacityCount > 0 && (
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 bg-red-100 dark:bg-red-600 border border-red-300 dark:border-red-400 rounded"></div>
-                              <span className="text-blue-800 dark:text-blue-200">Capacité dépassée ({capacityCount})</span>
+                              <span className="text-blue-800 dark:text-blue-200">{t('events:registrations.import_capacity_exceeded', { count: capacityCount })}</span>
                             </div>
                           )}
                           {duplicateCount > 0 && (
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 bg-yellow-100 dark:bg-yellow-600 border border-yellow-400 dark:border-yellow-400 rounded"></div>
-                              <span className="text-blue-800 dark:text-blue-200">{duplicateCount} Doublon(s)</span>
+                              <span className="text-blue-800 dark:text-blue-200">{t('events:registrations.import_duplicates_label', { count: duplicateCount })}</span>
                             </div>
                           )}
                           {deletedCount > 0 && (
                             <div className="flex items-center gap-2">
                               <div className="w-4 h-4 bg-purple-100 dark:bg-purple-600 border border-purple-300 dark:border-purple-400 rounded"></div>
-                              <span className="text-blue-800 dark:text-blue-200">{deletedCount} À restaurer</span>
+                              <span className="text-blue-800 dark:text-blue-200">{t('events:registrations.import_to_restore_label', { count: deletedCount })}</span>
                             </div>
                           )}
                         </div>
                         <div className="mt-3 flex gap-2">
                           <Button size="sm" variant="ghost" onClick={selectAllConflicts}>
-                            Tout sélectionner
+                            {t('events:registrations.import_select_all')}
                           </Button>
                           <Button size="sm" variant="ghost" onClick={deselectAllConflicts}>
-                            Tout désélectionner
+                            {t('events:registrations.import_deselect_all')}
                           </Button>
                         </div>
                       </div>
@@ -736,7 +734,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
             {/* Tableau avec conflits inline */}
             <div>
               <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                Aperçu des données ({preview.length} lignes) :
+                {t('events:registrations.import_preview_data', { count: preview.length })}
               </h4>
               <div className="overflow-x-auto max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -773,16 +771,16 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                       if (conflictType === 'duplicate') {
                         rowClass = 'bg-yellow-100 dark:bg-yellow-600/30'
                         icon = <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-200" />
-                        tooltip = 'Email déjà inscrit - Sélectionnez pour remplacer'
+                        tooltip = t('events:registrations.import_duplicate_tooltip')
                       } else if (conflictType === 'deleted') {
                         rowClass = 'bg-purple-100 dark:bg-purple-600/30'
                         icon = <AlertTriangle className="h-4 w-4 text-purple-600 dark:text-purple-300" />
-                        tooltip = 'Inscription supprimée - Sélectionnez pour restaurer'
+                        tooltip = t('events:registrations.import_deleted_tooltip')
                       } else if (conflictType === 'capacity') {
                         // Capacité dépassée → rouge
                         rowClass = 'bg-red-100 dark:bg-red-600/30'
                         icon = <XCircle className="h-4 w-4 text-red-600 dark:text-red-300" />
-                        tooltip = 'Capacité dépassée - Décochez d\'autres lignes pour importer celle-ci'
+                        tooltip = t('events:registrations.import_capacity_tooltip')
                       } else {
                         // Nouvelle inscription : verte si sélectionnée, blanche sinon
                         if (row._selected) {
@@ -806,8 +804,8 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                                   : conflictType === 'deleted' 
                                     ? tooltip 
                                     : conflictType === 'capacity' 
-                                      ? 'Sélection dépasse la capacité - Décochez d\'autres lignes' 
-                                      : 'Sélectionner pour importer (Shift+clic pour sélection multiple)'
+                                      ? t('events:registrations.import_capacity_checkbox_tooltip') 
+                                      : t('events:registrations.import_select_shift_tooltip')
                               }
                             />
                           </td>
@@ -815,7 +813,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                             <button
                               onClick={() => handleRemoveRow(rowIndex)}
                               className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 p-2 rounded hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
-                              title="Supprimer cette ligne"
+                              title={t('events:registrations.import_delete_row_tooltip')}
                             >
                               <Trash2 className="h-5 w-5" />
                             </button>
@@ -837,11 +835,11 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                                     onChange={(e) => handleCellChange(rowIndex, header, e.target.value)}
                                     className="w-full min-w-[120px] bg-transparent border border-gray-200 dark:border-gray-700 hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
                                   >
-                                    <option value="pending" className="bg-white dark:bg-gray-800">En attente</option>
-                                    <option value="approved" className="bg-white dark:bg-gray-800">Approuvé</option>
-                                    <option value="refused" className="bg-white dark:bg-gray-800">Refusé</option>
-                                    <option value="cancelled" className="bg-white dark:bg-gray-800">Annulé</option>
-                                    <option value="checked_in" className="bg-white dark:bg-gray-800">Présent</option>
+                                    <option value="pending" className="bg-white dark:bg-gray-800">{t('events:registrations.import_status_pending')}</option>
+                                    <option value="approved" className="bg-white dark:bg-gray-800">{t('events:registrations.import_status_approved')}</option>
+                                    <option value="refused" className="bg-white dark:bg-gray-800">{t('events:registrations.import_status_refused')}</option>
+                                    <option value="cancelled" className="bg-white dark:bg-gray-800">{t('events:registrations.import_status_cancelled')}</option>
+                                    <option value="checked_in" className="bg-white dark:bg-gray-800">{t('events:registrations.import_status_checked_in')}</option>
                                   </select>
                                 </td>
                               )
@@ -856,9 +854,9 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                                     className="w-full min-w-[120px] bg-transparent border border-gray-200 dark:border-gray-700 hover:border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded px-2 py-1 transition-colors text-sm"
                                   >
                                     <option value="" className="bg-white dark:bg-gray-800">-</option>
-                                    <option value="onsite" className="bg-white dark:bg-gray-800">Présentiel</option>
-                                    <option value="online" className="bg-white dark:bg-gray-800">Distanciel</option>
-                                    <option value="hybrid" className="bg-white dark:bg-gray-800">Hybride</option>
+                                    <option value="onsite" className="bg-white dark:bg-gray-800">{t('events:registrations.import_attendance_onsite')}</option>
+                                    <option value="online" className="bg-white dark:bg-gray-800">{t('events:registrations.import_attendance_online')}</option>
+                                    <option value="hybrid" className="bg-white dark:bg-gray-800">{t('events:registrations.import_attendance_hybrid')}</option>
                                   </select>
                                 </td>
                               )
@@ -941,11 +939,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                   <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3" />
                   <div>
                     <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200">
-                      Aucune colonne standard détectée
+                      {t('events:registrations.import_no_column_detected')}
                     </h4>
                     <p className="text-sm text-yellow-800 dark:text-yellow-300 mt-1">
-                      Les données seront importées telles quelles. Assurez-vous
-                      que les noms de colonnes sont corrects.
+                      {t('events:registrations.import_no_column_info')}
                     </p>
                   </div>
                 </div>
@@ -954,17 +951,17 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button variant="outline" onClick={() => setStep('upload')}>
-                Retour
+                {t('common:app.back')}
               </Button>
               <Button
                 onClick={handleImport}
                 disabled={isProcessing || isImporting}
               >
                 {isProcessing || isImporting ? (
-                  'Import en cours...'
+                  t('events:registrations.import_in_progress')
                 ) : (
                   <span className="flex items-center gap-2">
-                    Importer
+                    {t('events:registrations.import_button')}
                     {(() => {
                       const newCount = allData.filter(r => !r._conflictType && r._selected).length
                       const duplicateCount = allData.filter(r => r._conflictType === 'duplicate' && r._selected).length
@@ -1012,7 +1009,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                 <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                Import terminé !
+                {t('events:registrations.import_finished_title')}
               </h3>
               
               <div className={`grid gap-4 mb-6 ${(importResult.summary as any).restored > 0 ? 'grid-cols-4' : 'grid-cols-3'}`}>
@@ -1021,7 +1018,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                     {importResult.summary.created}
                   </div>
                   <div className="text-sm font-medium text-green-800 dark:text-green-300">
-                    Ajoutés
+                    {t('events:registrations.import_added_label')}
                   </div>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-center border border-blue-100 dark:border-blue-800">
@@ -1029,7 +1026,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                     {importResult.summary.updated}
                   </div>
                   <div className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                    Mis à jour
+                    {t('events:registrations.import_updated_label')}
                   </div>
                 </div>
                 {(importResult.summary as any).restored > 0 && (
@@ -1038,7 +1035,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                       {(importResult.summary as any).restored}
                     </div>
                     <div className="text-sm font-medium text-purple-800 dark:text-purple-300">
-                      Restaurés
+                      {t('events:registrations.import_restored_label')}
                     </div>
                   </div>
                 )}
@@ -1047,7 +1044,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                     {importResult.summary.skipped || 0}
                   </div>
                   <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    Ignorés / Erreurs
+                    {t('events:registrations.import_skipped_label')}
                   </div>
                 </div>
               </div>
@@ -1060,7 +1057,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                     <h4 className="text-sm font-medium text-yellow-900 dark:text-yellow-200 mb-2 flex items-center">
                       <AlertCircle className="h-4 w-4 mr-2" />
-                      Détails des éléments non importés ({importResult.summary.errors.length})
+                      {t('events:registrations.import_details_title', { count: importResult.summary.errors.length })}
                     </h4>
                     <div className="text-sm text-yellow-800 dark:text-yellow-300 space-y-1">
                       {(() => {
@@ -1081,16 +1078,16 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                         return (
                           <>
                             {full > 0 && (
-                              <p className="font-medium text-red-600 dark:text-red-400">• {full} non ajouté(s) : événement complet</p>
+                              <p className="font-medium text-red-600 dark:text-red-400">• {t('events:registrations.import_event_full_count', { count: full })}</p>
                             )}
                             {duplicates > 0 && (
-                              <p>• {duplicates} doublon(s) : déjà inscrits à cet événement</p>
+                              <p>• {t('events:registrations.import_duplicates_count', { count: duplicates })}</p>
                             )}
                             {refused > 0 && (
-                              <p>• {refused} refusé(s) : précédemment déclinés</p>
+                              <p>• {t('events:registrations.import_refused_count', { count: refused })}</p>
                             )}
                             {other > 0 && (
-                              <p>• {other} autre(s) erreur(s)</p>
+                              <p>• {t('events:registrations.import_other_errors', { count: other })}</p>
                             )}
                           </>
                         )
@@ -1102,10 +1099,10 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                   <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800">
                     <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
                       <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                        Liste des inscriptions non importées
+                        {t('events:registrations.import_list_title')}
                       </h4>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {importResult.summary.errors.length} erreur(s)
+                        {t('events:registrations.import_errors_count', { count: importResult.summary.errors.length })}
                       </span>
                     </div>
                     <div className="max-h-64 overflow-y-auto">
@@ -1113,13 +1110,13 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                         <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
                           <tr>
                             <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-16">
-                              Ligne
+                              {t('events:registrations.import_line_header')}
                             </th>
                             <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                              Email / Identifiant
+                              {t('events:registrations.import_email_header')}
                             </th>
                             <th scope="col" className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                              Raison
+                              {t('events:registrations.import_reason_header')}
                             </th>
                           </tr>
                         </thead>
@@ -1130,23 +1127,23 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                             let badgeColor = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
                             
                             if (errLower.includes('event is full') || errLower.includes('capacity')) {
-                              frenchError = 'Événement complet';
+                              frenchError = t('events:registrations.import_event_full_label');
                               badgeColor = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200';
                             }
                             else if (errLower.includes('already registered')) {
-                              frenchError = 'Déjà inscrit';
+                              frenchError = t('events:registrations.import_already_registered_label');
                               badgeColor = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200';
                             }
                             else if (errLower.includes('declined')) {
-                              frenchError = 'Précédemment refusé';
+                              frenchError = t('events:registrations.import_previously_refused_label');
                               badgeColor = 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200';
                             }
                             else if (errLower.includes('soft delete')) {
-                              frenchError = 'Dans la corbeille';
+                              frenchError = t('events:registrations.import_in_trash_label');
                               badgeColor = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200';
                             }
                             else if (errLower.includes('email is required')) {
-                              frenchError = 'Email manquant';
+                              frenchError = t('events:registrations.import_email_missing_label');
                               badgeColor = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
                             }
 
@@ -1156,7 +1153,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
                                   {error.row}
                                 </td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                  {error.email && error.email !== 'N/A' ? error.email : <span className="italic text-gray-400">Non spécifié</span>}
+                                  {error.email && error.email !== 'N/A' ? error.email : <span className="italic text-gray-400">{t('events:registrations.import_not_specified')}</span>}
                                 </td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm">
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badgeColor}`}>
@@ -1174,7 +1171,7 @@ export const ImportExcelModal: React.FC<ImportExcelModalProps> = ({
               )}
 
             <div className="flex justify-end">
-              <Button onClick={handleClose}>Fermer</Button>
+              <Button onClick={handleClose}>{t('common:app.close')}</Button>
             </div>
           </>
         )}

@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/ui/Modal'
 import { 
   Download, 
@@ -60,6 +61,8 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
   onRestore,
   onPermanentDelete,
 }) => {
+  const { t } = useTranslation(['events', 'common'])
+
   const getVariantClasses = (variant: string = 'default') => {
     const base = "group relative flex items-start gap-4 p-4 rounded-lg border-2 transition-all cursor-pointer"
     
@@ -95,12 +98,12 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
         // Mode supprimés
         {
           id: 'restore',
-          label: 'Gestion des suppressions',
+          label: t('events:registrations.bulk_management_deletions'),
           actions: [
             {
               id: 'restore',
-              label: 'Restaurer',
-              description: 'Restaurer toutes les inscriptions sélectionnées',
+              label: t('events:registrations.bulk_restore_label'),
+              description: t('events:registrations.bulk_restore_desc'),
               icon: <RotateCcw className={getIconClasses('success')} />,
               onClick: () => {
                 onRestore()
@@ -126,12 +129,12 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
         // Mode actifs
         {
           id: 'export',
-          label: 'Export',
+          label: t('events:registrations.bulk_management_export'),
           actions: [
             {
               id: 'export',
-              label: 'Exporter',
-              description: 'Télécharger les inscriptions au format Excel',
+              label: t('events:registrations.bulk_export_label'),
+              description: t('events:registrations.bulk_export_desc'),
               icon: <Download className={getIconClasses()} />,
               onClick: () => {
                 onExport()
@@ -142,12 +145,12 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
         },
         {
           id: 'management',
-          label: 'Gestion des inscriptions',
+          label: t('events:registrations.bulk_management_registrations'),
           actions: [
             {
               id: 'change-status',
-              label: 'Changer le statut',
-              description: 'Modifier le statut (approuvé, refusé, en attente...)',
+              label: t('events:registrations.bulk_change_status_label'),
+              description: t('events:registrations.bulk_change_status_desc'),
               icon: <RefreshCw className={getIconClasses()} />,
               onClick: () => {
                 onChangeStatus()
@@ -156,8 +159,8 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
             },
             {
               id: 'change-type',
-              label: 'Changer le type',
-              description: 'Modifier le type de participant',
+              label: t('events:registrations.bulk_change_type_label'),
+              description: t('events:registrations.bulk_change_type_desc'),
               icon: <Users className={getIconClasses()} />,
               onClick: () => {
                 onChangeType()
@@ -168,12 +171,12 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
         },
         {
           id: 'presence',
-          label: 'Gestion de la présence',
+          label: t('events:registrations.bulk_management_presence'),
           actions: [
             {
               id: 'check-in',
-              label: 'Check-in',
-              description: 'Enregistrer l\'arrivée des participants',
+              label: t('events:registrations.bulk_checkin_label'),
+              description: t('events:registrations.bulk_checkin_desc'),
               icon: <UserCheck className={getIconClasses('success')} />,
               onClick: () => {
                 onCheckIn()
@@ -183,8 +186,8 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
             },
             {
               id: 'undo-check-in',
-              label: 'Annuler Check-in',
-              description: 'Annuler l\'enregistrement d\'arrivée',
+              label: t('events:registrations.bulk_undo_checkin_label'),
+              description: t('events:registrations.bulk_undo_checkin_desc'),
               icon: <Undo2 className={getIconClasses('warning')} />,
               onClick: () => {
                 onUndoCheckIn()
@@ -194,8 +197,8 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
             },
             {
               id: 'check-out',
-              label: 'Check-out',
-              description: 'Enregistrer le départ des participants',
+              label: t('events:registrations.bulk_checkout_label'),
+              description: t('events:registrations.bulk_checkout_desc'),
               icon: <LogOut className={getIconClasses('success')} />,
               onClick: () => {
                 onCheckOut()
@@ -205,8 +208,8 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
             },
             {
               id: 'undo-check-out',
-              label: 'Annuler Check-out',
-              description: 'Annuler l\'enregistrement de départ',
+              label: t('events:registrations.bulk_undo_checkout_label'),
+              description: t('events:registrations.bulk_undo_checkout_desc'),
               icon: <Undo2 className={getIconClasses('warning')} />,
               onClick: () => {
                 onUndoCheckOut()
@@ -218,12 +221,12 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
         },
         {
           id: 'deletion',
-          label: 'Suppression',
+          label: t('events:registrations.bulk_management_deletion'),
           actions: [
             {
               id: 'delete',
-              label: 'Supprimer',
-              description: 'Déplacer vers les éléments supprimés',
+              label: t('events:registrations.bulk_delete_label'),
+              description: t('events:registrations.bulk_delete_desc'),
               icon: <Trash2 className={getIconClasses('danger')} />,
               onClick: () => {
                 onDelete()
@@ -239,7 +242,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Actions groupées (${selectedCount})`}
+      title={t('events:registrations.bulk_actions_title', { count: selectedCount })}
       size="2xl"
       contentPadding={false}
     >
@@ -279,13 +282,13 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
       {/* Footer fixe non-scrollable */}
       <div className="sticky bottom-0 bg-white dark:bg-gray-800 px-6 pb-6 pt-4 border-t border-gray-200 dark:border-gray-700">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          {selectedCount} inscription{selectedCount > 1 ? 's' : ''} sélectionnée{selectedCount > 1 ? 's' : ''}
+        {t('events:registrations.bulk_selected_count', { count: selectedCount })}
         </p>
         <button
           onClick={onClose}
           className="w-full py-2 px-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg transition-colors"
         >
-          Annuler
+          {t('common:app.cancel')}
         </button>
       </div>
     </Modal>

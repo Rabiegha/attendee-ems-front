@@ -1,0 +1,73 @@
+{
+  "page": {
+    "title": "Templates de badges",
+    "description": "Créez et gérez vos templates de badges d'événements",
+    "loading_error": "Erreur lors du chargement des templates",
+    "result_label": "template"
+  },
+  "actions": {
+    "new_template": "Nouveau template",
+    "create_first": "Créer votre premier template",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "duplicate": "Dupliquer",
+    "preview": "Aperçu",
+    "search_placeholder": "Rechercher un template..."
+  },
+  "filters": {
+    "status_label": "Statut",
+    "type_label": "Type",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "default": "Par défaut",
+    "custom": "Personnalisé",
+    "sort_newest": "Plus récent",
+    "sort_oldest": "Plus ancien",
+    "sort_name_az": "Nom (A-Z)",
+    "sort_name_za": "Nom (Z-A)",
+    "sort_most_used": "Plus utilisé",
+    "sort_least_used": "Moins utilisé"
+  },
+  "template": {
+    "default_badge": "Par défaut",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "used_count": "Utilisé {{count}} fois",
+    "variables": "Variables"
+  },
+  "empty": {
+    "title": "Aucun template trouvé",
+    "no_results": "Aucun template ne correspond à vos critères de recherche",
+    "no_templates": "Vous n'avez pas encore créé de template de badge"
+  },
+  "messages": {
+    "created": "Template créé avec succès",
+    "updated": "Template mis à jour avec succès",
+    "deleted": "Template supprimé avec succès",
+    "error_create": "Erreur lors de la création du template",
+    "error_update": "Erreur lors de la mise à jour du template",
+    "error_delete": "Erreur lors de la suppression du template"
+  },
+  "designer": {
+    "saving": "Enregistrement...",
+    "save": "Sauvegarder",
+    "saving_template": "Sauvegarde...",
+    "save_and_exit": "Sauvegarder et quitter",
+    "delete_template": "Supprimer le template",
+    "deleting": "Suppression...",
+    "delete": "Supprimer",
+    "delete_confirm": "Êtes-vous sûr de vouloir supprimer ce template ? Cette action est irréversible.",
+    "unsaved_changes": "Vous avez des modifications en attente. Si vous quittez cette page sans enregistrer, elles seront perdues.",
+    "go_back": "Retour",
+    "leave": "Quitter",
+    "undo": "Annuler (Ctrl+Z)",
+    "redo": "Rétablir (Ctrl+Y)",
+    "duplicate": "Dupliquer",
+    "delete_element": "Supprimer",
+    "delete_elements": "Supprimer ({{count}})",
+    "symmetry_title": "Symétrie Centrale",
+    "create_symmetry": "Créer Symétrie",
+    "break_symmetry": "Casser Symétrie",
+    "cancel": "Annuler"
+  }
+}

@@ -26,7 +26,34 @@ interface PrinterGroup {
     status: number
     isDefault: boolean
     deviceId?: string
+    description?: string
+    location?: string
+    uri?: string
   }>
+}
+
+/**
+ * Check if a printer status means "ready/idle".
+ * Windows reports 0 for idle, macOS CUPS reports 3 (IPP_PSTATE_IDLE).
+ * Status 4 (IPP_PSTATE_PROCESSING) is also considered operational.
+ */
+function isPrinterReady(status: number): boolean {
+  return status === 0 || status === 3 || status === 4
+}
+
+/**
+ * Parse an IP address or hostname from a CUPS device-uri.
+ * e.g. "ipp://192.168.1.100:631/ipp/print" → "192.168.1.100"
+ *      "usb://EPSON/..." → ""
+ */
+function parseHostFromUri(uri: string): string {
+  if (!uri) return ''
+  try {
+    // Handle ipp://, ipps://, http://, https://, socket://, lpd:// etc.
+    const match = uri.match(/^(?:ipp|ipps|http|https|socket|lpd):\/\/([^/:]+)/)
+    if (match) return match[1]
+  } catch { /* ignore */ }
+  return ''
 }
 
 export const PrintingPage: React.FC = () => {
@@ -138,22 +165,28 @@ export const PrintingPage: React.FC = () => {
                 </CardHeader>
                 
                 <CardContent className="divide-y divide-gray-100 dark:divide-gray-700/50 p-0 flex-1">
-                  {group.printers.map((printer) => (
+                  {group.printers.map((printer) => {
+                    const ready = isPrinterReady(printer.status)
+                    const host = parseHostFromUri(printer.uri || '')
+                    // Build a subtitle: show location, host/IP, or description (first non-empty)
+                    const subtitle = printer.location || host || printer.description || ''
+
+                    return (
                     <div 
                       key={`${printer.name}-${printer.deviceId}`}
                       className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors flex items-start justify-between group"
                     >
                       <div className="flex items-start gap-3">
                         <Printer className={`w-5 h-5 mt-0.5 ${
-                          printer.status === 0 ? 'text-gray-400 dark:text-gray-500' : 'text-red-400'
+                          ready ? 'text-gray-400 dark:text-gray-500' : 'text-red-400'
                         }`} />
                         <div>
                           <p className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                            {printer.displayName}
+                            {printer.displayName || printer.name}
                           </p>
-                          {printer.name !== printer.displayName && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5 truncate max-w-[200px]" title={printer.name}>
-                              {printer.name}
+                          {subtitle && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate max-w-[200px]" title={subtitle}>
+                              {subtitle}
                             </p>
                           )}
                           {printer.isDefault && (
@@ -165,12 +198,13 @@ export const PrintingPage: React.FC = () => {
                       </div>
                       
                       <div className={`w-2 h-2 rounded-full mt-2 ring-2 ring-white dark:ring-gray-800 ${
-                        printer.status === 0 
+                        ready 
                           ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' 
                           : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]'
-                      }`} title={printer.status === 0 ? t('status.ready') : t('status.error')} />
+                      }`} title={ready ? t('status.ready') : t('status.error')} />
                     </div>
-                  ))}
+                    )
+                  })}
                 </CardContent>
               </Card>
             ))}

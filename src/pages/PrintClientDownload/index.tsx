@@ -32,8 +32,8 @@ const AppleIcon = ({ className }: { className?: string }) => (
 export const PrintClientDownloadPage: React.FC = () => {
   const { t } = useTranslation('printing')
   // URLs de téléchargement (à adapter selon votre hébergement)
-  const windowsUrl = '/downloads/Attendee-Print-Client-Setup.exe'
-  const macUrl = '/downloads/Attendee-Print-Client-1.0.0.dmg'
+  const windowsUrl = '/downloads/Attendee_Print_Client.exe'
+  const macUrl = '/downloads/Attendee_Print_Client.dmg'
   
   return (
     <PageContainer>
@@ -64,13 +64,13 @@ export const PrintClientDownloadPage: React.FC = () => {
                 <div className="w-full space-y-3">
                   <a
                     href={windowsUrl}
-                    download="Attendee-Print-Client-Setup.exe"
+                    download="Attendee_Print_Client.exe"
                     className="block"
                     onClick={(e) => {
                       e.preventDefault()
                       const link = document.createElement('a')
                       link.href = windowsUrl
-                      link.download = 'Attendee-Print-Client-Setup.exe'
+                      link.download = 'Attendee_Print_Client.exe'
                       document.body.appendChild(link)
                       link.click()
                       document.body.removeChild(link)
@@ -108,13 +108,13 @@ export const PrintClientDownloadPage: React.FC = () => {
                 <div className="w-full space-y-3">
                   <a
                     href={macUrl}
-                    download="Attendee-Print-Client-1.0.0.dmg"
+                    download="Attendee_Print_Client.dmg"
                     className="block"
                     onClick={(e) => {
                       e.preventDefault()
                       const link = document.createElement('a')
                       link.href = macUrl
-                      link.download = 'Attendee-Print-Client-1.0.0.dmg'
+                      link.download = 'Attendee_Print_Client.dmg'
                       document.body.appendChild(link)
                       link.click()
                       document.body.removeChild(link)

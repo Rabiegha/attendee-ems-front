@@ -28,7 +28,8 @@ export function BadgePreviewModal({
   currentBadgeTemplateId 
 }: BadgePreviewModalProps) {
   const [isDownloading, setIsDownloading] = useState(false)
-  const [badgeImage, setBadgeImage] = useState<string>('')
+  const [badgeHtml, setBadgeHtml] = useState<string>('')
+  const [badgeDimensions, setBadgeDimensions] = useState<{ width: number; height: number }>({ width: 400, height: 600 })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string>('')
   const [errorType, setErrorType] = useState<'chromium' | 'no-template' | 'other'>('other')
@@ -102,16 +103,16 @@ export function BadgePreviewModal({
     }
 
     // Reset states
-    setBadgeImage('')
+    setBadgeHtml('')
     setError('')
     setIsLoading(true)
 
     const fetchBadgePreview = async () => {
       try {
-        // Utiliser le template calculé automatiquement
+        // Utiliser le format HTML pour un rendu direct (plus rapide, polices correctes)
         const url = effectiveBadgeTemplateId
-          ? `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?quality=high&templateId=${effectiveBadgeTemplateId}&force=true`
-          : `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?quality=high`
+          ? `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?format=html&templateId=${effectiveBadgeTemplateId}&force=true`
+          : `${API_URL}/events/${eventId}/registrations/${registration.id}/badge-preview?format=html`
         
         const response = await fetch(url, {
           headers: {
@@ -151,7 +152,8 @@ export function BadgePreviewModal({
         }
 
         const data = await response.json()
-        setBadgeImage(data.data.previewUrl)
+        setBadgeHtml(data.data.html)
+        setBadgeDimensions({ width: data.data.width, height: data.data.height })
         setIsLoading(false)
       } catch (err) {
         console.error('[Badge Preview] Failed to load:', err)
@@ -364,14 +366,56 @@ export function BadgePreviewModal({
             </div>
           ) : (
             <div className="w-full flex flex-col items-center">
-              {/* Badge Image */}
-              {badgeImage && (
-                <img
-                  src={badgeImage}
-                  alt={`Badge de ${attendeeName}`}
-                  className="max-w-[600px] max-h-[900px] w-auto h-auto border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
-                />
-              )}
+              {/* Badge HTML Preview */}
+              {badgeHtml && (() => {
+                // Calculer le facteur d'échelle pour que le badge tienne dans la zone de preview
+                const maxPreviewWidth = 500
+                const maxPreviewHeight = 800
+                const scaleX = maxPreviewWidth / badgeDimensions.width
+                const scaleY = maxPreviewHeight / badgeDimensions.height
+                const scale = Math.min(scaleX, scaleY, 1) // Ne pas agrandir
+                
+                const scaledWidth = Math.round(badgeDimensions.width * scale)
+                const scaledHeight = Math.round(badgeDimensions.height * scale)
+                
+                // Injecter le scaling directement dans le HTML pour éviter les problèmes
+                // de clipping CSS avec transform sur l'iframe
+                const scaledHtml = badgeHtml.replace(
+                  '</head>',
+                  `<style>
+                    html { 
+                      transform: scale(${scale}); 
+                      transform-origin: top left; 
+                      width: ${badgeDimensions.width}px;
+                      height: ${badgeDimensions.height}px;
+                    }
+                  </style>
+                  </head>`
+                )
+                
+                return (
+                  <div
+                    style={{
+                      width: `${scaledWidth}px`,
+                      height: `${scaledHeight}px`,
+                      overflow: 'hidden',
+                    }}
+                    className="border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-lg"
+                  >
+                    <iframe
+                      srcDoc={scaledHtml}
+                      title={`Badge de ${attendeeName}`}
+                      style={{
+                        width: `${scaledWidth}px`,
+                        height: `${scaledHeight}px`,
+                        border: 'none',
+                        display: 'block',
+                      }}
+                      sandbox="allow-same-origin"
+                    />
+                  </div>
+                )
+              })()}
             </div>
           )}
         </div>

@@ -8,6 +8,7 @@ import {
   AlignStartHorizontal, AlignEndHorizontal, AlignCenterHorizontal,
   Undo2, Redo2, CopyPlus
 } from 'lucide-react';
+import { GoogleFontPicker, loadGoogleFont } from './GoogleFontPicker';
 import { BadgeElement, BadgeFormat } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
 import { getTransformWithRotation } from '../../../shared/utils/transform';
@@ -85,7 +86,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
 
   if (selectedElements.length === 0) {
     return (
-      <div className="w-64 bg-white dark:bg-gray-800 shadow-md border-l dark:border-gray-700 flex flex-col">
+      <div className="w-80 bg-white dark:bg-gray-800 shadow-md border-l dark:border-gray-700 flex flex-col">
         <div className="flex-1 overflow-y-auto p-4">
           <div className="text-center text-gray-500 dark:text-gray-400 mt-8">
             <p className="text-sm">Sélectionner un élément pour modifier ses propriétés</p>
@@ -385,7 +386,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   };
 
   return (
-    <div className="w-64 bg-white dark:bg-gray-800 shadow-md border-l dark:border-gray-700 flex flex-col">
+    <div className="w-80 bg-white dark:bg-gray-800 shadow-md border-l dark:border-gray-700 flex flex-col">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
       {/* Header */}
       <div className="border-b dark:border-gray-700 pb-2">
@@ -836,18 +837,13 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         {selectedElement?.type === 'text' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Police</label>
-            <select
+            <GoogleFontPicker
               value={selectedElement.style.fontFamily || 'Arial'}
-              onChange={(e) => handleStyleUpdate('fontFamily', e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded p-2 text-sm"
-            >
-              <option value="Arial">Arial</option>
-              <option value="Helvetica">Helvetica</option>
-              <option value="Times New Roman">Times New Roman</option>
-              <option value="Georgia">Georgia</option>
-              <option value="Verdana">Verdana</option>
-              <option value="Courier New">Courier New</option>
-            </select>
+              onChange={(family) => {
+                loadGoogleFont(family)
+                handleStyleUpdate('fontFamily', family)
+              }}
+            />
           </div>
         )}
 

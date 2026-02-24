@@ -145,23 +145,23 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           id: 'participationStatus',
           header: t('detail.participation_status_header'),
           accessorKey: 'status',
-          cell: ({ row }) => (
-            <div className="cursor-pointer" onClick={() => handleEventClick(row.original.event.id)}>
-              <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  row.original.status === 'confirmed'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                    : row.original.status === 'pending'
-                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      : row.original.status === 'checked_in'
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400'
-                }`}
-              >
-                {row.original.status}
-              </span>
-            </div>
-          ),
+          cell: ({ row }) => {
+            const status = row.original.status
+            const statusConfig: Record<string, { className: string; label: string }> = {
+              approved:  { className: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400', label: t('status.approved') },
+              awaiting:  { className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400', label: t('status.awaiting') },
+              refused:   { className: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400', label: t('status.refused') },
+              cancelled: { className: 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-400', label: t('status.cancelled') },
+            }
+            const config = statusConfig[status] ?? { className: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400', label: status }
+            return (
+              <div className="cursor-pointer" onClick={() => handleEventClick(row.original.event.id)}>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
+                  {config.label}
+                </span>
+              </div>
+            )
+          },
         },
         {
           id: 'checkin',

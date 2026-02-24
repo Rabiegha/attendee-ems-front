@@ -39,7 +39,10 @@
     "confirmed": "Confirmé",
     "checked_in": "Enregistré",
     "cancelled": "Annulé",
-    "no_show": "Absent"
+    "no_show": "Absent",
+    "awaiting": "En attente",
+    "approved": "Approuvé",
+    "refused": "Refusé"
   },
   "filters": {
     "all": "Tous",

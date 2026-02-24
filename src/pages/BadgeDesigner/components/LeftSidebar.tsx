@@ -47,7 +47,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
 }) => {
   const { t } = useTranslation('badges')
   return (
-    <div className="w-64 bg-white dark:bg-gray-800 shadow-md flex flex-col border-r border-gray-200 dark:border-gray-700 relative">
+    <div className="w-80 bg-white dark:bg-gray-800 shadow-md flex flex-col border-r border-gray-200 dark:border-gray-700 relative">
       {/* Titre */}
       <div className="h-14 px-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center gap-3 shrink-0">
         {onGoBack && (

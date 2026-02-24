@@ -51,7 +51,7 @@ function parseHostFromUri(uri: string): string {
   try {
     // Handle ipp://, ipps://, http://, https://, socket://, lpd:// etc.
     const match = uri.match(/^(?:ipp|ipps|http|https|socket|lpd):\/\/([^/:]+)/)
-    if (match) return match[1]
+    if (match?.[1]) return match[1]
   } catch { /* ignore */ }
   return ''
 }

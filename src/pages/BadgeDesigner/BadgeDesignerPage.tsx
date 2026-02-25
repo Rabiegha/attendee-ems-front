@@ -1512,6 +1512,7 @@ const BadgeDesignerPageContent: React.FC = () => {
         onDeleteTemplate={handleDeleteTemplate}
         isDeleting={isDeleting}
         isEditMode={templateId !== 'new'}
+        background={background}
         zoom={currentZoom}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}

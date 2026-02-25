@@ -15,6 +15,7 @@
     "search_placeholder": "Rechercher un template..."
   },
   "filters": {
+    "all": "Tous",
     "status_label": "Statut",
     "type_label": "Type",
     "active": "Actif",

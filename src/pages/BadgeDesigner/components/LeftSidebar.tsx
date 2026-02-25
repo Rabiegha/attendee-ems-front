@@ -20,6 +20,7 @@ interface LeftSidebarProps {
   onDeleteTemplate?: () => void;
   isDeleting?: boolean;
   isEditMode?: boolean;
+  background?: string | null;
   // Zoom controls props
   zoom: number;
   onZoomIn: () => void;
@@ -41,6 +42,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   onDeleteTemplate,
   isDeleting = false,
   isEditMode = false,
+  background,
   zoom,
   onZoomIn,
   onZoomOut
@@ -166,7 +168,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             size="sm"
           >
             <ImageIcon size={16} />
-            Ajouter Image
+            {background ? "Modifier l'arrière-plan" : 'Ajouter un arrière-plan'}
           </Button>
           
           <input
@@ -175,7 +177,6 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             accept="image/*"
             onChange={onImageUpload}
             className="hidden"
-            multiple
           />
         </div>
       </div>

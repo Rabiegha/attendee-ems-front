@@ -68,6 +68,7 @@ import { BulkAttendeeTypeChangeModal } from './BulkAttendeeTypeChangeModal'
 import { BulkActionsModal } from './BulkActionsModal'
 import { BulkConfirmationModal } from './BulkConfirmationModal'
 import { ApprovalConfirmationModal } from './ApprovalConfirmationModal'
+import { PrinterSelectModal } from './PrinterSelectModal'
 import { RejectionConfirmationModal } from './RejectionConfirmationModal'
 import {
   getRegistrationFullName,
@@ -214,6 +215,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     useState<RegistrationDPO | null>(null)
   const [quickDownloadingKeys, setQuickDownloadingKeys] = useState<Set<string>>(new Set())
   const [printingKeys, setPrintingKeys] = useState<Set<string>>(new Set())
+  const [printRegistration, setPrintRegistration] = useState<RegistrationDPO | null>(null)
   const downloadQueueRef = useRef<Array<{ registration: RegistrationDPO; format: 'pdf' | 'image' }>>([])
   const isProcessingQueueRef = useRef(false)
   const toast = useToast()
@@ -296,7 +298,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   // Fonction d'impression de badge (via Electron print queue)
   const [generateBadge] = useGenerateBadgeMutation()
   
-  const handlePrintBadge = async (registration: RegistrationDPO) => {
+  const handlePrintBadge = async (registration: RegistrationDPO, printerName: string) => {
     const printKey = registration.id
     setPrintingKeys(prev => new Set(prev).add(printKey))
 
@@ -345,6 +347,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         eventId,
         userId,
         badgeUrl: badgePdfUrl,
+        printerName,
       }).unwrap()
 
       toast.success(t('events:registrations.badge_added_to_queue', { name: attendeeName }))
@@ -1505,7 +1508,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
               <Award className="h-4 w-4" />
             </button>
             <button
-              onClick={() => handlePrintBadge(row.original)}
+              onClick={() => setPrintRegistration(row.original)}
               disabled={printingKeys.has(row.original.id)}
               className="inline-flex items-center justify-center p-2 rounded-lg text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title={t('events:registrations.print_badge_tooltip')}
@@ -1813,6 +1816,24 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           registration={badgeDownloadRegistration}
           eventId={eventId}
           currentBadgeTemplateId={eventBadgeTemplateId ?? null}
+        />
+      )}
+
+      {/* Modal de sélection d'imprimante */}
+      {printRegistration && (
+        <PrinterSelectModal
+          isOpen={!!printRegistration}
+          onClose={() => setPrintRegistration(null)}
+          attendeeName={
+            printRegistration.attendee
+              ? `${printRegistration.attendee.firstName} ${printRegistration.attendee.lastName}`
+              : undefined
+          }
+          isSubmitting={printingKeys.has(printRegistration.id)}
+          onConfirm={async (printerName) => {
+            await handlePrintBadge(printRegistration, printerName)
+            setPrintRegistration(null)
+          }}
         />
       )}
 

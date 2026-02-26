@@ -2,11 +2,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Trash2, RotateCcw, RotateCw, Shuffle, X,
-  AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline,
+  AlignLeft, AlignCenter, AlignRight, Bold, Italic, Underline, Strikethrough,
   AlignHorizontalSpaceAround, AlignVerticalSpaceAround,
   AlignStartVertical, AlignCenterVertical, AlignEndVertical,
   AlignStartHorizontal, AlignEndHorizontal, AlignCenterHorizontal,
-  Undo2, Redo2, CopyPlus
+  Undo2, Redo2, CopyPlus,
+  CaseUpper, CaseLower, CaseSensitive, Type
 } from 'lucide-react';
 import { GoogleFontPicker, loadGoogleFont } from './GoogleFontPicker';
 import { BadgeElement, BadgeFormat } from '../../../shared/types/badge.types';
@@ -327,10 +328,24 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
     }
   };
 
-  // Toggle style for multi-selection (bold, italic, underline)
-  const handleBulkStyleToggle = (property: 'fontWeight' | 'fontStyle' | 'textDecoration') => {
+  // Toggle style for multi-selection (bold, italic, underline, strikethrough)
+  const handleBulkStyleToggle = (property: 'fontWeight' | 'fontStyle' | 'textDecoration' | 'strikethrough') => {
     const textElements = selectedElements.filter(el => el.type === 'text');
     if (textElements.length === 0) return;
+
+    // Handle strikethrough as a textDecoration variant
+    if (property === 'strikethrough') {
+      const allActive = textElements.every(el => el.style.textDecoration === 'line-through');
+      const targetValue = allActive ? 'none' : 'line-through';
+      const batchUpdates = textElements.map(element => ({
+        id: element.id,
+        updates: {
+          style: { ...element.style, textDecoration: targetValue }
+        } as Partial<BadgeElement>
+      }));
+      onBatchUpdateElements(batchUpdates);
+      return;
+    }
 
     // Determine the target value: if ALL elements have the active state, turn it off, otherwise turn it on for all
     const getActiveValue = (prop: typeof property) => {
@@ -370,9 +385,13 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   };
 
   // Helper function to check if a style property is active for all selected text elements
-  const isStyleActive = (property: 'fontWeight' | 'fontStyle' | 'textDecoration'): boolean => {
+  const isStyleActive = (property: 'fontWeight' | 'fontStyle' | 'textDecoration' | 'strikethrough'): boolean => {
     const textElements = selectedElements.filter(el => el.type === 'text');
     if (textElements.length === 0) return false;
+
+    if (property === 'strikethrough') {
+      return textElements.every(el => el.style.textDecoration === 'line-through');
+    }
 
     const getActiveValue = (prop: typeof property) => {
       if (prop === 'fontWeight') return 'bold';
@@ -570,6 +589,50 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     >
                       <Underline size={16} />
                     </button>
+
+                    <button
+                      onClick={() => handleBulkStyleToggle('strikethrough')}
+                      className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                        isStyleActive('strikethrough')
+                          ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                      title="Basculer barré"
+                    >
+                      <Strikethrough size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Text Transform - Only for text elements */}
+              {selectedElements.some(el => el.type === 'text') && (
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Casse du texte</label>
+                  <div className="flex bg-gray-100 dark:bg-gray-900/50 rounded-md p-1 gap-1">
+                    {[
+                      { value: 'none', icon: Type, label: 'Normal' },
+                      { value: 'uppercase', icon: CaseUpper, label: 'MAJUSCULES' },
+                      { value: 'lowercase', icon: CaseLower, label: 'minuscules' },
+                      { value: 'capitalize', icon: CaseSensitive, label: 'Première Lettre' }
+                    ].map((option) => {
+                      const textElements = selectedElements.filter(el => el.type === 'text');
+                      const isActive = textElements.length > 0 && textElements.every(el => (el.style.textTransform || 'none') === option.value);
+                      return (
+                        <button
+                          key={option.value}
+                          onClick={() => handleBulkStyleUpdate('textTransform', option.value)}
+                          className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                            isActive
+                              ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`}
+                          title={option.label}
+                        >
+                          <option.icon size={16} />
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1086,6 +1149,43 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                >
                  <Underline size={18} />
                </button>
+
+               {/* Strikethrough */}
+               <button
+                 onClick={() => handleStyleUpdate('textDecoration', selectedElement.style.textDecoration === 'line-through' ? 'none' : 'line-through')}
+                 className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${selectedElement.style.textDecoration === 'line-through' ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                 title="Barré"
+               >
+                 <Strikethrough size={18} />
+               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Text Transform - Text only */}
+        {selectedElement?.type === 'text' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Casse du texte</label>
+            <div className="flex bg-gray-100 dark:bg-gray-900/50 rounded-md p-1 gap-1">
+              {[
+                { value: 'none', icon: Type, label: 'Normal' },
+                { value: 'uppercase', icon: CaseUpper, label: 'MAJUSCULES' },
+                { value: 'lowercase', icon: CaseLower, label: 'minuscules' },
+                { value: 'capitalize', icon: CaseSensitive, label: 'Première Lettre' }
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleStyleUpdate('textTransform', option.value)}
+                  className={`flex-1 flex items-center justify-center py-1.5 rounded transition-colors ${
+                    (selectedElement.style.textTransform || 'none') === option.value
+                      ? 'bg-white dark:bg-gray-700 shadow-sm text-blue-600 dark:text-blue-400'
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  title={option.label}
+                >
+                  <option.icon size={18} />
+                </button>
+              ))}
             </div>
           </div>
         )}

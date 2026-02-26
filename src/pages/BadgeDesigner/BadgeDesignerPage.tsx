@@ -177,12 +177,17 @@ const BadgeDesignerPageContent: React.FC = () => {
     if (clipboard.length === 0) return;
     
     const PASTE_OFFSET = 20; // Offset in pixels
-    const newElements: BadgeElement[] = clipboard.map(el => ({
-      ...el,
-      id: `${Date.now()}-${Math.random()}`,
-      x: el.x + PASTE_OFFSET,
-      y: el.y + PASTE_OFFSET
-    }));
+    let timeOffset = 0;
+    const newElements: BadgeElement[] = clipboard.map(el => {
+      const newId = `element-${Date.now() + timeOffset}`;
+      timeOffset++;
+      return {
+        ...el,
+        id: newId,
+        x: el.x + PASTE_OFFSET,
+        y: el.y + PASTE_OFFSET,
+      };
+    });
 
     const updatedElements = [...elements, ...newElements];
     setElements(updatedElements);
@@ -541,22 +546,53 @@ const BadgeDesignerPageContent: React.FC = () => {
       // Variables : 90% de la largeur du badge, centrées
       textWidth = badgeWidth * 0.9;
       textHeight = Math.ceil(defaultFontSize * 1.5);
-      posX = badgeWidth * 0.05; // Centré (5% de marge de chaque côté)
-      posY = 50;
-      textAlign = 'left'; // Texte aligné à gauche dans la zone centrée
+      textAlign = 'left';
     } else if (type === 'text' && content) {
       // Texte libre : mesurer la taille réelle du texte
       const measured = measureText(content, defaultFontSize);
       textWidth = measured.width;
       textHeight = measured.height;
-      posX = 50;
-      posY = 50;
       textAlign = 'left';
     } else {
       // Défaut pour autres types
       textWidth = type === 'image' ? 100 : (type === 'qrcode' ? 80 : 300);
       textHeight = type === 'image' ? 100 : (type === 'qrcode' ? 80 : Math.ceil(defaultFontSize * 1.5));
-      posX = 50;
+    }
+
+    // Calculer la position au centre de la zone visible du viewport
+    // On utilise badgeRef pour obtenir la position réelle du badge à l'écran
+    const badgeEl = badgeRef.current;
+    if (badgeEl) {
+      const badgeRect = badgeEl.getBoundingClientRect();
+      // Trouver le conteneur parent (la zone d'édition visible)
+      const editorContainer = badgeEl.closest('.flex-1.flex.items-center');
+      if (editorContainer) {
+        const containerRect = editorContainer.getBoundingClientRect();
+
+        // Centre du conteneur visible en coordonnées écran
+        const viewportCenterScreenX = containerRect.left + containerRect.width / 2;
+        const viewportCenterScreenY = containerRect.top + containerRect.height / 2;
+
+        // Convertir en coordonnées badge (0..badgeWidth, 0..badgeHeight)
+        const scaleX = badgeWidth / badgeRect.width;
+        const scaleY = badgeHeight / badgeRect.height;
+        const centerXOnBadge = (viewportCenterScreenX - badgeRect.left) * scaleX;
+        const centerYOnBadge = (viewportCenterScreenY - badgeRect.top) * scaleY;
+
+        if (type === 'text' && isVariable) {
+          posX = badgeWidth * 0.05;
+          posY = Math.max(0, Math.min(centerYOnBadge - textHeight / 2, badgeHeight - textHeight));
+        } else {
+          posX = Math.max(0, Math.min(centerXOnBadge - textWidth / 2, badgeWidth - textWidth));
+          posY = Math.max(0, Math.min(centerYOnBadge - textHeight / 2, badgeHeight - textHeight));
+        }
+      } else {
+        posX = (type === 'text' && isVariable) ? badgeWidth * 0.05 : 50;
+        posY = 50;
+      }
+    } else {
+      // Fallback si pas de badgeRef
+      posX = (type === 'text' && isVariable) ? badgeWidth * 0.05 : 50;
       posY = 50;
     }
     
@@ -1238,6 +1274,7 @@ const BadgeDesignerPageContent: React.FC = () => {
   };
 
   const handleLeave = () => {
+    isSavingRef.current = true; // Bypass blocker synchronously
     setIsDirty(false);
     setShowUnsavedChangesModal(false);
     if (blocker.state === 'blocked') {
@@ -1579,49 +1616,48 @@ const BadgeDesignerPageContent: React.FC = () => {
       />
 
       {/* Modal de confirmation de navigation */}
-      {showUnsavedChangesModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-6 transform transition-all">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Modifications non enregistrées
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  Vous avez des modifications en attente. Si vous quittez cette page sans enregistrer, elles seront perdues.
-                </p>
-                
-                <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={handleStay}
-                    className="order-3 sm:order-1"
-                  >
-                    Retour
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={handleLeave}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 order-2 sm:order-2"
-                  >
-                    Quitter
-                  </Button>
-                  <Button
-                    onClick={handleSaveAndLeave}
-                    disabled={isCreating || isUpdating}
-                    className="order-1 sm:order-3"
-                  >
-                    {isCreating || isUpdating ? t('designer.saving') : t('designer.save')}
-                  </Button>
-                </div>
-              </div>
+      <Modal
+        isOpen={showUnsavedChangesModal}
+        onClose={handleStay}
+        title="Modifications non enregistrées"
+        maxWidth="lg"
+        showCloseButton={false}
+      >
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 h-12 w-12 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+            <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Vous avez des modifications en attente. Si vous quittez cette page sans enregistrer, elles seront perdues.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={handleStay}
+                className="order-3 sm:order-1"
+              >
+                Retour
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={handleLeave}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 order-2 sm:order-2"
+              >
+                Quitter
+              </Button>
+              <Button
+                onClick={handleSaveAndLeave}
+                disabled={isCreating || isUpdating}
+                className="order-1 sm:order-3"
+              >
+                {isCreating || isUpdating ? t('designer.saving') : t('designer.save')}
+              </Button>
             </div>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
       <Modal

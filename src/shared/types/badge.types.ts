@@ -120,7 +120,7 @@ export interface BadgeElement {
     verticalAlign?: 'top' | 'middle' | 'bottom';
     transform: string;
     rotation: number;
-    textTransform?: 'uppercase' | 'none';
+    textTransform?: 'uppercase' | 'lowercase' | 'capitalize' | 'none';
     textDecoration?: 'none' | 'underline' | 'line-through';
     opacity: number;
     zIndex: number;

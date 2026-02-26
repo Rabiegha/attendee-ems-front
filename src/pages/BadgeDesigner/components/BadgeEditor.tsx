@@ -975,10 +975,10 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             wrapperStyle={{
               width: '100%',
               height: '100%',
-              padding: '20px 0',
             }}
             contentStyle={{
               maxWidth: 'none',
+              padding: '40px',
             }}
           >
             <div

@@ -136,13 +136,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   return (
     <aside
       className={cn(
-        'fixed left-0 z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-screen transition-all duration-300 overflow-hidden',
+        'fixed left-0 z-40 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 h-[calc(100vh-69px)] transition-all duration-300 overflow-hidden flex flex-col',
         isOpen ? 'w-64' : 'w-16'
       )}
       style={{ top: '69px' }}
     >
       {/* Bouton chevrons en haut de la sidebar */}
-      <div className="flex items-center h-12 border-b border-gray-200 dark:border-gray-700 px-2 relative">
+      <div className="flex items-center h-12 flex-shrink-0 border-b border-gray-200 dark:border-gray-700 px-2 relative">
         <button
           onClick={onToggle}
           className="absolute p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300"
@@ -173,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         </button>
       </div>
 
-      <nav className="px-2 overflow-y-auto pb-20">
+      <nav className="px-2 overflow-y-auto pb-20 flex-1 min-h-0">
         <ul className="space-y-2 pt-4">
           {navigation.map((item) => {
             // Dashboard accessible à tous sans guard

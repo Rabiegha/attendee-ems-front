@@ -211,6 +211,7 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
             { key: 'firstName', label: 'Prénom' },
             { key: 'lastName', label: 'Nom' },
             { key: 'company', label: 'Entreprise' },
+            { key: 'jobTitle', label: 'Poste' },
             { key: 'email', label: 'Email' },
             { key: 'eventName', label: 'Événement' },
             { key: 'attendeeType', label: 'Type de participant' },

@@ -125,7 +125,7 @@ export const BadgeDesigner: React.FC = () => {
           actions={
             <Button 
               leftIcon={<Plus className="h-4 w-4" />}
-              onClick={() => navigate('/badges/designer/new')}
+              onClick={() => navigate('/badges/new')}
             >
               {t('badges:actions.new_template')}
             </Button>
@@ -190,7 +190,7 @@ export const BadgeDesigner: React.FC = () => {
         actions={
           <Button 
             leftIcon={<Plus className="h-4 w-4" />}
-            onClick={() => navigate('/badges/designer/new')}
+            onClick={() => navigate('/badges/new')}
           >
             {t('badges:actions.new_template')}
           </Button>
@@ -242,7 +242,7 @@ export const BadgeDesigner: React.FC = () => {
             </p>
             <Button 
               leftIcon={<Plus className="h-4 w-4" />}
-              onClick={() => navigate('/badges/designer/new')}
+              onClick={() => navigate('/badges/new')}
             >
               {t('badges:actions.create_first')}
             </Button>

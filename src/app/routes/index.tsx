@@ -31,6 +31,7 @@ import PublicRegistration from '@/pages/PublicRegistration'
 import { PrivacyPolicyPage } from '@/pages/PrivacyPolicy'
 import { BadgeDesigner } from '@/pages/BadgeDesigner'
 import { BadgeDesignerPage } from '@/pages/BadgeDesigner/BadgeDesignerPage'
+import { BadgeFormatSelector } from '@/pages/BadgeDesigner/BadgeFormatSelector'
 import { ApplicationDownloadPage } from '@/pages/ApplicationDownload'
 import { PrintClientDownloadPage } from '@/pages/PrintClientDownload'
 import { ReportsPage } from '@/pages/Reports'
@@ -159,6 +160,14 @@ export const router = createBrowserRouter([
             element: (
               <GuardedRoute action="manage" subject="Badge">
                 <BadgeDesigner />
+              </GuardedRoute>
+            ),
+          },
+          {
+            path: 'new',
+            element: (
+              <GuardedRoute action="manage" subject="Badge">
+                <BadgeFormatSelector />
               </GuardedRoute>
             ),
           },

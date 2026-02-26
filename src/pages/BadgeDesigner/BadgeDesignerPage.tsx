@@ -39,8 +39,9 @@ const BadgeDesignerPageContent: React.FC = () => {
   const [updateTemplate, { isLoading: isUpdating }] = useUpdateBadgeTemplateMutation();
   const [deleteTemplate, { isLoading: isDeleting }] = useDeleteBadgeTemplateMutation();
   
-  // State
-  const [format, setFormat] = useState<BadgeFormat>(BADGE_FORMATS.LARGE);
+  // State — use format from location.state (set by format selector) or fallback to LARGE
+  const initialFormat = (location.state as any)?.format || BADGE_FORMATS.LARGE;
+  const [format, setFormat] = useState<BadgeFormat>(initialFormat);
   const [elements, setElements] = useState<BadgeElement[]>([]);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [background, setBackground] = useState<string | null>(null);

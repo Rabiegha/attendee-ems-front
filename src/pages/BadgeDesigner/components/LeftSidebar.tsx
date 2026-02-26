@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, ImageIcon, Save, ArrowLeft, Trash2 } from 'lucide-react';
-import { BadgeFormat, BADGE_FORMATS } from '../../../shared/types/badge.types';
+import { BadgeFormat, BADGE_FORMATS, BADGE_FORMAT_LIST } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
 import { ZoomControls } from './ZoomControls';
 
@@ -74,17 +74,39 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Format</label>
         <select 
           className="w-full border border-gray-300 dark:border-gray-600 rounded p-2 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-          value={format.name}
+          value={
+            // Try to match current format to a preset
+            BADGE_FORMAT_LIST.find(f => f.width === format.width && f.height === format.height)?.name
+            || '__custom__'
+          }
           onChange={(e) => {
-            const selectedFormat = Object.values(BADGE_FORMATS).find(f => f.name === e.target.value);
+            if (e.target.value === '__custom__') return;
+            const selectedFormat = BADGE_FORMAT_LIST.find(f => f.name === e.target.value);
             if (selectedFormat) {
               onFormatChange(selectedFormat);
             }
           }}
         >
-          <option value="96x268mm">Large - 96x268mm</option>
-          <option value="96x164mm">Petit - 96x164mm</option>
+          <optgroup label={t('badges:format_selector.category_badges')}>
+            {BADGE_FORMAT_LIST.filter(f => f.category === 'badge').map(f => (
+              <option key={f.key} value={f.name}>{f.name}</option>
+            ))}
+          </optgroup>
+          <optgroup label={t('badges:format_selector.category_paper')}>
+            {BADGE_FORMAT_LIST.filter(f => f.category === 'paper').map(f => (
+              <option key={f.key} value={f.name}>{f.name}</option>
+            ))}
+          </optgroup>
+          {/* Show custom option if current format doesn't match any preset */}
+          {!BADGE_FORMAT_LIST.find(f => f.width === format.width && f.height === format.height) && (
+            <option value="__custom__">
+              {t('badges:format_selector.custom_label')} ({format.width}×{format.height}mm)
+            </option>
+          )}
         </select>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {format.width} × {format.height} mm
+        </p>
       </div>
 
       {/* Template Management */}

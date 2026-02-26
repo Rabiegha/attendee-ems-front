@@ -72,14 +72,30 @@ export interface BadgeTemplatePreview {
 
 // Badge formats in mm (from original badge generator)
 export const BADGE_FORMATS = {
-  LARGE: { width: 96, height: 268, name: '96x268mm' },
-  SMALL: { width: 96, height: 164, name: '96x164mm' }
-};
+  // Badges événementiels
+  LARGE: { width: 96, height: 268, name: 'Badge Large (96×268mm)', category: 'badge' },
+  SMALL: { width: 96, height: 164, name: 'Badge Petit (96×164mm)', category: 'badge' },
+  CR80: { width: 54, height: 86, name: 'Carte CR-80 (54×86mm)', category: 'badge' },
+  // Formats papier standard
+  A4: { width: 210, height: 297, name: 'A4 (210×297mm)', category: 'paper' },
+  A5: { width: 148, height: 210, name: 'A5 (148×210mm)', category: 'paper' },
+  A6: { width: 105, height: 148, name: 'A6 (105×148mm)', category: 'paper' },
+  A7: { width: 74, height: 105, name: 'A7 (74×105mm)', category: 'paper' },
+  LETTER: { width: 216, height: 279, name: 'Letter US (216×279mm)', category: 'paper' },
+} as const;
+
+export const BADGE_FORMAT_LIST = Object.entries(BADGE_FORMATS).map(([key, val]) => ({
+  key,
+  ...val,
+}));
+
+export type BadgeFormatKey = keyof typeof BADGE_FORMATS;
 
 export type BadgeFormat = {
   width: number;
   height: number;
   name: string;
+  category?: string;
 };
 
 // Badge element (from original badge generator)

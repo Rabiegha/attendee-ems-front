@@ -70,5 +70,21 @@
     "create_symmetry": "Créer Symétrie",
     "break_symmetry": "Casser Symétrie",
     "cancel": "Annuler"
+  },
+  "format_selector": {
+    "title": "Choisir un format",
+    "description": "Sélectionnez le format de votre badge ou définissez des dimensions personnalisées",
+    "category_badges": "Badges événementiels",
+    "category_paper": "Formats papier",
+    "category_custom": "Dimensions personnalisées",
+    "custom_label": "Format libre",
+    "width_mm": "Largeur (mm)",
+    "height_mm": "Hauteur (mm)",
+    "orientation": "Orientation",
+    "portrait": "Portrait",
+    "landscape": "Paysage",
+    "preview": "Aperçu",
+    "select_prompt": "Sélectionnez un format",
+    "confirm": "Ouvrir l'éditeur"
   }
 }

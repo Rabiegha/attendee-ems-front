@@ -977,12 +977,16 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
               height: '100%',
               padding: '20px 0',
             }}
+            contentStyle={{
+              maxWidth: 'none',
+            }}
           >
             <div
               ref={badgeRef}
               className="relative bg-white shadow-lg overflow-hidden"
             style={{
               width: `${badgeWidth}px`,
+              maxWidth: 'none',
               height: `${badgeHeight}px`,
               backgroundImage: background ? `url(${background})` : undefined,
               backgroundSize: 'cover',

@@ -14,7 +14,7 @@ interface PrinterSelectModalProps {
   onClose: () => void
   onConfirm: (printerName: string) => void
   isSubmitting?: boolean
-  attendeeName?: string
+  attendeeName?: string | undefined
 }
 
 export function PrinterSelectModal({
@@ -37,7 +37,7 @@ export function PrinterSelectModal({
   // Auto-select default printer on mount / when printers change
   useEffect(() => {
     if (isOpen && !selectedPrinter && exposedPrinters.length > 0) {
-      const defaultPrinter = exposedPrinters.find((p) => p.isDefault) ?? exposedPrinters[0]
+      const defaultPrinter = exposedPrinters.find((p) => p.isDefault) ?? exposedPrinters[0]!
       const compositeName = defaultPrinter.deviceId
         ? `${defaultPrinter.name}::${defaultPrinter.deviceId}`
         : defaultPrinter.name

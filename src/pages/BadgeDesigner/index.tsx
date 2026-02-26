@@ -64,7 +64,7 @@ export const BadgeDesigner: React.FC = () => {
   const totalPages = Math.ceil(totalTemplates / pageSize);
 
   const handleRefresh = () => {
-    dispatch(badgeTemplatesApi.util.invalidateTags(['BadgeTemplates']));
+    dispatch(badgeTemplatesApi.util.invalidateTags(['Badges']));
   };
 
   // Configuration des filtres

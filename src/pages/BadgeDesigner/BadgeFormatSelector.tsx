@@ -120,7 +120,7 @@ export const BadgeFormatSelector: React.FC = () => {
                       />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {fmt.name.split('(')[0].trim()}
+                          {(fmt.name ?? '').split('(')[0]?.trim()}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {fmt.width} × {fmt.height} mm
@@ -166,7 +166,7 @@ export const BadgeFormatSelector: React.FC = () => {
                       />
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {fmt.name.split('(')[0].trim()}
+                          {(fmt.name ?? '').split('(')[0]?.trim()}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {fmt.width} × {fmt.height} mm

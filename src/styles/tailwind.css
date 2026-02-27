@@ -94,6 +94,14 @@
     max-width: 100%;
   }
 
+  /* Exception pour le badge designer (les éléments ont des tailles en px à 300 DPI) */
+  .badge-canvas *,
+  .react-transform-wrapper *,
+  .react-transform-component *,
+  [class*="react-transform"] * {
+    max-width: none;
+  }
+
   /* ============================================
      ICON SIZE FIX - Taille minimale pour tous les icônes
      ============================================ */

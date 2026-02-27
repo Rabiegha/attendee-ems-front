@@ -159,6 +159,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     y: number;
   } | null>(null);
   const [shiftPressed, setShiftPressed] = useState(false);
+  const [altPressed, setAltPressed] = useState(false);
   
   // Native drag system
   const [draggingElementId, setDraggingElementId] = useState<string | null>(null);
@@ -174,18 +175,16 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
 
   const backgroundInputRef = useRef<HTMLInputElement>(null);
 
-  // Track shift key state
+  // Track shift and alt key state
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') {
-        setShiftPressed(true);
-      }
+      if (e.key === 'Shift') setShiftPressed(true);
+      if (e.key === 'Alt') { e.preventDefault(); setAltPressed(true); }
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') {
-        setShiftPressed(false);
-      }
+      if (e.key === 'Shift') setShiftPressed(false);
+      if (e.key === 'Alt') setAltPressed(false);
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -295,16 +294,100 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     // Maintain aspect ratio if shift is pressed or element requires it
     if (shiftPressed || element.maintainAspectRatio) {
       const aspectRatio = element.aspectRatio || resizeStartData.width / resizeStartData.height;
+      const movesLeft = ['nw', 'w', 'sw'].includes(resizeHandle);
+      const movesTop = ['nw', 'n', 'ne'].includes(resizeHandle);
+
       if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Width drives — recalculate height
         newHeight = newWidth / aspectRatio;
+        // Fix Y position: bottom edge must stay fixed for top-moving handles
+        if (movesTop) {
+          const fixedBottom = resizeStartData.y + resizeStartData.height;
+          newY = fixedBottom - newHeight;
+        }
       } else {
+        // Height drives — recalculate width
         newWidth = newHeight * aspectRatio;
+        // Fix X position: right edge must stay fixed for left-moving handles
+        if (movesLeft) {
+          const fixedRight = resizeStartData.x + resizeStartData.width;
+          newX = fixedRight - newWidth;
+        }
       }
     }
 
-    // Minimum size constraints
-    newWidth = Math.max(10, newWidth);
-    newHeight = Math.max(10, newHeight);
+    // Symmetric resize: Alt key mirrors the resize from center
+    if (altPressed) {
+      const centerX = resizeStartData.x + resizeStartData.width / 2;
+      const centerY = resizeStartData.y + resizeStartData.height / 2;
+      // Width changed → mirror horizontally from center
+      if (newWidth !== resizeStartData.width) {
+        newX = centerX - newWidth / 2;
+      }
+      // Height changed → mirror vertically from center
+      if (newHeight !== resizeStartData.height) {
+        newY = centerY - newHeight / 2;
+      }
+    }
+
+    // Minimum size constraints — clamp position so the opposite edge stays fixed
+    const MIN_SIZE = 10;
+    if (newWidth < MIN_SIZE) {
+      // If this handle moves the left edge, clamp X so right edge stays put
+      if (['nw', 'w', 'sw'].includes(resizeHandle)) {
+        newX = resizeStartData.x + resizeStartData.width - MIN_SIZE;
+      }
+      newWidth = MIN_SIZE;
+    }
+    if (newHeight < MIN_SIZE) {
+      // If this handle moves the top edge, clamp Y so bottom edge stays put
+      if (['nw', 'n', 'ne'].includes(resizeHandle)) {
+        newY = resizeStartData.y + resizeStartData.height - MIN_SIZE;
+      }
+      newHeight = MIN_SIZE;
+    }
+
+    // Apply snap during resize (skip when shift pressed)
+    if (!shiftPressed && resizeHandle) {
+      const snapped = calculateResizeSnap(newX, newY, newWidth, newHeight, resizeHandle, resizingElement);
+
+      // If aspect ratio must be maintained, snap both axes together
+      if (element.maintainAspectRatio || shiftPressed) {
+        const aspectRatio = element.aspectRatio || resizeStartData.width / resizeStartData.height;
+        const widthDiff = Math.abs(snapped.width - newWidth);
+        const heightDiff = Math.abs(snapped.height - newHeight);
+
+        if (widthDiff > 0.1 || heightDiff > 0.1) {
+          // Pick the axis with the bigger snap delta — derive the other from the ratio
+          if (widthDiff >= heightDiff) {
+            snapped.height = snapped.width / aspectRatio;
+          } else {
+            snapped.width = snapped.height * aspectRatio;
+          }
+
+          // Recalculate position: anchor the fixed edges from the original element
+          const snapMovesLeft = ['nw', 'w', 'sw'].includes(resizeHandle);
+          const snapMovesRight = ['ne', 'e', 'se'].includes(resizeHandle);
+          const snapMovesTop = ['nw', 'n', 'ne'].includes(resizeHandle);
+          const snapMovesBottom = ['sw', 's', 'se'].includes(resizeHandle);
+
+          if (snapMovesLeft && !snapMovesRight) {
+            snapped.x = resizeStartData.x + resizeStartData.width - snapped.width;
+          }
+          if (snapMovesTop && !snapMovesBottom) {
+            snapped.y = resizeStartData.y + resizeStartData.height - snapped.height;
+          }
+        }
+      }
+
+      newX = snapped.x;
+      newY = snapped.y;
+      newWidth = Math.max(10, snapped.width);
+      newHeight = Math.max(10, snapped.height);
+    } else {
+      setSnapGuides([]);
+      setSnapTargetElements([]);
+    }
 
     // Save last resize data for history
     setLastResizeData({
@@ -335,6 +418,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     setResizeHandle(null);
     setResizeStartData(null);
     setLastResizeData(null);
+    setSnapGuides([]);
+    setSnapTargetElements([]);
   };
 
   useEffect(() => {
@@ -385,11 +470,14 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
         </div>
       );
     } else if (element.type === 'qrcode') {
+      const zoom = currentZoom || initialZoom;
+      const qrFontSize = Math.max(6, Math.round(10 / zoom));
+      const qrLabelSize = Math.max(8, Math.round(12 / zoom));
       return (
         <div 
           className="flex flex-col items-center justify-center bg-white border-2 border-gray-300 text-gray-600"
           style={{ 
-            fontSize: '10px', 
+            fontSize: `${qrFontSize}px`, 
             width: '100%', 
             height: '100%',
             transform: element.style.transform,
@@ -412,7 +500,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             <rect x="40" y="40" width="20" height="20" fill="black"/>
             <rect x="45" y="45" width="10" height="10" fill="white"/>
           </svg>
-          <span className="text-[8px] mt-1">QR Code</span>
+          <span style={{ fontSize: `${qrLabelSize}px` }} className="mt-1">QR Code</span>
         </div>
       );
     } else if (element.type === 'image') {
@@ -681,6 +769,131 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     setSnapGuides(guides);
     setSnapTargetElements(targetElements);
     return { x: snappedX, y: snappedY };
+  };
+
+  // Calculate snap positions during resize (snaps the active edge being moved)
+  const calculateResizeSnap = (
+    x: number, y: number, width: number, height: number,
+    handle: string, elementId: string
+  ): { x: number; y: number; width: number; height: number } => {
+    const guides: { x?: number; y?: number }[] = [];
+    const targetElements: string[] = [];
+    let snappedX = x;
+    let snappedY = y;
+    let snappedWidth = width;
+    let snappedHeight = height;
+
+    // Determine which edges are being moved by this handle
+    const movesLeft = ['nw', 'w', 'sw'].includes(handle);
+    const movesRight = ['ne', 'e', 'se'].includes(handle);
+    const movesTop = ['nw', 'n', 'ne'].includes(handle);
+    const movesBottom = ['sw', 's', 'se'].includes(handle);
+
+    // Current edge positions
+    const edgeLeft = x;
+    const edgeRight = x + width;
+    const edgeTop = y;
+    const edgeBottom = y + height;
+
+    // Collect all snap lines from badge and other elements
+    const xSnapLines: number[] = [0, badgeWidth / 2, badgeWidth];
+    const ySnapLines: number[] = [0, badgeHeight / 2, badgeHeight];
+
+    elements.forEach(other => {
+      if (other.id === elementId) return;
+      if (selectedElements.length > 1 && selectedElements.includes(other.id)) return;
+      xSnapLines.push(other.x, other.x + other.width / 2, other.x + other.width);
+      ySnapLines.push(other.y, other.y + other.height / 2, other.y + other.height);
+    });
+
+    // Snap left edge (right edge stays fixed)
+    if (movesLeft) {
+      let bestDist = SNAP_THRESHOLD;
+      let bestSnap: number | null = null;
+      for (const line of xSnapLines) {
+        const dist = Math.abs(edgeLeft - line);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestSnap = line;
+        }
+      }
+      if (bestSnap !== null) {
+        snappedX = bestSnap;
+        snappedWidth = edgeRight - bestSnap;
+        guides.push({ x: bestSnap });
+      }
+    }
+
+    // Snap right edge (left edge stays fixed)
+    if (movesRight) {
+      let bestDist = SNAP_THRESHOLD;
+      let bestSnap: number | null = null;
+      for (const line of xSnapLines) {
+        const dist = Math.abs(edgeRight - line);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestSnap = line;
+        }
+      }
+      if (bestSnap !== null) {
+        snappedWidth = bestSnap - snappedX;
+        guides.push({ x: bestSnap });
+      }
+    }
+
+    // Snap top edge (bottom edge stays fixed)
+    if (movesTop) {
+      let bestDist = SNAP_THRESHOLD;
+      let bestSnap: number | null = null;
+      for (const line of ySnapLines) {
+        const dist = Math.abs(edgeTop - line);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestSnap = line;
+        }
+      }
+      if (bestSnap !== null) {
+        snappedY = bestSnap;
+        snappedHeight = edgeBottom - bestSnap;
+        guides.push({ y: bestSnap });
+      }
+    }
+
+    // Snap bottom edge (top edge stays fixed)
+    if (movesBottom) {
+      let bestDist = SNAP_THRESHOLD;
+      let bestSnap: number | null = null;
+      for (const line of ySnapLines) {
+        const dist = Math.abs(edgeBottom - line);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestSnap = line;
+        }
+      }
+      if (bestSnap !== null) {
+        snappedHeight = bestSnap - snappedY;
+        guides.push({ y: bestSnap });
+      }
+    }
+
+    // Find target elements for visual highlighting
+    elements.forEach(other => {
+      if (other.id === elementId) return;
+      const otherXEdges = [other.x, other.x + other.width / 2, other.x + other.width];
+      const otherYEdges = [other.y, other.y + other.height / 2, other.y + other.height];
+      for (const guide of guides) {
+        if (guide.x !== undefined && otherXEdges.some(e => Math.abs(e - (guide.x as number)) < 1)) {
+          if (!targetElements.includes(other.id)) targetElements.push(other.id);
+        }
+        if (guide.y !== undefined && otherYEdges.some(e => Math.abs(e - (guide.y as number)) < 1)) {
+          if (!targetElements.includes(other.id)) targetElements.push(other.id);
+        }
+      }
+    });
+
+    setSnapGuides(guides);
+    setSnapTargetElements(targetElements);
+    return { x: snappedX, y: snappedY, width: snappedWidth, height: snappedHeight };
   };
 
   // Native drag handlers
@@ -998,30 +1211,35 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             onMouseUp={onBackgroundMouseUp}
           >
           {/* Background upload prompt */}
-          {!background && (
-            <div 
-              className="absolute inset-0 flex items-center justify-center text-gray-400 cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                backgroundInputRef.current?.click();
-              }}
-            >
-              <div className="text-center">
-                <Plus 
-                  size={48} 
-                  className="mx-auto mb-2" 
-                />
-                <p>Cliquez pour ajouter un arrière-plan</p>
-                <input
-                  ref={backgroundInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={onBackgroundUpload}
-                  className="hidden"
-                />
+          {!background && (() => {
+            const zoom = currentZoom || initialZoom;
+            const iconSize = Math.round(48 / zoom);
+            const fontSize = Math.max(10, Math.round(14 / zoom));
+            return (
+              <div 
+                className="absolute inset-0 flex items-center justify-center text-gray-400 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  backgroundInputRef.current?.click();
+                }}
+              >
+                <div className="text-center">
+                  <Plus 
+                    size={iconSize} 
+                    className="mx-auto mb-2" 
+                  />
+                  <p style={{ fontSize: `${fontSize}px` }}>Cliquez pour ajouter un arrière-plan</p>
+                  <input
+                    ref={backgroundInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={onBackgroundUpload}
+                    className="hidden"
+                  />
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Render elements */}
           {elements

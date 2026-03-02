@@ -41,6 +41,7 @@ import {
   BarChart3,
   Mail,
   Printer,
+  LayoutGrid,
 } from 'lucide-react'
 import { formatDate, formatDateTime } from '@/shared/lib/utils'
 import { EventSettingsTab } from './EventSettingsTab'
@@ -63,8 +64,9 @@ import { FormPreview } from '@/features/events/ui/FormPreview'
 import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 import { EventSessionsTab } from './EventSessionsTab'
+import { EventPlacementTab } from './EventPlacementTab'
 
-type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions' | 'stats' | 'emails' | 'print-queue'
+type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions' | 'placement' | 'stats' | 'emails' | 'print-queue'
 
 export const EventDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>()
@@ -83,7 +85,7 @@ export const EventDetails: React.FC = () => {
   // Synchroniser l'onglet actif avec l'URL
   useEffect(() => {
     const currentTab = searchParams.get('tab') as TabType | null
-    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions', 'stats', 'emails', 'print-queue'].includes(currentTab)) {
+    if (currentTab && ['details', 'registrations', 'team', 'form', 'settings', 'attendee-types', 'badges', 'sessions', 'placement', 'stats', 'emails', 'print-queue'].includes(currentTab)) {
       setActiveTab(currentTab)
     }
   }, [searchParams])
@@ -743,6 +745,13 @@ export const EventDetails: React.FC = () => {
       disabledIfDeleted: true 
     },
     { 
+      id: 'placement' as TabType, 
+      label: t('tabs.placement'), 
+      icon: LayoutGrid,
+      hasPermission: canReadEvents,
+      disabledIfDeleted: true 
+    },
+    { 
       id: 'form' as TabType, 
       label: t('tabs.form'), 
       icon: FormInput, 
@@ -1264,6 +1273,14 @@ export const EventDetails: React.FC = () => {
           <EventSessionsTab 
             event={event} 
             eventAttendeeTypes={eventAttendeeTypes || []} 
+            isLoadingAttendeeTypes={isLoadingAttendeeTypes}
+          />
+        )}
+
+        {activeTab === 'placement' && (
+          <EventPlacementTab
+            event={event}
+            eventAttendeeTypes={eventAttendeeTypes || []}
             isLoadingAttendeeTypes={isLoadingAttendeeTypes}
           />
         )}

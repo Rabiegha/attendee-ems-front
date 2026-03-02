@@ -32,6 +32,16 @@ interface AttendeeType {
   }
 }
 
+interface PublicEventTable {
+  id: string
+  name: string
+  capacity: number | null
+  is_fallback: boolean
+  sort_order: number
+  assigned_count: number
+  available: boolean
+}
+
 const PublicRegistration: React.FC = () => {
   const { token } = useParams<{ token: string }>()
   const toast = useToast()
@@ -39,6 +49,7 @@ const PublicRegistration: React.FC = () => {
 
   const [event, setEvent] = useState<EventSettings | null>(null)
   const [attendeeTypes, setAttendeeTypes] = useState<AttendeeType[]>([])
+  const [eventTables, setEventTables] = useState<PublicEventTable[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState<Record<string, string | boolean>>({})
@@ -71,13 +82,9 @@ const PublicRegistration: React.FC = () => {
         setEvent(data)
 
         // Si l'événement a des champs de type attendee_type, charger les types
-        const hasAttendeeTypeField = data.registration_fields?.some((f: any) => f.type === 'attendee_type')
+        const hasAttendeeTypeField = data.registration_fields?.some((f: any) => f.type === 'attendee_type' || f.fieldType === 'attendee_type')
         if (hasAttendeeTypeField) {
           try {
-            // Utiliser l'endpoint public pour récupérer les types de participants
-            // Note: Il faudra peut-être créer cet endpoint côté backend s'il n'existe pas
-            // Pour l'instant on essaie de récupérer via l'endpoint existant si possible ou on simule
-            // En réalité, on devrait avoir un endpoint public pour ça: /public/events/:token/attendee-types
             const typesResponse = await fetch(`${apiUrl}/public/events/${token}/attendee-types`)
             if (typesResponse.ok) {
               const typesData = await typesResponse.json()
@@ -86,6 +93,20 @@ const PublicRegistration: React.FC = () => {
             }
           } catch (e) {
             console.error("Erreur lors du chargement des types de participants", e)
+          }
+        }
+
+        // Si l'événement a des champs de type table_choice, charger les tables
+        const hasTableChoiceField = data.registration_fields?.some((f: any) => f.type === 'table_choice' || f.fieldType === 'table_choice')
+        if (hasTableChoiceField) {
+          try {
+            const tablesResponse = await fetch(`${apiUrl}/public/events/${token}/tables`)
+            if (tablesResponse.ok) {
+              const tablesData = await tablesResponse.json()
+              setEventTables(tablesData)
+            }
+          } catch (e) {
+            console.error("Erreur lors du chargement des tables", e)
           }
         }
 
@@ -323,6 +344,30 @@ const PublicRegistration: React.FC = () => {
             {attendeeTypes.map((type) => (
               <option key={type.id} value={type.id} className="dark:bg-gray-700 dark:text-white">
                 {type.attendeeType.name}
+              </option>
+            ))}
+          </select>
+        )
+      case 'table_choice':
+        return (
+          <select
+            value={stringValue}
+            onChange={(e) => handleInputChange(field.id, e.target.value)}
+            required={field.required}
+            disabled={disabled}
+            className={baseClasses}
+          >
+            <option value="" className="dark:bg-gray-700 dark:text-white">{t('public_registration.select_table', 'Sélectionnez une table')}</option>
+            {eventTables.map((table) => (
+              <option
+                key={table.id}
+                value={table.id}
+                disabled={!table.available && table.capacity !== null}
+                className="dark:bg-gray-700 dark:text-white"
+              >
+                {table.name}
+                {table.capacity !== null ? ` (${table.assigned_count}/${table.capacity})` : ''}
+                {!table.available && table.capacity !== null ? ` - ${t('public_registration.table_full', 'Complet')}` : ''}
               </option>
             ))}
           </select>

@@ -23,6 +23,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Printer,
+  LayoutGrid,
 } from 'lucide-react'
 import type { RegistrationDPO } from '../dpo/registration.dpo'
 import { Button, TableSelector, type TableSelectorOption, ActionButtons } from '@/shared/ui'
@@ -1224,6 +1225,63 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     })
   }, [allAnswerKeys, formFields, registrations])
 
+  // Colonnes conditionnelles pour les tables (seulement si au moins une valeur)
+  const conditionalTableColumns = useMemo<ColumnDef<RegistrationDPO>[]>(() => {
+    const cols: ColumnDef<RegistrationDPO>[] = []
+    
+    const hasTableChoice = registrations.some(reg => reg.tableChoice?.name)
+    if (hasTableChoice) {
+      cols.push({
+        id: 'tableChoice',
+        header: colHeader(t('events:registrations.header_table_choice')),
+        accessorFn: (row) => row.tableChoice?.name || '',
+        sortingFn: 'caseInsensitive',
+        cell: ({ row }) => {
+          const choice = row.original.tableChoice
+          return (
+            <div className="cursor-pointer text-sm" onClick={() => handleRowClick(row.original)}>
+              {choice ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium">
+                  <LayoutGrid className="h-3 w-3" />
+                  {choice.name}
+                </span>
+              ) : (
+                <span className="text-gray-400 dark:text-gray-600">—</span>
+              )}
+            </div>
+          )
+        },
+      })
+    }
+    
+    const hasAssignedTable = registrations.some(reg => reg.assignedTable?.name)
+    if (hasAssignedTable) {
+      cols.push({
+        id: 'assignedTable',
+        header: colHeader(t('events:registrations.header_assigned_table')),
+        accessorFn: (row) => row.assignedTable?.name || '',
+        sortingFn: 'caseInsensitive',
+        cell: ({ row }) => {
+          const assigned = row.original.assignedTable
+          return (
+            <div className="cursor-pointer text-sm" onClick={() => handleRowClick(row.original)}>
+              {assigned ? (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs font-medium">
+                  <LayoutGrid className="h-3 w-3" />
+                  {assigned.name}
+                </span>
+              ) : (
+                <span className="text-gray-400 dark:text-gray-600">—</span>
+              )}
+            </div>
+          )
+        },
+      })
+    }
+    
+    return cols
+  }, [registrations, t])
+
   // Columns definition
   const columns = useMemo<ColumnDef<RegistrationDPO>[]>(
     () => {
@@ -1275,6 +1333,8 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
       },
       // Injecter les colonnes custom ici
       ...customColumns,
+      // Colonnes conditionnelles (tables) — n'apparaissent que si au moins une valeur
+      ...conditionalTableColumns,
       {
         id: 'attendeeType',
         header: colHeader(t('events:registrations.header_type')),
@@ -1615,7 +1675,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     
     return baseColumns
   },
-    [isUpdating, isDeletedTab, optimisticStatusUpdates, updateStatus, quickDownloadingKeys, customColumns, t, STATUS_CONFIG, STATUS_OPTIONS]
+    [isUpdating, isDeletedTab, optimisticStatusUpdates, updateStatus, quickDownloadingKeys, customColumns, conditionalTableColumns, t, STATUS_CONFIG, STATUS_OPTIONS]
   )
 
   return (

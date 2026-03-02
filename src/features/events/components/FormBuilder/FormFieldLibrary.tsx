@@ -14,6 +14,7 @@ import {
   List,
   Users,
   ShieldCheck,
+  LayoutGrid,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { FormFieldConfig } from '@/features/registrations/config/formFields.config'
@@ -199,6 +200,22 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
       { label: 'En ligne', value: 'online' },
     ],
   },
+  {
+    id: 'table_choice',
+    key: 'table_choice_id',
+    label: 'Choix de table',
+    placeholder: 'Sélectionnez une table',
+    type: 'table_choice',
+    icon: LayoutGrid,
+    category: 'event',
+    description: 'Table souhaitée pour le placement',
+    required: false,
+    registrationField: 'table_choice_id',
+    visibleInPublicForm: true,
+    visibleInAdminForm: true,
+    visibleInAttendeeTable: true,
+    visibleInExport: true,
+  },
 
   // ===== CATÉGORIE : PERSONNALISÉ =====
   {
@@ -294,7 +311,7 @@ export function getFieldById(id: string): PredefinedFieldTemplate | undefined {
  * Créer une instance de champ personnalisé
  */
 export function createCustomField(
-  type: 'text' | 'textarea' | 'select' | 'attendee_type',
+  type: 'text' | 'textarea' | 'select' | 'attendee_type' | 'table_choice',
   label: string,
   key?: string
 ): PredefinedFieldTemplate {
@@ -311,7 +328,7 @@ export function createCustomField(
     label,
     placeholder: `Saisissez ${label.toLowerCase()}`,
     type,
-    icon: type === 'textarea' ? MessageSquare : type === 'select' ? List : type === 'attendee_type' ? Users : User,
+    icon: type === 'textarea' ? MessageSquare : type === 'select' ? List : type === 'attendee_type' ? Users : type === 'table_choice' ? LayoutGrid : User,
     category: 'custom',
     description: `Champ personnalisé : ${label}`,
     required: false,
@@ -330,6 +347,15 @@ export function createCustomField(
     return {
       ...baseField,
       registrationField: 'event_attendee_type_id',
+      storeInAnswers: false,
+      visibleInAttendeeTable: true,
+    } as PredefinedFieldTemplate
+  }
+
+  if (type === 'table_choice') {
+    return {
+      ...baseField,
+      registrationField: 'table_choice_id',
       storeInAnswers: false,
       visibleInAttendeeTable: true,
     } as PredefinedFieldTemplate

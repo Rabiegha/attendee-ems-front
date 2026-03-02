@@ -19,6 +19,16 @@ export interface RegistrationDPO {
       text_color_hex: string | null
     }
   } | null
+  tableChoiceId?: string | null
+  assignedTableId?: string | null
+  tableChoice?: {
+    id: string
+    name: string
+  } | null
+  assignedTable?: {
+    id: string
+    name: string
+  } | null
   event?: {
     id: string
     name: string

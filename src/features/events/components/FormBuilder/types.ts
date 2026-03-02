@@ -51,7 +51,7 @@ export interface StandardField {
   storeInAnswers?: boolean        // Si true, stocké dans answers plutôt que dans attendee
   label: string
   placeholder?: string
-  fieldType?: 'text' | 'email' | 'phone' | 'textarea'
+  fieldType?: 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'multiselect' | 'country' | 'attendee_type' | 'table_choice'
   icon?: LucideIcon
   category?: 'identity' | 'contact' | 'professional' | 'event' | 'custom' | 'legal'
   description?: string

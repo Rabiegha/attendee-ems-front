@@ -22,6 +22,16 @@ export function mapRegistrationDTOtoDPO(dto: RegistrationDTO): RegistrationDPO {
         text_color_hex: dto.eventAttendeeType.attendeeType.text_color_hex,
       }
     } : null,
+    tableChoiceId: dto.table_choice_id || null,
+    assignedTableId: dto.assigned_table_id || null,
+    tableChoice: dto.tableChoice ? {
+      id: dto.tableChoice.id,
+      name: dto.tableChoice.name,
+    } : null,
+    assignedTable: dto.assignedTable ? {
+      id: dto.assignedTable.id,
+      name: dto.assignedTable.name,
+    } : null,
     event: dto.event ? {
       id: dto.event.id,
       name: dto.event.name,
@@ -90,6 +100,8 @@ export function mapRegistrationDPOtoDTO(dpo: RegistrationDPO): RegistrationDTO {
     attendance_type: dpo.attendanceType,
     answers: dpo.answers,
     event_attendee_type_id: dpo.eventAttendeeTypeId || null,
+    table_choice_id: dpo.tableChoiceId || null,
+    assigned_table_id: dpo.assignedTableId || null,
     badge_template_id: dpo.badgeTemplateId || null,
     invited_at: dpo.invitedAt || null,
     confirmed_at: dpo.confirmedAt || null,

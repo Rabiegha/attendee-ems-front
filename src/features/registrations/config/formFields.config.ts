@@ -12,6 +12,7 @@ export type FieldType =
   | 'radio' // Boutons radio (choix unique)
   | 'country' // Sélecteur de pays
   | 'attendee_type' // Type de participant (Staff, Partenaire, Invité...)
+  | 'table_choice' // Choix de table (placement)
   | 'checkbox' // Case à cocher (RGPD, consentements)
 
 export interface FormFieldConfig {

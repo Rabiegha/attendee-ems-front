@@ -351,6 +351,50 @@ export const eventsApi = rootApi.injectEndpoints({
         { type: 'SessionHistory', id: sessionId }
       ],
     }),
+
+    // ─── Event Tables (Placement) ─────────────────────────────────
+    getEventTables: builder.query<EventTable[], string>({
+      query: (eventId) => `/events/${eventId}/tables`,
+      providesTags: (_result, _error, eventId) => [{ type: 'EventTables', id: eventId }],
+    }),
+
+    createEventTable: builder.mutation<EventTable, { eventId: string; data: CreateEventTableDto }>({
+      query: ({ eventId, data }) => ({
+        url: `/events/${eventId}/tables`,
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventTables', id: eventId }],
+    }),
+
+    updateEventTable: builder.mutation<EventTable, { eventId: string; tableId: string; data: UpdateEventTableDto }>({
+      query: ({ eventId, tableId, data }) => ({
+        url: `/events/${eventId}/tables/${tableId}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventTables', id: eventId }],
+    }),
+
+    deleteEventTable: builder.mutation<void, { eventId: string; tableId: string }>({
+      query: ({ eventId, tableId }) => ({
+        url: `/events/${eventId}/tables/${tableId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [{ type: 'EventTables', id: eventId }],
+    }),
+
+    assignRegistrationTable: builder.mutation<any, { eventId: string; registrationId: string; tableId: string | null }>({
+      query: ({ eventId, registrationId, tableId }) => ({
+        url: `/events/${eventId}/tables/assign`,
+        method: 'POST',
+        body: { registrationId, tableId },
+      }),
+      invalidatesTags: (_result, _error, { eventId }) => [
+        { type: 'EventTables', id: eventId },
+        { type: 'Registrations', id: eventId },
+      ],
+    }),
   }),
   overrideExisting: false,
 })
@@ -431,6 +475,49 @@ export interface ScanSessionDto {
   scanType: 'IN' | 'OUT'
 }
 
+// ─── Event Table (Placement) types ─────────────────────────────
+export interface EventTableRegistration {
+  id: string
+  attendee: {
+    id: string
+    first_name: string
+    last_name: string
+    email: string
+  }
+  checked_in_at: string | null
+}
+
+export interface EventTable {
+  id: string
+  org_id: string
+  event_id: string
+  name: string
+  capacity: number | null
+  is_fallback: boolean
+  sort_order: number
+  allowedAttendeeTypes: string[]
+  assignedCount: number
+  assignedRegistrations: EventTableRegistration[]
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateEventTableDto {
+  name: string
+  capacity?: number
+  is_fallback?: boolean
+  sort_order?: number
+  allowedAttendeeTypes?: string[]
+}
+
+export interface UpdateEventTableDto {
+  name?: string
+  capacity?: number
+  is_fallback?: boolean
+  sort_order?: number
+  allowedAttendeeTypes?: string[]
+}
+
 export const {
   useGetEventsQuery,
   useGetEventByIdQuery,
@@ -456,4 +543,9 @@ export const {
   useUpdateEventSessionMutation,
   useDeleteEventSessionMutation,
   useScanSessionParticipantMutation,
+  useGetEventTablesQuery,
+  useCreateEventTableMutation,
+  useUpdateEventTableMutation,
+  useDeleteEventTableMutation,
+  useAssignRegistrationTableMutation,
 } = eventsApi

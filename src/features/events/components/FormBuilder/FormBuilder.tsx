@@ -408,7 +408,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       order: fields.length,
       width: 'full',
       label: template.label,
-      fieldType: template.type as 'text' | 'email' | 'phone' | 'textarea',
+      fieldType: template.type as StandardField['fieldType'],
       required: template.required ?? false,
       visibleInPublicForm: template.visibleInPublicForm ?? true,
       visibleInAdminForm: template.visibleInAdminForm ?? true,

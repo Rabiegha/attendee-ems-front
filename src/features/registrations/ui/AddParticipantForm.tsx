@@ -3,6 +3,7 @@ import type { FormField } from '@/features/events/components/FormBuilder'
 import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/hooks/useToast'
 import { useCreateRegistrationMutation } from '../api/registrationsApi'
+import { useGetEventTablesQuery } from '@/features/events/api/eventsApi'
 import { CheckCircle, Clock, XCircle, Ban } from 'lucide-react'
 
 interface EventAttendeeType {
@@ -54,6 +55,10 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const toast = useToast()
   const [createRegistration] = useCreateRegistrationMutation()
+
+  // Fetch tables if form has a table_choice field
+  const hasTableChoiceField = fields.some((f) => f.type === 'table_choice' || ('fieldType' in f && f.fieldType === 'table_choice'))
+  const { data: eventTables = [] } = useGetEventTablesQuery(eventId, { skip: !hasTableChoiceField })
 
   const handleInputChange = (fieldId: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }))
@@ -127,6 +132,11 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
         requestData.event_attendee_type_id = selectedAttendeeTypeId
       } else if (registrationData.attendee_type) {
         requestData.event_attendee_type_id = registrationData.attendee_type
+      }
+
+      // Table choice
+      if (registrationData.table_choice_id) {
+        requestData.table_choice_id = registrationData.table_choice_id
       }
 
       if (Object.keys(answers).length > 0) {
@@ -314,6 +324,26 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
               )
             })}
           </div>
+        )
+
+      case 'table_choice':
+        return (
+          <select
+            id={field.id}
+            value={value}
+            onChange={(e) => handleInputChange(field.id, e.target.value)}
+            required={field.required}
+            className={commonClasses}
+          >
+            <option value="">Sélectionnez une table...</option>
+            {eventTables.map((table: any) => (
+              <option key={table.id} value={table.id} disabled={!table.available && table.capacity !== null}>
+                {table.name}
+                {table.capacity !== null ? ` (${table.assigned_count || table._count?.assignedRegistrations || 0}/${table.capacity})` : ''}
+                {!table.available && table.capacity !== null ? ' - Complet' : ''}
+              </option>
+            ))}
+          </select>
         )
 
       default:

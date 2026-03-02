@@ -6,7 +6,7 @@ import { formatDate } from '@/shared/lib/utils'
 import { Button } from '@/shared/ui/Button'
 import { useToast } from '@/shared/hooks/useToast'
 import { useCreatePublicRegistrationMutation } from '../api/publicEventsApi'
-import { useGetEventAttendeeTypesQuery } from '../api/eventsApi'
+import { useGetEventAttendeeTypesQuery, useGetEventTablesQuery } from '../api/eventsApi'
 
 interface FormPreviewProps {
   event: EventDPO
@@ -39,6 +39,8 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
   
   // Fetch attendee types for the event
   const { data: eventAttendeeTypes } = useGetEventAttendeeTypesQuery(event.id)
+  // Fetch tables for the event
+  const { data: eventTables } = useGetEventTablesQuery(event.id)
 
   const handleInputChange = (fieldId: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldId]: value }))
@@ -124,6 +126,11 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       // Add registration-specific data
       if (registrationData.event_attendee_type_id) {
         requestData.event_attendee_type_id = registrationData.event_attendee_type_id
+      }
+
+      // Add table choice
+      if (registrationData.table_choice_id) {
+        requestData.table_choice_id = registrationData.table_choice_id
       }
 
       // Add custom answers
@@ -285,6 +292,47 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             />
             <span className="text-gray-900 dark:text-white">{(field as any).checkboxText || field.label}</span>
           </div>
+        )
+      case 'attendee_type':
+        return (
+          <select
+            value={value}
+            onChange={(e) => handleInputChange(field.id, e.target.value)}
+            className={baseClasses}
+            required={field.required}
+            disabled={disabled}
+          >
+            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez un type</option>
+            {eventAttendeeTypes?.map((type: any) => (
+              <option key={type.id} value={type.id} className="dark:bg-gray-700 dark:text-white">
+                {type.attendeeType?.name || type.name}
+              </option>
+            ))}
+          </select>
+        )
+      case 'table_choice':
+        return (
+          <select
+            value={value}
+            onChange={(e) => handleInputChange(field.id, e.target.value)}
+            className={baseClasses}
+            required={field.required}
+            disabled={disabled}
+          >
+            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez une table</option>
+            {eventTables?.map((table: any) => (
+              <option
+                key={table.id}
+                value={table.id}
+                disabled={table.capacity !== null && (table._count?.assignedRegistrations ?? 0) >= table.capacity}
+                className="dark:bg-gray-700 dark:text-white"
+              >
+                {table.name}
+                {table.capacity !== null ? ` (${table._count?.assignedRegistrations ?? 0}/${table.capacity})` : ''}
+                {table.capacity !== null && (table._count?.assignedRegistrations ?? 0) >= table.capacity ? ' - Complet' : ''}
+              </option>
+            ))}
+          </select>
         )
       case 'multiselect':
         return (

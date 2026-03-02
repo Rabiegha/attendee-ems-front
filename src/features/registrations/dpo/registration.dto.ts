@@ -19,6 +19,16 @@ export interface RegistrationDTO {
       text_color_hex: string | null
     }
   } | null
+  table_choice_id?: string | null
+  assigned_table_id?: string | null
+  tableChoice?: {
+    id: string
+    name: string
+  } | null
+  assignedTable?: {
+    id: string
+    name: string
+  } | null
   event?: {
     id: string
     name: string

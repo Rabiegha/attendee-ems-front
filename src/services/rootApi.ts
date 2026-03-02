@@ -150,6 +150,7 @@ export const rootApi = createApi({
     'Badge',
     'Sessions',
     'SessionHistory',
+    'EventTables',
     'EmailTemplates',
     'PrintJobs',
   ],

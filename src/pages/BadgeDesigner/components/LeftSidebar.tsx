@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, ImageIcon, Save, ArrowLeft, Trash2 } from 'lucide-react';
-import { BadgeFormat, BADGE_FORMATS, BADGE_FORMAT_LIST } from '../../../shared/types/badge.types';
+import { BadgeElement, BadgeFormat, BADGE_FORMATS, BADGE_FORMAT_LIST } from '../../../shared/types/badge.types';
 import { Button } from '../../../shared/ui/Button';
 import { ZoomControls } from './ZoomControls';
+import { LayerPanel } from './LayerPanel';
+import { VariablesSection } from './VariablesSection';
 
 interface LeftSidebarProps {
   format: BadgeFormat;
@@ -25,6 +27,16 @@ interface LeftSidebarProps {
   zoom: number;
   onZoomIn: () => void;
   onZoomOut: () => void;
+  // Layer panel props
+  elements: BadgeElement[];
+  selectedElements: string[];
+  symmetryPairs: Map<string, string>;
+  onSelectElements: (ids: string[]) => void;
+  onUpdateElement: (id: string, updates: Partial<BadgeElement>, skipHistory?: boolean) => void;
+  onBatchUpdateElements: (updates: Array<{ id: string; updates: Partial<BadgeElement> }>, skipHistory?: boolean) => void;
+  onDeleteElement: (id: string) => void;
+  onDuplicateElement: (id: string) => void;
+  onReorderElements: (reorderedElements: BadgeElement[]) => void;
 }
 
 export const LeftSidebar: React.FC<LeftSidebarProps> = ({
@@ -45,7 +57,16 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
   background,
   zoom,
   onZoomIn,
-  onZoomOut
+  onZoomOut,
+  elements,
+  selectedElements,
+  symmetryPairs,
+  onSelectElements,
+  onUpdateElement,
+  onBatchUpdateElements,
+  onDeleteElement,
+  onDuplicateElement,
+  onReorderElements
 }) => {
   const { t } = useTranslation('badges')
   return (
@@ -204,28 +225,20 @@ export const LeftSidebar: React.FC<LeftSidebarProps> = ({
       </div>
 
       {/* Variables */}
-      <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-        <h3 className="font-medium mb-2 text-gray-800 dark:text-gray-200">Variables</h3>
-        <div className="space-y-1">
-          {[
-            { key: 'firstName', label: 'Prénom' },
-            { key: 'lastName', label: 'Nom' },
-            { key: 'company', label: 'Entreprise' },
-            { key: 'jobTitle', label: 'Poste' },
-            { key: 'email', label: 'Email' },
-            { key: 'eventName', label: 'Événement' },
-            { key: 'attendeeType', label: 'Type de participant' },
-          ].map(variable => (
-            <button
-              key={variable.key}
-              onClick={() => onAddElement('text', `{{${variable.key}}}`)}
-              className="w-full text-left px-2 py-1 text-xs bg-gray-50 hover:bg-gray-100 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-100 dark:border-gray-600 rounded border"
-            >
-              {variable.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <VariablesSection onAddElement={onAddElement} />
+
+      {/* Layer Panel */}
+      <LayerPanel
+        elements={elements}
+        selectedElements={selectedElements}
+        symmetryPairs={symmetryPairs}
+        onSelectElements={onSelectElements}
+        onUpdateElement={onUpdateElement}
+        onBatchUpdateElements={onBatchUpdateElements}
+        onDeleteElement={onDeleteElement}
+        onDuplicateElement={onDuplicateElement}
+        onReorderElements={onReorderElements}
+      />
       </div>
 
       {/* Zoom Controls - Fixed en bas */}

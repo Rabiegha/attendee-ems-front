@@ -1176,9 +1176,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     allAnswerKeys.forEach(fieldId => {
       const hasData = registrations.some(reg => {
         const answer = reg.answers?.[fieldId]
-        // Support ancien et nouveau format
-        const value = typeof answer === 'object' && answer !== null && 'value' in answer ? answer.value : answer
-        return value !== undefined && value !== null && value !== ''
+        return answer !== undefined && answer !== null && answer !== ''
       })
       visibility[`custom_${fieldId}`] = hasData
     })
@@ -1188,36 +1186,27 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
   // Générer les colonnes dynamiques pour les champs custom
   const customColumns = useMemo<ColumnDef<RegistrationDPO>[]>(() => {
-    // Pour chaque clé trouvée dans answers, créer une colonne
+    // Pour chaque clé trouvée dans answers, créer une colonne (format plat: label -> value)
     return allAnswerKeys.map((fieldId) => {
       // Chercher le champ dans le formulaire pour avoir le type et les options
-      const field = formFields?.find(f => f.id === fieldId && isCustomField(f)) as CustomField | undefined
+      const field = formFields?.find(f => f.label === fieldId && isCustomField(f)) as CustomField | undefined
       
-      // Récupérer le label depuis les données (première inscription qui a ce champ)
-      const sampleAnswer = registrations.find(reg => reg.answers?.[fieldId])?.answers?.[fieldId]
-      const storedLabel = typeof sampleAnswer === 'object' && sampleAnswer !== null && 'label' in sampleAnswer 
-        ? sampleAnswer.label 
-        : field?.label || fieldId
+      // Le fieldId est déjà le label en format plat
+      const columnLabel = field?.label || fieldId
       
       return {
         id: `custom_${fieldId}`,
-        header: () => <span title={storedLabel}>{storedLabel}</span>,
-        accessorFn: (row) => {
-          const answer = row.answers?.[fieldId]
-          // Support ancien format (valeur directe) et nouveau format (objet)
-          return typeof answer === 'object' && answer !== null && 'value' in answer ? answer.value : answer
-        },
+        header: () => <span title={columnLabel}>{columnLabel}</span>,
+        accessorFn: (row) => row.answers?.[fieldId],
         cell: ({ row }) => {
-          const answer = row.original.answers?.[fieldId]
-          const value = typeof answer === 'object' && answer !== null && 'value' in answer ? answer.value : answer
-          const fieldType = typeof answer === 'object' && answer !== null && 'fieldType' in answer ? answer.fieldType : field?.fieldType
+          const value = row.original.answers?.[fieldId]
           
           return (
             <div 
               className="cursor-pointer text-sm text-gray-900 dark:text-white"
               onClick={() => handleRowClick(row.original)}
             >
-              {field && fieldType ? formatCustomValue(value, { ...field, fieldType }) : (value ? String(value) : '—')}
+              {field?.fieldType ? formatCustomValue(value, { ...field, fieldType: field.fieldType }) : (value ? String(value) : '—')}
             </div>
           )
         },

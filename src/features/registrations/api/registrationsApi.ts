@@ -542,29 +542,6 @@ export const registrationsApi = rootApi.injectEndpoints({
       }),
     }),
 
-    checkFieldData: builder.mutation<
-      { affectedCount: number; canDelete: boolean },
-      { eventId: string; fieldId: string }
-    >({
-      query: ({ eventId, fieldId }) => ({
-        url: `/registrations/events/${eventId}/check-field-data/${fieldId}`,
-        method: 'POST',
-      }),
-    }),
-
-    cleanFieldData: builder.mutation<
-      { cleanedCount: number },
-      { eventId: string; fieldId: string }
-    >({
-      query: ({ eventId, fieldId }) => ({
-        url: `/registrations/events/${eventId}/clean-field-data/${fieldId}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: (_result, _error, { eventId }) => [
-        { type: 'Attendee', id: `EVENT-${eventId}` },
-      ],
-    }),
-
     getRecentRegistrations: builder.query<
       RegistrationDPO[],
       { limit?: number }
@@ -614,6 +591,4 @@ export const {
   useGenerateBadgeMutation,
   useDownloadBadgeMutation,
   useGetRegistrationTemplateMutation,
-  useCheckFieldDataMutation,
-  useCleanFieldDataMutation,
 } = registrationsApi

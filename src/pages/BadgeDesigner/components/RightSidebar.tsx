@@ -7,7 +7,8 @@ import {
   AlignStartVertical, AlignCenterVertical, AlignEndVertical,
   AlignStartHorizontal, AlignEndHorizontal, AlignCenterHorizontal,
   Undo2, Redo2, CopyPlus,
-  CaseUpper, CaseLower, CaseSensitive, Type
+  CaseUpper, CaseLower, CaseSensitive, Type,
+  Lock, Unlock
 } from 'lucide-react';
 import { GoogleFontPicker, loadGoogleFont } from './GoogleFontPicker';
 import { BadgeElement, BadgeFormat } from '../../../shared/types/badge.types';
@@ -416,6 +417,22 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           }
         </h3>
       </div>
+
+      {/* Lock indicator */}
+      {selectedElement?.locked && (
+        <div className="flex items-center justify-between px-2.5 py-1.5 bg-amber-500/10 rounded-md">
+          <div className="flex items-center gap-1.5">
+            <Lock size={12} className="text-amber-500" />
+            <span className="text-xs text-amber-600 dark:text-amber-400">Verrouillé</span>
+          </div>
+          <button
+            onClick={() => onUpdateElement(selectedElement.id, { locked: false })}
+            className="text-[11px] text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 underline"
+          >
+            Déverrouiller
+          </button>
+        </div>
+      )}
 
       {/* Multi-Selection Panel */}
       {multipleSelected && (
@@ -1367,16 +1384,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           )}
         </div>
 
-        {/* Z-Index */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Z-Index</label>
-          <input
-            type="number"
-            value={selectedElement?.style.zIndex || 1}
-            onChange={(e) => handleStyleUpdate('zIndex', parseInt(e.target.value))}
-            className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded p-2 text-sm"
-          />
-        </div>
+
       </div>
       </div>
 

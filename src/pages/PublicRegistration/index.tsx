@@ -165,15 +165,10 @@ const PublicRegistration: React.FC = () => {
       event?.registration_fields?.forEach((field: any) => {
         const value = formData[field.id]
         
-        // Champs custom (type: 'custom') -> stockés dans answers comme objets
+        // Champs custom (type: 'custom') -> stockés dans answers au format plat
         if (field.type === 'custom') {
-          // Pour les champs custom, on stocke même si vide (sauf undefined/null)
           if (value !== undefined && value !== null) {
-            answers[field.id] = {
-              label: field.label,
-              value: value,
-              fieldType: field.fieldType
-            }
+            answers[field.label] = value
           }
         }
         // Champs standard - on skip si pas de valeur

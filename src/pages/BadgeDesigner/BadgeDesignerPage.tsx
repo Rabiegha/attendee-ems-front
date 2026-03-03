@@ -238,6 +238,12 @@ const BadgeDesignerPageContent: React.FC = () => {
     saveToHistory(newElements, background);
   }, [elements, background, saveToHistory]);
 
+  // Reorder elements (from layer panel drag-to-reorder)
+  const reorderElements = useCallback((reorderedElements: BadgeElement[]) => {
+    setElements(reorderedElements);
+    saveToHistory(reorderedElements, background);
+  }, [background, saveToHistory]);
+
   // Load template from API when editing (only once at mount)
   useEffect(() => {
     // Skip if already loaded
@@ -381,6 +387,12 @@ const BadgeDesignerPageContent: React.FC = () => {
 
       // Arrow keys: Move selected elements
       if (selectedElements.length > 0 && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        // Filter out locked elements
+        const movableElements = selectedElements.filter(id => {
+          const el = elements.find(el => el.id === id);
+          return el && !el.locked;
+        });
+        if (movableElements.length === 0) return;
         e.preventDefault();
         
         // Shift key multiplies movement by 10 for faster movement
@@ -412,7 +424,7 @@ const BadgeDesignerPageContent: React.FC = () => {
         // Calculate all symmetry updates first
         const symmetryUpdates = new Map<string, Partial<BadgeElement>>();
         
-        selectedElements.forEach(elementId => {
+        movableElements.forEach(elementId => {
           const element = elements.find(el => el.id === elementId);
           if (!element) return;
           
@@ -477,7 +489,7 @@ const BadgeDesignerPageContent: React.FC = () => {
         
         // Apply all updates in one synchronous setElements call
         const newElements = elements.map(element => {
-          if (selectedElements.includes(element.id)) {
+          if (movableElements.includes(element.id)) {
             return {
               ...element,
               x: element.x + deltaX,
@@ -605,6 +617,8 @@ const BadgeDesignerPageContent: React.FC = () => {
       width: textWidth,
       height: textHeight,
       visible: true,
+      locked: false,
+      name: type === 'text' ? (content.includes('{{') ? content.replace(/\{\{|\}\}/g, '') : `Texte ${elements.filter(el => el.type === 'text').length + 1}`) : type === 'qrcode' ? `QR Code ${elements.filter(el => el.type === 'qrcode').length + 1}` : `Image ${elements.filter(el => el.type === 'image').length + 1}`,
       ...(type === 'qrcode' && { 
         maintainAspectRatio: true,
         aspectRatio: 1
@@ -1299,8 +1313,16 @@ const BadgeDesignerPageContent: React.FC = () => {
     // Ignore middle mouse button (used for panning)
     if (e.button === 1) return;
     
-    if (e.target === badgeRef.current) {
-      const rect = badgeRef.current.getBoundingClientRect();
+    const target = e.target as HTMLElement;
+    const isOnBadgeBackground = e.target === badgeRef.current;
+    const isInsideBadge = badgeRef.current?.contains(target) ?? false;
+    
+    // Start selection if clicking on badge background OR outside badge
+    // Don't start if clicking on an element inside the badge
+    if (isOnBadgeBackground || !isInsideBadge) {
+      const rect = badgeRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
       const badgeWidth = mmToPx(format.width);
       const badgeHeight = mmToPx(format.height);
       
@@ -1320,69 +1342,90 @@ const BadgeDesignerPageContent: React.FC = () => {
     }
   };
 
-  const handleBackgroundMouseMove = (e: React.MouseEvent) => {
-    if (isSelecting && selectionStart) {
+  // Use refs to access latest state in window-level listeners without re-registering
+  const isSelectingRef = useRef(isSelecting);
+  const selectionStartRef = useRef(selectionStart);
+  const selectionEndRef = useRef(selectionEnd);
+  isSelectingRef.current = isSelecting;
+  selectionStartRef.current = selectionStart;
+  selectionEndRef.current = selectionEnd;
+
+  // Window-level mousemove/mouseup for selection (works even outside badge)
+  useEffect(() => {
+    if (!isSelecting) return;
+
+    const handleWindowMouseMove = (e: MouseEvent) => {
       const rect = badgeRef.current?.getBoundingClientRect();
       if (rect) {
         const badgeWidth = mmToPx(format.width);
         const badgeHeight = mmToPx(format.height);
-        
-        // Convert screen coordinates to badge coordinates
         const scaleX = badgeWidth / rect.width;
         const scaleY = badgeHeight / rect.height;
         const mouseXInBadge = (e.clientX - rect.left) * scaleX;
         const mouseYInBadge = (e.clientY - rect.top) * scaleY;
-        
         setSelectionEnd({ x: mouseXInBadge, y: mouseYInBadge });
       }
-    }
+    };
+
+    const handleWindowMouseUp = () => {
+      const start = selectionStartRef.current;
+      const end = selectionEndRef.current;
+      if (start && end) {
+        const selectionRect = {
+          left: Math.min(start.x, end.x),
+          top: Math.min(start.y, end.y),
+          right: Math.max(start.x, end.x),
+          bottom: Math.max(start.y, end.y)
+        };
+
+        const selectedIds = elements
+          .filter(element => {
+            if (element.locked || !element.visible) return false;
+            const elementRect = {
+              left: element.x,
+              top: element.y,
+              right: element.x + element.width,
+              bottom: element.y + element.height
+            };
+            return !(
+              elementRect.right < selectionRect.left ||
+              elementRect.left > selectionRect.right ||
+              elementRect.bottom < selectionRect.top ||
+              elementRect.top > selectionRect.bottom
+            );
+          })
+          .map(element => element.id);
+
+        if (selectedIds.length > 0) {
+          setSelectedElements(prev => {
+            if (prev.length > 0 && start) {
+              return [...new Set([...prev, ...selectedIds])];
+            }
+            return selectedIds;
+          });
+        }
+      }
+
+      setIsSelecting(false);
+      setSelectionStart(null);
+      setSelectionEnd(null);
+    };
+
+    window.addEventListener('mousemove', handleWindowMouseMove);
+    window.addEventListener('mouseup', handleWindowMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleWindowMouseMove);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
+    };
+  }, [isSelecting, elements, format.width, format.height]);
+
+  // Keep legacy React handlers as no-ops / fallbacks (still useful for badge-internal events)
+  const handleBackgroundMouseMove = (_e: React.MouseEvent) => {
+    // Handled by window-level listener now
   };
 
   const handleBackgroundMouseUp = () => {
-    if (isSelecting && selectionStart && selectionEnd) {
-      // Calculate selection rectangle
-      const selectionRect = {
-        left: Math.min(selectionStart.x, selectionEnd.x),
-        top: Math.min(selectionStart.y, selectionEnd.y),
-        right: Math.max(selectionStart.x, selectionEnd.x),
-        bottom: Math.max(selectionStart.y, selectionEnd.y)
-      };
-
-      // Find elements that intersect with selection rectangle
-      const selectedIds = elements
-        .filter(element => {
-          const elementRect = {
-            left: element.x,
-            top: element.y,
-            right: element.x + element.width,
-            bottom: element.y + element.height
-          };
-
-          // Check for intersection
-          return !(
-            elementRect.right < selectionRect.left ||
-            elementRect.left > selectionRect.right ||
-            elementRect.bottom < selectionRect.top ||
-            elementRect.top > selectionRect.bottom
-          );
-        })
-        .map(element => element.id);
-
-      // Update selection
-      if (selectedIds.length > 0) {
-        setSelectedElements(prev => {
-          // If shift/ctrl, add to existing selection
-          if (prev.length > 0 && selectionStart) {
-            return [...new Set([...prev, ...selectedIds])];
-          }
-          return selectedIds;
-        });
-      }
-    }
-
-    setIsSelecting(false);
-    setSelectionStart(null);
-    setSelectionEnd(null);
+    // Handled by window-level listener now
   };
 
   // Element interaction handlers
@@ -1434,6 +1477,8 @@ const BadgeDesignerPageContent: React.FC = () => {
       selectedElements.forEach(elementId => {
         const element = elements.find(el => el.id === elementId);
         if (!element) return;
+        // Skip locked elements — they don't move during multi-drag
+        if (element.locked) return;
         
         const updatedElement = {
           ...element,
@@ -1496,7 +1541,8 @@ const BadgeDesignerPageContent: React.FC = () => {
       
       // Apply all updates in one synchronous setElements call
       const newElements = elements.map(element => {
-        if (selectedElements.includes(element.id)) {
+        // Skip locked elements — they stay in place
+        if (selectedElements.includes(element.id) && !element.locked) {
           return {
             ...element,
             x: element.x + deltaX,
@@ -1554,6 +1600,15 @@ const BadgeDesignerPageContent: React.FC = () => {
         zoom={currentZoom}
         onZoomIn={handleZoomIn}
         onZoomOut={handleZoomOut}
+        elements={elements}
+        selectedElements={selectedElements}
+        symmetryPairs={symmetryPairs}
+        onSelectElements={setSelectedElements}
+        onUpdateElement={updateElement}
+        onBatchUpdateElements={batchUpdateElements}
+        onDeleteElement={deleteElement}
+        onDuplicateElement={duplicateElement}
+        onReorderElements={reorderElements}
       />
 
       {/* Main Canvas - zoom/pan managed by BadgeEditor */}

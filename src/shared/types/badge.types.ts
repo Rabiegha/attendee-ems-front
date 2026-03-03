@@ -108,6 +108,8 @@ export interface BadgeElement {
   width: number;
   height: number;
   visible: boolean;
+  locked?: boolean;
+  name?: string;
   rotation?: number;
   properties?: any;
   style: {

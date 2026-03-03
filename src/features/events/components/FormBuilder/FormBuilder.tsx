@@ -10,7 +10,6 @@ import {
   Columns,
   AlertCircle,
   Sparkles,
-  AlertTriangle,
   Settings,
   Eye,
   EyeOff,
@@ -68,7 +67,6 @@ interface FormBuilderProps {
   }) => void
   className?: string
   eventId?: string
-  onFieldDelete?: (fieldId: string) => Promise<{ affectedCount: number; canDelete: boolean }>
 }
 
 // Champs obligatoires qui ne peuvent pas être supprimés
@@ -293,7 +291,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   onConfigChange,
   className = '',
   eventId,
-  onFieldDelete,
 }) => {
   const [newOptions, setNewOptions] = useState<Record<string, string>>({})
   const [customColor, setCustomColor] = useState<string>(submitButtonColor)
@@ -301,8 +298,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
   const [activeId, setActiveId] = useState<string | null>(null)
   const [showCustomFieldCreator, setShowCustomFieldCreator] = useState(false)
   const [editingField, setEditingField] = useState<FormField | null>(null)
-  const [deleteFieldId, setDeleteFieldId] = useState<string | null>(null)
-  const [deleteAffectedCount, setDeleteAffectedCount] = useState<number>(0)
 
   // Undo/Redo History
   const [history, setHistory] = useState<FormField[][]>([fields])
@@ -484,46 +479,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
     }
   }
 
-  const handleRemoveField = async (fieldId: string) => {
+  const handleRemoveField = (fieldId: string) => {
     const fieldToRemove = fields.find((f) => f.id === fieldId)
-    
-    console.log('🗑️ handleRemoveField called for:', fieldId, fieldToRemove)
     
     // Empêcher la suppression des champs obligatoires
     if (fieldToRemove && isMandatoryField(fieldToRemove)) {
-      console.log('❌ Cannot delete mandatory field')
       return
     }
     
-    // Pour les champs custom, vérifier s'il y a des données existantes
-    if (fieldToRemove && isCustomField(fieldToRemove) && onFieldDelete && eventId) {
-      console.log('🔍 Checking for existing data...', { eventId, fieldId, hasCallback: !!onFieldDelete })
-      try {
-        const result = await onFieldDelete(fieldId)
-        console.log('📊 Field data check result:', result)
-        
-        if (result.affectedCount > 0) {
-          // Il y a des données, montrer le modal de confirmation
-          console.log('⚠️ Found data, showing modal')
-          setDeleteFieldId(fieldId)
-          setDeleteAffectedCount(result.affectedCount)
-          return
-        }
-        console.log('✅ No data found, proceeding with deletion')
-      } catch (error) {
-        console.error('❌ Error checking field data:', error)
-        // En cas d'erreur, continuer avec la suppression normale
-      }
-    } else {
-      console.log('ℹ️ Skipping data check:', { 
-        isCustom: fieldToRemove && isCustomField(fieldToRemove),
-        hasCallback: !!onFieldDelete,
-        hasEventId: !!eventId
-      })
-    }
-    
-    // Pas de données ou pas de vérification nécessaire, supprimer directement
-    console.log('🗑️ Performing field deletion')
     performFieldDeletion(fieldId)
   }
 
@@ -532,13 +495,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       .filter((f) => f.id !== fieldId)
       .map((f, index) => ({ ...f, order: index }))
     onChange(updatedFields)
-    setDeleteFieldId(null)
-  }
-
-  const handleConfirmDelete = () => {
-    if (deleteFieldId) {
-      performFieldDeletion(deleteFieldId)
-    }
   }
 
   const handleUpdateField = (fieldId: string, updates: Partial<FormField>) => {
@@ -1273,52 +1229,6 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
               >
                 <RotateCcw className="h-4 w-4" />
                 <span>Réinitialiser</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Delete Field Confirmation Modal */}
-      {deleteFieldId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 border border-red-200 dark:border-red-800">
-            <div className="flex items-start space-x-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                  Supprimer ce champ ?
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  Nous avons détecté que <strong>{deleteAffectedCount} inscription(s)</strong> contiennent des données pour ce champ.
-                </p>
-                <p className="text-sm text-red-600 dark:text-red-400 font-medium mb-2">
-                  ⚠️ En supprimant ce champ, toutes les données associées seront définitivement perdues.
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Cette action est irréversible.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end space-x-3 mt-6">
-              <button
-                onClick={() => {
-                  setDeleteFieldId(null)
-                  setDeleteAffectedCount(0)
-                }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 rounded-lg transition-colors flex items-center space-x-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                <span>Supprimer définitivement</span>
               </button>
             </div>
           </div>

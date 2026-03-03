@@ -10,8 +10,6 @@ import {
 import {
   useGetRegistrationsQuery,
   useBulkExportRegistrationsMutation,
-  useCheckFieldDataMutation,
-  useCleanFieldDataMutation,
 } from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import { Can } from '@/shared/acl/guards/Can'
@@ -174,10 +172,6 @@ export const EventDetails: React.FC = () => {
   const [updateRegistrationFields] = useUpdateRegistrationFieldsMutation()
   const [updateEvent] = useUpdateEventMutation()
   const [bulkExportRegistrations] = useBulkExportRegistrationsMutation()
-
-  // RTK Query mutations pour la suppression de champ
-  const [checkFieldData] = useCheckFieldDataMutation()
-  const [cleanFieldData] = useCleanFieldDataMutation()
 
   // Queries pour les registrations - DOIVENT être avant les early returns
   const {
@@ -419,37 +413,6 @@ export const EventDetails: React.FC = () => {
           JSON.stringify(error.data, null, 2)
         )
       }
-    }
-  }
-
-  // Fonction pour vérifier et nettoyer les données d'un champ avant suppression
-  const handleFieldDelete = async (fieldId: string): Promise<{ affectedCount: number; canDelete: boolean }> => {
-    if (!id) {
-      return { affectedCount: 0, canDelete: true }
-    }
-
-    try {
-      // Vérifier si des données existent
-      const checkResult = await checkFieldData({
-        eventId: id,
-        fieldId,
-      }).unwrap()
-
-      // Si des données existent, les nettoyer
-      if (checkResult.affectedCount > 0) {
-        await cleanFieldData({
-          eventId: id,
-          fieldId,
-        }).unwrap()
-      }
-
-      return {
-        affectedCount: checkResult.affectedCount,
-        canDelete: checkResult.canDelete,
-      }
-    } catch (error) {
-      console.error('Error in handleFieldDelete:', error)
-      return { affectedCount: 0, canDelete: true }
     }
   }
 
@@ -1226,7 +1189,6 @@ export const EventDetails: React.FC = () => {
                 isDarkMode={isDarkMode}
                 onConfigChange={handleConfigChange}
                 eventId={id || ''}
-                onFieldDelete={handleFieldDelete}
               />
 
               <EmbedCodeGenerator eventId={event.id} publicToken={event.id} />

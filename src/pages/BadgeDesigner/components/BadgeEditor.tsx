@@ -97,7 +97,9 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
       style={{
         ...style,
         ...(isSelected && {
-          outline: '4px solid rgb(59, 130, 246)',
+          outline: element.locked
+            ? '4px solid rgb(245, 158, 11)'
+            : '4px solid rgb(59, 130, 246)',
           outlineOffset: '0px'
         })
       }}
@@ -106,7 +108,7 @@ const DraggableElement: React.FC<DraggableElementProps> = ({
     >
       {/* Zone de contenu draggable */}
       <div
-        className="w-full h-full cursor-move"
+        className={`w-full h-full ${element.locked ? 'cursor-default' : 'cursor-move'}`}
         style={{ opacity: element.style.opacity ?? 1 }}
         onMouseDown={handleMouseDown}
       >
@@ -140,7 +142,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
   transformRef,
   initialZoom = 0.5,
   currentZoom,
-  onZoomChange
+  onZoomChange,
 }) => {
   const [resizingElement, setResizingElement] = useState<string | null>(null);
   const [resizeHandle, setResizeHandle] = useState<string | null>(null);
@@ -202,6 +204,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     
     const element = elements.find(el => el.id === elementId);
     if (!element) return;
+    if (element.locked) return;
 
     // Get badge coordinates
     const badgeRect = badgeRef.current?.getBoundingClientRect();
@@ -548,7 +551,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     const content = renderElementContent(element);
 
     // Apply drag offset to all selected elements when one is being dragged
-    const effectiveDragOffset = (draggingElementId === element.id || isPartOfDragGroup) ? currentDragOffset : undefined;
+    // Locked elements never move, even in a multi-selection drag group
+    const effectiveDragOffset = (!element.locked && (draggingElementId === element.id || isPartOfDragGroup)) ? currentDragOffset : undefined;
 
     return (
       <React.Fragment key={element.id}>
@@ -592,8 +596,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
           />
         )}
         
-        {/* Resize handles - en dehors de la zone draggable */}
-        {isSelected && (
+        {/* Resize handles - only shown when selected AND not locked */}
+        {isSelected && !element.locked && (
           <>
             {['nw', 'ne', 'sw', 'se', 'n', 's', 'w', 'e'].map(handle => {
               const zoom = currentZoom || initialZoom;
@@ -622,6 +626,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             })}
           </>
         )}
+        
+
       </React.Fragment>
     );
   };
@@ -901,6 +907,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
     e.stopPropagation();
     const element = elements.find(el => el.id === elementId);
     if (!element) return;
+    if (element.locked) return;
 
     // Select element immediately on mousedown ONLY if it's not already in a multi-selection
     // This preserves multi-selection when starting to drag
@@ -1162,8 +1169,19 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
 
   const symmetricClones = getSymmetricClones();
 
+  const handleOuterMouseDown = (e: React.MouseEvent) => {
+    // If the click is outside the badge, forward to background handler (starts selection + deselects)
+    const target = e.target as HTMLElement;
+    if (badgeRef.current && !badgeRef.current.contains(target)) {
+      onBackgroundMouseDown(e);
+    }
+  };
+
   return (
-    <div className="flex-1 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-700">
+    <div
+      className="flex-1 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-700"
+      onMouseDown={handleOuterMouseDown}
+    >
       <TransformWrapper
           ref={transformRef}
           initialScale={initialZoom}
@@ -1191,9 +1209,10 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
             }}
             contentStyle={{
               maxWidth: 'none',
-              padding: '40px',
             }}
           >
+            {/* Padding wrapper around the badge */}
+            <div style={{ padding: '40px' }}>
             <div
               ref={badgeRef}
               className="relative bg-white shadow-lg overflow-hidden"
@@ -1244,6 +1263,8 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
           {/* Render elements */}
           {elements
             .filter(element => {
+              // Hide invisible elements
+              if (!element.visible) return false;
               // If we're dragging, hide the symmetric pair elements (they'll be rendered as symmetricClones)
               if (draggingElementId) {
                 // Check if this element is a clone of the dragged element
@@ -1329,6 +1350,7 @@ export const BadgeEditor: React.FC<BadgeEditorProps> = ({
               )}
             </React.Fragment>
           ))}
+          </div>
           </div>
         </TransformComponent>
       </TransformWrapper>

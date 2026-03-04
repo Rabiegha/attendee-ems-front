@@ -25,7 +25,7 @@ const SYSTEM_CATEGORIES: VariableCategory[] = [
       { key: 'fullName', label: 'Nom complet', example: 'Jean Dupont' },
       { key: 'email', label: 'Email', example: 'jean@exemple.com' },
       { key: 'phone', label: 'Téléphone', example: '+33 6 12 34 56 78' },
-      { key: 'company', label: 'Entreprise', example: 'Acme Corp' },
+      { key: 'company', label: 'Entreprise', example: 'Attendee' },
       { key: 'jobTitle', label: 'Poste', example: 'Développeur' },
       { key: 'country', label: 'Pays', example: 'France' },
       { key: 'attendeeType', label: 'Type de participant', example: 'VIP' },

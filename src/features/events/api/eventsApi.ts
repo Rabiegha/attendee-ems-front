@@ -356,6 +356,8 @@ export const eventsApi = rootApi.injectEndpoints({
     getEventTables: builder.query<EventTable[], string>({
       query: (eventId) => `/events/${eventId}/tables`,
       providesTags: (_result, _error, eventId) => [{ type: 'EventTables', id: eventId }],
+      // Always refetch when the Placement tab mounts (component unmounts on tab switch)
+      keepUnusedDataFor: 0,
     }),
 
     createEventTable: builder.mutation<EventTable, { eventId: string; data: CreateEventTableDto }>({

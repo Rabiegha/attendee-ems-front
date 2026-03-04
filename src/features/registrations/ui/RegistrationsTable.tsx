@@ -699,7 +699,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     }
   }
 
-  const handleUpdate = async (data: any) => {
+  const handleUpdate = async (data: Record<string, unknown>) => {
     if (!editingRegistration) return
 
     try {
@@ -1810,6 +1810,9 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           onClose={() => setEditingRegistration(null)}
           registration={editingRegistration}
           onSave={handleUpdate}
+          formFields={formFields}
+          allAnswerKeys={allAnswerKeys}
+          eventAttendeeTypes={eventAttendeeTypes}
         />
       )}
 

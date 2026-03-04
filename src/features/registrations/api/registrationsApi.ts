@@ -105,6 +105,7 @@ export const registrationsApi = rootApi.injectEndpoints({
       invalidatesTags: (_result, _error, { eventId }) => [
         { type: 'Attendee', id: `EVENT-${eventId}` },
         { type: 'Event', id: eventId },
+        { type: 'EventTables', id: eventId },
       ],
     }),
 
@@ -168,6 +169,7 @@ export const registrationsApi = rootApi.injectEndpoints({
       invalidatesTags: (_result, _error, { eventId }) => [
         { type: 'Attendee', id: `EVENT-${eventId}` },
         { type: 'Event', id: eventId },
+        { type: 'EventTables', id: eventId },
       ],
     }),
 
@@ -239,6 +241,8 @@ export const registrationsApi = rootApi.injectEndpoints({
           }
           answers?: Record<string, any>
           eventAttendeeTypeId?: string | null
+          tableChoiceId?: string | null
+          assignedTableId?: string | null
           attendanceType?: 'onsite' | 'online' | 'hybrid'
           status?: string
         }
@@ -251,6 +255,16 @@ export const registrationsApi = rootApi.injectEndpoints({
         if (data.eventAttendeeTypeId !== undefined) {
           payload.event_attendee_type_id = data.eventAttendeeTypeId
           delete payload.eventAttendeeTypeId
+        }
+
+        if (data.tableChoiceId !== undefined) {
+          payload.table_choice_id = data.tableChoiceId
+          delete payload.tableChoiceId
+        }
+
+        if (data.assignedTableId !== undefined) {
+          payload.assigned_table_id = data.assignedTableId
+          delete payload.assignedTableId
         }
         
         if (data.attendanceType !== undefined) {
@@ -269,7 +283,8 @@ export const registrationsApi = rootApi.injectEndpoints({
       invalidatesTags: (_result, _error, { id, eventId }) => [
         { type: 'Attendee', id },
         { type: 'Attendee', id: `EVENT-${eventId}` },
-        { type: 'AttendeeTypes', id: eventId }, // Invalider pour mettre à jour les compteurs
+        { type: 'AttendeeTypes', id: eventId },
+        { type: 'EventTables', id: eventId },
       ],
     }),
 
@@ -283,6 +298,7 @@ export const registrationsApi = rootApi.injectEndpoints({
           { type: 'Attendee', id },
           { type: 'Attendee', id: `EVENT-${eventId}` },
           { type: 'Event', id: eventId },
+          { type: 'EventTables', id: eventId },
         ],
       }
     ),
@@ -299,6 +315,7 @@ export const registrationsApi = rootApi.injectEndpoints({
           { type: 'Attendee', id },
           { type: 'Attendee', id: `EVENT-${eventId}` },
           { type: 'Event', id: eventId },
+          { type: 'EventTables', id: eventId },
         ],
       }
     ),
@@ -313,6 +330,7 @@ export const registrationsApi = rootApi.injectEndpoints({
           { type: 'Attendee', id },
           { type: 'Attendee', id: `EVENT-${eventId}` },
           { type: 'Event', id: eventId },
+          { type: 'EventTables', id: eventId },
         ],
       }
     ),
@@ -329,6 +347,7 @@ export const registrationsApi = rootApi.injectEndpoints({
       invalidatesTags: (_result, _error, { eventId }) => [
         { type: 'Attendee', id: `EVENT-${eventId}` },
         { type: 'Event', id: eventId },
+        { type: 'EventTables', id: eventId },
       ],
     }),
 
@@ -383,6 +402,7 @@ export const registrationsApi = rootApi.injectEndpoints({
         { type: 'Attendee', id },
         { type: 'Attendee', id: 'LIST' },
         { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'EventTables', id: eventId },
       ],
     }),
 
@@ -394,6 +414,8 @@ export const registrationsApi = rootApi.injectEndpoints({
         url: `/events/${eventId}/registrations/${registrationId}/generate-badge`,
         method: 'POST',
       }),
+      transformResponse: (response: { message: string; data: { id: string; badge_pdf_url?: string; badge_image_url?: string } }) =>
+        response.data,
       invalidatesTags: (_result, _error, { registrationId }) => [
         { type: 'Attendee', id: registrationId },
       ],
@@ -416,6 +438,7 @@ export const registrationsApi = rootApi.injectEndpoints({
         { type: 'Attendee', id },
         { type: 'Attendee', id: 'LIST' },
         { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'EventTables', id: eventId },
       ],
     }),
 
@@ -436,6 +459,7 @@ export const registrationsApi = rootApi.injectEndpoints({
         { type: 'Attendee', id },
         { type: 'Attendee', id: 'LIST' },
         { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'EventTables', id: eventId },
       ],
     }),
 
@@ -456,6 +480,7 @@ export const registrationsApi = rootApi.injectEndpoints({
         { type: 'Attendee', id },
         { type: 'Attendee', id: 'LIST' },
         { type: 'Attendee', id: `EVENT-${eventId}` },
+        { type: 'EventTables', id: eventId },
       ],
     }),
 

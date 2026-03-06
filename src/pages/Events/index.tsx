@@ -44,7 +44,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
   const [searchQuery, setSearchQuery] = useState('')
   const [tagFilters, setTagFilters] = useState<string[]>([])
   const [filterValues, setFilterValues] = useState<FilterValues>({})
-  const [sortValue, setSortValue] = useState<string>('createdAt-desc')
+  const [sortValue, setSortValue] = useState<string>('created_at-desc')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(12)
 
@@ -197,10 +197,10 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
 
   // Options de tri
   const sortOptions: SortOption[] = [
-    { value: 'createdAt-desc', label: t('events:filters.sort_created_newest') },
-    { value: 'createdAt-asc', label: t('events:filters.sort_created_oldest') },
-    { value: 'startDate-asc', label: t('events:filters.sort_date_closest') },
-    { value: 'startDate-desc', label: t('events:filters.sort_date_farthest') },
+    { value: 'created_at-desc', label: t('events:filters.sort_created_newest') },
+    { value: 'created_at-asc', label: t('events:filters.sort_created_oldest') },
+    { value: 'start_at-asc', label: t('events:filters.sort_date_closest') },
+    { value: 'start_at-desc', label: t('events:filters.sort_date_farthest') },
     { value: 'name-asc', label: t('events:filters.sort_name_az') },
     { value: 'name-desc', label: t('events:filters.sort_name_za') },
   ]
@@ -209,7 +209,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
     setSearchQuery('')
     setTagFilters([])
     setFilterValues({})
-    setSortValue('createdAt-desc')
+    setSortValue('created_at-desc')
   }
 
   const getStatusColor = (status: string) => {

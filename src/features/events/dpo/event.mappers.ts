@@ -60,6 +60,8 @@ export const mapEventDTOtoDPO = (dto: EventDTO): EventDPO => {
     ...(dto.emailSettings?.reminder_enabled !== undefined && { reminderEmailEnabled: dto.emailSettings.reminder_enabled }),
     ...(dto.settings?.include_qr_code_in_approval !== undefined && { includeQrCodeInApproval: dto.settings.include_qr_code_in_approval }),
     ...(dto.settings?.badge_template_id && { badgeTemplateId: dto.settings.badge_template_id }),
+    ...(dto.settings?.table_fill_mode && { tableFillMode: dto.settings.table_fill_mode as EventDPO['tableFillMode'] }),
+    ...(dto.settings?.force_placement !== undefined && { forcePlacement: dto.settings.force_placement }),
 
     // Computed properties (calculated from dates but stored as primitives)
     isActive: dto.status === 'published',
@@ -150,6 +152,8 @@ export const mapUpdateEventDPOtoDTO = (dpo: UpdateEventDPO): UpdateEventDTO => {
   if (dpo.reminderEmailEnabled !== undefined) dto.reminder_enabled = dpo.reminderEmailEnabled
   if (dpo.includeQrCodeInApproval !== undefined) dto.include_qr_code_in_approval = dpo.includeQrCodeInApproval
   if (dpo.badgeTemplateId !== undefined) dto.badge_template_id = dpo.badgeTemplateId
+  if (dpo.tableFillMode !== undefined) (dto as any).table_fill_mode = dpo.tableFillMode
+  if (dpo.forcePlacement !== undefined) (dto as any).force_placement = dpo.forcePlacement
 
   // Map partnerIds to assigned_user_ids for backend
   if (dpo.partnerIds !== undefined) {

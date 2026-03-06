@@ -648,7 +648,22 @@
     "unassign_error": "Erreur lors du retrait du participant",
     "loading_error": "Erreur lors du chargement des tables.",
     "no_tables": "Aucune table créée",
-    "no_tables_description": "Créez des tables pour organiser le placement de vos participants"
+    "no_tables_description": "Créez des tables pour organiser le placement de vos participants",
+    "fill_mode_title": "Mode de remplissage automatique",
+    "fill_mode_sequential": "Séquentiel",
+    "fill_mode_sequential_desc": "Remplit les tables dans l'ordre d'affichage",
+    "fill_mode_random": "Aléatoire",
+    "fill_mode_random_desc": "Assigne une table au hasard",
+    "fill_mode_fill_first": "Remplir d'abord",
+    "fill_mode_fill_first_desc": "Remplit la table la plus remplie en priorité",
+    "fill_mode_balance": "Équilibrer",
+    "fill_mode_balance_desc": "Répartit uniformément entre les tables",
+    "fill_mode_update_success": "Mode de remplissage mis à jour",
+    "fill_mode_update_error": "Erreur lors de la mise à jour du mode",
+    "force_placement_label": "Placement forcé",
+    "force_placement_desc": "Si les choix et tables de secours sont pleins, assigner automatiquement à une autre table disponible (les restrictions de type restent respectées)",
+    "force_placement_update_success": "Placement forcé mis à jour",
+    "satisfaction": "Satisfaction : {{rate}}% ({{satisfied}}/{{total}})"
   },
   "public_registration": {
     "event_not_found": "Événement non trouvé",

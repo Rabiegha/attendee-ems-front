@@ -397,13 +397,14 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       }
     }
     
+    const resolvedFieldType: StandardField['fieldType'] = template.type ?? 'text';
     const newField: FormField = {
       type: 'standard',
       id: newId,
       order: fields.length,
       width: 'full',
       label: template.label,
-      fieldType: template.type as StandardField['fieldType'],
+      fieldType: resolvedFieldType,
       required: template.required ?? false,
       visibleInPublicForm: template.visibleInPublicForm ?? true,
       visibleInAdminForm: template.visibleInAdminForm ?? true,
@@ -422,6 +423,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
       ...(template.optionsKey && { optionsKey: template.optionsKey }),
       ...(template.helpText && { helpText: template.helpText }),
       ...(template.isSystemField && { isSystemField: template.isSystemField }),
+      ...(resolvedFieldType === 'table_choice' && { tableChoiceMode: template.tableChoiceMode || 'single' }),
     }
     onChange([...fields, newField])
   }
@@ -925,6 +927,44 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
                     {('key' in field && field.key === 'event_attendee_type_id') && (
                       <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-700 dark:text-blue-300">
                         ℹ️ Ce champ affichera automatiquement la liste des types de participants configurés dans l'onglet "Types de participants".
+                      </div>
+                    )}
+
+                    {/* Table Choice Mode Toggle */}
+                    {isStandardField(field) && field.fieldType === 'table_choice' && (
+                      <div className="mt-2 p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded space-y-2">
+                        <label className="block text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                          Mode de sélection
+                        </label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateField(field.id, { tableChoiceMode: 'single' } as Partial<StandardField>)}
+                            className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+                              (field.tableChoiceMode || 'single') === 'single'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                            }`}
+                          >
+                            Choix unique
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateField(field.id, { tableChoiceMode: 'multi' } as Partial<StandardField>)}
+                            className={`px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+                              field.tableChoiceMode === 'multi'
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600'
+                            }`}
+                          >
+                            Multi-choix (par priorité)
+                          </button>
+                        </div>
+                        <p className="text-xs text-indigo-600 dark:text-indigo-400">
+                          {(field.tableChoiceMode || 'single') === 'single'
+                            ? 'Le participant pourra choisir une seule table.'
+                            : 'Le participant pourra choisir plusieurs tables classées par ordre de préférence.'}
+                        </p>
                       </div>
                     )}
 

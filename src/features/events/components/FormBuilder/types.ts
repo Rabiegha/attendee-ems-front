@@ -52,6 +52,7 @@ export interface StandardField {
   label: string
   placeholder?: string
   fieldType?: 'text' | 'email' | 'phone' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'multiselect' | 'country' | 'attendee_type' | 'table_choice'
+  tableChoiceMode?: 'single' | 'multi'
   icon?: LucideIcon
   category?: 'identity' | 'contact' | 'professional' | 'event' | 'custom' | 'legal'
   description?: string

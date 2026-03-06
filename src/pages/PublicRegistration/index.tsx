@@ -162,6 +162,19 @@ const PublicRegistration: React.FC = () => {
         return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
       }
 
+      const resolveRegistrationField = (field: any): string | null => {
+        if (field.registrationField) return field.registrationField
+
+        const fieldType = field.fieldType || field.type
+        const key = field.key || ''
+
+        // table_choice is handled directly after the loop (split comma-separated → array)
+        if (fieldType === 'attendee_type' || key === 'event_attendee_type_id' || key === 'attendee_type') return 'event_attendee_type_id'
+        if (key === 'attendance_type') return 'attendance_type'
+
+        return null
+      }
+
       event?.registration_fields?.forEach((field: any) => {
         const value = formData[field.id]
         
@@ -182,11 +195,15 @@ const PublicRegistration: React.FC = () => {
           attendee[backendFieldName] = value
         } 
         // Champs mappés aux colonnes registration
-        else if (field.registrationField) {
-          registrationData[field.registrationField] = value
+        else {
+          const registrationField = resolveRegistrationField(field)
+          if (registrationField) {
+            registrationData[registrationField] = value
+            return
+          }
         } 
         // Anciens champs avec storeInAnswers (compatibilité)
-        else if (field.storeInAnswers) {
+        if (field.storeInAnswers) {
           answers[field.key] = value
         }
       })
@@ -194,8 +211,29 @@ const PublicRegistration: React.FC = () => {
       // Email est requis
       if (!attendee.email) {
         toast.error(t('public_registration.email_required'), t('public_registration.email_required_message'))
-        setIsSubmitting(false)
         return
+      }
+
+      // Direct table choice extraction from form data
+      const tcField = (event?.registration_fields || []).find((f: any) => {
+        const ft = f.fieldType || f.type
+        return ft === 'table_choice' || f.key === 'table_choice_ids'
+      })
+      if (tcField) {
+        const tcRawValue = formData[tcField.id]
+        if (tcRawValue && typeof tcRawValue === 'string' && tcRawValue.trim()) {
+          registrationData.table_choice_ids = tcRawValue.split(',').filter(Boolean)
+        } else {
+          delete registrationData.table_choice_ids
+        }
+      }
+
+      if (registrationData.eventAttendeeTypeId && !registrationData.event_attendee_type_id) {
+        registrationData.event_attendee_type_id = registrationData.eventAttendeeTypeId
+      }
+
+      if (registrationData.attendanceType && !registrationData.attendance_type) {
+        registrationData.attendance_type = registrationData.attendanceType
       }
 
       const payload = {
@@ -343,30 +381,59 @@ const PublicRegistration: React.FC = () => {
             ))}
           </select>
         )
-      case 'table_choice':
+      case 'table_choice': {
+        const isMulti = 'tableChoiceMode' in field && field.tableChoiceMode === 'multi'
+        const selectedIds = stringValue ? String(stringValue).split(',').filter(Boolean) : []
+        const selectTable = (tableId: string) => {
+          if (isMulti) {
+            const newIds = selectedIds.includes(tableId)
+              ? selectedIds.filter(id => id !== tableId)
+              : [...selectedIds, tableId]
+            handleInputChange(field.id, newIds.join(','))
+          } else {
+            handleInputChange(field.id, selectedIds.includes(tableId) ? '' : tableId)
+          }
+        }
         return (
-          <select
-            value={stringValue}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
-            required={field.required}
-            disabled={disabled}
-            className={baseClasses}
-          >
-            <option value="" className="dark:bg-gray-700 dark:text-white">{t('public_registration.select_table', 'Sélectionnez une table')}</option>
-            {eventTables.map((table) => (
-              <option
-                key={table.id}
-                value={table.id}
-                disabled={!table.available && table.capacity !== null}
-                className="dark:bg-gray-700 dark:text-white"
-              >
-                {table.name}
-                {table.capacity !== null ? ` (${table.assigned_count}/${table.capacity})` : ''}
-                {!table.available && table.capacity !== null ? ` - ${t('public_registration.table_full', 'Complet')}` : ''}
-              </option>
-            ))}
-          </select>
+          <div className={`space-y-1.5 max-h-48 overflow-y-auto border rounded-lg p-2 ${disabled ? 'opacity-50' : ''} dark:border-gray-600`}>
+            {eventTables.length === 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 p-2">{t('public_registration.no_tables', 'Aucune table disponible')}</p>
+            )}
+            {eventTables.map((table) => {
+              const isFull = !table.available && table.capacity !== null
+              const isSelected = selectedIds.includes(table.id)
+              const priority = selectedIds.indexOf(table.id)
+              return (
+                <label
+                  key={table.id}
+                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                    isSelected
+                      ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-transparent'
+                  } ${isFull && !isSelected ? 'opacity-50' : ''}`}
+                >
+                  <input
+                    type={isMulti ? 'checkbox' : 'radio'}
+                    name={isMulti ? undefined : field.id}
+                    checked={isSelected}
+                    onChange={() => selectTable(table.id)}
+                    disabled={(isFull && !isSelected) || disabled}
+                    className={isMulti ? 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' : 'border-gray-300 text-blue-600 focus:ring-blue-500'}
+                  />
+                  <span className="flex-1 text-sm text-gray-900 dark:text-white">
+                    {table.name}
+                    {table.capacity !== null ? ` (${table.assigned_count}/${table.capacity})` : ''}
+                    {isFull ? ` - ${t('public_registration.table_full', 'Complet')}` : ''}
+                  </span>
+                  {isMulti && isSelected && priority >= 0 && (
+                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">#{priority + 1}</span>
+                  )}
+                </label>
+              )
+            })}
+          </div>
         )
+      }
       case 'radio':
         return (
           <div className="space-y-2">

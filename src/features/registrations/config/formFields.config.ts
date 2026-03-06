@@ -47,6 +47,9 @@ export interface FormFieldConfig {
   registrationField?: string // Champ de registration (si non dans answers)
   storeInAnswers?: boolean // Stocké dans le JSON answers ?
 
+  // Mode de sélection pour table_choice
+  tableChoiceMode?: 'single' | 'multi' // Choix unique ou multi-choix
+
   // Options pour les listes
   options?: Array<{ value: string; label: string }>
   optionsKey?: string // Pour les listes multiples : nom unique de la liste

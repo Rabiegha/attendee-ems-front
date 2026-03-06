@@ -201,6 +201,7 @@ export const registrationsApi = rootApi.injectEndpoints({
           }
           attendance_type: 'onsite' | 'online' | 'hybrid'
           event_attendee_type_id?: string
+          table_choice_ids?: string[]
           answers?: Record<string, any>
           source?: 'public_form' | 'test_form' | 'manual' | 'import'
           // Admin fields for manual registration
@@ -241,7 +242,7 @@ export const registrationsApi = rootApi.injectEndpoints({
           }
           answers?: Record<string, any>
           eventAttendeeTypeId?: string | null
-          tableChoiceId?: string | null
+          tableChoiceIds?: string[]
           assignedTableId?: string | null
           attendanceType?: 'onsite' | 'online' | 'hybrid'
           status?: string
@@ -257,9 +258,9 @@ export const registrationsApi = rootApi.injectEndpoints({
           delete payload.eventAttendeeTypeId
         }
 
-        if (data.tableChoiceId !== undefined) {
-          payload.table_choice_id = data.tableChoiceId
-          delete payload.tableChoiceId
+        if (data.tableChoiceIds !== undefined) {
+          payload.table_choice_ids = data.tableChoiceIds
+          delete payload.tableChoiceIds
         }
 
         if (data.assignedTableId !== undefined) {

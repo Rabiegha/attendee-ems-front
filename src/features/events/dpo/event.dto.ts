@@ -89,6 +89,8 @@ export interface CreateEventDTO {
   reminder_enabled?: boolean
   include_qr_code_in_approval?: boolean
   badge_template_id?: string
+  table_fill_mode?: string
+  force_placement?: boolean
 }
 
 export interface UpdateEventDTO extends Partial<CreateEventDTO> {

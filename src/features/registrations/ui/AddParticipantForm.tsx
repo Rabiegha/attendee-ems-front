@@ -57,7 +57,7 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
   const [createRegistration] = useCreateRegistrationMutation()
 
   // Fetch tables if form has a table_choice field
-  const hasTableChoiceField = fields.some((f) => f.type === 'table_choice' || ('fieldType' in f && f.fieldType === 'table_choice'))
+  const hasTableChoiceField = fields.some((f) => 'fieldType' in f && f.fieldType === 'table_choice')
   const { data: eventTables = [] } = useGetEventTablesQuery(eventId, { skip: !hasTableChoiceField })
 
   const handleInputChange = (fieldId: string, value: string) => {
@@ -75,6 +75,20 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
 
       const toSnakeCase = (str: string) => {
         return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
+      }
+
+      const resolveRegistrationField = (field: FormField): string | null => {
+        const direct = ('registrationField' in field && field.registrationField) ? field.registrationField : null
+        if (direct) return direct
+
+        const fieldType = field.fieldType || field.type
+        const key = ('key' in field && field.key) ? field.key : ''
+
+        // table_choice is handled directly after the loop (split comma-separated → array)
+        if (fieldType === 'attendee_type' || key === 'event_attendee_type_id' || key === 'attendee_type') return 'event_attendee_type_id'
+        if (key === 'attendance_type') return 'attendance_type'
+
+        return null
       }
 
       fields.forEach((field) => {
@@ -96,25 +110,29 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
           attendee[backendFieldName] = value
         } 
         // Champs mappés aux colonnes registration
-        else if (('registrationField' in field) && field.registrationField) {
-          registrationData[field.registrationField] = value
-        } 
+        else {
+          const registrationField = resolveRegistrationField(field)
+          if (registrationField) {
+            registrationData[registrationField] = value
+            return
+          }
+        }
+
         // Anciens champs avec storeInAnswers (compatibilité)
-        else if (('storeInAnswers' in field) && field.storeInAnswers) {
+        if (('storeInAnswers' in field) && field.storeInAnswers) {
           const key = ('key' in field && field.key) ? field.key : field.id
           answers[key] = value
-        }
+        } 
       })
 
       if (!attendee.email) {
         toast.error('Email requis', "L'adresse email est obligatoire")
-        setIsSubmitting(false)
         return
       }
 
       const requestData: any = {
         attendee,
-        attendance_type: registrationData.attendance_type || 'onsite',
+        attendance_type: registrationData.attendance_type || registrationData.attendanceType || 'onsite',
         source: 'manual',
         admin_status: adminStatus,
         admin_is_checked_in: isCheckedIn,
@@ -125,13 +143,20 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
       // Priorité : attendee type sélectionné explicitement, sinon depuis le champ du formulaire
       if (selectedAttendeeTypeId) {
         requestData.event_attendee_type_id = selectedAttendeeTypeId
-      } else if (registrationData.attendee_type) {
-        requestData.event_attendee_type_id = registrationData.attendee_type
+      } else if (registrationData.event_attendee_type_id || registrationData.eventAttendeeTypeId || registrationData.attendee_type) {
+        requestData.event_attendee_type_id = registrationData.event_attendee_type_id || registrationData.eventAttendeeTypeId || registrationData.attendee_type
       }
 
-      // Table choice
-      if (registrationData.table_choice_id) {
-        requestData.table_choice_id = registrationData.table_choice_id
+      // Direct table choice extraction from form data
+      const tcField = fields.find((f: any) => {
+        const ft = f.fieldType || f.type
+        return ft === 'table_choice' || ('key' in f && f.key === 'table_choice_ids')
+      })
+      if (tcField) {
+        const tcRawValue = formData[tcField.id]
+        if (tcRawValue && typeof tcRawValue === 'string' && tcRawValue.trim()) {
+          requestData.table_choice_ids = tcRawValue.split(',').filter(Boolean)
+        }
       }
 
       if (Object.keys(answers).length > 0) {
@@ -153,7 +178,6 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
       }
     } catch (error: any) {
       console.error("Erreur lors de l'ajout:", error)
-      console.error("Error details:", error?.data)
 
       let errorMessage = "Une erreur est survenue"
       const backendMessage = error?.data?.message || ''
@@ -321,25 +345,59 @@ export const AddParticipantForm: React.FC<AddParticipantFormProps> = ({
           </div>
         )
 
-      case 'table_choice':
+      case 'table_choice': {
+        const isMulti = 'tableChoiceMode' in field && field.tableChoiceMode === 'multi'
+        const selectedIds = value ? String(value).split(',').filter(Boolean) : []
+        const selectTable = (tableId: string) => {
+          if (isMulti) {
+            const newIds = selectedIds.includes(tableId)
+              ? selectedIds.filter(id => id !== tableId)
+              : [...selectedIds, tableId]
+            handleInputChange(field.id, newIds.join(','))
+          } else {
+            handleInputChange(field.id, selectedIds.includes(tableId) ? '' : tableId)
+          }
+        }
         return (
-          <select
-            id={field.id}
-            value={value}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
-            required={field.required}
-            className={commonClasses}
-          >
-            <option value="">Sélectionnez une table...</option>
-            {eventTables.map((table: any) => (
-              <option key={table.id} value={table.id} disabled={!table.available && table.capacity !== null}>
-                {table.name}
-                {table.capacity !== null ? ` (${table.assigned_count || table._count?.assignedRegistrations || 0}/${table.capacity})` : ''}
-                {!table.available && table.capacity !== null ? ' - Complet' : ''}
-              </option>
-            ))}
-          </select>
+          <div className="space-y-1.5 max-h-48 overflow-y-auto border rounded-lg p-2 dark:border-gray-600">
+            {eventTables.length === 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 p-2">Aucune table configurée</p>
+            )}
+            {eventTables.map((table: any) => {
+              const isFull = !table.available && table.capacity !== null
+              const isSelected = selectedIds.includes(table.id)
+              const priority = selectedIds.indexOf(table.id)
+              return (
+                <label
+                  key={table.id}
+                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                    isSelected
+                      ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-transparent'
+                  } ${isFull && !isSelected ? 'opacity-50' : ''}`}
+                >
+                  <input
+                    type={isMulti ? 'checkbox' : 'radio'}
+                    name={isMulti ? undefined : field.id}
+                    checked={isSelected}
+                    onChange={() => selectTable(table.id)}
+                    disabled={isFull && !isSelected}
+                    className={isMulti ? 'rounded border-gray-300 text-primary-600 focus:ring-primary-500' : 'border-gray-300 text-primary-600 focus:ring-primary-500'}
+                  />
+                  <span className="flex-1 text-sm dark:text-gray-200">
+                    {table.name}
+                    {table.capacity !== null ? ` (${table.assigned_count || table._count?.assignedRegistrations || 0}/${table.capacity})` : ''}
+                    {isFull ? ' - Complet' : ''}
+                  </span>
+                  {isMulti && isSelected && priority >= 0 && (
+                    <span className="text-xs font-medium text-primary-600 dark:text-primary-400">#{priority + 1}</span>
+                  )}
+                </label>
+              )
+            })}
+          </div>
         )
+      }
 
       default:
         return null

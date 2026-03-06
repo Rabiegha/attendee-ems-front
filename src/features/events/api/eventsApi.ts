@@ -397,6 +397,11 @@ export const eventsApi = rootApi.injectEndpoints({
         { type: 'Registrations', id: eventId },
       ],
     }),
+
+    getPlacementSatisfaction: builder.query<PlacementSatisfaction, string>({
+      query: (eventId) => `/events/${eventId}/tables/satisfaction`,
+      providesTags: (_result, _error, eventId) => [{ type: 'EventTables', id: eventId }],
+    }),
   }),
   overrideExisting: false,
 })
@@ -487,6 +492,15 @@ export interface EventTableRegistration {
     email: string
   }
   checked_in_at: string | null
+  tableChoiceIds?: string[]
+}
+
+export interface PlacementSatisfaction {
+  totalAssigned: number
+  totalWithChoices: number
+  satisfied: number
+  unsatisfied: number
+  rate: number | null
 }
 
 export interface EventTable {
@@ -550,4 +564,5 @@ export const {
   useUpdateEventTableMutation,
   useDeleteEventTableMutation,
   useAssignRegistrationTableMutation,
+  useGetPlacementSatisfactionQuery,
 } = eventsApi

@@ -23,7 +23,7 @@ interface RegistrationUpdatePayload {
   answers?: Record<string, unknown>
   status?: string
   eventAttendeeTypeId?: string | null
-  tableChoiceId?: string | null
+  tableChoiceIds?: string[]
   assignedTableId?: string | null
   comment?: string
 }
@@ -75,7 +75,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
   const [answersData, setAnswersData] = useState<Record<string, unknown>>({})
   const [status, setStatus] = useState('')
   const [eventAttendeeTypeId, setEventAttendeeTypeId] = useState('')
-  const [tableChoiceId, setTableChoiceId] = useState('')
+  const [tableChoiceIds, setTableChoiceIds] = useState<string[]>([])
   const [assignedTableId, setAssignedTableId] = useState('')
   const [comment, setComment] = useState('')
 
@@ -136,7 +136,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
 
     setStatus(registration.status || 'awaiting')
     setEventAttendeeTypeId(registration.eventAttendeeType?.id || '')
-    setTableChoiceId(registration.tableChoiceId || '')
+    setTableChoiceIds(registration.tableChoiceIds?.length ? registration.tableChoiceIds : registration.tableChoices?.map(tc => tc.id) ?? [])
     setAssignedTableId(registration.assignedTableId || '')
     setComment(registration.comment || '')
     // allAnswerKeys is stable (memoized by parent) â€” safe as dependency
@@ -185,8 +185,9 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
       updateData.eventAttendeeTypeId = eventAttendeeTypeId || null
     }
 
-    if (tableChoiceId !== (registration.tableChoiceId || '')) {
-      updateData.tableChoiceId = tableChoiceId || null
+    const origTableChoiceIds = registration.tableChoiceIds?.length ? registration.tableChoiceIds : registration.tableChoices?.map(tc => tc.id) ?? []
+    if (JSON.stringify(tableChoiceIds) !== JSON.stringify(origTableChoiceIds)) {
+      updateData.tableChoiceIds = tableChoiceIds
     }
 
     if (assignedTableId !== (registration.assignedTableId || '')) {
@@ -198,7 +199,7 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
     }
 
     await onSave(updateData)
-  }, [attendeeData, answersData, status, eventAttendeeTypeId, tableChoiceId, assignedTableId, comment, registration, onSave])
+  }, [attendeeData, answersData, status, eventAttendeeTypeId, tableChoiceIds, assignedTableId, comment, registration, onSave])
 
   // â”€â”€â”€ Render helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderStandardField = (field: FormField) => {
@@ -522,22 +523,57 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
         </div>
 
         {/* 3. Tables (only if event has tables) */}
-        {eventTables.length > 0 && (
+        {eventTables.length > 0 && (() => {
+          const tableChoiceField = formFields.find(f => 'fieldType' in f && f.fieldType === 'table_choice')
+          const isMulti = tableChoiceField && 'tableChoiceMode' in tableChoiceField && tableChoiceField.tableChoiceMode === 'multi'
+          return (
           <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
             <div className="grid grid-cols-2 gap-4">
-              {/* Table Choice */}
+              {/* Table Choices */}
               <div>
-                <label className={LABEL_CLASSES}>{t('events:registrations.header_table_choice', 'Table choisie')}</label>
-                <select
-                  value={tableChoiceId}
-                  onChange={(e) => setTableChoiceId(e.target.value)}
-                  className={INPUT_CLASSES}
-                >
-                  <option value="">{t('events:registrations.filter_none', 'Aucune')}</option>
-                  {eventTables.map(tbl => (
-                    <option key={tbl.id} value={tbl.id}>{tbl.name}</option>
-                  ))}
-                </select>
+                <label className={LABEL_CLASSES}>{t('events:registrations.header_table_choice', isMulti ? 'Tables choisies' : 'Table choisie')}</label>
+                <div className="space-y-1 max-h-40 overflow-y-auto border rounded-lg p-2 dark:border-gray-600">
+                  {eventTables.map(tbl => {
+                    const isSelected = tableChoiceIds.includes(tbl.id)
+                    const priority = tableChoiceIds.indexOf(tbl.id)
+                    const selectTable = () => {
+                      if (isMulti) {
+                        setTableChoiceIds(prev =>
+                          prev.includes(tbl.id)
+                            ? prev.filter(id => id !== tbl.id)
+                            : [...prev, tbl.id]
+                        )
+                      } else {
+                        // Single mode: toggle or replace
+                        setTableChoiceIds(prev =>
+                          prev.includes(tbl.id) ? [] : [tbl.id]
+                        )
+                      }
+                    }
+                    return (
+                      <label
+                        key={tbl.id}
+                        className={`flex items-center gap-2 p-1.5 rounded cursor-pointer text-sm transition-colors ${
+                          isSelected
+                            ? 'bg-primary-50 dark:bg-primary-900/30'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        }`}
+                      >
+                        <input
+                          type={isMulti ? 'checkbox' : 'radio'}
+                          name={isMulti ? undefined : 'tableChoice'}
+                          checked={isSelected}
+                          onChange={selectTable}
+                          className={isMulti ? 'rounded border-gray-300 text-primary-600 focus:ring-primary-500' : 'border-gray-300 text-primary-600 focus:ring-primary-500'}
+                        />
+                        <span className="flex-1 dark:text-gray-200">{tbl.name}</span>
+                        {isMulti && isSelected && priority >= 0 && (
+                          <span className="text-xs font-medium text-primary-600 dark:text-primary-400">#{priority + 1}</span>
+                        )}
+                      </label>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Assigned Table */}
@@ -556,7 +592,8 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
               </div>
             </div>
           </div>
-        )}
+          )
+        })()}
 
         {/* 4. Custom fields & extra data */}
         {hasFormFields && customFields.length > 0 && (

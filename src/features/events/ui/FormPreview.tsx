@@ -64,6 +64,20 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
         return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
       }
 
+      const resolveRegistrationField = (field: FormField): string | null => {
+        const direct = ('registrationField' in field && field.registrationField) ? field.registrationField : null
+        if (direct) return direct
+
+        const fieldType = field.fieldType || field.type
+        const key = ('key' in field && field.key) ? field.key : ''
+
+        // table_choice is handled directly after the loop (split comma-separated → array)
+        if (fieldType === 'attendee_type' || key === 'event_attendee_type_id' || key === 'attendee_type') return 'event_attendee_type_id'
+        if (key === 'attendance_type') return 'attendance_type'
+
+        return null
+      }
+
       // Group form data by field configuration
       fields.forEach((field) => {
         const value = formData[field.id]
@@ -85,12 +99,15 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
           attendee[backendFieldName] = value
         } 
         // Champs mappés aux colonnes registration
-        else if ('registrationField' in field && field.registrationField) {
-          // Map to registration table column
-          registrationData[field.registrationField] = value
+        else {
+          const registrationField = resolveRegistrationField(field)
+          if (registrationField) {
+            registrationData[registrationField] = value
+            return
+          }
         } 
         // Anciens champs avec storeInAnswers (compatibilité)
-        else if ('storeInAnswers' in field && field.storeInAnswers) {
+        if ('storeInAnswers' in field && field.storeInAnswers) {
           // Store in answers JSON
           const key = 'key' in field && field.key ? field.key : field.id
           answers[key] = value
@@ -105,8 +122,8 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
 
       // Determine attendance type
       let attendanceType: 'onsite' | 'online' | 'hybrid' = 'onsite'
-      if (registrationData.attendance_type) {
-        attendanceType = registrationData.attendance_type
+      if (registrationData.attendance_type || registrationData.attendanceType) {
+        attendanceType = (registrationData.attendance_type || registrationData.attendanceType) as typeof attendanceType
       } else if (event.locationType === 'online') {
         attendanceType = 'online'
       } else if (event.locationType === 'hybrid') {
@@ -119,13 +136,20 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
       }
 
       // Add registration-specific data
-      if (registrationData.event_attendee_type_id) {
-        requestData.event_attendee_type_id = registrationData.event_attendee_type_id
+      if (registrationData.event_attendee_type_id || registrationData.eventAttendeeTypeId) {
+        requestData.event_attendee_type_id = registrationData.event_attendee_type_id || registrationData.eventAttendeeTypeId
       }
 
-      // Add table choice
-      if (registrationData.table_choice_id) {
-        requestData.table_choice_id = registrationData.table_choice_id
+      // Direct table choice extraction from form data
+      const tcField = fields.find((f: any) => {
+        const ft = f.fieldType || f.type
+        return ft === 'table_choice' || ('key' in f && f.key === 'table_choice_ids')
+      })
+      if (tcField) {
+        const tcRawValue = formData[tcField.id]
+        if (tcRawValue && typeof tcRawValue === 'string' && tcRawValue.trim()) {
+          requestData.table_choice_ids = tcRawValue.split(',').filter(Boolean)
+        }
       }
 
       // Add custom answers
@@ -305,30 +329,61 @@ export const FormPreview: React.FC<FormPreviewProps> = ({
             ))}
           </select>
         )
-      case 'table_choice':
+      case 'table_choice': {
+        const isMulti = 'tableChoiceMode' in field && field.tableChoiceMode === 'multi'
+        const selectedIds = value ? String(value).split(',').filter(Boolean) : []
+        const selectTable = (tableId: string) => {
+          if (isMulti) {
+            const newIds = selectedIds.includes(tableId)
+              ? selectedIds.filter(id => id !== tableId)
+              : [...selectedIds, tableId]
+            handleInputChange(field.id, newIds.join(','))
+          } else {
+            // Single mode: replace selection
+            handleInputChange(field.id, selectedIds.includes(tableId) ? '' : tableId)
+          }
+        }
         return (
-          <select
-            value={value}
-            onChange={(e) => handleInputChange(field.id, e.target.value)}
-            className={baseClasses}
-            required={field.required}
-            disabled={disabled}
-          >
-            <option value="" className="dark:bg-gray-700 dark:text-white">Sélectionnez une table</option>
-            {eventTables?.map((table: any) => (
-              <option
-                key={table.id}
-                value={table.id}
-                disabled={table.capacity !== null && (table._count?.assignedRegistrations ?? 0) >= table.capacity}
-                className="dark:bg-gray-700 dark:text-white"
-              >
-                {table.name}
-                {table.capacity !== null ? ` (${table._count?.assignedRegistrations ?? 0}/${table.capacity})` : ''}
-                {table.capacity !== null && (table._count?.assignedRegistrations ?? 0) >= table.capacity ? ' - Complet' : ''}
-              </option>
-            ))}
-          </select>
+          <div className={`space-y-1.5 max-h-48 overflow-y-auto border rounded-lg p-2 dark:border-gray-600 ${disabled ? 'opacity-50' : ''}`}>
+            {(!eventTables || eventTables.length === 0) && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 p-2">Aucune table configurée</p>
+            )}
+            {eventTables?.map((table: any) => {
+              const count = table._count?.assignedRegistrations ?? 0
+              const isFull = table.capacity !== null && count >= table.capacity
+              const isSelected = selectedIds.includes(table.id)
+              const priority = selectedIds.indexOf(table.id)
+              return (
+                <label
+                  key={table.id}
+                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                    isSelected
+                      ? 'bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50 border border-transparent'
+                  } ${isFull && !isSelected ? 'opacity-50' : ''}`}
+                >
+                  <input
+                    type={isMulti ? 'checkbox' : 'radio'}
+                    name={isMulti ? undefined : field.id}
+                    checked={isSelected}
+                    onChange={() => selectTable(table.id)}
+                    disabled={(isFull && !isSelected) || disabled}
+                    className={isMulti ? 'rounded border-gray-300 text-blue-600 focus:ring-blue-500' : 'border-gray-300 text-blue-600 focus:ring-blue-500'}
+                  />
+                  <span className="flex-1 text-sm dark:text-gray-200">
+                    {table.name}
+                    {table.capacity !== null ? ` (${count}/${table.capacity})` : ''}
+                    {isFull ? ' - Complet' : ''}
+                  </span>
+                  {isMulti && isSelected && priority >= 0 && (
+                    <span className="text-xs font-medium text-blue-600 dark:text-blue-400">#{priority + 1}</span>
+                  )}
+                </label>
+              )
+            })}
+          </div>
         )
+      }
       case 'multiselect':
         return (
           <div className="space-y-2">

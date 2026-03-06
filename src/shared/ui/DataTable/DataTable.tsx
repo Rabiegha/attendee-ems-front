@@ -479,12 +479,15 @@ export function DataTable<TData, TValue>({
     table.resetRowSelection()
   }, [table])
 
-  // Notify parent of selection changes
+  // Notify parent of selection changes (use ref to avoid infinite loop from unstable callback refs)
+  const onRowSelectionChangeRef = React.useRef(onRowSelectionChange)
+  onRowSelectionChangeRef.current = onRowSelectionChange
+
   React.useEffect(() => {
-    if (onRowSelectionChange) {
-      onRowSelectionChange(selectedItems)
+    if (onRowSelectionChangeRef.current) {
+      onRowSelectionChangeRef.current(selectedItems)
     }
-  }, [rowSelection, onRowSelectionChange, selectedItems])
+  }, [selectedItems])
 
   // Save column visibility to localStorage when it changes
   React.useEffect(() => {

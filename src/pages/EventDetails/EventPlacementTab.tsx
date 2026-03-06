@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EventDPO } from '@/features/events/dpo/event.dpo'
-import { Plus, Users as UsersIcon, Trash2, Edit2, LayoutGrid, AlertTriangle } from 'lucide-react'
+import { Plus, Users as UsersIcon, Trash2, Edit2, LayoutGrid, AlertTriangle, Shuffle, ArrowDown, BarChart3, Scale, ShieldCheck, RefreshCw } from 'lucide-react'
 import { Button, Modal } from '@/shared/ui'
 import { Skeleton } from '@/shared/ui/Skeleton'
 import {
@@ -10,6 +10,8 @@ import {
   useUpdateEventTableMutation,
   useDeleteEventTableMutation,
   useAssignRegistrationTableMutation,
+  useUpdateEventMutation,
+  useGetPlacementSatisfactionQuery,
   type EventTable,
   type CreateEventTableDto,
   type EventAttendeeType,
@@ -309,30 +311,50 @@ const TableCard: React.FC<{
             {t('events:placement.no_participants')}
           </p>
         ) : (
-          table.assignedRegistrations.map((reg) => (
-            <div
-              key={reg.id}
-              className="flex items-center justify-between group px-2 py-1.5 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <div
-                  className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                    reg.checked_in_at ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
-                />
-                <span className="text-xs text-gray-700 dark:text-gray-300 truncate">
-                  {reg.attendee.first_name} {reg.attendee.last_name}
-                </span>
-              </div>
-              <button
-                onClick={() => onUnassign(reg.id)}
-                className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-red-500 transition-all"
-                title={t('events:placement.unassign')}
+          table.assignedRegistrations.map((reg) => {
+            const tableChoiceIds = reg.tableChoiceIds || []
+            const hasChoices = tableChoiceIds.length > 0
+            const isOutOfChoice = hasChoices && !tableChoiceIds.includes(table.id)
+
+            return (
+              <div
+                key={reg.id}
+                className={`flex items-center justify-between group px-2 py-1.5 rounded transition-colors ${
+                  isOutOfChoice
+                    ? 'bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                    : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                }`}
               >
-                <Trash2 className="h-3 w-3" />
-              </button>
-            </div>
-          ))
+                <div className="flex items-center gap-2 min-w-0">
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      isOutOfChoice
+                        ? 'bg-amber-500'
+                        : reg.checked_in_at
+                        ? 'bg-green-500'
+                        : 'bg-gray-300'
+                    }`}
+                  />
+                  <span
+                    className={`text-xs truncate ${
+                      isOutOfChoice
+                        ? 'text-amber-700 dark:text-amber-300 font-medium'
+                        : 'text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    {reg.attendee.first_name} {reg.attendee.last_name}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onUnassign(reg.id)}
+                  className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-red-500 transition-all"
+                  title={t('events:placement.unassign')}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            )
+          })
         )}
       </div>
     </div>
@@ -353,16 +375,59 @@ export const EventPlacementTab: React.FC<EventPlacementTabProps> = ({
   isLoadingAttendeeTypes = false,
 }) => {
   const { t } = useTranslation(['events', 'common'])
-  const { data: tables = [], isLoading, error } = useGetEventTablesQuery(event.id)
+  const {
+    data: tables = [],
+    isLoading,
+    isFetching: isFetchingTables,
+    error,
+    refetch: refetchTables,
+  } = useGetEventTablesQuery(event.id)
+  const {
+    data: satisfaction,
+    isFetching: isFetchingSatisfaction,
+    refetch: refetchSatisfaction,
+  } = useGetPlacementSatisfactionQuery(event.id)
   const [createTable] = useCreateEventTableMutation()
   const [updateTable] = useUpdateEventTableMutation()
   const [deleteTable] = useDeleteEventTableMutation()
   const [assignTable] = useAssignRegistrationTableMutation()
+  const [updateEvent] = useUpdateEventMutation()
 
   const toast = useToast()
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingTable, setEditingTable] = useState<EventTable | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const currentFillMode = event.tableFillMode || event.settings?.table_fill_mode || 'sequential'
+  const currentForcePlacement = event.forcePlacement ?? event.settings?.force_placement ?? false
+
+  const fillModes = [
+    { value: 'sequential', icon: ArrowDown, label: t('events:placement.fill_mode_sequential'), description: t('events:placement.fill_mode_sequential_desc') },
+    { value: 'random', icon: Shuffle, label: t('events:placement.fill_mode_random'), description: t('events:placement.fill_mode_random_desc') },
+    { value: 'fill_first', icon: BarChart3, label: t('events:placement.fill_mode_fill_first'), description: t('events:placement.fill_mode_fill_first_desc') },
+    { value: 'balance', icon: Scale, label: t('events:placement.fill_mode_balance'), description: t('events:placement.fill_mode_balance_desc') },
+  ] as const
+
+  const handleFillModeChange = async (mode: string) => {
+    try {
+      await updateEvent({ id: event.id, data: { tableFillMode: mode as any } }).unwrap()
+      toast.success(t('events:placement.fill_mode_update_success'))
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err?.data?.message || t('events:placement.fill_mode_update_error'))
+    }
+  }
+
+  const handleForcePlacementToggle = async () => {
+    try {
+      await updateEvent({ id: event.id, data: { forcePlacement: !currentForcePlacement } }).unwrap()
+      toast.success(t('events:placement.force_placement_update_success'))
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err?.data?.message || t('events:placement.fill_mode_update_error'))
+    }
+  }
 
   const handleCreate = async (data: CreateEventTableDto) => {
     try {
@@ -417,6 +482,19 @@ export const EventPlacementTab: React.FC<EventPlacementTabProps> = ({
     }
   }
 
+  const handleRefresh = async () => {
+    if (isRefreshing) return
+
+    setIsRefreshing(true)
+    try {
+      await Promise.all([refetchTables(), refetchSatisfaction()])
+      // Keep spinner visible briefly so refresh feedback is noticeable.
+      await new Promise((resolve) => setTimeout(resolve, 500))
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   // Stats summary
   const totalCapacity = tables.reduce((sum, t) => sum + (t.capacity || 0), 0)
   const totalAssigned = tables.reduce((sum, t) => sum + t.assignedCount, 0)
@@ -443,15 +521,105 @@ export const EventPlacementTab: React.FC<EventPlacementTabProps> = ({
               })}
             </span>
           )}
+          {satisfaction && satisfaction.rate !== null && (
+            <span className={`font-medium ${
+              satisfaction.rate >= 80 ? 'text-green-600 dark:text-green-400' :
+              satisfaction.rate >= 50 ? 'text-yellow-600 dark:text-yellow-400' :
+              'text-red-600 dark:text-red-400'
+            }`}>
+              {t('events:placement.satisfaction', {
+                rate: satisfaction.rate,
+                satisfied: satisfaction.satisfied,
+                total: satisfaction.totalWithChoices,
+              })}
+            </span>
+          )}
         </div>
-        <Button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center space-x-2"
-          leftIcon={<Plus className="h-4 w-4" />}
-        >
-          {t('events:placement.create_button')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing || isFetchingTables || isFetchingSatisfaction}
+            className="h-10"
+            leftIcon={
+              <RefreshCw
+                className={`h-4 w-4 ${
+                  isRefreshing || isFetchingTables || isFetchingSatisfaction ? 'animate-spin' : ''
+                }`}
+              />
+            }
+          >
+            {t('common:app.refresh')}
+          </Button>
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center space-x-2"
+            leftIcon={<Plus className="h-4 w-4" />}
+          >
+            {t('events:placement.create_button')}
+          </Button>
+        </div>
       </div>
+
+      {/* Fill Mode Selector */}
+      {tables.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            {t('events:placement.fill_mode_title')}
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            {fillModes.map((mode) => {
+              const Icon = mode.icon
+              const isActive = currentFillMode === mode.value
+              return (
+                <button
+                  key={mode.value}
+                  type="button"
+                  onClick={() => handleFillModeChange(mode.value)}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all text-center ${
+                    isActive
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  <Icon className={`h-5 w-5 ${isActive ? 'text-primary-600 dark:text-primary-400' : ''}`} />
+                  <span className="text-xs font-medium">{mode.label}</span>
+                  <span className="text-[10px] leading-tight opacity-70">{mode.description}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Force Placement Toggle */}
+      {tables.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className={`h-5 w-5 ${currentForcePlacement ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {t('events:placement.force_placement_label')}
+                </h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('events:placement.force_placement_desc')}
+                </p>
+              </div>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={currentForcePlacement}
+                onChange={handleForcePlacementToggle}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+        </div>
+      )}
 
       {/* Grid */}
       {isLoading || isLoadingAttendeeTypes ? (

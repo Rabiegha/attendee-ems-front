@@ -35,6 +35,8 @@ export interface EventDPO {
   reminderEmailEnabled?: boolean
   includeQrCodeInApproval?: boolean
   badgeTemplateId?: string
+  tableFillMode?: 'sequential' | 'random' | 'fill_first' | 'balance'
+  forcePlacement?: boolean
   settings?: {
     registration_fields?: any[]
     [key: string]: any
@@ -85,6 +87,8 @@ export interface CreateEventDPO {
   reminderEmailEnabled?: boolean
   includeQrCodeInApproval?: boolean
   badgeTemplateId?: string | undefined
+  tableFillMode?: 'sequential' | 'random' | 'fill_first' | 'balance'
+  forcePlacement?: boolean
 }
 
 export interface UpdateEventDPO extends Partial<Omit<CreateEventDPO, 'badgeTemplateId'>> {

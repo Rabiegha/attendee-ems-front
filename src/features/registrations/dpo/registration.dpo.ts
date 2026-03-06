@@ -19,12 +19,12 @@ export interface RegistrationDPO {
       text_color_hex: string | null
     }
   } | null
-  tableChoiceId?: string | null
+  tableChoiceIds?: string[]
   assignedTableId?: string | null
-  tableChoice?: {
+  tableChoices?: {
     id: string
     name: string
-  } | null
+  }[]
   assignedTable?: {
     id: string
     name: string

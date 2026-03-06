@@ -699,7 +699,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     }
   }
 
-  const handleUpdate = async (data: Record<string, unknown>) => {
+  const handleUpdate = async (data: Record<string, any>) => {
     if (!editingRegistration) return
 
     try {
@@ -1218,22 +1218,27 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const conditionalTableColumns = useMemo<ColumnDef<RegistrationDPO>[]>(() => {
     const cols: ColumnDef<RegistrationDPO>[] = []
     
-    const hasTableChoice = registrations.some(reg => reg.tableChoice?.name)
+    const hasTableChoice = registrations.some(reg => reg.tableChoices?.length)
     if (hasTableChoice) {
       cols.push({
         id: 'tableChoice',
         header: colHeader(t('events:registrations.header_table_choice')),
-        accessorFn: (row) => row.tableChoice?.name || '',
+        accessorFn: (row) => row.tableChoices?.map(tc => tc.name).join(', ') || '',
         sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
-          const choice = row.original.tableChoice
+          const choices = row.original.tableChoices || []
           return (
             <div className="cursor-pointer text-sm" onClick={() => handleRowClick(row.original)}>
-              {choice ? (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium">
-                  <LayoutGrid className="h-3 w-3" />
-                  {choice.name}
-                </span>
+              {choices.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {choices.map((choice, i) => (
+                    <span key={choice.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium">
+                      <LayoutGrid className="h-3 w-3" />
+                      {choice.name}
+                      {choices.length > 1 && <span className="opacity-60">#{i + 1}</span>}
+                    </span>
+                  ))}
+                </div>
               ) : (
                 <span className="text-gray-400 dark:text-gray-600">—</span>
               )}
@@ -1812,7 +1817,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
           onSave={handleUpdate}
           formFields={formFields}
           allAnswerKeys={allAnswerKeys}
-          eventAttendeeTypes={eventAttendeeTypes}
+          eventAttendeeTypes={eventAttendeeTypes ?? []}
         />
       )}
 

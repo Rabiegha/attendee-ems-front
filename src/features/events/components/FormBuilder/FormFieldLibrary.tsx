@@ -202,7 +202,7 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
   },
   {
     id: 'table_choice',
-    key: 'table_choice_id',
+    key: 'table_choice_ids',
     label: 'Choix de table',
     placeholder: 'Sélectionnez une table',
     type: 'table_choice',
@@ -210,7 +210,7 @@ export const PREDEFINED_FIELDS: PredefinedFieldTemplate[] = [
     category: 'event',
     description: 'Table souhaitée pour le placement',
     required: false,
-    registrationField: 'table_choice_id',
+    registrationField: 'table_choice_ids',
     visibleInPublicForm: true,
     visibleInAdminForm: true,
     visibleInAttendeeTable: true,
@@ -355,7 +355,7 @@ export function createCustomField(
   if (type === 'table_choice') {
     return {
       ...baseField,
-      registrationField: 'table_choice_id',
+      registrationField: 'table_choice_ids',
       storeInAnswers: false,
       visibleInAttendeeTable: true,
     } as PredefinedFieldTemplate

@@ -9,6 +9,7 @@ import { useSelector } from 'react-redux'
 import {
   selectUser,
   selectOrganization,
+  selectUserRoles,
 } from '@/features/auth/model/sessionSlice'
 import { useMeQuery } from '@/features/auth/api/authApi'
 import { StatsCards } from '@/widgets/StatsCards'
@@ -38,6 +39,8 @@ export const Dashboard: React.FC = () => {
   const { t } = useTranslation(['common', 'events', 'auth'])
   const currentUser = useSelector(selectUser)
   const organization = useSelector(selectOrganization)
+  const userRoles = useSelector(selectUserRoles)
+  const isPartner = userRoles.includes('PARTNER')
   
   // États pour gérer le nombre d'éléments affichés
   const [eventsLimit, setEventsLimit] = useState(5)
@@ -149,7 +152,7 @@ export const Dashboard: React.FC = () => {
   }
 
   // ── DASHBOARD PARTNER ──────────────────────────────
-  if (canReadPartnerScan) {
+  if (isPartner) {
     return (
       <PageContainer maxWidth="7xl" padding="lg">
         <PageHeader

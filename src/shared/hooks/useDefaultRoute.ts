@@ -1,17 +1,20 @@
+import { useSelector } from 'react-redux'
 import { useCan } from '@/shared/acl/hooks/useCan'
 import { ROUTES } from '@/app/config/constants'
+import { selectUserRoles } from '@/features/auth/model/sessionSlice'
 
 /**
  * Hook pour déterminer la route par défaut selon les permissions de l'utilisateur
  */
 export const useDefaultRoute = (): string => {
+  const userRoles = useSelector(selectUserRoles)
+  const isPartner = userRoles.includes('PARTNER')
   const canReadOrganization = useCan('read', 'Organization')
   const canReadEvent = useCan('read', 'Event')
   const canReadAttendee = useCan('read', 'Attendee')
-  const canReadPartnerScan = useCan('read', 'PartnerScan')
 
   // Partner → directement sur Mes Contacts
-  if (canReadPartnerScan) {
+  if (isPartner) {
     return ROUTES.MY_CONTACTS
   }
 

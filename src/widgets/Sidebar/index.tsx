@@ -53,6 +53,7 @@ const navigation = [
   },
   {
     name: 'navigation.my_contacts',
+    nameForNonPartner: 'navigation.partner_scans',
     href: ROUTES.MY_CONTACTS,
     icon: Users,
     action: 'read' as const,
@@ -242,14 +243,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                       )
                     }
-                    title={!isOpen ? t(item.name) : undefined}
+                    title={!isOpen ? t('nameForNonPartner' in item && !isPartner ? item.nameForNonPartner : item.name) : undefined}
                   >
                     <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
                     <span className={cn(
                       "whitespace-nowrap transition-opacity duration-300",
                       isOpen ? "opacity-100" : "opacity-0"
                     )}>
-                      {t(item.name)}
+                      {t('nameForNonPartner' in item && !isPartner ? item.nameForNonPartner : item.name)}
                     </span>
                   </NavLink>
                 </li>

@@ -129,6 +129,12 @@ export const rulesFor = (role: UserRole, ctx: RoleContext): AppRule[] => {
           subject: 'Attendee',
           conditions: { eventId: { $in: eventIds }, orgId },
         },
+        // Partner Scans — CRUD propre
+        { action: 'create', subject: 'PartnerScan', conditions: { orgId } },
+        { action: 'read', subject: 'PartnerScan', conditions: { orgId } },
+        { action: 'update', subject: 'PartnerScan', conditions: { orgId } },
+        { action: 'delete', subject: 'PartnerScan', conditions: { orgId } },
+        { action: 'export', subject: 'PartnerScan', conditions: { orgId } },
         // Accès limité aux rapports des événements assignés
         {
           action: 'read',

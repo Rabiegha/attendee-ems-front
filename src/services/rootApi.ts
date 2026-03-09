@@ -153,6 +153,7 @@ export const rootApi = createApi({
     'EventTables',
     'EmailTemplates',
     'PrintJobs',
+    'PartnerScan',
   ],
   // Pas d'endpoints ici, ils seront injectés par chaque feature
   endpoints: () => ({}),

@@ -8,6 +8,12 @@ export const useDefaultRoute = (): string => {
   const canReadOrganization = useCan('read', 'Organization')
   const canReadEvent = useCan('read', 'Event')
   const canReadAttendee = useCan('read', 'Attendee')
+  const canReadPartnerScan = useCan('read', 'PartnerScan')
+
+  // Partner → directement sur Mes Contacts
+  if (canReadPartnerScan) {
+    return ROUTES.MY_CONTACTS
+  }
 
   // Admins et managers peuvent accéder au dashboard complet
   if (canReadOrganization) {

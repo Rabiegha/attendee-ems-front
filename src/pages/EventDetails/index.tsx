@@ -12,6 +12,7 @@ import {
   useBulkExportRegistrationsMutation,
 } from '@/features/registrations/api/registrationsApi'
 import { skipToken } from '@reduxjs/toolkit/query/react'
+import { useSelector } from 'react-redux'
 import { Can } from '@/shared/acl/guards/Can'
 import { useCan } from '@/shared/acl/hooks/useCan'
 import { Button } from '@/shared/ui/Button'
@@ -53,6 +54,8 @@ import { RegistrationsTable } from '@/features/registrations/ui/RegistrationsTab
 import { ImportExcelModal } from '@/features/registrations/ui/ImportExcelModal'
 import { AddParticipantForm } from '@/features/registrations/ui/AddParticipantForm'
 import { EditEventModal } from '@/features/events/ui/EditEventModal'
+import { useGetPartnerScansQuery, useLazyExportPartnerScansExcelQuery } from '@/features/partner-scans/api/partnerScansApi'
+import { PartnerScansTable } from '@/features/partner-scans/ui/PartnerScansTable'
 import {
   FormBuilder,
   type FormField,
@@ -63,6 +66,7 @@ import { EmbedCodeGenerator } from '@/features/events/ui/EmbedCodeGenerator'
 import { EventActionsModal } from './EventActionsModal'
 import { EventSessionsTab } from './EventSessionsTab'
 import { EventPlacementTab } from './EventPlacementTab'
+import { selectUserRoles } from '@/features/auth/model/sessionSlice'
 
 type TabType = 'details' | 'registrations' | 'team' | 'form' | 'settings' | 'attendee-types' | 'badges' | 'sessions' | 'placement' | 'stats' | 'emails' | 'print-queue'
 
@@ -155,6 +159,9 @@ export const EventDetails: React.FC = () => {
   const canReadBadges = useCan('read', 'Badge')
   const canUpdateEvent = useCan('update', 'Event')
   const canAssignUsers = useCan('update', 'Event') // Même permission que update event
+  const canReadPartnerScans = useCan('read', 'PartnerScan')
+  const userRoles = useSelector(selectUserRoles)
+  const isPartner = userRoles.includes('PARTNER')
 
   const {
     data: event,
@@ -235,6 +242,37 @@ export const EventDetails: React.FC = () => {
       skip: !id,
     }
   )
+
+  // Partner scans pour cet événement (uniquement pour les PARTNER)
+  const [partnerScansPage, setPartnerScansPage] = useState(1)
+  const [partnerScansSearch, setPartnerScansSearch] = useState('')
+  const [partnerScansActiveTab, setPartnerScansActiveTab] = useState<'active' | 'deleted'>('active')
+  const partnerScansIsActive = partnerScansActiveTab === 'active'
+  const {
+    data: partnerScansData,
+    isLoading: partnerScansLoading,
+    refetch: refetchPartnerScans,
+  } = useGetPartnerScansQuery(
+    id && isPartner
+      ? {
+          event_id: id,
+          page: partnerScansPage,
+          limit: 20,
+          ...(partnerScansSearch && { search: partnerScansSearch }),
+          is_active: partnerScansIsActive,
+        }
+      : skipToken
+  )
+  // Counters for partner tabs
+  const { data: partnerActiveCount } = useGetPartnerScansQuery(
+    id && isPartner ? { event_id: id, page: 1, limit: 1, is_active: true } : skipToken
+  )
+  const { data: partnerDeletedCount } = useGetPartnerScansQuery(
+    id && isPartner ? { event_id: id, page: 1, limit: 1, is_active: false } : skipToken
+  )
+
+  // Export Excel pour la vue partner (hook doit être avant les early returns)
+  const [triggerPartnerExport] = useLazyExportPartnerScansExcelQuery()
 
   // Charger les champs depuis event.settings.registration_fields quand l'événement est chargé
   useEffect(() => {
@@ -658,6 +696,117 @@ export const EventDetails: React.FC = () => {
   const approvedCount = activeMeta.statusCounts.approved
   const awaitingCount = activeMeta.statusCounts.awaiting
   const refusedCount = activeMeta.statusCounts.refused
+
+  // ──────────────────────────────────────────────────────
+  // VUE SIMPLIFIÉE PARTNER : uniquement la liste de contacts
+  // ──────────────────────────────────────────────────────
+
+  const handlePartnerExport = async () => {
+    if (!id) return
+    try {
+      const blob = await triggerPartnerExport({ event_id: id, is_active: partnerScansIsActive }).unwrap()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `contacts-${event?.name ?? id}-${partnerScansActiveTab}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch {
+      // silently fail
+    }
+  }
+
+  const partnerScansTabs: TabItem[] = [
+    {
+      id: 'active',
+      label: t('common:partner_scans.tab_active'),
+      count: partnerActiveCount?.meta?.total ?? 0,
+    },
+    {
+      id: 'deleted',
+      label: t('common:partner_scans.tab_deleted'),
+      count: partnerDeletedCount?.meta?.total ?? 0,
+    },
+  ]
+
+  const handlePartnerScansTabChange = (tabId: string) => {
+    setPartnerScansActiveTab(tabId as 'active' | 'deleted')
+    setPartnerScansPage(1)
+  }
+
+  if (isPartner) {
+    return (
+      <div className="w-full min-h-screen">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          {/* Header simplifié */}
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center space-x-3 mb-2">
+                <Link
+                  to="/events"
+                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Link>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {event.name}
+                </h1>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    event.status === 'published'
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
+                  }`}
+                >
+                  {event.status === 'published' ? t('status.published') : event.status}
+                </span>
+              </div>
+              <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-300">
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {formatDate(event.startDate)}
+                </div>
+                {event.location && (
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    {event.location}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Table contacts avec onglets, export, refresh */}
+          <PartnerScansTable
+            scans={partnerScansData?.data ?? []}
+            isLoading={partnerScansLoading}
+            showEventColumn={false}
+            isDeletedTab={!partnerScansIsActive}
+            totalItems={partnerScansData?.meta?.total}
+            currentPage={partnerScansPage}
+            pageSize={20}
+            onPageChange={setPartnerScansPage}
+            onPageSizeChange={() => {}}
+            onSearchChange={(search) => {
+              setPartnerScansSearch(search)
+              setPartnerScansPage(1)
+            }}
+            onExport={handlePartnerExport}
+            onRefresh={refetchPartnerScans}
+            tabsElement={
+              <Tabs
+                items={partnerScansTabs}
+                activeTab={partnerScansActiveTab}
+                onTabChange={handlePartnerScansTabChange}
+              />
+            }
+          />
+        </div>
+      </div>
+    )
+  }
 
   // Définir les onglets avec leurs permissions requises
   const allTabs = [

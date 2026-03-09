@@ -121,6 +121,7 @@ export function mapPermissionsToCASlRules(
       badges: 'Badge',
       'badge-templates': 'Badge',
       'attendee-types': 'AttendeeType',
+      'partner-scans': 'PartnerScan',
       reports: 'Report',
       email: 'Email',
     }

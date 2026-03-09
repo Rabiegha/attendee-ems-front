@@ -17,8 +17,11 @@ import {
   Smartphone,
   MonitorCheck,
 } from 'lucide-react'
+import { useSelector } from 'react-redux'
 import { ROUTES } from '@/app/config/constants'
 import { Can } from '@/shared/acl/guards/Can'
+import { useCan } from '@/shared/acl/hooks/useCan'
+import { selectUserRoles } from '@/features/auth/model/sessionSlice'
 import { cn } from '@/shared/lib/utils'
 
 interface SidebarProps {
@@ -46,6 +49,14 @@ const navigation = [
     icon: Users,
     action: 'read' as const,
     subject: 'Attendee' as const,
+    hideForPartner: true,
+  },
+  {
+    name: 'navigation.my_contacts',
+    href: ROUTES.MY_CONTACTS,
+    icon: Users,
+    action: 'read' as const,
+    subject: 'PartnerScan' as const,
   },
   {
     name: 'navigation.attendee_types',
@@ -81,6 +92,7 @@ const navigation = [
     icon: UserCog,
     action: 'read' as const,
     subject: 'User' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.roles_permissions',
@@ -108,18 +120,21 @@ const navigation = [
     href: '/application',
     icon: Smartphone,
     // Pas de guard - accessible à tous
+    hideForPartner: true,
   },
   {
     name: 'navigation.printing',
     href: '/printing',
     icon: Printer,
     // Pas de guard - accessible à tous
+    hideForPartner: true,
   },
   {
     name: 'navigation.print_client',
     href: '/print-client',
     icon: MonitorCheck,
     // Pas de guard - accessible à tous
+    hideForPartner: true,
   },
   {
     name: 'navigation.settings',
@@ -132,6 +147,13 @@ const navigation = [
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const { t } = useTranslation('common')
+  const userRoles = useSelector(selectUserRoles)
+  const isPartner = userRoles.includes('PARTNER')
+
+  // Filtrer les items : si hideForPartner=true et c'est un Partner, on cache
+  const visibleNavigation = navigation.filter(
+    (item) => !('hideForPartner' in item && item.hideForPartner && isPartner)
+  )
 
   return (
     <aside
@@ -175,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
 
       <nav className="px-2 overflow-y-auto pb-20 flex-1 min-h-0">
         <ul className="space-y-2 pt-4">
-          {navigation.map((item) => {
+          {visibleNavigation.map((item) => {
             // Dashboard accessible à tous sans guard
             if (!item.action || !item.subject) {
               return (

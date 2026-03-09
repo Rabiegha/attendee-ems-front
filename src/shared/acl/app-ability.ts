@@ -37,6 +37,7 @@ export type Subjects =
   | 'Invitation'
   | 'Invoice'
   | 'Registration'
+  | 'PartnerScan'
   | 'Analytics'
   | 'Email'
   | 'all'

@@ -11,7 +11,7 @@ export const MesContacts: React.FC = () => {
   const { t } = useTranslation(['common'])
   const toast = useToast()
   const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(20)
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active')
 
@@ -107,7 +107,7 @@ export const MesContacts: React.FC = () => {
           currentPage={page}
           pageSize={pageSize}
           onPageChange={setPage}
-          onPageSizeChange={() => setPage(1)}
+          onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
           onSearchChange={handleSearchChange}
           onExport={handleExport}
           onRefresh={() => refetch()}

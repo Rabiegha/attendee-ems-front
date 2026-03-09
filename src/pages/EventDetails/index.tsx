@@ -245,6 +245,7 @@ export const EventDetails: React.FC = () => {
 
   // Partner scans pour cet événement (uniquement pour les PARTNER)
   const [partnerScansPage, setPartnerScansPage] = useState(1)
+  const [partnerScansPageSize, setPartnerScansPageSize] = useState(20)
   const [partnerScansSearch, setPartnerScansSearch] = useState('')
   const [partnerScansActiveTab, setPartnerScansActiveTab] = useState<'active' | 'deleted'>('active')
   const partnerScansIsActive = partnerScansActiveTab === 'active'
@@ -257,7 +258,7 @@ export const EventDetails: React.FC = () => {
       ? {
           event_id: id,
           page: partnerScansPage,
-          limit: 20,
+          limit: partnerScansPageSize,
           ...(partnerScansSearch && { search: partnerScansSearch }),
           is_active: partnerScansIsActive,
         }
@@ -786,9 +787,9 @@ export const EventDetails: React.FC = () => {
             isDeletedTab={!partnerScansIsActive}
             totalItems={partnerScansData?.meta?.total}
             currentPage={partnerScansPage}
-            pageSize={20}
+            pageSize={partnerScansPageSize}
             onPageChange={setPartnerScansPage}
-            onPageSizeChange={() => {}}
+            onPageSizeChange={(size) => { setPartnerScansPageSize(size); setPartnerScansPage(1) }}
             onSearchChange={(search) => {
               setPartnerScansSearch(search)
               setPartnerScansPage(1)

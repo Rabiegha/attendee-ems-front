@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
-import { CreditCard, Plus, Clock, Hash, Layers } from 'lucide-react';
+import { CreditCard, Plus, Clock, Hash, Layers, Copy } from 'lucide-react';
 import { 
   PageHeader,
   PageContainer,
@@ -19,7 +19,7 @@ import {
   type FilterValues,
   type SortOption
 } from '@/shared/ui';
-import { useGetBadgeTemplatesQuery, badgeTemplatesApi } from '@/services/api/badge-templates.api';
+import { useGetBadgeTemplatesQuery, useDuplicateBadgeTemplateMutation, badgeTemplatesApi } from '@/services/api/badge-templates.api';
 
 export const BadgeDesigner: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +30,7 @@ export const BadgeDesigner: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterValues, setFilterValues] = useState<FilterValues>({});
   const [sortValue, setSortValue] = useState<string>('createdAt-desc');
+  const [duplicateTemplate] = useDuplicateBadgeTemplateMutation();
   
   // États de pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -266,6 +267,17 @@ export const BadgeDesigner: React.FC = () => {
                         {template.name}
                       </h3>
                       <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            duplicateTemplate(template.id);
+                          }}
+                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+                          title={t('badges:actions.duplicate')}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </button>
                         {template.is_default && (
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                             {t('badges:template.default_badge')}

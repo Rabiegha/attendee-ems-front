@@ -79,11 +79,10 @@ export const badgeTemplatesApi = rootApi.injectEndpoints({
       ],
     }),
 
-    duplicateBadgeTemplate: builder.mutation<BadgeTemplate, { id: string; data: DuplicateBadgeTemplateDto }>({
-      query: ({ id, data }) => ({
+    duplicateBadgeTemplate: builder.mutation<BadgeTemplate, string>({
+      query: (id) => ({
         url: `/badges/templates/${id}/duplicate`,
         method: 'POST',
-        body: data,
       }),
       invalidatesTags: ['Badges'],
     }),

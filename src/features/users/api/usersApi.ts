@@ -164,6 +164,16 @@ export const usersApi = rootApi.injectEndpoints({
       invalidatesTags: ['Users'],
     }),
 
+    // Suppression définitive permanente (hard delete)
+    permanentDeleteUsers: builder.mutation<{ deletedCount: number }, string[]>({
+      query: (userIds) => ({
+        url: '/users/permanent-delete',
+        method: 'DELETE',
+        body: { ids: userIds },
+      }),
+      invalidatesTags: ['Users'],
+    }),
+
     // Restauration en masse
     bulkRestoreUsers: builder.mutation<{ restoredCount: number }, string[]>({
       query: (userIds) => ({
@@ -265,6 +275,7 @@ export const {
   useUpdateUserMutation,
   useDeleteUserMutation,
   useBulkDeleteUsersMutation, // 🆕 Hook pour suppression en masse
+  usePermanentDeleteUsersMutation, // Hook pour suppression définitive (hard delete)
   useBulkRestoreUsersMutation, // 🆕 Hook pour restauration en masse
   useGetRolesQuery,
   useGetOrganizationsQuery, // 🆕 Hook pour les organisations

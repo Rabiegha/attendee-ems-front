@@ -46,6 +46,7 @@ import {
   useGetUsersQuery,
   useUpdateUserMutation,
   useBulkDeleteUsersMutation,
+  usePermanentDeleteUsersMutation,
   useBulkRestoreUsersMutation,
   usersApi,
   type User,
@@ -106,6 +107,7 @@ function UsersPageContent() {
   // Mutations
   const [updateUser] = useUpdateUserMutation()
   const [bulkDeleteUsers] = useBulkDeleteUsersMutation()
+  const [permanentDeleteUsers] = usePermanentDeleteUsersMutation()
   const [bulkRestoreUsers] = useBulkRestoreUsersMutation()
 
   // Optimistic updates: stocke temporairement les nouveaux roleId avant confirmation serveur
@@ -250,7 +252,7 @@ function UsersPageContent() {
   }
 
   const handleConfirmPermanentDelete = async (userIds: string[]) => {
-    await bulkDeleteUsers(userIds).unwrap()
+    await permanentDeleteUsers(userIds).unwrap()
     setPermanentDeletingUser(null)
   }
 

@@ -1656,7 +1656,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
                     className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 min-w-[32px] p-1.5"
                     title={t('events:registrations.refuse_tooltip')}
                   >
-                    <Trash2 className="h-4 w-4 shrink-0" />
+                    <XCircle className="h-4 w-4 shrink-0" />
                   </Button>
                 </>
               )}

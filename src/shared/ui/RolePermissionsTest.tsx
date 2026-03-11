@@ -4,6 +4,7 @@ import { selectUser } from '@/features/auth/model/sessionSlice'
 import { useCan } from '@/shared/acl/hooks/useCan'
 import { Can } from '@/shared/acl/guards/Can'
 import { getRoleLabel } from '@/shared/acl/role-mapping'
+import { Check, X } from 'lucide-react'
 
 /**
  * Composant de test pour visualiser les différences de permissions selon les rôles
@@ -102,7 +103,7 @@ const PermissionTest: React.FC<PermissionTestProps> = ({ action, subject, label 
         : 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
     }`}>
       <span className="text-xs">{label}</span>
-      <span className="text-lg">{canDo ? '✅' : '❌'}</span>
+      <span className="text-lg">{canDo ? <Check className="w-5 h-5 text-green-600" /> : <X className="w-5 h-5 text-red-600" />}</span>
     </div>
   )
 }

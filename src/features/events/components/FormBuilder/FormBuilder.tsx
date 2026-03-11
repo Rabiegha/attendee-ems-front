@@ -779,7 +779,7 @@ export const FormBuilder: React.FC<FormBuilderProps> = ({
           </select>
         ) : (
           <div className="px-3 py-2 text-sm text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-900/40 rounded-lg">
-            ✅ Tous les champs prédéfinis ont été ajoutés
+            Tous les champs prédéfinis ont été ajoutés
           </div>
         )}
       </div>

@@ -114,7 +114,7 @@ export const BulkActionsModal: React.FC<BulkActionsModalProps> = ({
             {
               id: 'permanent-delete',
               label: 'Supprimer définitivement',
-              description: '⚠️ Action irréversible - Suppression permanente',
+              description: 'Action irréversible - Suppression permanente',
               icon: <Trash2 className={getIconClasses('danger')} />,
               onClick: () => {
                 onPermanentDelete()

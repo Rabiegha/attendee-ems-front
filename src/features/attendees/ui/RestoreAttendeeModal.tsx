@@ -92,20 +92,11 @@ export const RestoreAttendeeModal: React.FC<RestoreAttendeeModalProps> = ({
           </Button>
           <Button
             onClick={handleRestore}
-            disabled={isLoading}
+            loading={isLoading}
             className="min-w-[120px] bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white border-0"
           >
-            {isLoading ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Restauration...</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <RotateCcw className="w-4 h-4" />
-                <span>Restaurer</span>
-              </div>
-            )}
+            <RotateCcw className="w-4 h-4" />
+            <span>Restaurer</span>
           </Button>
         </div>
       </div>

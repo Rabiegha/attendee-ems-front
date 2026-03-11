@@ -97,9 +97,9 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
   const [filterValues, setFilterValues] = useState<FilterValues>({})
 
   // ── Mutations ─────────────────────────────────────────────────────────────
-  const [deleteScan] = useDeletePartnerScanMutation()
-  const [restoreScan] = useRestorePartnerScanMutation()
-  const [permanentDeleteScan] = usePermanentDeletePartnerScanMutation()
+  const [deleteScan, { isLoading: isDeletingScan }] = useDeletePartnerScanMutation()
+  const [restoreScan, { isLoading: isRestoringScan }] = useRestorePartnerScanMutation()
+  const [permanentDeleteScan, { isLoading: isPermanentDeletingScan }] = usePermanentDeletePartnerScanMutation()
   const [bulkDelete] = useBulkDeletePartnerScansMutation()
   const [bulkRestore] = useBulkRestorePartnerScansMutation()
   const [bulkPermanentDelete] = useBulkPermanentDeletePartnerScansMutation()
@@ -119,6 +119,7 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
     variant: 'warning' | 'danger' | 'success'
     action: () => Promise<void>
   } | null>(null)
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
 
   // ── Handlers ──────────────────────────────────────────────────────────────
   const handleSearchChange = useCallback(
@@ -585,10 +586,10 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
             <span className="text-sm">{t('common:partner_scans.confirm_delete_hint')}</span>
           </p>
           <div className="flex justify-center space-x-3">
-            <Button variant="outline" onClick={() => setDeletingContact(null)}>
+            <Button variant="outline" onClick={() => setDeletingContact(null)} disabled={isDeletingScan}>
               {t('common:partner_scans.cancel')}
             </Button>
-            <Button variant="destructive" onClick={handleDelete}>
+            <Button variant="destructive" onClick={handleDelete} loading={isDeletingScan}>
               {t('common:partner_scans.delete')}
             </Button>
           </div>
@@ -613,10 +614,10 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
             {t('common:partner_scans.confirm_restore_message', { name: restoringContact ? getFullName(restoringContact) : '' })}
           </p>
           <div className="flex justify-center space-x-3">
-            <Button variant="outline" onClick={() => setRestoringContact(null)}>
+            <Button variant="outline" onClick={() => setRestoringContact(null)} disabled={isRestoringScan}>
               {t('common:partner_scans.cancel')}
             </Button>
-            <Button variant="default" onClick={handleRestore}>
+            <Button variant="default" onClick={handleRestore} loading={isRestoringScan}>
               {t('common:partner_scans.restore')}
             </Button>
           </div>
@@ -645,10 +646,10 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
             </span>
           </p>
           <div className="flex justify-center space-x-3">
-            <Button variant="outline" onClick={() => setPermanentDeletingContact(null)}>
+            <Button variant="outline" onClick={() => setPermanentDeletingContact(null)} disabled={isPermanentDeletingScan}>
               {t('common:partner_scans.cancel')}
             </Button>
-            <Button variant="destructive" onClick={handlePermanentDelete}>
+            <Button variant="destructive" onClick={handlePermanentDelete} loading={isPermanentDeletingScan}>
               {t('common:partner_scans.permanent_delete')}
             </Button>
           </div>
@@ -684,13 +685,19 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
               {bulkConfirmation.message}
             </p>
             <div className="flex justify-center space-x-3">
-              <Button variant="outline" onClick={() => setBulkConfirmation(null)}>
+              <Button variant="outline" onClick={() => setBulkConfirmation(null)} disabled={bulkActionLoading}>
                 {t('common:partner_scans.cancel')}
               </Button>
               <Button
                 variant={bulkConfirmation.variant === 'danger' ? 'destructive' : 'default'}
+                loading={bulkActionLoading}
                 onClick={async () => {
-                  await bulkConfirmation.action()
+                  setBulkActionLoading(true)
+                  try {
+                    await bulkConfirmation.action()
+                  } finally {
+                    setBulkActionLoading(false)
+                  }
                   setBulkConfirmation(null)
                 }}
               >

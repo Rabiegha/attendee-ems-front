@@ -87,16 +87,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : 'button'
     const isDisabled = disabled || loading
 
-    // Ajouter la classe animate-spin à l'icône leftIcon si loading est vrai
-    const animatedLeftIcon = loading && leftIcon 
-      ? React.cloneElement(leftIcon as React.ReactElement, {
-          className: cn(
-            (leftIcon as React.ReactElement).props.className,
-            'animate-spin'
-          )
-        })
-      : leftIcon
-
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
@@ -105,9 +95,18 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         <div className="flex items-center gap-2">
-          {animatedLeftIcon && <span className="flex-shrink-0">{animatedLeftIcon}</span>}
-          {children}
-          {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+          {loading ? (
+            <>
+              <LoadingSpinner />
+              {loadingText || children}
+            </>
+          ) : (
+            <>
+              {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
+              {children}
+              {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+            </>
+          )}
         </div>
       </Comp>
     )

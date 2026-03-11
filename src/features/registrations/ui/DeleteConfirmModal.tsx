@@ -51,9 +51,9 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
           <Button
             variant="destructive"
             onClick={onConfirm}
-            disabled={isLoading}
+            loading={isLoading}
           >
-            {isLoading ? t('common:app.deleting') : t('common:app.delete')}
+            {t('common:app.delete')}
           </Button>
         </div>
       </div>

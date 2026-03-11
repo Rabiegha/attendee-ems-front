@@ -192,6 +192,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
     variant: 'default' | 'danger' | 'warning' | 'success'
     action: () => Promise<void>
   } | null>(null)
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
   const [bulkStatusModalOpen, setBulkStatusModalOpen] = useState(false)
   const [bulkStatusSelectedIds, setBulkStatusSelectedIds] = useState<Set<string>>(new Set())
   const [bulkStatusConfirmationModalOpen, setBulkStatusConfirmationModalOpen] = useState(false)
@@ -488,7 +489,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   const [rejectWithEmail, { isLoading: isRejecting }] = useRejectWithEmailMutation()
   const [updateRegistration, { isLoading: isUpdating }] =
     useUpdateRegistrationMutation()
-  const [deleteRegistration] = useDeleteRegistrationMutation()
+  const [deleteRegistration, { isLoading: isDeleting }] = useDeleteRegistrationMutation()
   const [restoreRegistration] = useRestoreRegistrationMutation()
   const [permanentDeleteRegistration] = usePermanentDeleteRegistrationMutation()
   const [bulkDeleteRegistrations] = useBulkDeleteRegistrationsMutation()
@@ -1825,6 +1826,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
         isOpen={!!deletingRegistration}
         onClose={() => setDeletingRegistration(null)}
         onConfirm={handleDelete}
+        isLoading={isDeleting}
         attendeeName={deletingRegistration ? getRegistrationFullName(deletingRegistration) : ''}
       />
 
@@ -1981,12 +1983,18 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
             setBulkActionsModalOpen(true)
           }}
           onConfirm={async () => {
-            await bulkConfirmation.action()
+            setBulkActionLoading(true)
+            try {
+              await bulkConfirmation.action()
+            } finally {
+              setBulkActionLoading(false)
+            }
             setBulkConfirmation(null)
           }}
           title={bulkConfirmation.title}
           message={bulkConfirmation.message}
           variant={bulkConfirmation.variant}
+          isLoading={bulkActionLoading}
         />
       )}
     </div>

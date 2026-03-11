@@ -117,20 +117,11 @@ export const PermanentDeleteAttendeeModal: React.FC<
           </Button>
           <Button
             onClick={handlePermanentDelete}
-            disabled={isLoading}
+            loading={isLoading}
             className="min-w-[180px] bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border-0"
           >
-            {isLoading ? (
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Suppression...</span>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-2">
-                <Trash className="w-4 h-4" />
-                <span>Supprimer définitivement</span>
-              </div>
-            )}
+            <Trash className="w-4 h-4" />
+            <span>Supprimer définitivement</span>
           </Button>
         </div>
       </div>

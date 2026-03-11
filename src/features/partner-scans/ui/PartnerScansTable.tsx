@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useMemo, useState, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { ColumnDef } from '@tanstack/react-table'
@@ -48,6 +48,7 @@ interface PartnerScansTableProps {
   onPageSizeChange?: (pageSize: number) => void
   // Server-side search
   onSearchChange?: (search: string) => void
+  searchValue?: string
   // Tabs
   tabsElement?: React.ReactNode
   // Export
@@ -85,6 +86,7 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
   onPageChange,
   onPageSizeChange,
   onSearchChange,
+  searchValue: searchValueProp,
   tabsElement,
   onExport,
   onRefresh,
@@ -94,6 +96,13 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
   const locale = i18n.language === 'fr' ? fr : enUS
   const toast = useToast()
   const [searchValue, setSearchValue] = useState('')
+
+  // Sync local search state from parent controlled value
+  useEffect(() => {
+    if (searchValueProp !== undefined && searchValueProp !== searchValue) {
+      setSearchValue(searchValueProp)
+    }
+  }, [searchValueProp])
   const [filterValues, setFilterValues] = useState<FilterValues>({})
 
   // ── Mutations ─────────────────────────────────────────────────────────────

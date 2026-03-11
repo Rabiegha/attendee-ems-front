@@ -114,6 +114,7 @@ interface RegistrationsTableProps {
   onPageSizeChange?: (pageSize: number) => void
   // Server-side search
   onSearchChange?: (search: string) => void
+  searchValue?: string
   eventAttendeeTypes?: EventAttendeeType[] | undefined
   isLoadingAttendeeTypes?: boolean
   formFields?: FormField[]
@@ -157,6 +158,7 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
   onPageChange,
   onPageSizeChange,
   onSearchChange,
+  searchValue,
   eventAttendeeTypes,
   isLoadingAttendeeTypes = false,
   formFields = [],
@@ -1065,6 +1067,14 @@ export const RegistrationsTable: React.FC<RegistrationsTableProps> = ({
 
   // Tracker la dernière valeur de recherche envoyée pour éviter les appels inutiles
   const lastSearchRef = useRef<string>('')
+
+  // Sync local search state from parent controlled value
+  useEffect(() => {
+    if (searchValue !== undefined && searchValue !== searchQuery) {
+      setSearchQuery(searchValue)
+      lastSearchRef.current = searchValue
+    }
+  }, [searchValue])
 
   // Envoyer la recherche au backend via debounce
   useEffect(() => {

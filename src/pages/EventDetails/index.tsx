@@ -118,6 +118,9 @@ export const EventDetails: React.FC = () => {
       newParams.set('tab', tab)
       return newParams
     })
+    // Reset search when switching main tabs
+    setRegistrationsSearch('')
+    setRegistrationsPage(1)
   }
 
   // State pour la pagination des inscriptions
@@ -735,6 +738,7 @@ export const EventDetails: React.FC = () => {
   const handlePartnerScansTabChange = (tabId: string) => {
     setPartnerScansActiveTab(tabId as 'active' | 'deleted')
     setPartnerScansPage(1)
+    setPartnerScansSearch('')
   }
 
   if (isPartner) {
@@ -794,6 +798,7 @@ export const EventDetails: React.FC = () => {
               setPartnerScansSearch(search)
               setPartnerScansPage(1)
             }}
+            searchValue={partnerScansSearch}
             onExport={handlePartnerExport}
             onRefresh={refetchPartnerScans}
             tabsElement={
@@ -1314,6 +1319,7 @@ export const EventDetails: React.FC = () => {
               }}
               // Server-side search
               onSearchChange={handleRegistrationsSearchChange}
+              searchValue={registrationsSearch}
             />
           </div>
         )}

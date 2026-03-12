@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { selectUser, selectOrganization } from '@/features/auth/model/sessionSlice'
 import { useCan } from '@/shared/acl/hooks/useCan'
 import { useMeQuery } from '@/features/auth/api/authApi'
+import { Check, X } from 'lucide-react'
 
 /**
  * Composant pour afficher les informations de l'utilisateur connecté
@@ -76,23 +77,23 @@ export const UserInfo: React.FC = () => {
       
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className={`flex items-center ${canManageOrg ? 'text-green-600' : 'text-red-600'}`}>
-          <span className="mr-2">{canManageOrg ? '✅' : '❌'}</span>
+          <span className="mr-2">{canManageOrg ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}</span>
           Gérer organisation
         </div>
         <div className={`flex items-center ${canManageUsers ? 'text-green-600' : 'text-red-600'}`}>
-          <span className="mr-2">{canManageUsers ? '✅' : '❌'}</span>
+          <span className="mr-2">{canManageUsers ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}</span>
           Gérer utilisateurs
         </div>
         <div className={`flex items-center ${canManageEvents ? 'text-green-600' : 'text-red-600'}`}>
-          <span className="mr-2">{canManageEvents ? '✅' : '❌'}</span>
+          <span className="mr-2">{canManageEvents ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}</span>
           Gérer événements
         </div>
         <div className={`flex items-center ${canReadEvents ? 'text-green-600' : 'text-red-600'}`}>
-          <span className="mr-2">{canReadEvents ? '✅' : '❌'}</span>
+          <span className="mr-2">{canReadEvents ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}</span>
           Voir événements
         </div>
         <div className={`flex items-center ${canReadAttendees ? 'text-green-600' : 'text-red-600'}`}>
-          <span className="mr-2">{canReadAttendees ? '✅' : '❌'}</span>
+          <span className="mr-2">{canReadAttendees ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}</span>
           Voir participants
         </div>
       </div>

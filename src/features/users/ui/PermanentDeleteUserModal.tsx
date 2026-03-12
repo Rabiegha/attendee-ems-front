@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Trash2, AlertTriangle } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
@@ -16,15 +17,19 @@ export function PermanentDeleteUserModal({
   onDelete,
 }: PermanentDeleteUserModalProps) {
   const { t } = useTranslation(['users', 'common'])
+  const [isLoading, setIsLoading] = useState(false)
 
   if (!user) return null
 
   const handleConfirm = async () => {
+    setIsLoading(true)
     try {
       await onDelete([user.id])
       onClose()
     } catch (error) {
       console.error('Erreur lors de la suppression définitive:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -46,12 +51,13 @@ export function PermanentDeleteUserModal({
         </p>
 
         <div className="flex gap-3 justify-end pt-4">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             {t('common:app.cancel')}
           </Button>
           <Button
             variant="destructive"
             onClick={handleConfirm}
+            loading={isLoading}
           >
             <Trash2 className="w-4 h-4" />
             {t('users:modal.permanent_delete_button')}

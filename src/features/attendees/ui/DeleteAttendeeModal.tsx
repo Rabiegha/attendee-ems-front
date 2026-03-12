@@ -102,10 +102,10 @@ export const DeleteAttendeeModal: React.FC<DeleteAttendeeModalProps> = ({
           <Button
             variant="destructive"
             onClick={handleDelete}
-            disabled={isLoading}
+            loading={isLoading}
             className="px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold shadow-lg shadow-red-500/25 hover:shadow-xl hover:scale-105 transition-all duration-200"
           >
-            {isLoading ? t('modal.deleting') : t('modal.delete_button')}
+            {t('modal.delete_button')}
           </Button>
         </div>
       </div>

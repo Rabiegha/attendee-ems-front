@@ -115,6 +115,7 @@ export const PartnerScansPage: React.FC = () => {
           onPageChange={setPage}
           onPageSizeChange={(size) => { setPageSize(size); setPage(1) }}
           onSearchChange={handleSearchChange}
+          searchValue={search}
           onExport={handleExport}
           onRefresh={() => refetch()}
           tabsElement={

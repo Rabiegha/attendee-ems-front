@@ -178,21 +178,21 @@ export function DataTableDemo() {
               </h3>
               <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1.5">
                 <li className="flex items-start gap-2">
-                  <span className="font-semibold">🎯 Column Ordering:</span>
+                  <span className="font-semibold">Column Ordering:</span>
                   <span>
                     Cliquez et glissez sur l'icône ⋮⋮ à gauche de chaque en-tête pour
                     réorganiser les colonnes
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="font-semibold">👁️ Column Visibility:</span>
+                  <span className="font-semibold">Column Visibility:</span>
                   <span>
                     Cliquez sur le bouton "Colonnes" en haut à droite pour
                     masquer/afficher des colonnes
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="font-semibold">✨ Animations smooth:</span>
+                  <span className="font-semibold">Animations smooth:</span>
                   <span>
                     Transitions fluides avec cubic-bezier + visual feedback pendant le
                     drag

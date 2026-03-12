@@ -107,6 +107,34 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
   const customFields = useMemo(() => formFields.filter(f => isCustomField(f)), [formFields])
   const hasFormFields = formFields.length > 0
 
+  // Standard field keys already covered by the form config
+  const configuredStandardKeys = useMemo(() => {
+    const keys = new Set<string>()
+    for (const f of standardFields) {
+      const key = ('key' in f && f.key) || ('attendeeField' in f && f.attendeeField) || f.id
+      keys.add(key)
+    }
+    return keys
+  }, [standardFields])
+
+  // Human-readable labels for standard fields not in form config
+  const STANDARD_FIELD_LABELS: Record<string, string> = {
+    first_name: t('events:registrations.first_name', 'Prénom'),
+    last_name: t('events:registrations.last_name', 'Nom'),
+    email: t('events:registrations.email_field', 'Email'),
+    phone: t('events:registrations.phone_field', 'Téléphone'),
+    company: t('events:registrations.company_field', 'Entreprise'),
+    jobTitle: t('events:registrations.job_title_field', 'Fonction'),
+    country: t('events:registrations.country_field', 'Pays'),
+  }
+
+  // Standard fields with non-empty data that are NOT in the form config
+  const missingStandardFields = useMemo(() => {
+    return Object.entries(STANDARD_FIELD_MAP)
+      .filter(([key]) => !configuredStandardKeys.has(key))
+      .map(([key]) => key)
+  }, [configuredStandardKeys])
+
   // â”€â”€â”€ Extra answer keys not covered by form config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const extraAnswerKeys = useMemo(() => {
     if (!hasFormFields) return []
@@ -409,58 +437,25 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
     }
   }
 
-  // Fallback: if no formFields provided, show default fields
+  // Fallback: if no formFields provided, show all standard fields
   const renderDefaultFields = () => (
     <>
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={LABEL_CLASSES}>{t('events:registrations.first_name')}</label>
-          <input
-            type="text"
-            value={attendeeData.first_name || ''}
-            onChange={(e) => setAttendeeData(prev => ({ ...prev, first_name: e.target.value }))}
-            className={INPUT_CLASSES}
-          />
-        </div>
-        <div>
-          <label className={LABEL_CLASSES}>{t('events:registrations.last_name')}</label>
-          <input
-            type="text"
-            value={attendeeData.last_name || ''}
-            onChange={(e) => setAttendeeData(prev => ({ ...prev, last_name: e.target.value }))}
-            className={INPUT_CLASSES}
-          />
-        </div>
-      </div>
-      <div>
-        <label className={LABEL_CLASSES}>
-          {t('events:registrations.email_field')} <span className="text-red-500 dark:text-red-400">*</span>
-        </label>
-        <input
-          type="email"
-          required
-          value={attendeeData.email || ''}
-          onChange={(e) => setAttendeeData(prev => ({ ...prev, email: e.target.value }))}
-          className={INPUT_CLASSES}
-        />
-      </div>
-      <div>
-        <label className={LABEL_CLASSES}>{t('events:registrations.phone_field')}</label>
-        <input
-          type="tel"
-          value={attendeeData.phone || ''}
-          onChange={(e) => setAttendeeData(prev => ({ ...prev, phone: e.target.value }))}
-          className={INPUT_CLASSES}
-        />
-      </div>
-      <div>
-        <label className={LABEL_CLASSES}>{t('events:registrations.company_field')}</label>
-        <input
-          type="text"
-          value={attendeeData.company || ''}
-          onChange={(e) => setAttendeeData(prev => ({ ...prev, company: e.target.value }))}
-          className={INPUT_CLASSES}
-        />
+        {Object.entries(STANDARD_FIELD_MAP).map(([key, config]) => (
+          <div key={key} className={key === 'email' ? 'col-span-2' : ''}>
+            <label className={LABEL_CLASSES}>
+              {STANDARD_FIELD_LABELS[key] || key}
+              {key === 'email' && <span className="text-red-500 dark:text-red-400 ml-1">*</span>}
+            </label>
+            <input
+              type={config.inputType || 'text'}
+              required={key === 'email'}
+              value={attendeeData[key] || ''}
+              onChange={(e) => setAttendeeData(prev => ({ ...prev, [key]: e.target.value }))}
+              className={INPUT_CLASSES}
+            />
+          </div>
+        ))}
       </div>
     </>
   )
@@ -481,6 +476,28 @@ export const EditRegistrationModal: React.FC<EditRegistrationModalProps> = ({
             {standardFields.length > 0 && (
               <div className="grid grid-cols-2 gap-4">
                 {standardFields.map(renderStandardField)}
+              </div>
+            )}
+            {/* Show remaining standard fields that have data but are not in form config */}
+            {missingStandardFields.length > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                {missingStandardFields.map(key => {
+                  const config = STANDARD_FIELD_MAP[key]
+                  if (!config) return null
+                  return (
+                    <div key={key}>
+                      <label className={LABEL_CLASSES}>
+                        {STANDARD_FIELD_LABELS[key] || key}
+                      </label>
+                      <input
+                        type={config.inputType || 'text'}
+                        value={attendeeData[key] || ''}
+                        onChange={(e) => setAttendeeData(prev => ({ ...prev, [key]: e.target.value }))}
+                        className={INPUT_CLASSES}
+                      />
+                    </div>
+                  )
+                })}
               </div>
             )}
           </>

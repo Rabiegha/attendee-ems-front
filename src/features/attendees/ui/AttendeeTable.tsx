@@ -74,9 +74,9 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
 
   // Individual mutations
   const [updateAttendee] = useUpdateAttendeeMutation()
-  const [deleteAttendee] = useDeleteAttendeeMutation()
-  const [restoreAttendee] = useRestoreAttendeeMutation()
-  const [permanentDeleteAttendee] = usePermanentDeleteAttendeeMutation()
+  const [deleteAttendee, { isLoading: isDeletingAttendee }] = useDeleteAttendeeMutation()
+  const [restoreAttendee, { isLoading: isRestoringAttendee }] = useRestoreAttendeeMutation()
+  const [permanentDeleteAttendee, { isLoading: isPermanentDeletingAttendee }] = usePermanentDeleteAttendeeMutation()
 
   // Bulk actions states
   const [bulkActionsModalOpen, setBulkActionsModalOpen] = useState(false)
@@ -91,6 +91,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
     variant: 'default' | 'danger' | 'warning' | 'success'
     action: () => Promise<void>
   } | null>(null)
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
 
   // Modal states
   const [editingAttendee, setEditingAttendee] = useState<AttendeeDPO | null>(
@@ -463,9 +464,15 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
           message={bulkConfirmation.message}
           variant={bulkConfirmation.variant}
           onConfirm={async () => {
-            await bulkConfirmation.action()
+            setBulkActionLoading(true)
+            try {
+              await bulkConfirmation.action()
+            } finally {
+              setBulkActionLoading(false)
+            }
             setBulkConfirmation(null)
           }}
+          isLoading={bulkActionLoading}
         />
       )}
 
@@ -482,6 +489,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         onClose={() => setDeletingAttendee(null)}
         attendee={deletingAttendee}
         onDelete={handleConfirmDelete}
+        isLoading={isDeletingAttendee}
       />
 
       <RestoreAttendeeModal
@@ -489,6 +497,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         onClose={() => setRestoringAttendee(null)}
         attendee={restoringAttendee}
         onRestore={handleConfirmRestore}
+        isLoading={isRestoringAttendee}
       />
 
       <PermanentDeleteAttendeeModal
@@ -496,6 +505,7 @@ export const AttendeeTable: React.FC<AttendeeTableProps> = ({
         onClose={() => setPermanentDeletingAttendee(null)}
         attendee={permanentDeletingAttendee}
         onPermanentDelete={handleConfirmPermanentDelete}
+        isLoading={isPermanentDeletingAttendee}
       />
     </>
   )

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RotateCcw } from 'lucide-react'
 import { Modal } from '@/shared/ui/Modal'
@@ -12,15 +13,19 @@ interface RestoreUserModalProps {
 
 export function RestoreUserModal({ user, onClose, onRestore }: RestoreUserModalProps) {
   const { t } = useTranslation(['users', 'common'])
+  const [isLoading, setIsLoading] = useState(false)
 
   if (!user) return null
 
   const handleConfirm = async () => {
+    setIsLoading(true)
     try {
       await onRestore(user.id, { is_active: true })
       onClose()
     } catch (error) {
       console.error('Erreur lors de la restauration:', error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -32,12 +37,13 @@ export function RestoreUserModal({ user, onClose, onRestore }: RestoreUserModalP
         </p>
 
         <div className="flex gap-3 justify-end pt-4">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             {t('common:app.cancel')}
           </Button>
           <Button
             variant="default"
             onClick={handleConfirm}
+            loading={isLoading}
             className="bg-green-600 hover:bg-green-700 text-white"
           >
             <RotateCcw className="w-4 h-4" />

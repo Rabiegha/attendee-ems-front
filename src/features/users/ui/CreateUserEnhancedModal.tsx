@@ -439,7 +439,7 @@ export const CreateUserEnhancedModal: React.FC<
             {!isSuperAdmin && currentUser?.orgId && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
                 <p className="text-sm text-blue-700 dark:text-blue-400">
-                  📍 {t('users:modal.auto_created_in_org')}
+                  {t('users:modal.auto_created_in_org')}
                 </p>
               </div>
             )}

@@ -130,6 +130,7 @@ function UsersPageContent() {
     variant: 'default' | 'success' | 'warning' | 'danger'
     action: () => Promise<void>
   } | null>(null)
+  const [bulkActionLoading, setBulkActionLoading] = useState(false)
 
   const clearBulkSelection = useCallback(() => {
     setBulkSelectedIds(new Set())
@@ -724,9 +725,15 @@ function UsersPageContent() {
           message={bulkConfirmation.message}
           variant={bulkConfirmation.variant}
           onConfirm={async () => {
-            await bulkConfirmation.action()
+            setBulkActionLoading(true)
+            try {
+              await bulkConfirmation.action()
+            } finally {
+              setBulkActionLoading(false)
+            }
             setBulkConfirmation(null)
           }}
+          isLoading={bulkActionLoading}
         />
       )}
 

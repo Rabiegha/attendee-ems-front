@@ -154,6 +154,7 @@ export const rootApi = createApi({
     'EmailTemplates',
     'PrintJobs',
     'PartnerScan',
+    'Companies',
   ],
   // Pas d'endpoints ici, ils seront injectés par chaque feature
   endpoints: () => ({}),

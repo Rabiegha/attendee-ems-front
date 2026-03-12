@@ -336,7 +336,7 @@ export const EventsPage: React.FC<EventsPageProps> = () => {
     <PageContainer maxWidth="7xl" padding="lg">
       <PageHeader
         title={t('events:page.title')}
-        description={filteredEvents.length > 1 ? t('events:page.found_many', { count: filteredEvents.length }) : t('events:page.found_one', { count: filteredEvents.length })}
+        description={displayCount > 1 ? t('events:page.found_many', { count: displayCount }) : t('events:page.found_one', { count: displayCount })}
         icon={Calendar}
         actions={
           <Can do="create" on="Event">

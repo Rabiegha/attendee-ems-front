@@ -60,6 +60,7 @@ export interface PartnerScansAllQueryParams {
   limit?: number
   search?: string | undefined
   is_active?: boolean
+  user_id?: string
 }
 
 export const partnerScansApi = rootApi.injectEndpoints({

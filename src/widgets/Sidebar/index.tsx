@@ -16,6 +16,7 @@ import {
   Printer,
   Smartphone,
   MonitorCheck,
+  Contact2,
 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { ROUTES } from '@/app/config/constants'
@@ -53,11 +54,19 @@ const navigation = [
   },
   {
     name: 'navigation.my_contacts',
-    nameForNonPartner: 'navigation.partner_scans',
     href: ROUTES.MY_CONTACTS,
     icon: Users,
     action: 'read' as const,
     subject: 'PartnerScan' as const,
+    hideForNonPartner: true,
+  },
+  {
+    name: 'navigation.partners',
+    href: ROUTES.PARTNERS,
+    icon: Contact2,
+    action: 'read' as const,
+    subject: 'User' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.attendee_types',
@@ -65,6 +74,7 @@ const navigation = [
     icon: Tag,
     action: 'read' as const,
     subject: 'AttendeeType' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.badge_designer',
@@ -72,6 +82,7 @@ const navigation = [
     icon: CreditCard,
     action: 'read' as const,
     subject: 'Badge' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.reports',
@@ -79,6 +90,7 @@ const navigation = [
     icon: BarChart3,
     action: 'export' as const,
     subject: 'Report' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.organizations',
@@ -86,6 +98,7 @@ const navigation = [
     icon: Building2,
     action: 'read' as const,
     subject: 'Organization' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.users',
@@ -101,6 +114,7 @@ const navigation = [
     icon: Shield,
     action: 'manage' as const,
     subject: 'Role' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.invitations',
@@ -108,6 +122,7 @@ const navigation = [
     icon: Mail,
     action: 'create' as const,
     subject: 'Invitation' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.email',
@@ -115,6 +130,7 @@ const navigation = [
     icon: Mail,
     action: 'read' as const,
     subject: 'Email' as const,
+    hideForPartner: true,
   },
   {
     name: 'navigation.application',
@@ -143,6 +159,7 @@ const navigation = [
     icon: Settings,
     action: 'update' as const,
     subject: 'Organization' as const,
+    hideForPartner: true,
   },
 ]
 
@@ -151,9 +168,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const userRoles = useSelector(selectUserRoles)
   const isPartner = userRoles.includes('PARTNER')
 
-  // Filtrer les items : si hideForPartner=true et c'est un Partner, on cache
+  // Filtrer les items selon le rôle
   const visibleNavigation = navigation.filter(
-    (item) => !('hideForPartner' in item && item.hideForPartner && isPartner)
+    (item) => {
+      if ('hideForPartner' in item && item.hideForPartner && isPartner) return false
+      if ('hideForNonPartner' in item && item.hideForNonPartner && !isPartner) return false
+      return true
+    }
   )
 
   return (
@@ -243,14 +264,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                           : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                       )
                     }
-                    title={!isOpen ? t('nameForNonPartner' in item && !isPartner ? item.nameForNonPartner : item.name) : undefined}
+                    title={!isOpen ? t(item.name) : undefined}
                   >
                     <item.icon className="h-5 w-5 flex-shrink-0 mr-3" />
                     <span className={cn(
                       "whitespace-nowrap transition-opacity duration-300",
                       isOpen ? "opacity-100" : "opacity-0"
                     )}>
-                      {t('nameForNonPartner' in item && !isPartner ? item.nameForNonPartner : item.name)}
+                      {t(item.name)}
                     </span>
                   </NavLink>
                 </li>

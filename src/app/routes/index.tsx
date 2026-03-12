@@ -37,8 +37,10 @@ import { PrintClientDownloadPage } from '@/pages/PrintClientDownload'
 import { ReportsPage } from '@/pages/Reports'
 import { EmailManagementPage } from '@/pages/EmailManagement'
 import { PrintingPage } from '@/pages/Printing'
-import { MesContacts } from '@/pages/MesContacts'
+import { PartnerScansPage } from '@/pages/PartnerScans'
 import { PartnerScanDetail } from '@/pages/PartnerScanDetail'
+import { PartnersPage } from '@/pages/Partners'
+import { PartnerDetailPage } from '@/pages/Partners/PartnerDetailPage'
 
 // Component wrapper pour EventDetails avec guard spécialisé
 const EventDetailsWithGuard: React.FC = () => {
@@ -206,7 +208,7 @@ export const router = createBrowserRouter([
             index: true,
             element: (
               <GuardedRoute action="read" subject="PartnerScan">
-                <MesContacts />
+                <PartnerScansPage />
               </GuardedRoute>
             ),
           },
@@ -215,6 +217,27 @@ export const router = createBrowserRouter([
             element: (
               <GuardedRoute action="read" subject="PartnerScan">
                 <PartnerScanDetail />
+              </GuardedRoute>
+            ),
+          },
+        ],
+      },
+      {
+        path: 'partners',
+        children: [
+          {
+            index: true,
+            element: (
+              <GuardedRoute action="read" subject="User">
+                <PartnersPage />
+              </GuardedRoute>
+            ),
+          },
+          {
+            path: ':partnerId',
+            element: (
+              <GuardedRoute action="read" subject="User">
+                <PartnerDetailPage />
               </GuardedRoute>
             ),
           },

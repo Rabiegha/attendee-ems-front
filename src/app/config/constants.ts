@@ -57,6 +57,7 @@ export const ROUTES = {
   ROLES_PERMISSIONS: '/roles-permissions',
   BADGES: '/badges',
   MY_CONTACTS: '/my-contacts',
+  PARTNERS: '/partners',
   LOGIN: '/login',
   FORBIDDEN: '/403',
 } as const

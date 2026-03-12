@@ -445,20 +445,6 @@ export const PartnerScansTable: React.FC<PartnerScansTableProps> = ({
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      {/* Export button above FilterBar */}
-      {onExport && (
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            onClick={onExport}
-            className="h-10 flex-shrink-0"
-            leftIcon={<Download className="h-4 w-4" />}
-          >
-            {t('common:partner_scans.export')}
-          </Button>
-        </div>
-      )}
-
       {/* Barre de recherche et filtres — identique à RegistrationsTable */}
       <FilterBar
         resultCount={totalItems || 0}

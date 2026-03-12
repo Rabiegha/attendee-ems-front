@@ -9,6 +9,7 @@ export interface CreateUserRequest {
   last_name?: string
   phone?: string
   company?: string
+  company_id?: string
   job_title?: string
   country?: string
   metadata?: any
@@ -22,6 +23,8 @@ export interface User {
   last_name?: string
   phone?: string
   company?: string
+  company_id?: string | null
+  company_name?: string | null
   job_title?: string
   country?: string
   metadata?: any

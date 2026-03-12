@@ -1,12 +1,15 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Modal, Button, Input, FormField } from '@/shared/ui'
+import { Modal, Button, Input, FormField, Select, SelectOption } from '@/shared/ui'
+import { useGetCompaniesQuery } from '@/features/companies/api/companiesApi'
 
 interface EditUserModalProps {
   isOpen: boolean
   onClose: () => void
   user: any | null
   onSave: (userId: string, data: any) => Promise<void>
+  /** Si true, affiche un select entreprise au lieu d'un champ texte */
+  useCompanySelect?: boolean
 }
 
 export const EditUserModal: React.FC<EditUserModalProps> = ({
@@ -14,6 +17,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
   onClose,
   user,
   onSave,
+  useCompanySelect = false,
 }) => {
   const { t } = useTranslation(['users', 'common'])
   const [isSaving, setIsSaving] = useState(false)
@@ -23,7 +27,13 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
     email: '',
     phone: '',
     company: '',
+    company_id: '' as string | null,
     job_title: '',
+  })
+
+  // Charger les entreprises pour le select
+  const { data: companies = [] } = useGetCompaniesQuery(undefined, {
+    skip: !useCompanySelect,
   })
 
   React.useEffect(() => {
@@ -34,6 +44,7 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         email: user.email || '',
         phone: user.phone || '',
         company: user.company || '',
+        company_id: user.company_id || '',
         job_title: user.job_title || '',
       })
     }
@@ -44,7 +55,15 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
 
     setIsSaving(true)
     try {
-      await onSave(user.id, formData)
+      const dataToSend: any = { ...formData }
+      if (useCompanySelect) {
+        // Envoyer company_id (string ou null pour dissocier)
+        dataToSend.company_id = formData.company_id || null
+        delete dataToSend.company
+      } else {
+        delete dataToSend.company_id
+      }
+      await onSave(user.id, dataToSend)
       onClose()
     } catch (error) {
       console.error('Error saving user:', error)
@@ -102,13 +121,27 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({
         
         <div className="grid grid-cols-2 gap-4">
           <FormField label={t('users:modal.company')}>
-            <Input
-              value={formData.company}
-              onChange={(e) =>
-                setFormData({ ...formData, company: e.target.value })
-              }
-              placeholder={t('users:modal.company_placeholder')}
-            />
+            {useCompanySelect ? (
+              <Select
+                value={formData.company_id || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, company_id: e.target.value || null })
+                }
+              >
+                <SelectOption value="">{t('common:partners.no_company')}</SelectOption>
+                {companies.map((c) => (
+                  <SelectOption key={c.id} value={c.id}>{c.name}</SelectOption>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                value={formData.company}
+                onChange={(e) =>
+                  setFormData({ ...formData, company: e.target.value })
+                }
+                placeholder={t('users:modal.company_placeholder')}
+              />
+            )}
           </FormField>
           <FormField label={t('users:modal.job_title')}>
             <Input

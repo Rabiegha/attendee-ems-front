@@ -1,14 +1,18 @@
 import React, { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Users } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { Users, Download } from 'lucide-react'
 import { PageContainer } from '@/shared/ui/PageContainer'
-import { Tabs, type TabItem } from '@/shared/ui'
+import { PageHeader, Tabs, Button, type TabItem } from '@/shared/ui'
 import { useGetAllPartnerScansQuery, useLazyExportPartnerScansExcelQuery } from '@/features/partner-scans/api/partnerScansApi'
 import { PartnerScansTable } from '@/features/partner-scans/ui/PartnerScansTable'
 import { useToast } from '@/shared/hooks/useToast'
+import { selectUserRoles } from '@/features/auth/model/sessionSlice'
 
-export const MesContacts: React.FC = () => {
+export const PartnerScansPage: React.FC = () => {
   const { t } = useTranslation(['common'])
+  const userRoles = useSelector(selectUserRoles)
+  const isPartner = userRoles.includes('PARTNER')
   const toast = useToast()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -46,7 +50,7 @@ export const MesContacts: React.FC = () => {
       const url = URL.createObjectURL(result)
       const a = document.createElement('a')
       a.href = url
-      a.download = `mes-contacts-${Date.now()}.xlsx`
+      a.download = `${isPartner ? 'mes-contacts' : 'leads-partenaires'}-${Date.now()}.xlsx`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -84,18 +88,20 @@ export const MesContacts: React.FC = () => {
   return (
     <PageContainer maxWidth="7xl" padding="lg">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-              <Users className="h-7 w-7 text-blue-600" />
-              {t('common:partner_scans.page_title')}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {t('common:partner_scans.page_subtitle')}
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          title={isPartner ? t('common:partner_scans.page_title') : t('common:partner_scans.page_title_admin')}
+          description={isPartner ? t('common:partner_scans.page_subtitle') : t('common:partner_scans.page_subtitle_admin')}
+          icon={Users}
+          actions={
+            <Button
+              onClick={handleExport}
+              variant="outline"
+              leftIcon={<Download className="h-4 w-4" />}
+            >
+              {t('common:partner_scans.export')}
+            </Button>
+          }
+        />
 
         {/* Table avec onglets, export, refresh */}
         <PartnerScansTable

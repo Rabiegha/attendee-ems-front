@@ -33,7 +33,10 @@ import {
   type TabItem,
   type FilterValues,
 } from '@/shared/ui'
-import { useGetPartnersQuery, type PartnersQueryParams } from '@/features/partners/api/partnersApi'
+import {
+  useGetPartnersQuery,
+  type PartnersQueryParams,
+} from '@/features/partners/api/partnersApi'
 import { CreatePartnerModal } from '@/features/partners/ui/CreatePartnerModal'
 import { EditUserModal } from '@/features/users/ui/EditUserModal'
 import { DeleteUserModal } from '@/features/users/ui/DeleteUserModal'
@@ -112,29 +115,32 @@ export const PartnersPage: React.FC = () => {
   }
   if (debouncedSearch) partnersQueryParams.search = debouncedSearch
   // Filtre par entreprise côté serveur (par company_id)
-  if (selectedCompanyFilter && selectedCompanyFilter !== 'all' && selectedCompanyFilter !== 'with' && selectedCompanyFilter !== 'without') {
+  if (
+    selectedCompanyFilter &&
+    selectedCompanyFilter !== 'all' &&
+    selectedCompanyFilter !== 'with' &&
+    selectedCompanyFilter !== 'without'
+  ) {
     partnersQueryParams.companyId = selectedCompanyFilter
   }
+  if (selectedCompanyFilter === 'with') {
+    partnersQueryParams.hasCompany = true
+  }
+  if (selectedCompanyFilter === 'without') {
+    partnersQueryParams.hasCompany = false
+  }
 
-  const { data: partnersData, isLoading: isLoadingPartners } = useGetPartnersQuery(partnersQueryParams)
+  const { data: partnersData, isLoading: isLoadingPartners } =
+    useGetPartnersQuery(partnersQueryParams)
 
   // ── API Entreprises ──
-  const { data: companies = [], isLoading: isLoadingCompanies } = useGetCompaniesQuery(
-    debouncedCompanySearch || undefined
+  const { data: companies = [], isLoading: isLoadingCompanies } =
+    useGetCompaniesQuery(debouncedCompanySearch || undefined)
+
+  const filteredPartners = useMemo(
+    () => partnersData?.users || [],
+    [partnersData?.users]
   )
-
-  // Filtrage local partenaires par entreprise (with/without seulement)
-  const filteredPartners = useMemo(() => {
-    let partners = partnersData?.users || []
-
-    if (selectedCompanyFilter === 'with') {
-      partners = partners.filter((p) => p.company_id)
-    } else if (selectedCompanyFilter === 'without') {
-      partners = partners.filter((p) => !p.company_id)
-    }
-
-    return partners
-  }, [partnersData?.users, selectedCompanyFilter])
 
   // Config des filtres partenaires avec les entreprises de la DB
   const filterConfig = useMemo(() => {
@@ -155,18 +161,21 @@ export const PartnersPage: React.FC = () => {
   }, [t, companies])
 
   // ── Tabs config ──
-  const tabs: TabItem[] = useMemo(() => [
-    {
-      id: 'partners',
-      label: t('partners.tab_partners'),
-      count: partnersData?.total || 0,
-    },
-    {
-      id: 'companies',
-      label: t('companies.tab_title'),
-      count: companies.length,
-    },
-  ], [t, partnersData?.total, companies.length])
+  const tabs: TabItem[] = useMemo(
+    () => [
+      {
+        id: 'partners',
+        label: t('partners.tab_partners'),
+        count: partnersData?.total || 0,
+      },
+      {
+        id: 'companies',
+        label: t('companies.tab_title'),
+        count: companies.length,
+      },
+    ],
+    [t, partnersData?.total, companies.length]
+  )
 
   // ── Handlers Partenaires ──
   const handleResetFilters = () => {
@@ -223,12 +232,19 @@ export const PartnersPage: React.FC = () => {
       {
         id: 'partner',
         header: t('partners.col_partner'),
-        accessorFn: (row) => `${row.first_name || ''} ${row.last_name || ''} ${row.email}`,
+        accessorFn: (row) =>
+          `${row.first_name || ''} ${row.last_name || ''} ${row.email}`,
         sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const user = row.original
-          const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ')
-          const initials = [user.first_name?.[0], user.last_name?.[0]].filter(Boolean).join('').toUpperCase() || '?'
+          const fullName = [user.first_name, user.last_name]
+            .filter(Boolean)
+            .join(' ')
+          const initials =
+            [user.first_name?.[0], user.last_name?.[0]]
+              .filter(Boolean)
+              .join('')
+              .toUpperCase() || '?'
           return (
             <div
               className="flex items-center cursor-pointer"
@@ -236,14 +252,18 @@ export const PartnersPage: React.FC = () => {
             >
               <div className="h-10 w-10 flex-shrink-0">
                 <div className="h-10 w-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">{initials}</span>
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    {initials}
+                  </span>
                 </div>
               </div>
               <div className="ml-4">
                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                   {fullName || user.email}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {user.email}
+                </div>
               </div>
             </div>
           )
@@ -258,7 +278,10 @@ export const PartnersPage: React.FC = () => {
           const companyName = row.original.company_name || row.original.company
           if (!companyName) {
             return (
-              <div className="cursor-pointer" onClick={() => handleViewScans(row.original)}>
+              <div
+                className="cursor-pointer"
+                onClick={() => handleViewScans(row.original)}
+              >
                 <span className="text-sm text-gray-400 dark:text-gray-500 italic">
                   {t('partners.no_company')}
                 </span>
@@ -266,9 +289,14 @@ export const PartnersPage: React.FC = () => {
             )
           }
           return (
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleViewScans(row.original)}>
+            <div
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => handleViewScans(row.original)}
+            >
               <Building2 className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-900 dark:text-white">{companyName}</span>
+              <span className="text-sm text-gray-900 dark:text-white">
+                {companyName}
+              </span>
             </div>
           )
         },
@@ -281,7 +309,10 @@ export const PartnersPage: React.FC = () => {
         cell: ({ row }) => {
           const isActive = row.original.is_active
           return (
-            <div className="cursor-pointer" onClick={() => handleViewScans(row.original)}>
+            <div
+              className="cursor-pointer"
+              onClick={() => handleViewScans(row.original)}
+            >
               {isActive ? (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200">
                   <UserCheck className="h-3 w-3 mr-1" />
@@ -304,7 +335,10 @@ export const PartnersPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => { e.stopPropagation(); handleEditPartner(partner) }}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleEditPartner(partner)
+            }}
             title={t('partners.action_edit')}
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0 min-w-[32px] p-1.5"
           >
@@ -313,7 +347,10 @@ export const PartnersPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => { e.stopPropagation(); handleDeletePartner(partner) }}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleDeletePartner(partner)
+            }}
             title={t('partners.action_delete')}
             className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
           >
@@ -363,7 +400,10 @@ export const PartnersPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => { e.stopPropagation(); handleEditCompany(company) }}
+            onClick={(e) => {
+              e.stopPropagation()
+              handleEditCompany(company)
+            }}
             title={t('companies.action_edit')}
             className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex-shrink-0 min-w-[32px] p-1.5"
           >
@@ -372,7 +412,10 @@ export const PartnersPage: React.FC = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={(e) => { e.stopPropagation(); setDeletingCompany(company) }}
+            onClick={(e) => {
+              e.stopPropagation()
+              setDeletingCompany(company)
+            }}
             title={t('companies.action_delete')}
             className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 flex-shrink-0 min-w-[32px] p-1.5"
           >
@@ -417,11 +460,7 @@ export const PartnersPage: React.FC = () => {
 
       {/* Onglets */}
       <PageSection spacing="lg">
-        <Tabs
-          items={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+        <Tabs items={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
       </PageSection>
 
       {/* ── Onglet Partenaires ── */}
@@ -432,7 +471,11 @@ export const PartnersPage: React.FC = () => {
               resultCount={partnersData?.total || 0}
               resultLabel={t('partners.result_label')}
               onReset={handleResetFilters}
-              showResetButton={searchQuery !== '' || (selectedCompanyFilter !== undefined && selectedCompanyFilter !== 'all')}
+              showResetButton={
+                searchQuery !== '' ||
+                (selectedCompanyFilter !== undefined &&
+                  selectedCompanyFilter !== 'all')
+              }
             >
               <SearchInput
                 placeholder={t('partners.search_placeholder')}
@@ -537,7 +580,10 @@ export const PartnersPage: React.FC = () => {
       {deletingCompany && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-screen items-center justify-center p-4">
-            <div className="fixed inset-0 bg-black/50" onClick={() => setDeletingCompany(null)} />
+            <div
+              className="fixed inset-0 bg-black/50"
+              onClick={() => setDeletingCompany(null)}
+            />
             <div className="relative z-50 w-full max-w-md rounded-lg bg-white dark:bg-gray-800 shadow-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 {t('companies.delete_title')}
@@ -546,7 +592,10 @@ export const PartnersPage: React.FC = () => {
                 {t('companies.delete_message', { name: deletingCompany.name })}
               </p>
               <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setDeletingCompany(null)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setDeletingCompany(null)}
+                >
                   {t('companies.cancel')}
                 </Button>
                 <Button variant="destructive" onClick={handleDeleteCompany}>

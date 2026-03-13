@@ -1,6 +1,6 @@
 /**
  * DataTable - Composant de table réutilisable basé sur TanStack Table
- * 
+ *
  * Features:
  * - Tri multi-colonnes
  * - Sélection multiple avec checkbox
@@ -81,12 +81,12 @@ import { BulkActions, type BulkAction } from '../BulkActions'
 const caseInsensitiveSort = (rowA: any, rowB: any, columnId: string) => {
   const a = rowA.getValue(columnId)
   const b = rowB.getValue(columnId)
-  
+
   // Si les valeurs ne sont pas des chaînes, utiliser le tri par défaut
   if (typeof a !== 'string' || typeof b !== 'string') {
     return a === b ? 0 : a > b ? 1 : -1
   }
-  
+
   // Tri insensible à la casse
   return a.toLowerCase().localeCompare(b.toLowerCase())
 }
@@ -139,7 +139,14 @@ function DraggableTableHeader({
   getPinningStyles: (column: any) => React.CSSProperties
 }) {
   const { t } = useTranslation('common')
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: header.column.id,
   })
 
@@ -149,9 +156,9 @@ function DraggableTableHeader({
     ...pinningStyles,
     transform: CSS.Transform.toString(transform),
     // Désactiver transition pendant drag pour éviter glitches
-    transition: isDragging ? 'none' : (transition || undefined),
-    opacity: isDragging ? 0.5 : (pinningStyles.opacity || 1),
-    zIndex: isDragging ? 50 : (pinningStyles.zIndex || 'auto'),
+    transition: isDragging ? 'none' : transition || undefined,
+    opacity: isDragging ? 0.5 : pinningStyles.opacity || 1,
+    zIndex: isDragging ? 50 : pinningStyles.zIndex || 'auto',
     // GPU acceleration
     willChange: isDragging ? 'transform' : 'auto',
   }
@@ -215,11 +222,14 @@ export function DataTable<TData, TValue>({
   currentPage,
 }: DataTableProps<TData, TValue>) {
   const { t } = useTranslation('common')
+  const isServerPagination = totalItems !== undefined
 
   // Generate a stable key for localStorage based on column IDs
   const storageKey = React.useMemo(() => {
     const columnIds = columns
-      .map((c) => (typeof c.id === 'string' ? c.id : (c as any).accessorKey || ''))
+      .map((c) =>
+        typeof c.id === 'string' ? c.id : (c as any).accessorKey || ''
+      )
       .sort()
       .join(',')
     return `datatable-order-${columnIds.slice(0, 50)}` // Limit length
@@ -227,34 +237,34 @@ export function DataTable<TData, TValue>({
 
   // Initialize columnOrder from localStorage or default
   const getInitialColumnOrder = React.useCallback((): ColumnOrderState => {
-    const defaultOrder = columns.map((c) => 
+    const defaultOrder = columns.map((c) =>
       typeof c.id === 'string' ? c.id : (c as any).accessorKey || ''
     )
-    
+
     if (!enableColumnOrdering) return defaultOrder
-    
+
     try {
       const stored = localStorage.getItem(storageKey)
       if (stored) {
         const parsedOrder = JSON.parse(stored) as string[]
         // Validate that stored order matches current columns
-        const isValid = 
+        const isValid =
           parsedOrder.length === defaultOrder.length &&
           parsedOrder.every((id) => defaultOrder.includes(id))
-        
+
         return isValid ? parsedOrder : defaultOrder
       }
     } catch (e) {
       console.warn('Failed to load column order from localStorage:', e)
     }
-    
+
     return defaultOrder
   }, [columns, storageKey, enableColumnOrdering])
 
   // Initialize columnVisibility from localStorage or default
   const getInitialColumnVisibility = React.useCallback((): VisibilityState => {
     if (!enableColumnVisibility) return {}
-    
+
     const visibilityStorageKey = `${storageKey}-visibility`
     try {
       const stored = localStorage.getItem(visibilityStorageKey)
@@ -264,44 +274,92 @@ export function DataTable<TData, TValue>({
     } catch (e) {
       console.warn('Failed to load column visibility from localStorage:', e)
     }
-    
+
     // Si pas de localStorage, utiliser initialColumnVisibility si fourni
     return initialColumnVisibility || {}
   }, [storageKey, enableColumnVisibility, initialColumnVisibility])
 
   // States
   const [sorting, setSorting] = React.useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(getInitialColumnVisibility)
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  )
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>(getInitialColumnVisibility)
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
-  const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(getInitialColumnOrder)
+  const [columnOrder, setColumnOrder] = React.useState<ColumnOrderState>(
+    getInitialColumnOrder
+  )
   const [columnPinning, setColumnPinning] = React.useState<ColumnPinningState>({
     left: ['select'], // Pin la colonne select à gauche par défaut
     right: ['actions'], // Pin la colonne actions à droite par défaut
   })
   const [showColumnSettings, setShowColumnSettings] = React.useState(false)
   const [activeId, setActiveId] = React.useState<string | null>(null)
-  const [lastSelectedIndex, setLastSelectedIndex] = React.useState<number | null>(null)
+  const [lastSelectedIndex, setLastSelectedIndex] = React.useState<
+    number | null
+  >(null)
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: pageSize,
   })
-  
+
   // Ref pour éviter les boucles infinies entre props et state
   const isUpdatingFromProps = React.useRef(false)
 
+  React.useEffect(() => {
+    if (!enablePagination || !isServerPagination) {
+      return
+    }
+
+    const nextPageIndex = Math.max((currentPage || 1) - 1, 0)
+    const nextPageSize = pageSize
+
+    if (
+      pagination.pageIndex === nextPageIndex &&
+      pagination.pageSize === nextPageSize
+    ) {
+      return
+    }
+
+    isUpdatingFromProps.current = true
+    setPagination({
+      pageIndex: nextPageIndex,
+      pageSize: nextPageSize,
+    })
+  }, [
+    currentPage,
+    enablePagination,
+    isServerPagination,
+    pageSize,
+    pagination.pageIndex,
+    pagination.pageSize,
+  ])
+
+  React.useEffect(() => {
+    if (!isUpdatingFromProps.current) {
+      return
+    }
+
+    isUpdatingFromProps.current = false
+  }, [pagination.pageIndex, pagination.pageSize])
+
   // Helper pour les styles de pinning (sticky positioning)
-  const getCommonPinningStyles = (column: Column<TData>): React.CSSProperties => {
+  const getCommonPinningStyles = (
+    column: Column<TData>
+  ): React.CSSProperties => {
     const isPinned = column.getIsPinned()
-    const isLastLeftPinnedColumn = isPinned === 'left' && column.getIsLastColumn('left')
-    const isFirstRightPinnedColumn = isPinned === 'right' && column.getIsFirstColumn('right')
+    const isLastLeftPinnedColumn =
+      isPinned === 'left' && column.getIsLastColumn('left')
+    const isFirstRightPinnedColumn =
+      isPinned === 'right' && column.getIsFirstColumn('right')
 
     return {
       boxShadow: isLastLeftPinnedColumn
         ? '-4px 0 4px -4px rgba(0, 0, 0, 0.1) inset'
         : isFirstRightPinnedColumn
-        ? '4px 0 4px -4px rgba(0, 0, 0, 0.1) inset'
-        : undefined,
+          ? '4px 0 4px -4px rgba(0, 0, 0, 0.1) inset'
+          : undefined,
       left: isPinned === 'left' ? `${column.getStart('left')}px` : undefined,
       right: isPinned === 'right' ? `${column.getAfter('right')}px` : undefined,
       opacity: isPinned ? 0.97 : 1,
@@ -329,26 +387,28 @@ export function DataTable<TData, TValue>({
 
   // Inject handleRowClick into selection column
   const enhancedColumns = React.useMemo(() => {
-    return columns.map(col => {
+    return columns.map((col) => {
       if (col.id === 'select' && enableRowSelection) {
         return {
           ...col,
           cell: ({ row, table: innerTable }: any) => {
-            const rowIndex = innerTable.getRowModel().rows.findIndex((r: any) => r.id === row.id)
-            
+            const rowIndex = innerTable
+              .getRowModel()
+              .rows.findIndex((r: any) => r.id === row.id)
+
             const handleClick = (e: React.MouseEvent) => {
               e.stopPropagation()
-              
+
               // Shift+Click for range selection
               if (e.shiftKey && lastSelectedIndex !== null) {
                 const start = Math.min(lastSelectedIndex, rowIndex)
                 const end = Math.max(lastSelectedIndex, rowIndex)
-                
+
                 const newSelection: RowSelectionState = {}
-                
+
                 // Copy existing selection
                 Object.assign(newSelection, rowSelection)
-                
+
                 // Add range
                 for (let i = start; i <= end; i++) {
                   const targetRow = innerTable.getRowModel().rows[i]
@@ -356,7 +416,7 @@ export function DataTable<TData, TValue>({
                     newSelection[targetRow.id] = true
                   }
                 }
-                
+
                 setRowSelection(newSelection)
                 setLastSelectedIndex(rowIndex)
               } else {
@@ -365,9 +425,9 @@ export function DataTable<TData, TValue>({
                 setLastSelectedIndex(rowIndex)
               }
             }
-            
+
             return (
-              <div 
+              <div
                 className="flex items-center justify-center w-full cursor-pointer"
                 onClick={handleClick}
                 title={t('table.shift_click_range')}
@@ -383,7 +443,7 @@ export function DataTable<TData, TValue>({
                 />
               </div>
             )
-          }
+          },
         }
       }
       return col
@@ -397,12 +457,14 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    ...(enablePagination && { 
+    ...(enablePagination && {
       getPaginationRowModel: getPaginationRowModel(),
-      ...(totalItems ? {
-        manualPagination: true,
-        pageCount: Math.ceil(totalItems / pageSize),
-      } : {}),
+      ...(isServerPagination
+        ? {
+            manualPagination: true,
+            pageCount: Math.ceil(totalItems / pageSize),
+          }
+        : {}),
     }),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -410,7 +472,7 @@ export function DataTable<TData, TValue>({
     onRowSelectionChange: setRowSelection,
     onColumnOrderChange: setColumnOrder,
     onColumnPinningChange: setColumnPinning,
-    ...(totalItems ? {} : { onPaginationChange: setPagination }), // Seulement pour pagination locale
+    ...(isServerPagination ? {} : { onPaginationChange: setPagination }), // Seulement pour pagination locale
     enableRowSelection,
     sortingFns: {
       caseInsensitive: caseInsensitiveSort,
@@ -422,7 +484,7 @@ export function DataTable<TData, TValue>({
       rowSelection,
       columnOrder,
       columnPinning,
-      ...(enablePagination && !totalItems && { pagination }), // Pagination dans state seulement si locale
+      ...(enablePagination && { pagination }),
     },
   })
 
@@ -433,30 +495,30 @@ export function DataTable<TData, TValue>({
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    
+
     if (over && active.id !== over.id) {
       setColumnOrder((currentOrder) => {
         const activeIndex = currentOrder.indexOf(active.id as string)
         const overIndex = currentOrder.indexOf(over.id as string)
-        
+
         // Validation des index pour éviter bugs
         if (activeIndex === -1 || overIndex === -1) {
           return currentOrder
         }
-        
+
         const newOrder = arrayMove(currentOrder, activeIndex, overIndex)
-        
+
         // Save to localStorage
         try {
           localStorage.setItem(storageKey, JSON.stringify(newOrder))
         } catch (e) {
           console.warn('Failed to save column order to localStorage:', e)
         }
-        
+
         return newOrder
       })
     }
-    
+
     setActiveId(null)
   }
 
@@ -492,10 +554,13 @@ export function DataTable<TData, TValue>({
   // Save column visibility to localStorage when it changes
   React.useEffect(() => {
     if (!enableColumnVisibility) return
-    
+
     const visibilityStorageKey = `${storageKey}-visibility`
     try {
-      localStorage.setItem(visibilityStorageKey, JSON.stringify(columnVisibility))
+      localStorage.setItem(
+        visibilityStorageKey,
+        JSON.stringify(columnVisibility)
+      )
     } catch (e) {
       console.warn('Failed to save column visibility to localStorage:', e)
     }
@@ -503,11 +568,12 @@ export function DataTable<TData, TValue>({
 
   // Get visible columns for ordering (exclude pinned columns)
   const columnIds = React.useMemo(
-    () => columnOrder.filter(id => {
-      const leftPinned = columnPinning.left || []
-      const rightPinned = columnPinning.right || []
-      return !leftPinned.includes(id) && !rightPinned.includes(id)
-    }),
+    () =>
+      columnOrder.filter((id) => {
+        const leftPinned = columnPinning.left || []
+        const rightPinned = columnPinning.right || []
+        return !leftPinned.includes(id) && !rightPinned.includes(id)
+      }),
     [columnOrder, columnPinning]
   )
 
@@ -519,19 +585,19 @@ export function DataTable<TData, TValue>({
       prevColumnsRef.current = columns
       return
     }
-    
-    const prevIds = prevColumnsRef.current.map((c) => 
+
+    const prevIds = prevColumnsRef.current.map((c) =>
       typeof c.id === 'string' ? c.id : (c as any).accessorKey || ''
     )
-    const newIds = columns.map((c) => 
+    const newIds = columns.map((c) =>
       typeof c.id === 'string' ? c.id : (c as any).accessorKey || ''
     )
-    
+
     // Only reset if column IDs actually changed (not just reordered)
-    const structureChanged = 
+    const structureChanged =
       prevIds.length !== newIds.length ||
       !prevIds.every((id) => newIds.includes(id))
-    
+
     if (structureChanged) {
       const newOrder = getInitialColumnOrder()
       setColumnOrder(newOrder)
@@ -541,7 +607,9 @@ export function DataTable<TData, TValue>({
 
   // Toggle all columns visibility
   const handleToggleAllColumns = () => {
-    const allVisible = table.getAllLeafColumns().every((col) => col.getIsVisible())
+    const allVisible = table
+      .getAllLeafColumns()
+      .every((col) => col.getIsVisible())
     table.getAllLeafColumns().forEach((col) => {
       if (col.getCanHide()) {
         col.toggleVisibility(!allVisible)
@@ -552,19 +620,21 @@ export function DataTable<TData, TValue>({
   // Reset table to default state
   const handleResetTable = () => {
     // Reset column order
-    const defaultOrder = columns.map((c) => 
+    const defaultOrder = columns.map((c) =>
       typeof c.id === 'string' ? c.id : (c as any).accessorKey || ''
     )
     setColumnOrder(defaultOrder)
     localStorage.removeItem(storageKey)
-    
+
     // Reset column visibility to all visible
     setColumnVisibility({})
     localStorage.removeItem(`${storageKey}-visibility`)
   }
 
   // Count visible columns
-  const visibleColumnsCount = table.getAllLeafColumns().filter((col) => col.getIsVisible()).length
+  const visibleColumnsCount = table
+    .getAllLeafColumns()
+    .filter((col) => col.getIsVisible()).length
 
   // Loading state
   if (isLoading) {
@@ -604,13 +674,17 @@ export function DataTable<TData, TValue>({
     <div className={cn('w-full', className)}>
       {/* Toolbar - Column Visibility & Reset */}
       {(enableColumnVisibility || enableColumnOrdering || tabsElement) && (
-        <div className={cn(
-          "flex items-center gap-2 mb-4",
-          tabsElement ? "justify-between px-6 pt-4" : "justify-end bg-transparent"
-        )}>
+        <div
+          className={cn(
+            'flex items-center gap-2 mb-4',
+            tabsElement
+              ? 'justify-between px-6 pt-4'
+              : 'justify-end bg-transparent'
+          )}
+        >
           {/* Tabs on the left */}
           {tabsElement && <div className="flex-1">{tabsElement}</div>}
-          
+
           {/* Buttons on the right */}
           <div className="flex items-center gap-2">
             {/* Reset Button */}
@@ -638,75 +712,78 @@ export function DataTable<TData, TValue>({
                   {t('table.columns_count', { count: visibleColumnsCount })}
                 </Button>
 
-              {showColumnSettings && (
-                <>
-                  {/* Backdrop */}
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowColumnSettings(false)}
-                  />
-
-                  {/* Dropdown */}
-                  <div className="absolute right-0 mt-2 min-w-[320px] w-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-visible animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 whitespace-nowrap">
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-base font-semibold text-gray-900 dark:text-white">
-                  {t('table.columns_display')}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleToggleAllColumns}
-                  className="text-sm h-9 px-4 whitespace-nowrap"
-                >
-                  {visibleColumnsCount === table.getAllLeafColumns().length
-                    ? t('app.hide_all')
-                    : t('app.show_all')}
-                </Button>
-              </div>
-            </div>
-
-            <div className="p-4 max-h-[400px] overflow-y-auto">
-              {table.getAllLeafColumns().map((column) => {
-                const canHide = column.getCanHide()
-                const isVisible = column.getIsVisible()
-
-                return (
-                  <label
-                    key={column.id}
-                    className={cn(
-                      'flex items-center gap-3 px-4 py-3 rounded-md transition-colors whitespace-nowrap',
-                      canHide
-                        ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
-                        : 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    <Checkbox
-                      checked={isVisible}
-                      onChange={(e) => column.toggleVisibility(e.target.checked)}
-                      disabled={!canHide}
+                {showColumnSettings && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowColumnSettings(false)}
                     />
-                    <span className="text-base text-gray-700 dark:text-gray-300 flex items-center gap-3 flex-1">
-                      {isVisible ? (
-                        <Eye className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-                      ) : (
-                        <EyeOff className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                      )}
-                      <span>
-                        {typeof column.columnDef.header === 'string'
-                          ? column.columnDef.header
-                          : column.id}
-                      </span>
-                    </span>
-                  </label>
-                )
-              })}
-            </div>
-          </div>
-                </>
-              )}
-            </div>
-          )}
+
+                    {/* Dropdown */}
+                    <div className="absolute right-0 mt-2 min-w-[320px] w-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-visible animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="p-4 border-b border-gray-200 dark:border-gray-700 whitespace-nowrap">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-base font-semibold text-gray-900 dark:text-white">
+                            {t('table.columns_display')}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleToggleAllColumns}
+                            className="text-sm h-9 px-4 whitespace-nowrap"
+                          >
+                            {visibleColumnsCount ===
+                            table.getAllLeafColumns().length
+                              ? t('app.hide_all')
+                              : t('app.show_all')}
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="p-4 max-h-[400px] overflow-y-auto">
+                        {table.getAllLeafColumns().map((column) => {
+                          const canHide = column.getCanHide()
+                          const isVisible = column.getIsVisible()
+
+                          return (
+                            <label
+                              key={column.id}
+                              className={cn(
+                                'flex items-center gap-3 px-4 py-3 rounded-md transition-colors whitespace-nowrap',
+                                canHide
+                                  ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
+                                  : 'opacity-50 cursor-not-allowed'
+                              )}
+                            >
+                              <Checkbox
+                                checked={isVisible}
+                                onChange={(e) =>
+                                  column.toggleVisibility(e.target.checked)
+                                }
+                                disabled={!canHide}
+                              />
+                              <span className="text-base text-gray-700 dark:text-gray-300 flex items-center gap-3 flex-1">
+                                {isVisible ? (
+                                  <Eye className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
+                                ) : (
+                                  <EyeOff className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                                )}
+                                <span>
+                                  {typeof column.columnDef.header === 'string'
+                                    ? column.columnDef.header
+                                    : column.id}
+                                </span>
+                              </span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -734,7 +811,10 @@ export function DataTable<TData, TValue>({
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 transition-colors duration-200">
           {/* Zone scrollable avec hauteur max */}
           <div className="overflow-auto max-h-[calc(100vh-450px)]">
-            <table className="w-full" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+            <table
+              className="w-full"
+              style={{ borderCollapse: 'separate', borderSpacing: 0 }}
+            >
               {/* Header sticky */}
               <thead className="bg-gray-50 dark:bg-gray-700 transition-colors duration-200 sticky top-0 z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -743,57 +823,74 @@ export function DataTable<TData, TValue>({
                       <>
                         {/* Colonnes pinnées à gauche */}
                         {headerGroup.headers
-                          .filter(header => header.column.getIsPinned() === 'left')
-                          .map((header) => {
-                          const sortHandler = header.column.getToggleSortingHandler()
-                          
-                          return (
-                            <th
-                              key={header.id}
-                              className={cn(
-                                'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
-                                header.column.getCanSort() &&
-                                  'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
-                                'bg-gray-50 dark:bg-gray-700'
-                              )}
-                              onClick={header.column.getCanSort() && sortHandler ? (e) => sortHandler(e) : undefined}
-                              style={getCommonPinningStyles(header.column)}
-                            >
-                              <div className="flex items-center gap-2">
-                                {header.isPlaceholder
-                                  ? null
-                                  : flexRender(
-                                      header.column.columnDef.header,
-                                      header.getContext()
-                                    )}
-                                {header.column.getCanSort() && (
-                                  <span className="ml-auto flex-shrink-0">
-                                    {{
-                                      asc: <ChevronUp className="h-4 w-4" />,
-                                      desc: <ChevronDown className="h-4 w-4" />,
-                                    }[header.column.getIsSorted() as string] ?? (
-                                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                                    )}
-                                  </span>
-                                )}
-                              </div>
-                            </th>
+                          .filter(
+                            (header) => header.column.getIsPinned() === 'left'
                           )
-                        })}
-                        
+                          .map((header) => {
+                            const sortHandler =
+                              header.column.getToggleSortingHandler()
+
+                            return (
+                              <th
+                                key={header.id}
+                                className={cn(
+                                  'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
+                                  header.column.getCanSort() &&
+                                    'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
+                                  'bg-gray-50 dark:bg-gray-700'
+                                )}
+                                onClick={
+                                  header.column.getCanSort() && sortHandler
+                                    ? (e) => sortHandler(e)
+                                    : undefined
+                                }
+                                style={getCommonPinningStyles(header.column)}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {header.isPlaceholder
+                                    ? null
+                                    : flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext()
+                                      )}
+                                  {header.column.getCanSort() && (
+                                    <span className="ml-auto flex-shrink-0">
+                                      {{
+                                        asc: <ChevronUp className="h-4 w-4" />,
+                                        desc: (
+                                          <ChevronDown className="h-4 w-4" />
+                                        ),
+                                      }[
+                                        header.column.getIsSorted() as string
+                                      ] ?? (
+                                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
+                              </th>
+                            )
+                          })}
+
                         {/* Colonnes draggables dans SortableContext */}
-                        <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
+                        <SortableContext
+                          items={columnIds}
+                          strategy={horizontalListSortingStrategy}
+                        >
                           {headerGroup.headers
-                            .filter(header => !header.column.getIsPinned())
+                            .filter((header) => !header.column.getIsPinned())
                             .map((header) => {
-                              const sortHandler = header.column.getToggleSortingHandler()
+                              const sortHandler =
+                                header.column.getToggleSortingHandler()
                               return (
                                 <DraggableTableHeader
                                   key={header.id}
                                   header={header}
                                   canSort={header.column.getCanSort()}
                                   getPinningStyles={getCommonPinningStyles}
-                                  {...(sortHandler && { onSortClick: sortHandler })}
+                                  {...(sortHandler && {
+                                    onSortClick: sortHandler,
+                                  })}
                                 >
                                   {header.isPlaceholder
                                     ? null
@@ -805,8 +902,12 @@ export function DataTable<TData, TValue>({
                                     <span className="ml-auto flex-shrink-0">
                                       {{
                                         asc: <ChevronUp className="h-4 w-4" />,
-                                        desc: <ChevronDown className="h-4 w-4" />,
-                                      }[header.column.getIsSorted() as string] ?? (
+                                        desc: (
+                                          <ChevronDown className="h-4 w-4" />
+                                        ),
+                                      }[
+                                        header.column.getIsSorted() as string
+                                      ] ?? (
                                         <ChevronsUpDown className="h-4 w-4 opacity-50" />
                                       )}
                                     </span>
@@ -818,43 +919,54 @@ export function DataTable<TData, TValue>({
 
                         {/* Colonnes pinnées à droite */}
                         {headerGroup.headers
-                          .filter(header => header.column.getIsPinned() === 'right')
-                          .map((header) => {
-                          const sortHandler = header.column.getToggleSortingHandler()
-                          
-                          return (
-                            <th
-                              key={header.id}
-                              className={cn(
-                                'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
-                                header.column.getCanSort() &&
-                                  'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
-                                'bg-gray-50 dark:bg-gray-700'
-                              )}
-                              onClick={header.column.getCanSort() && sortHandler ? (e) => sortHandler(e) : undefined}
-                              style={getCommonPinningStyles(header.column)}
-                            >
-                              <div className="flex items-center gap-2">
-                                {header.isPlaceholder
-                                  ? null
-                                  : flexRender(
-                                      header.column.columnDef.header,
-                                      header.getContext()
-                                    )}
-                                {header.column.getCanSort() && (
-                                  <span className="ml-auto flex-shrink-0">
-                                    {{
-                                      asc: <ChevronUp className="h-4 w-4" />,
-                                      desc: <ChevronDown className="h-4 w-4" />,
-                                    }[header.column.getIsSorted() as string] ?? (
-                                      <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                                    )}
-                                  </span>
-                                )}
-                              </div>
-                            </th>
+                          .filter(
+                            (header) => header.column.getIsPinned() === 'right'
                           )
-                        })}
+                          .map((header) => {
+                            const sortHandler =
+                              header.column.getToggleSortingHandler()
+
+                            return (
+                              <th
+                                key={header.id}
+                                className={cn(
+                                  'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider',
+                                  header.column.getCanSort() &&
+                                    'cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors',
+                                  'bg-gray-50 dark:bg-gray-700'
+                                )}
+                                onClick={
+                                  header.column.getCanSort() && sortHandler
+                                    ? (e) => sortHandler(e)
+                                    : undefined
+                                }
+                                style={getCommonPinningStyles(header.column)}
+                              >
+                                <div className="flex items-center gap-2">
+                                  {header.isPlaceholder
+                                    ? null
+                                    : flexRender(
+                                        header.column.columnDef.header,
+                                        header.getContext()
+                                      )}
+                                  {header.column.getCanSort() && (
+                                    <span className="ml-auto flex-shrink-0">
+                                      {{
+                                        asc: <ChevronUp className="h-4 w-4" />,
+                                        desc: (
+                                          <ChevronDown className="h-4 w-4" />
+                                        ),
+                                      }[
+                                        header.column.getIsSorted() as string
+                                      ] ?? (
+                                        <ChevronsUpDown className="h-4 w-4 opacity-50" />
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
+                              </th>
+                            )
+                          })}
                       </>
                     ) : (
                       headerGroup.headers.map((header) => (
@@ -869,7 +981,10 @@ export function DataTable<TData, TValue>({
                           onClick={header.column.getToggleSortingHandler()}
                           style={{
                             ...getCommonPinningStyles(header.column),
-                            width: header.getSize() !== 150 ? header.getSize() : undefined,
+                            width:
+                              header.getSize() !== 150
+                                ? header.getSize()
+                                : undefined,
                           }}
                         >
                           {header.isPlaceholder ? null : (
@@ -923,7 +1038,10 @@ export function DataTable<TData, TValue>({
                           className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                           style={getCommonPinningStyles(cell.column)}
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </td>
                       ))}
                     </tr>
@@ -940,8 +1058,14 @@ export function DataTable<TData, TValue>({
             duration: 200,
             easing: 'ease-out',
             keyframes: ({ transform }) => [
-              { transform: CSS.Transform.toString(transform.initial), opacity: 1 },
-              { transform: CSS.Transform.toString(transform.final), opacity: 0 },
+              {
+                transform: CSS.Transform.toString(transform.initial),
+                opacity: 1,
+              },
+              {
+                transform: CSS.Transform.toString(transform.final),
+                opacity: 0,
+              },
             ],
           }}
           style={{
@@ -960,7 +1084,9 @@ export function DataTable<TData, TValue>({
             <div className="bg-white dark:bg-gray-800 px-6 py-3 rounded-lg shadow-2xl border-2 border-blue-500 dark:border-blue-400 cursor-grabbing">
               <span className="text-xs font-medium text-gray-700 dark:text-gray-300 uppercase select-none">
                 {(() => {
-                  const column = table.getAllLeafColumns().find((col) => col.id === activeId)
+                  const column = table
+                    .getAllLeafColumns()
+                    .find((col) => col.id === activeId)
                   if (!column) return activeId
                   const header = column.columnDef.header
                   return typeof header === 'string' ? header : activeId
@@ -976,30 +1102,56 @@ export function DataTable<TData, TValue>({
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-200">
           {/* Page info and page size selector */}
           <div className="flex items-center gap-4 text-sm text-gray-700 dark:text-gray-300">
-            {enableRowSelection && table.getFilteredSelectedRowModel().rows.length > 0 ? (
+            {enableRowSelection &&
+            table.getFilteredSelectedRowModel().rows.length > 0 ? (
               <div className="flex items-center gap-3">
                 <span>
-                  {t('table.selected_count', { selected: table.getFilteredSelectedRowModel().rows.length, total: table.getFilteredRowModel().rows.length })}
+                  {t('table.selected_count', {
+                    selected: table.getFilteredSelectedRowModel().rows.length,
+                    total: table.getFilteredRowModel().rows.length,
+                  })}
                 </span>
               </div>
             ) : (
               <>
                 <span>
-                  {totalItems ? (
-                    // Pagination côté serveur : utiliser totalItems
-                    t('table.showing', { from: pagination.pageIndex * pagination.pageSize + 1, to: Math.min((pagination.pageIndex + 1) * pagination.pageSize, totalItems!), total: totalItems })
-                  ) : (
-                    // Pagination locale : utiliser les données filtrées
-                    t('table.showing', { from: table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1, to: Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length), total: table.getFilteredRowModel().rows.length })
-                  )}
+                  {totalItems
+                    ? // Pagination côté serveur : utiliser totalItems
+                      t('table.showing', {
+                        from: ((currentPage || 1) - 1) * pageSize + 1,
+                        to: Math.min(
+                          (currentPage || 1) * pageSize,
+                          totalItems!
+                        ),
+                        total: totalItems,
+                      })
+                    : // Pagination locale : utiliser les données filtrées
+                      t('table.showing', {
+                        from:
+                          table.getState().pagination.pageIndex *
+                            table.getState().pagination.pageSize +
+                          1,
+                        to: Math.min(
+                          (table.getState().pagination.pageIndex + 1) *
+                            table.getState().pagination.pageSize,
+                          table.getFilteredRowModel().rows.length
+                        ),
+                        total: table.getFilteredRowModel().rows.length,
+                      })}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="whitespace-nowrap">{t('table.per_page')}</span>
+                  <span className="whitespace-nowrap">
+                    {t('table.per_page')}
+                  </span>
                   <select
-                    value={totalItems ? pageSize : table.getState().pagination.pageSize}
+                    value={
+                      isServerPagination
+                        ? pageSize
+                        : table.getState().pagination.pageSize
+                    }
                     onChange={(e) => {
                       const newSize = Number(e.target.value)
-                      if (totalItems && onPageSizeChange) {
+                      if (isServerPagination && onPageSizeChange) {
                         // Pagination serveur : appeler callback directement
                         onPageSizeChange(newSize)
                       } else {
@@ -1030,13 +1182,17 @@ export function DataTable<TData, TValue>({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (totalItems && onPageChange) {
+                  if (isServerPagination && onPageChange) {
                     onPageChange(1)
                   } else {
                     table.setPageIndex(0)
                   }
                 }}
-                disabled={totalItems ? (currentPage || 1) <= 1 : !table.getCanPreviousPage()}
+                disabled={
+                  isServerPagination
+                    ? (currentPage || 1) <= 1
+                    : !table.getCanPreviousPage()
+                }
                 className="flex-shrink-0"
               >
                 <ChevronsLeft className="h-4 w-4" />
@@ -1045,53 +1201,65 @@ export function DataTable<TData, TValue>({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (totalItems && onPageChange) {
+                  if (isServerPagination && onPageChange) {
                     onPageChange((currentPage || 1) - 1)
                   } else {
                     table.previousPage()
                   }
                 }}
-                disabled={totalItems ? (currentPage || 1) <= 1 : !table.getCanPreviousPage()}
+                disabled={
+                  isServerPagination
+                    ? (currentPage || 1) <= 1
+                    : !table.getCanPreviousPage()
+                }
                 className="flex-shrink-0"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              
+
               {/* Page numbers */}
               <div className="flex items-center gap-1">
                 {(() => {
-                  const currentPageNum = totalItems ? (currentPage || 1) : table.getState().pagination.pageIndex + 1
+                  const currentPageNum = isServerPagination
+                    ? currentPage || 1
+                    : table.getState().pagination.pageIndex + 1
                   const totalPages = table.getPageCount()
                   const pages: (number | string)[] = []
-                  
+
                   if (totalPages <= 7) {
                     // Show all pages if 7 or less
                     for (let i = 1; i <= totalPages; i++) pages.push(i)
                   } else {
                     // Always show first page
                     pages.push(1)
-                    
+
                     if (currentPageNum > 3) pages.push('...')
-                    
+
                     // Show pages around current
-                    for (let i = Math.max(2, currentPageNum - 1); i <= Math.min(totalPages - 1, currentPageNum + 1); i++) {
+                    for (
+                      let i = Math.max(2, currentPageNum - 1);
+                      i <= Math.min(totalPages - 1, currentPageNum + 1);
+                      i++
+                    ) {
                       pages.push(i)
                     }
-                    
+
                     if (currentPageNum < totalPages - 2) pages.push('...')
-                    
+
                     // Always show last page
                     pages.push(totalPages)
                   }
-                  
+
                   return pages.map((page, idx) =>
                     typeof page === 'number' ? (
                       <Button
                         key={page}
-                        variant={currentPageNum === page ? 'default' : 'outline'}
+                        variant={
+                          currentPageNum === page ? 'default' : 'outline'
+                        }
                         size="sm"
                         onClick={() => {
-                          if (totalItems && onPageChange) {
+                          if (isServerPagination && onPageChange) {
                             onPageChange(page)
                           } else {
                             table.setPageIndex(page - 1)
@@ -1102,23 +1270,32 @@ export function DataTable<TData, TValue>({
                         {page}
                       </Button>
                     ) : (
-                      <span key={`ellipsis-${idx}`} className="px-2 text-gray-500">...</span>
+                      <span
+                        key={`ellipsis-${idx}`}
+                        className="px-2 text-gray-500"
+                      >
+                        ...
+                      </span>
                     )
                   )
                 })()}
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (totalItems && onPageChange) {
+                  if (isServerPagination && onPageChange) {
                     onPageChange((currentPage || 1) + 1)
                   } else {
                     table.nextPage()
                   }
                 }}
-                disabled={totalItems ? (currentPage || 1) >= table.getPageCount() : !table.getCanNextPage()}
+                disabled={
+                  isServerPagination
+                    ? (currentPage || 1) >= table.getPageCount()
+                    : !table.getCanNextPage()
+                }
                 className="flex-shrink-0"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -1127,13 +1304,17 @@ export function DataTable<TData, TValue>({
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  if (totalItems && onPageChange) {
+                  if (isServerPagination && onPageChange) {
                     onPageChange(table.getPageCount())
                   } else {
                     table.setPageIndex(table.getPageCount() - 1)
                   }
                 }}
-                disabled={totalItems ? (currentPage || 1) >= table.getPageCount() : !table.getCanNextPage()}
+                disabled={
+                  isServerPagination
+                    ? (currentPage || 1) >= table.getPageCount()
+                    : !table.getCanNextPage()
+                }
                 className="flex-shrink-0"
               >
                 <ChevronsRight className="h-4 w-4" />

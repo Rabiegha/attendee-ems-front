@@ -6,7 +6,7 @@ export type UsersTab = 'active' | 'deleted'
 interface UsersFilters {
   page: number
   pageSize: number
-  search?: string
+  search?: string | undefined
   isActive?: boolean
 }
 
@@ -45,7 +45,9 @@ const usersSlice = createSlice({
 
 export const { setFilters, setActiveTab, resetFilters } = usersSlice.actions
 
-export const selectUsersFilters = (state: RootState) => state.users?.filters || initialState.filters
-export const selectUsersActiveTab = (state: RootState) => state.users?.activeTab || initialState.activeTab
+export const selectUsersFilters = (state: RootState) =>
+  state.users?.filters || initialState.filters
+export const selectUsersActiveTab = (state: RootState) =>
+  state.users?.activeTab || initialState.activeTab
 
 export default usersSlice.reducer

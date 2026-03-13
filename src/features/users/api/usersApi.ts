@@ -86,15 +86,31 @@ export const usersApi = rootApi.injectEndpoints({
         limit?: number
         search?: string
         isActive?: boolean
+        roleCode?: string
+        companyId?: string
+        hasCompany?: boolean
       }
     >({
-      query: ({ page = 1, limit = 10, search, isActive }) => ({
+      query: ({
+        page = 1,
+        limit = 10,
+        search,
+        isActive,
+        roleCode,
+        companyId,
+        hasCompany,
+      }) => ({
         url: API_ENDPOINTS.USERS.LIST,
         params: {
           page: page.toString(),
           limit: limit.toString(),
-          ...(search && { q: search }),
+          ...(search && { search }),
           ...(isActive !== undefined && { isActive: isActive.toString() }),
+          ...(roleCode && { roleCode }),
+          ...(companyId && { companyId }),
+          ...(hasCompany !== undefined && {
+            hasCompany: hasCompany.toString(),
+          }),
         },
       }),
       providesTags: (_result, _error, arg) => [
@@ -104,7 +120,7 @@ export const usersApi = rootApi.injectEndpoints({
       keepUnusedDataFor: 0, // Désactiver complètement le cache
       // Force RTK Query à considérer chaque combinaison de paramètres comme unique
       serializeQueryArgs: ({ queryArgs }) => {
-        return `users-${queryArgs.isActive}-${queryArgs.page}-${queryArgs.limit}-${queryArgs.search || ''}`
+        return `users-${queryArgs.isActive}-${queryArgs.page}-${queryArgs.limit}-${queryArgs.search || ''}-${queryArgs.roleCode || ''}-${queryArgs.companyId || ''}-${queryArgs.hasCompany ?? ''}`
       },
     }),
 
@@ -130,16 +146,20 @@ export const usersApi = rootApi.injectEndpoints({
           const result = await queryFulfilled
           const state = getState() as any
           const currentUser = state.session?.user
-          
+
           // Si l'utilisateur modifié est l'utilisateur connecté
           if (currentUser && currentUser.id === id) {
             // Mettre à jour le Redux store
-            const { updateUser: updateSessionUser } = await import('@/features/auth/model/sessionSlice')
+            const { updateUser: updateSessionUser } = await import(
+              '@/features/auth/model/sessionSlice'
+            )
             dispatch(updateSessionUser(result.data))
-            
+
             // Invalider spécifiquement la query 'me' pour forcer le refetch
             dispatch(
-              (await import('@/features/auth/api/authApi')).authApi.util.invalidateTags(['Auth'])
+              (
+                await import('@/features/auth/api/authApi')
+              ).authApi.util.invalidateTags(['Auth'])
             )
           }
         } catch {

@@ -80,16 +80,47 @@ function UsersPageContent() {
   const filters = useSelector(selectUsersFilters)
   const activeTab = useSelector(selectUsersActiveTab)
 
-  // API queries
-  const { data: usersData, isLoading } = useGetUsersQuery(filters)
-  
   // Récupérer la liste des rôles avec l'orgId de l'utilisateur connecté
   const rolesParams = useMemo(() => {
     return currentUser?.orgId ? { orgId: currentUser.orgId } : {}
   }, [currentUser?.orgId])
-  
-  const { data: roles = [], isLoading: rolesLoading } = useGetRolesFilteredQuery(rolesParams)
-  
+
+  const { data: roles = [], isLoading: rolesLoading } =
+    useGetRolesFilteredQuery(rolesParams)
+
+  const [searchQuery, setSearchQuery] = useState(filters.search || '')
+  const [roleFilters, setRoleFilters] = useState<FilterValues>({})
+  const lastSearchRef = useRef<string>(filters.search || '')
+
+  const selectedRoleId = roleFilters.roles as string | undefined
+  const selectedRoleCode = useMemo(() => {
+    if (!selectedRoleId || selectedRoleId === 'all') {
+      return undefined
+    }
+
+    return roles.find((role) => role.id === selectedRoleId)?.code
+  }, [roles, selectedRoleId])
+
+  const usersQueryFilters = useMemo(
+    () => ({
+      page: filters.page,
+      limit: filters.pageSize,
+      ...(filters.isActive !== undefined ? { isActive: filters.isActive } : {}),
+      ...(filters.search ? { search: filters.search } : {}),
+      ...(selectedRoleCode ? { roleCode: selectedRoleCode } : {}),
+    }),
+    [
+      filters.isActive,
+      filters.page,
+      filters.pageSize,
+      filters.search,
+      selectedRoleCode,
+    ]
+  )
+
+  // API queries
+  const { data: usersData, isLoading } = useGetUsersQuery(usersQueryFilters)
+
   // Queries for stats (active users count)
   const { data: activeUsersStats } = useGetUsersQuery({
     page: 1,
@@ -111,13 +142,16 @@ function UsersPageContent() {
   const [bulkRestoreUsers] = useBulkRestoreUsersMutation()
 
   // Optimistic updates: stocke temporairement les nouveaux roleId avant confirmation serveur
-  const [optimisticRoleUpdates, setOptimisticRoleUpdates] = useState<Map<string, string>>(new Map())
+  const [optimisticRoleUpdates, setOptimisticRoleUpdates] = useState<
+    Map<string, string>
+  >(new Map())
 
   // Modal states
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [deletingUser, setDeletingUser] = useState<User | null>(null)
   const [restoringUser, setRestoringUser] = useState<User | null>(null)
-  const [permanentDeletingUser, setPermanentDeletingUser] = useState<User | null>(null)
+  const [permanentDeletingUser, setPermanentDeletingUser] =
+    useState<User | null>(null)
 
   // Bulk actions states
   const [bulkActionsModalOpen, setBulkActionsModalOpen] = useState(false)
@@ -137,23 +171,21 @@ function UsersPageContent() {
     setTableResetCounter((prev) => prev + 1)
   }, [])
 
-  const handleRowSelectionChange = useCallback((selectedRows: typeof filteredUsers) => {
-    const ids = new Set(selectedRows.map((row) => row.id))
-    // Only update if selection actually changed
-    setBulkSelectedIds((prev) => {
-      const prevArray = Array.from(prev).sort()
-      const newArray = Array.from(ids).sort()
-      if (JSON.stringify(prevArray) === JSON.stringify(newArray)) {
-        return prev
-      }
-      return ids
-    })
-  }, [])
-
-  // Filtres locaux (recherche + rôles)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [roleFilters, setRoleFilters] = useState<FilterValues>({})
-  const lastSearchRef = useRef<string>('')
+  const handleRowSelectionChange = useCallback(
+    (selectedRows: typeof filteredUsers) => {
+      const ids = new Set(selectedRows.map((row) => row.id))
+      // Only update if selection actually changed
+      setBulkSelectedIds((prev) => {
+        const prevArray = Array.from(prev).sort()
+        const newArray = Array.from(ids).sort()
+        if (JSON.stringify(prevArray) === JSON.stringify(newArray)) {
+          return prev
+        }
+        return ids
+      })
+    },
+    []
+  )
 
   // Tabs configuration
   const isDeletedTab = activeTab === 'deleted'
@@ -164,47 +196,44 @@ function UsersPageContent() {
       // Ne pas appeler si la valeur n'a pas changé
       if (searchQuery !== lastSearchRef.current) {
         lastSearchRef.current = searchQuery
-        dispatch(setFilters({ ...(searchQuery && { search: searchQuery }), page: 1 }))
+        dispatch(setFilters({ page: 1, search: searchQuery || undefined }))
       }
     }, 500) // Debounce de 500ms
     return () => clearTimeout(timer)
   }, [searchQuery, dispatch])
 
-  // Filtrage local côté client uniquement pour les rôles (car non géré par le backend)
-  const selectedRoleId = roleFilters.roles as string | undefined
-  const filteredUsers = useMemo(() => {
-    let users = usersData?.users || []
+  useEffect(() => {
+    setSearchQuery(filters.search || '')
+    lastSearchRef.current = filters.search || ''
+  }, [filters.search])
 
-    // Filtre par rôle (single select)
-    if (selectedRoleId && selectedRoleId !== 'all') {
-      users = users.filter((user) => {
-        // user.role is the correct property, not user.roles
-        return user.role?.id === selectedRoleId
-      })
-    }
-
-    return users
-  }, [usersData?.users, selectedRoleId])
+  const filteredUsers = useMemo(
+    () => usersData?.users || [],
+    [usersData?.users]
+  )
 
   // Configuration des filtres pour le popup
-  const filterConfig = useMemo(() => ({
-    roles: {
-      label: t('filters.roles_label'),
-      type: 'radio' as const,
-      options: [
-        { value: 'all', label: t('filters.all_roles') },
-        ...roles.map((role) => ({
-          value: role.id,
-          label: role.name || role.code,
-        })),
-      ],
-    },
-  }), [roles, t])
+  const filterConfig = useMemo(
+    () => ({
+      roles: {
+        label: t('filters.roles_label'),
+        type: 'radio' as const,
+        options: [
+          { value: 'all', label: t('filters.all_roles') },
+          ...roles.map((role) => ({
+            value: role.id,
+            label: role.name || role.code,
+          })),
+        ],
+      },
+    }),
+    [roles, t]
+  )
 
   const handleResetFilters = () => {
     setSearchQuery('')
     setRoleFilters({})
-    dispatch(setFilters({ page: 1 }))
+    dispatch(setFilters({ page: 1, search: undefined }))
   }
 
   const handleRefresh = () => {
@@ -261,7 +290,8 @@ function UsersPageContent() {
   const stats = {
     total: (activeUsersStats?.total || 0) + (deletedUsersStats?.total || 0),
     active: activeUsersStats?.total || 0,
-    pending: usersData?.users?.filter((u) => u.must_change_password).length || 0, // This requires current data
+    pending:
+      usersData?.users?.filter((u) => u.must_change_password).length || 0, // This requires current data
     inactive: deletedUsersStats?.total || 0,
   }
 
@@ -287,7 +317,8 @@ function UsersPageContent() {
       {
         id: 'user',
         header: t('table.user'),
-        accessorFn: (row) => `${row.first_name || ''} ${row.last_name || ''} ${row.email}`,
+        accessorFn: (row) =>
+          `${row.first_name || ''} ${row.last_name || ''} ${row.email}`,
         sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const user = row.original
@@ -304,7 +335,9 @@ function UsersPageContent() {
                     ? `${user.first_name} ${user.last_name}`
                     : user.email}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">{user.email}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {user.email}
+                </div>
               </div>
             </div>
           )
@@ -320,7 +353,7 @@ function UsersPageContent() {
         sortingFn: 'caseInsensitive',
         cell: ({ row }) => {
           const user = row.original
-          
+
           // Si les rôles sont en chargement, afficher un loader
           if (rolesLoading) {
             return (
@@ -329,7 +362,7 @@ function UsersPageContent() {
               </span>
             )
           }
-          
+
           // Si aucun rôle n'est disponible, afficher le rôle statique
           if (roles.length === 0) {
             return (
@@ -338,48 +371,57 @@ function UsersPageContent() {
               </span>
             )
           }
-          
+
           // Trouver le niveau du rôle de l'utilisateur connecté
           const currentUserRoleCode = currentUser?.roles?.[0] // Premier rôle dans le JWT
-          const currentUserRole = roles.find(r => r.code === currentUserRoleCode)
+          const currentUserRole = roles.find(
+            (r) => r.code === currentUserRoleCode
+          )
           const currentUserLevel = currentUserRole?.level ?? 999
-          
+
           // Filtrer les rôles selon la hiérarchie
           // L'utilisateur connecté ne peut attribuer que des rôles de niveau supérieur ou égal au sien
-          let availableRoles = roles.filter(role => role.level >= currentUserLevel)
-          
+          let availableRoles = roles.filter(
+            (role) => role.level >= currentUserLevel
+          )
+
           // Toujours inclure le rôle actuel de l'utilisateur pour l'affichage
-          if (user.role?.id && !availableRoles.find(r => r.id === user.role.id)) {
-            const targetUserRole = roles.find(r => r.id === user.role.id)
+          if (
+            user.role?.id &&
+            !availableRoles.find((r) => r.id === user.role.id)
+          ) {
+            const targetUserRole = roles.find((r) => r.id === user.role.id)
             if (targetUserRole) {
               availableRoles = [targetUserRole, ...availableRoles]
             }
           }
-          
-          const roleOptions: TableSelectorOption[] = availableRoles.map(role => ({
-            value: role.id,
-            label: role.name,
-            description: role.description,
-            color: 'blue' as const,
-          }))
+
+          const roleOptions: TableSelectorOption[] = availableRoles.map(
+            (role) => ({
+              value: role.id,
+              label: role.name,
+              description: role.description,
+              color: 'blue' as const,
+            })
+          )
 
           // Utiliser la valeur optimiste si disponible, sinon la valeur serveur
           const optimisticRoleId = optimisticRoleUpdates.get(user.id)
           const displayedRoleId = optimisticRoleId || user.role?.id || ''
-          
+
           // Si on a une valeur optimiste ET que le serveur a renvoyé la même valeur, on peut nettoyer
           if (optimisticRoleId && user.role?.id === optimisticRoleId) {
             // Nettoyer de manière asynchrone pour éviter les updates pendant le render
             Promise.resolve().then(() => {
-              setOptimisticRoleUpdates(prev => {
+              setOptimisticRoleUpdates((prev) => {
                 const next = new Map(prev)
                 next.delete(user.id)
                 return next
               })
             })
           }
-          
-          const displayedRole = roles.find(r => r.id === displayedRoleId)
+
+          const displayedRole = roles.find((r) => r.id === displayedRoleId)
 
           return (
             <Can
@@ -387,7 +429,9 @@ function UsersPageContent() {
               on="Role"
               fallback={
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200">
-                  {displayedRole?.name || user.role?.name || t('status.undefined')}
+                  {displayedRole?.name ||
+                    user.role?.name ||
+                    t('status.undefined')}
                 </span>
               }
             >
@@ -399,30 +443,38 @@ function UsersPageContent() {
                     throw new Error(t('messages.cannot_modify_own_role'))
                   }
                   // Optimistic update: afficher immédiatement le nouveau rôle
-                  setOptimisticRoleUpdates(prev => new Map(prev).set(user.id, newRoleId))
-                  
+                  setOptimisticRoleUpdates((prev) =>
+                    new Map(prev).set(user.id, newRoleId)
+                  )
+
                   try {
                     await updateUser({
                       id: user.id,
                       data: { role_id: newRoleId },
                     }).unwrap()
-                    
+
                     // Trouver le nom du nouveau rôle pour le toast
-                    const newRole = roles?.find(r => r.id === newRoleId)
+                    const newRole = roles?.find((r) => r.id === newRoleId)
                     toast.success(
                       t('messages.role_updated'),
-                      t('messages.role_updated_detail', { name: `${user.first_name} ${user.last_name}`, role: newRole?.name || t('table.role') })
+                      t('messages.role_updated_detail', {
+                        name: `${user.first_name} ${user.last_name}`,
+                        role: newRole?.name || t('table.role'),
+                      })
                     )
                     // Le nettoyage se fera automatiquement quand le serveur renverra la bonne valeur
                   } catch (error) {
                     console.error('Error updating role:', error)
                     // Erreur: restaurer l'ancienne valeur immédiatement
-                    setOptimisticRoleUpdates(prev => {
+                    setOptimisticRoleUpdates((prev) => {
                       const next = new Map(prev)
                       next.delete(user.id)
                       return next
                     })
-                    toast.error(t('common:app.error'), t('messages.error_role_update'))
+                    toast.error(
+                      t('common:app.error'),
+                      t('messages.error_role_update')
+                    )
                     throw error
                   }
                 }}
@@ -445,7 +497,7 @@ function UsersPageContent() {
         },
         cell: ({ row }) => {
           const user = row.original
-          
+
           if (user.must_change_password) {
             return (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200">
@@ -454,7 +506,7 @@ function UsersPageContent() {
               </span>
             )
           }
-          
+
           if (user.is_active) {
             return (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200">
@@ -463,7 +515,7 @@ function UsersPageContent() {
               </span>
             )
           }
-          
+
           return (
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200">
               <UserX className="h-3 w-3 mr-1" />
@@ -510,7 +562,7 @@ function UsersPageContent() {
             </>
           )
         }
-        
+
         // Actions pour utilisateurs actifs
         return (
           <>
@@ -544,7 +596,15 @@ function UsersPageContent() {
         )
       }),
     ],
-    [currentUser?.id, isDeletedTab, roles, rolesLoading, optimisticRoleUpdates, updateUser, t]
+    [
+      currentUser?.id,
+      isDeletedTab,
+      roles,
+      rolesLoading,
+      optimisticRoleUpdates,
+      updateUser,
+      t,
+    ]
   )
 
   // Handler pour les actions groupées
@@ -557,13 +617,15 @@ function UsersPageContent() {
       action: async () => {
         try {
           await bulkDeleteUsers(Array.from(bulkSelectedIds)).unwrap()
-          toast.success(t('bulk.deactivated_success', { count: bulkSelectedIds.size }))
+          toast.success(
+            t('bulk.deactivated_success', { count: bulkSelectedIds.size })
+          )
           clearBulkSelection()
         } catch (error) {
           console.error('Erreur lors de la désactivation:', error)
           toast.error(t('bulk.deactivate_error'))
         }
-      }
+      },
     })
   }
 
@@ -576,13 +638,15 @@ function UsersPageContent() {
       action: async () => {
         try {
           await bulkRestoreUsers(Array.from(bulkSelectedIds)).unwrap()
-          toast.success(t('bulk.restored_success', { count: bulkSelectedIds.size }))
+          toast.success(
+            t('bulk.restored_success', { count: bulkSelectedIds.size })
+          )
           clearBulkSelection()
         } catch (error) {
           console.error('Erreur lors de la réactivation:', error)
           toast.error(t('bulk.restore_error'))
         }
-      }
+      },
     })
   }
 
@@ -614,7 +678,10 @@ function UsersPageContent() {
           resultCount={usersData?.total || 0}
           resultLabel={t('page.result_label')}
           onReset={handleResetFilters}
-          showResetButton={searchQuery !== '' || (selectedRoleId !== undefined && selectedRoleId !== 'all')}
+          showResetButton={
+            searchQuery !== '' ||
+            (selectedRoleId !== undefined && selectedRoleId !== 'all')
+          }
           onRefresh={handleRefresh}
           showRefreshButton={true}
         >
@@ -642,8 +709,12 @@ function UsersPageContent() {
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
                     {bulkSelectedIds.size > 1
-                      ? t('common:bulk.selected_many', { count: bulkSelectedIds.size })
-                      : t('common:bulk.selected_one', { count: bulkSelectedIds.size })}
+                      ? t('common:bulk.selected_many', {
+                          count: bulkSelectedIds.size,
+                        })
+                      : t('common:bulk.selected_one', {
+                          count: bulkSelectedIds.size,
+                        })}
                   </span>
                   <button
                     onClick={clearBulkSelection}
@@ -675,11 +746,7 @@ function UsersPageContent() {
             bulkActions={[]}
             getItemId={(user) => user.id}
             itemType={t('page.item_type')}
-            emptyMessage={
-              isDeletedTab
-                ? t('empty.deleted')
-                : t('empty.title')
-            }
+            emptyMessage={isDeletedTab ? t('empty.deleted') : t('empty.title')}
             onRowSelectionChange={handleRowSelectionChange}
             tabsElement={
               <Tabs

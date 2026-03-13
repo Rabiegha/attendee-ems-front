@@ -14,13 +14,14 @@ export interface PartnersQueryParams {
   limit?: number
   search?: string
   companyId?: string
+  hasCompany?: boolean
 }
 
 export const partnersApi = rootApi.injectEndpoints({
   endpoints: (builder) => ({
     // Récupérer la liste des partenaires (roleCode=PARTNER)
     getPartners: builder.query<PartnersListResponse, PartnersQueryParams>({
-      query: ({ page = 1, limit = 10, search, companyId }) => {
+      query: ({ page = 1, limit = 10, search, companyId, hasCompany }) => {
         const params: Record<string, string> = {
           page: page.toString(),
           limit: limit.toString(),
@@ -28,6 +29,7 @@ export const partnersApi = rootApi.injectEndpoints({
         }
         if (search) params.search = search
         if (companyId) params.companyId = companyId
+        if (hasCompany !== undefined) params.hasCompany = hasCompany.toString()
         return {
           url: API_ENDPOINTS.USERS.LIST,
           params,
@@ -35,7 +37,7 @@ export const partnersApi = rootApi.injectEndpoints({
       },
       providesTags: ['Users'],
       serializeQueryArgs: ({ queryArgs }) => {
-        return `partners-${queryArgs.page}-${queryArgs.limit}-${queryArgs.search || ''}-${queryArgs.companyId || ''}`
+        return `partners-${queryArgs.page}-${queryArgs.limit}-${queryArgs.search || ''}-${queryArgs.companyId || ''}-${queryArgs.hasCompany ?? ''}`
       },
     }),
 
@@ -48,7 +50,4 @@ export const partnersApi = rootApi.injectEndpoints({
   overrideExisting: false,
 })
 
-export const {
-  useGetPartnersQuery,
-  useGetPartnerByIdQuery,
-} = partnersApi
+export const { useGetPartnersQuery, useGetPartnerByIdQuery } = partnersApi
